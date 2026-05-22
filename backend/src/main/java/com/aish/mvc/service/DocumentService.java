@@ -1,5 +1,6 @@
 package com.aish.mvc.service;
 
+import com.aish.mvc.dto.DocumentRequestDTO;
 import com.aish.mvc.dto.DocumentResponseDTO;
 import com.aish.mvc.entity.Document;
 import com.aish.mvc.repository.DocumentRepository;
@@ -31,5 +32,27 @@ public class DocumentService {
             dto.setCreatedAt(doc.getCreatedAt());
             return dto;
         }).collect(Collectors.toList());
+    }
+    public DocumentResponseDTO createDocument(DocumentRequestDTO request) {
+        Document document = new Document();
+        document.setTitle(request.getTitle());
+        document.setDescription(request.getDescription());
+        document.setFileName(request.getFileName());
+        document.setStorageUrl(request.getStorageUrl());
+        document.setVisibility(request.getVisibility());
+        document.setUserId(request.getUserId());
+        
+        Document savedDoc = documentRepository.save(document);
+        
+        DocumentResponseDTO response = new DocumentResponseDTO();
+        response.setId(savedDoc.getId());
+        response.setTitle(savedDoc.getTitle());
+        response.setDescription(savedDoc.getDescription());
+        response.setFileName(savedDoc.getFileName());
+        response.setStorageUrl(savedDoc.getStorageUrl());
+        response.setVisibility(savedDoc.getVisibility());
+        response.setCreatedAt(savedDoc.getCreatedAt());
+        
+        return response;
     }
 }
