@@ -3,9 +3,10 @@ package com.aish.mvc.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 @Entity
-@Table(name = "documents")
+@Table(name = "doc_documents")
 @Data
 public class Document {
 
@@ -25,20 +26,20 @@ public class Document {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "file_name", nullable = false)
-    private String fileName;
-
-    @Column(name = "file_type", length = 100)
-    private String fileType;
-
-    @Column(name = "file_size")
-    private Long fileSize;
-
-    @Column(name = "storage_url", columnDefinition = "TEXT", nullable = false)
-    private String storageUrl;
-
     @Column(length = 20)
     private String visibility = "PRIVATE";
+
+    @Column(length = 20)
+    private String status = "PENDING";
+
+    @Column(name = "view_count")
+    private Integer viewCount = 0;
+
+    @Column(name = "download_count")
+    private Integer downloadCount = 0;
+
+    @Column(name = "average_rating")
+    private BigDecimal averageRating = BigDecimal.ZERO;
 
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
