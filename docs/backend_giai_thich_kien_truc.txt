@@ -1,0 +1,35 @@
+backend/src/main/java/com/aish/mvc/
+│
+├── controller/
+│   // nhận request từ frontend
+│   // xử lý API endpoint
+│
+├── service/
+│   // xử lý business logic chính
+│
+├── repository/
+│   // thao tác database bằng JPA
+│
+├── entity/
+│   // mapping bảng database
+│
+├── dto/
+│   // object truyền dữ liệu request/response
+│
+├── config/
+│   // cấu hình hệ thống
+│   // security, cors, swagger...
+│
+├── common/
+│   // code dùng chung toàn project
+│   // utils, exception, constants...
+│
+└── BackendApplication.java
+    // file khởi động Spring Boot
+
+====================================================
+Controller nhận request
+Service xử lý logic
+Repository thao tác DB
+Entity mapping dữ liệu
+DTO truyền dữ liệu giữa frontend/backend
