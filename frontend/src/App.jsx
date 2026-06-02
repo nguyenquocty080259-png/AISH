@@ -1,3 +1,4 @@
+import React from 'react';
 import DocumentPage from './pages/DocumentPage';
 // Xóa dòng import './App.css' đi nếu có nhé!
 
@@ -7,6 +8,7 @@ function App() {
         <DocumentPage />
     </>
   );
+
 }
 
 export default App;

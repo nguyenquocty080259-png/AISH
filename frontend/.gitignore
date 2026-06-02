@@ -7,18 +7,42 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+<<<<<<< HEAD
 node_modules
 dist
 dist-ssr
 *.local
 
 # Editor directories and files
+=======
+# Dependencies
+node_modules
+
+# Build files
+dist
+dist-ssr
+
+# Environment files
+.env
+*.local
+
+# Editor files
+>>>>>>> 9658510663071aa25b9e65c9fc8c67c7af598677
 .vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
+<<<<<<< HEAD
+=======
+
+# Visual Studio
+>>>>>>> 9658510663071aa25b9e65c9fc8c67c7af598677
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
+<<<<<<< HEAD
 *.sw?
+=======
+*.sw?
+>>>>>>> 9658510663071aa25b9e65c9fc8c67c7af598677
