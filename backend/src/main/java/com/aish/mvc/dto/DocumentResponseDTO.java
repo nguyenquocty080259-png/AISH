@@ -1,18 +1,28 @@
 package com.aish.mvc.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class DocumentResponseDTO {
-    // Chỉ lấy những trường cần thiết cho Front-end hiển thị lên màn hình
     private Long id;
     private String title;
     private String description;
+
+    // Trường này để fix lỗi setStatus nè
+    private String status;
+
+    // Trường này để fix lỗi setOwnerName nè
+    private String ownerName;
+
+    private String visibility;
     private String fileName;
     private String storageUrl;
-    private String visibility;
     private LocalDateTime createdAt;
-    
-    // Tuyệt đối không nhét userId hay mấy thứ bảo mật vào đây
 }
