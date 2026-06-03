@@ -1,5 +1,5 @@
 import React from 'react';
-import DocumentPage from './pages/DocumentPage';
+import DocumentPage from './pages/document/DocumentPage';
 // Xóa dòng import './App.css' đi nếu có nhé!
 
 function App() {
