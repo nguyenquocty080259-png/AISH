@@ -41,9 +41,9 @@ public class AuthUser {
     private String avatarUrl;
 
     @Enumerated(EnumType.STRING)
-    @ColumnDefault("'ACTIVE'")
+    @ColumnDefault("'PENDING'")
     @Column(name = "status", length = 20)
-    private UserStatus status = UserStatus.ACTIVE;
+    private UserStatus status = UserStatus.PENDING;
 
     @Column(name = "deleted_at")
     private Instant deletedAt;

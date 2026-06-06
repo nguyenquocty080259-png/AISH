@@ -9,17 +9,20 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http
-    ) throws Exception {
-        System.out.println("===== CUSTOM SECURITY CONFIG LOADED =====");
+    public SecurityFilterChain filterChain(HttpSecurity http)
+            throws Exception {
+
         http
+                .cors(cors -> {})
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**")
-                        .permitAll()
-                        .anyRequest()
-                        .authenticated()
+                        .requestMatchers(
+                                "/api/auth/login",
+                                "/api/auth/signup",
+                                "/api/auth/verify-otp",
+                                "/api/auth/resend-otp"
+                        ).permitAll()
+                        .anyRequest().authenticated()
                 );
 
         return http.build();

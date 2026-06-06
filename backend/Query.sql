@@ -1,17 +1,20 @@
-SELECT * FROM auth_roles;
+ALTER TABLE auth_users
+    DROP CONSTRAINT auth_users_status_check;
 
-SELECT
-    id,
-    identifier,
-    password_hash
-FROM auth_accounts;
+ALTER TABLE auth_users
+    ADD CONSTRAINT auth_users_status_check
+        CHECK (
+            status IN (
+                       'PENDING',
+                       'ACTIVE',
+                       'INACTIVE',
+                       'BANNED'
+                )
+            );
 
-SELECT
-    u.id,
-    u.full_name,
-    r.role_name
-FROM auth_users u
-         JOIN auth_user_roles ur
-              ON ur.user_id = u.id
-         JOIN auth_roles r
-              ON r.id = ur.role_id;
+select *
+from auth_email_verifications;
+
+select *
+from auth_email_verifications
+order by id desc;
