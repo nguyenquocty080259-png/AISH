@@ -11,7 +11,7 @@ function NavbarHomePage() {
       {/* Logo */}
       <a href="#heroSection" className="logo">
         <div className="logo-img">
-          <img src="" alt="AI Study Hub logo" />
+          <img src=".\public\logo.png" alt="AI Study Hub logo" />
         </div>
         <div className="logo-Name">
           <a href="#heroSection">AI Study Hub</a>
