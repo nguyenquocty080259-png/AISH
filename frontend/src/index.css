@@ -1,3 +1,9 @@
+<<<<<<< HEAD
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+=======
+@import "./assets/styles/reset.css";
+@import "./assets/styles/variable.css";
+@import "./assets/styles/global.css";
+>>>>>>> e9b70bfdfd2cd1e8d82537920efad755386b2a73
