@@ -88,7 +88,7 @@ function AiShowcaseSection() {
   }
 
   return (
-    <section id="aiShowcaseSection" className="showcase-section">
+    <section id="ai-showcase" className="showcase-section">
 
       <div className="showcase-header">
         <div>
