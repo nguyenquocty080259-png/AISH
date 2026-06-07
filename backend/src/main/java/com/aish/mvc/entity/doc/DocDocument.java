@@ -37,6 +37,7 @@ public class DocDocument {
     @Enumerated(EnumType.STRING)
     @Column(name = "visibility", length = 20)
     private DocumentVisibility visibility = DocumentVisibility.PRIVATE;
+
     // Quan hệ với User (Chủ sở hữu)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -49,7 +50,12 @@ public class DocDocument {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-    // Thêm dòng này vào trong class DocDocument.java
+
+    // THÊM ĐOÀN NÀY: Lưu thời gian xóa mềm, nếu bằng null nghĩa là file chưa bị xóa
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    // Quan hệ với danh sách các file vật lý đính kèm
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DocFile> files;
 }

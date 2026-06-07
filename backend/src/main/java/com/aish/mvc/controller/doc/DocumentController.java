@@ -1,97 +1,88 @@
 package com.aish.mvc.controller.doc;
 
-import com.aish.mvc.dto.DocumentRequestDTO;
-import com.aish.mvc.dto.DocumentResponseDTO;
+import com.aish.mvc.dto.doc.DocumentResponseDTO;
 import com.aish.mvc.entity.doc.DocFile;
 import com.aish.mvc.service.doc.DocumentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/documents")
-@CrossOrigin(origins = "http://localhost:5173") // Cổng mặc định của Vite React
+@CrossOrigin(origins = "http://localhost:5173")
 public class DocumentController {
 
-    @Autowired
-    private DocumentService documentService;
+    @Autowired private DocumentService documentService;
+    @Value("${app.upload.dir}") private String uploadDir;
 
-    // Lấy đường dẫn thư mục upload từ file application.properties
-    @Value("${app.upload.dir}")
-    private String uploadDir;
-
-    /**
-     * 1. Lấy danh sách toàn bộ tài liệu
-     */
     @GetMapping
     public ResponseEntity<List<DocumentResponseDTO>> getAll() {
         return ResponseEntity.ok(documentService.getAllDocuments());
     }
 
-    /**
-     * 2. Xem chi tiết thông tin một tài liệu
-     */
-    @GetMapping("/{id}")
-    public ResponseEntity<DocumentResponseDTO> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(documentService.getDocumentById(id));
-    }
-
-    /**
-     * 3. Upload tài liệu mới kèm file vật lý
-     */
     @PostMapping("/upload")
     public ResponseEntity<DocumentResponseDTO> upload(
             @RequestParam("title") String title,
             @RequestParam("description") String description,
             @RequestParam("file") MultipartFile file) {
-
-        DocumentResponseDTO result = documentService.uploadDocumentWithFile(title, description, file);
-        return new ResponseEntity<>(result, HttpStatus.CREATED);
+        return new ResponseEntity<>(documentService.uploadDocumentWithFile(title, description, file), HttpStatus.CREATED);
     }
 
-    /**
-     * 4. Xóa tài liệu (Xóa cứng)
-     */
+    @PostMapping("/{id}/favorite")
+    public ResponseEntity<Void> toggleFavorite(@PathVariable Long id) {
+        documentService.toggleFavorite(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/comment")
+    public ResponseEntity<Void> addComment(@PathVariable Long id, @RequestBody String content) {
+        documentService.addComment(id, content);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/rate")
+    public ResponseEntity<Void> rate(@PathVariable Long id, @RequestParam Integer star) {
+        documentService.rateDocument(id, star);
+        return ResponseEntity.ok().build();
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         documentService.deleteDocument(id);
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * 5. Tải xuống tài liệu (Download)
-     * Hàm này sẽ tìm file thực tế dựa trên Document ID
-     */
+    @GetMapping("/trash")
+    public ResponseEntity<List<DocumentResponseDTO>> getTrash() {
+        return ResponseEntity.ok(documentService.getDeletedDocuments());
+    }
+
+    @PutMapping("/{id}/restore")
+    public ResponseEntity<Void> restore(@PathVariable Long id) {
+        documentService.restoreDocument(id);
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/{id}/download")
     public ResponseEntity<Resource> downloadFile(@PathVariable Long id) {
         DocFile docFile = documentService.getFileByDocumentId(id);
         try {
-            // Thêm Log để mình nhìn tận mắt nó tìm ở đâu
+            documentService.logDownload(id); // Ghi nhận download vào bảng lịch sử theo ERD
             Path filePath = Paths.get(uploadDir).resolve(docFile.getFileUrl()).normalize();
-            System.out.println("DEBUG: Looking for file at " + filePath.toAbsolutePath());
-
             Resource resource = new UrlResource(filePath.toUri());
             if (resource.exists() || resource.isReadable()) {
                 return ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + docFile.getFileName() + "\"")
-                        .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION) // Cho phép React đọc header này
+                        .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
                         .body(resource);
-            } else {
-                return ResponseEntity.notFound().build();
-            }
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
+            } else { return ResponseEntity.notFound().build(); }
+        } catch (Exception e) { return ResponseEntity.internalServerError().build(); }
     }
 }

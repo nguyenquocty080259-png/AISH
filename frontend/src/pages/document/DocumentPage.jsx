@@ -4,154 +4,327 @@ import UploadModal from '../../components/Document/UploadModal';
 
 const DocumentPage = () => {
     const [documents, setDocuments] = useState([]);
+    const [viewMode, setViewMode] = useState('active'); // 'active' hoặc 'trash'
+    const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [commentInputs, setCommentInputs] = useState({});
 
-    // 1. Tự động load dữ liệu khi mở trang
-    useEffect(() => {
-        loadDocuments();
-    }, []);
+    // Danh sách file giả lập đang upload (Menu góc phải dưới)
+    const [uploadingFiles, setUploadingFiles] = useState([
+        { id: 1, name: 'BaoCao_DoAn_SWP.pdf', progress: 75 },
+        { id: 2, name: 'TaiLieu_ThamKhao.docx', progress: 40 }
+    ]);
 
-    const loadDocuments = async () => {
+    useEffect(() => { loadData(); }, [viewMode]);
+
+    const loadData = async () => {
         try {
             setLoading(true);
-            const res = await documentApi.getAll();
-            setDocuments(res.data);
-        } catch (err) {
-            console.error("Không lấy được dữ liệu:", err);
-        } finally {
-            setLoading(false);
-        }
+            const res = viewMode === 'active' ? await documentApi.getAll() : await documentApi.getTrash();
+            setDocuments(res.data || []);
+        } catch (err) { setDocuments([]); } finally { setLoading(false); }
     };
 
-    // 2. Hàm xử lý upload
     const handleUpload = async (data) => {
         const formData = new FormData();
         formData.append('title', data.title);
         formData.append('description', data.description);
         formData.append('file', data.file); 
-
         try {
-            const res = await documentApi.upload(formData);
-            setDocuments(prevDocs => [res.data, ...prevDocs]);
+            await documentApi.upload(formData);
+            loadData(); 
             setIsModalOpen(false);
             alert("Tải lên tài liệu thành công!");
-        } catch (err) {
-            console.error("Lỗi khi upload:", err);
-            alert("Có lỗi xảy ra khi tải file lên Backend!");
-        }
+        } catch (err) { alert("Lỗi khi tải tệp lên!"); }
     };
 
-    // 3. Hàm xử lý xóa
+    const handleFavorite = async (id) => {
+        try {
+            await documentApi.toggleFavorite(id);
+            setDocuments(prevDocs => prevDocs.map(doc => {
+                if (doc.id === id) {
+                    const isNowFavorited = !doc.favorited;
+                    return {
+                        ...doc,
+                        favorited: isNowFavorited,
+                        favoriteCount: isNowFavorited ? doc.favoriteCount + 1 : doc.favoriteCount - 1
+                    };
+                }
+                return doc;
+            }));
+        } catch (err) { alert("Lỗi tương tác yêu thích!"); }
+    };
+
+    const handleComment = async (id) => {
+        const content = commentInputs[id];
+        if (!content || !content.trim()) return;
+        try {
+            await documentApi.addComment(id, content);
+            setCommentInputs(prev => ({ ...prev, [id]: '' }));
+            loadData(); 
+        } catch (err) { alert("Không thể gửi bình luận!"); }
+    };
+
+    const handleRate = async (id, star) => {
+        try {
+            await documentApi.rate(id, star);
+            loadData(); 
+            alert(`Đã đánh giá ${star} sao!`);
+        } catch (err) { alert("Lỗi đánh giá!"); }
+    };
+
     const handleDelete = async (id) => {
-        if (window.confirm("Bạn có chắc chắn muốn xóa tài liệu này không?")) {
+        if (window.confirm("Bạn có chắc chắn muốn xóa tài liệu này?")) {
             try {
                 await documentApi.delete(id);
-                setDocuments(prevDocs => prevDocs.filter(doc => doc.id !== id));
-                alert("Đã xóa tài liệu thành công!");
-            } catch (err) {
-                console.error("Lỗi khi xóa:", err);
-                alert("Không thể xóa tài liệu này!");
-            }
+                setDocuments(prev => prev.filter(doc => doc.id !== id));
+            } catch (err) { alert("Lỗi khi xóa!"); }
         }
     };
-const handleDownload = async (id, fileName) => {
-    try {
-        console.log("1. Bắt đầu gọi API tải file cho ID:", id);
-        const response = await documentApi.download(id);
-        
-        console.log("2. Backend đã trả về dữ liệu. Đang tạo Blob...");
-        // Ép kiểu Blob để chắc chắn trình duyệt hiểu đây là file
-        const blob = new Blob([response.data], { 
-            type: response.headers['content-type'] || 'application/octet-stream' 
-        });
-        
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        
-        // Đặt tên file khi tải về
-        const finalFileName = fileName || `document_${id}.pdf`;
-        link.setAttribute('download', finalFileName);
-        
-        console.log("3. Đang kích hoạt lệnh tải cho file:", finalFileName);
-        document.body.appendChild(link);
-        link.click();
-        
-        // Dọn dẹp bộ nhớ
-        setTimeout(() => {
-            link.remove();
-            window.URL.revokeObjectURL(url);
-            console.log("4. Hoàn tất quy trình tải.");
-        }, 100);
 
-    } catch (err) {
-        console.error("Lỗi khi tải file:", err);
-        alert("Có lỗi xảy ra trong quá trình xử lý file!");
-    }
-};
-    // 4. Phần hiển thị UI
+    const handleRestore = async (id) => {
+        try {
+            await documentApi.restore(id);
+            setDocuments(prev => prev.filter(doc => doc.id !== id));
+        } catch (err) { alert("Lỗi khi khôi phục!"); }
+    };
+
+    const handleDownload = async (id, fileName) => {
+        try {
+            const response = await documentApi.download(id);
+            const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/octet-stream' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', fileName || `document_${id}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setDocuments(prevDocs => prevDocs.map(doc => doc.id === id ? { ...doc, downloadCount: doc.downloadCount + 1 } : doc));
+        } catch (err) { alert("Lỗi tải file!"); }
+    };
+
+    const filteredDocuments = documents.filter(doc => 
+        doc.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        doc.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
-        <div className="p-10 bg-[#F4F7FE] min-h-screen">
-            <div className="flex justify-between items-center mb-10">
-                <h1 className="text-3xl font-bold text-[#2B3674]">Tài liệu hệ thống</h1>
-                <button 
-                    onClick={() => setIsModalOpen(true)}
-                    className="bg-[#4318FF] text-white px-8 py-3 rounded-2xl font-bold shadow-lg hover:bg-[#3311CC] transition-all"
-                >
-                    + Tải lên tệp mới
-                </button>
+        /* KHỐI BỌC NGOÀI CÙNG: Đã cấu hình w-full và flex-row để Sidebar ôm sát lề trái chuẩn đét */
+        <div className="flex w-full min-h-screen font-sans antialiased text-gray-700 bg-[#F8F9FD]">
+            
+            {/* ========================================== */}
+            {/* GIỮ NGUYÊN & ĐỒNG BỘ: SIDEBAR MENU BÊN TRÁI */}
+            {/* ========================================== */}
+            <div className="w-64 bg-white border-r border-gray-100 p-6 flex flex-col justify-between hidden md:flex shrink-0">
+                <div>
+                    {/* Logo Storage */}
+                    <div className="flex items-center gap-3 mb-10">
+                        <div className="w-10 h-10 rounded-xl bg-[#DB6700] flex items-center justify-center text-white font-black text-xl shadow-lg shadow-orange-500/20">S</div>
+                        <span className="text-xl font-black text-gray-800 tracking-tight">Storage</span>
+                    </div>
+
+                    {/* Danh mục Menu gốc giống ảnh bạn gửi */}
+                    <nav className="flex flex-col gap-2">
+                        <button className="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 font-bold text-sm hover:bg-gray-50 transition-all">
+                            <span>📊</span> Dashboard
+                        </button>
+                        <button 
+                            onClick={() => setViewMode('active')} 
+                            className={`flex items-center justify-between px-4 py-3 rounded-xl font-bold text-sm transition-all ${viewMode === 'active' ? 'bg-[#DB6700]/10 text-[#DB6700]' : 'text-gray-400 hover:bg-gray-50'}`}
+                        >
+                            <span className="flex items-center gap-4">📁 Documents</span>
+                        </button>
+                        <button 
+                            onClick={() => setViewMode('trash')} 
+                            className={`flex items-center justify-between px-4 py-3 rounded-xl font-bold text-sm transition-all ${viewMode === 'trash' ? 'bg-red-50 text-red-500' : 'text-gray-400 hover:bg-gray-50'}`}
+                        >
+                            <span className="flex items-center gap-4">🗑️ Thùng rác</span>
+                        </button>
+                        <button className="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 font-bold text-sm hover:bg-gray-50 transition-all">
+                            <span>🖼️</span> Images
+                        </button>
+                        <button className="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 font-bold text-sm hover:bg-gray-50 transition-all">
+                            <span>🎥</span> Video, Audio
+                        </button>
+                        <button className="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 font-bold text-sm hover:bg-gray-50 transition-all">
+                            <span>⚙️</span> Others
+                        </button>
+                    </nav>
+                </div>
+
+                {/* Info Card dưới chân sidebar */}
+                <div className="bg-gradient-to-br from-[#E59D1B]/10 to-[#DB6700]/10 p-4 rounded-2xl border border-[#E59D1B]/20">
+                    <p className="text-xs font-black text-[#DB6700] mb-1">SWP391 Storage</p>
+                    <p className="text-[10px] text-gray-500 font-medium">Hệ thống phân loại tương tác tài nguyên nâng cao.</p>
+                </div>
             </div>
 
-            {loading ? (
-                <p>Đang tải tài liệu...</p>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {documents.map((doc) => (
-                        <div key={doc.id} className="bg-white p-8 rounded-[30px] shadow-sm border border-gray-50 hover:shadow-md transition-shadow">
-                            <div className="flex items-center gap-4 mb-4">
-                                <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-500 font-bold">
-                                    DOC
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-[#2B3674] text-xl">{doc.title}</h3>
-                                    <p className="text-gray-400 text-xs">ID: #{doc.id}</p>
-                                </div>
-                            </div>
-                            
-                            <p className="text-gray-500 text-sm mb-6 line-clamp-2">
-                                {doc.description || "Không có mô tả cho tài liệu này."}
-                            </p>
-
-                            <div className="flex justify-between items-center pt-4 border-t border-gray-50">
-                                <div className="flex gap-2">
-                                    <span className="text-[10px] font-bold px-2 py-1 bg-green-50 text-green-500 rounded-lg">
-                                        {doc.status}
-                                    </span>
-                                    <button 
-                                        onClick={() => handleDelete(doc.id)}
-                                        className="text-red-500 font-bold text-sm hover:underline"
-                                    >
-                                        Xóa
-                                    </button>
-                                </div>
-                                <button 
-    onClick={() => handleDownload(doc.id, doc.fileName)}
-    className="text-[#4318FF] font-bold text-sm hover:underline"
->
-    Tải về
-</button>
-                            </div>
+            {/* KHỐI NỘI DUNG CHÍNH (BÊN PHẢI SIDEBAR) - Đã cấu hình flex-1 tràn khung */}
+            <div className="flex-1 p-6 md:p-8 overflow-y-auto relative">
+                
+                {/* TOP SEARCH BAR */}
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8 bg-white p-4 rounded-2xl shadow-sm border border-gray-50">
+                    <div className="w-full sm:w-96 relative">
+                        <span className="absolute left-4 top-2.5 text-gray-400 text-sm">🔍</span>
+                        <input 
+                            type="text" 
+                            placeholder="Search documents by title or keyword..." 
+                            value={searchTerm} 
+                            onChange={(e) => setSearchTerm(e.target.value)} 
+                            className="w-full pl-10 pr-4 py-2 bg-gray-50 rounded-xl outline-none text-sm border border-transparent focus:border-[#E59D1B] transition-all"
+                        />
+                    </div>
+                    
+                    <div className="flex items-center gap-4 w-full sm:w-auto justify-end">
+                        {viewMode === 'active' && (
+                            <button 
+                                onClick={() => setIsModalOpen(true)} 
+                                className="bg-[#DB6700] hover:bg-[#DB6700]/90 text-white px-6 py-2 rounded-xl font-bold text-sm shadow-md shadow-orange-500/20 flex items-center gap-2 transition-all"
+                            >
+                                📤 Upload File
+                            </button>
+                        )}
+                        <div className="flex items-center gap-2 pl-4 border-l border-gray-100">
+                            <div className="w-8 h-8 rounded-full bg-[#E59D1B] text-white flex items-center justify-center font-bold text-xs">M</div>
+                            <span className="text-sm font-bold text-gray-800">Mitchel</span>
                         </div>
-                    ))}
+                    </div>
                 </div>
-            )}
 
-            <UploadModal 
-                isOpen={isModalOpen} 
-                onClose={() => setIsModalOpen(false)} 
-                onUploadSuccess={handleUpload} 
-            />
+                {/* TIÊU ĐỀ KHU VỰC VÀ THANH CHUYỂN TAB ĐỘNG */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <div>
+                        <h2 className="text-2xl font-black text-gray-800 tracking-tight">
+                            {viewMode === 'active' ? 'Documents' : 'Trash Can'}
+                        </h2>
+                        <p className="text-xs text-gray-400 font-medium mt-0.5">Tổng số lượng: {filteredDocuments.length} files</p>
+                    </div>
+
+                    <div className="flex bg-gray-200/60 p-1 rounded-xl w-full sm:w-auto">
+                        <button onClick={() => setViewMode('active')} className={`px-6 py-2 rounded-lg font-bold text-sm transition-all ${viewMode === 'active' ? 'bg-white text-[#DB6700] shadow-sm' : 'text-gray-500'}`}>Tài liệu hiện có</button>
+                        <button onClick={() => setViewMode('trash')} className={`px-6 py-2 rounded-lg font-bold text-sm transition-all ${viewMode === 'trash' ? 'bg-white text-red-500 shadow-sm' : 'text-gray-500'}`}>Thùng rác</button>
+                    </div>
+                </div>
+
+                {/* GRID CARD TÀI LIỆU */}
+                {loading ? (
+                    <div className="text-center py-20 text-sm font-bold text-gray-400">Đang đồng bộ dữ liệu hệ thống...</div>
+                ) : filteredDocuments.length === 0 ? (
+                    <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200 text-gray-400 font-bold text-sm w-full">
+                        {viewMode === 'active' ? 'Thư mục trống. Hãy nhấn Tải lên tệp mới!' : 'Thùng rác trống.'}
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        {filteredDocuments.map((doc) => (
+                            <div key={doc.id} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between relative">
+                                <div>
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#E59D1B]/10 to-[#DB6700]/10 flex items-center justify-center text-[#DB6700] font-black text-xs">DOC</div>
+                                        {viewMode === 'active' && (
+                                            <div className="flex gap-0.5 text-sm">
+                                                {[1, 2, 3, 4, 5].map(star => (
+                                                    <button key={star} onClick={() => handleRate(doc.id, star)} className="hover:scale-125 transition-transform duration-100">
+                                                        {star <= (doc.averageRating || 0) ? '⭐' : '☆'}
+                                                    </button>
+                                                ))}
+                                                <span className="text-[10px] text-gray-400 font-black ml-1">({doc.averageRating?.toFixed(1) || 0.0})</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <h4 className="font-bold text-gray-800 text-base truncate">{doc.title}</h4>
+                                    <p className="text-[10px] text-gray-400 font-bold truncate mb-2">Tác giả: {doc.ownerName || 'Hệ thống'} | Ngày tạo: {new Date(doc.createdAt).toLocaleDateString()}</p>
+                                    <p className="text-gray-500 text-xs font-medium line-clamp-2 mb-4 h-8">{doc.description || "Không có mô tả chi tiết."}</p>
+                                    
+                                    {viewMode === 'active' && (
+                                        <div className="flex gap-4 text-[11px] font-bold text-gray-400 bg-gray-50 p-2 rounded-xl mb-4">
+                                            <span>📥 {doc.downloadCount || 0} Lượt tải</span>
+                                            <span>❤️ {doc.favoriteCount || 0} Lượt thích</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* KHU VỰC BÌNH LUẬN */}
+                                {viewMode === 'active' && (
+                                    <div className="border-t border-gray-50 pt-3 mt-2">
+                                        <span className="text-[11px] font-black text-gray-400 uppercase tracking-wider block mb-2">Thảo luận ({doc.comments?.length || 0})</span>
+                                        <div className="max-h-24 overflow-y-auto flex flex-col gap-1.5 mb-3 pr-1">
+                                            {doc.comments && doc.comments.length > 0 ? (
+                                                doc.comments.map(c => (
+                                                    <div key={c.id} className="text-[11px] bg-gray-50/70 p-2 rounded-lg leading-relaxed">
+                                                        <span className="font-bold text-[#DB6700]">{c.ownerName}: </span>
+                                                        <span className="text-gray-600">{c.content}</span>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <p className="text-[10px] text-gray-400 italic">Chưa có bình luận.</p>
+                                            )}
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <input 
+                                                type="text" 
+                                                placeholder="Write a comment..." 
+                                                value={commentInputs[doc.id] || ''}
+                                                onChange={(e) => setCommentInputs(prev => ({ ...prev, [doc.id]: e.target.value }))}
+                                                className="flex-1 p-2 bg-gray-50 text-xs rounded-xl outline-none border border-transparent focus:border-[#E59D1B] focus:bg-white transition-all"
+                                            />
+                                            <button onClick={() => handleComment(doc.id)} className="bg-[#E59D1B] text-white px-3 text-xs font-bold rounded-xl hover:bg-[#DB6700] transition-colors">Gửi</button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* THANH NÚT BẤM DƯỚI CARD */}
+                                <div className="flex justify-between items-center pt-3 border-t border-gray-100 mt-4">
+                                    <div className="flex items-center gap-2">
+                                        {viewMode === 'active' ? (
+                                            <>
+                                                <button onClick={() => handleFavorite(doc.id)} className={`text-sm p-1 rounded-lg transition-transform active:scale-75 ${doc.favorited ? 'text-red-500 scale-110' : 'text-gray-300'}`}>
+                                                    {doc.favorited ? '❤️' : '🤍'}
+                                                </button>
+                                                <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-[#E59D1B]/10 text-[#E59D1B]">{doc.visibility}</span>
+                                                <button onClick={() => handleDelete(doc.id)} className="text-red-400 font-bold text-xs hover:underline ml-2">Xóa</button>
+                                            </>
+                                        ) : (
+                                            <button onClick={() => handleRestore(doc.id)} className="text-green-500 font-black text-xs hover:underline">🔄 Khôi phục</button>
+                                        )}
+                                    </div>
+                                    {viewMode === 'active' && (
+                                        <button onClick={() => handleDownload(doc.id, doc.fileName)} className="text-[#DB6700] font-black text-xs hover:underline">Tải về</button>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* MENU TIẾN TRÌNH UPLOAD (IN PROGRESS) GÓC PHẢI DƯỚI */}
+                {viewMode === 'active' && uploadingFiles.length > 0 && (
+                    <div className="fixed bottom-6 right-6 w-72 bg-white rounded-2xl shadow-2xl p-5 border border-gray-100 z-50">
+                        <div className="flex justify-between items-center mb-3">
+                            <span className="text-xs font-black text-gray-800">In Progress</span>
+                            <span className="text-[10px] text-gray-400 font-bold bg-gray-50 px-1.5 py-0.5 rounded">⚡ Live</span>
+                        </div>
+                        <div className="flex flex-col gap-3">
+                            {uploadingFiles.map(f => (
+                                <div key={f.id} className="text-xs">
+                                    <div className="flex justify-between font-bold text-gray-600 mb-1">
+                                        <span className="truncate pr-2 w-40">{f.name}</span>
+                                        <span className="text-[#DB6700]">{f.progress}%</span>
+                                    </div>
+                                    <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                                        <div className="bg-gradient-to-r from-[#E59D1B] to-[#DB6700] h-full transition-all duration-300" style={{ width: `${f.progress}%` }}></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+            </div>
+
+            <UploadModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onUploadSuccess={handleUpload} />
         </div>
     );
 };

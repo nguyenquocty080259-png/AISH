@@ -1,37 +1,58 @@
 package com.aish.mvc.entity.auth;
 
 
-import com.aish.mvc.entity.doc.DocDocument;
+import com.aish.mvc.entity.enums.UserStatus;
 import jakarta.persistence.*;
-import lombok.*;
-import java.util.List;
+import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 
-@Entity
-@Table(name = "auth_users")
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
+
+
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Entity
+@Table(name = "auth_users")
 public class AuthUser {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(unique = true, nullable = false)
-    private String username;
-
-    private String password;
-
-    private String email;
-
+    @Size(max = 255)
     @Column(name = "full_name")
     private String fullName;
 
-    private String role; // Ví dụ: ROLE_USER, ROLE_ADMIN
+    @Column(name = "dob")
+    private LocalDate dob;
 
-    // Quan hệ 1 User có nhiều Documents
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<DocDocument> documents;
+    @Size(max = 20)
+    @Column(name = "phone_number", length = 20)
+    private String phoneNumber;
+
+    @Column(name = "avatar_url", length = Integer.MAX_VALUE)
+    private String avatarUrl;
+
+    @Enumerated(EnumType.STRING)
+    @ColumnDefault("'ACTIVE'")
+    @Column(name = "status", length = 20)
+    private UserStatus status = UserStatus.ACTIVE;
+
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "auth_user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private Set<AuthRole> authRoles = new HashSet<>();
 }
