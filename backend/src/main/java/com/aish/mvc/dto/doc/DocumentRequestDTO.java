@@ -1,4 +1,4 @@
-package com.aish.mvc.dto;
+package com.aish.mvc.dto.doc;
 
 public class DocumentRequestDTO {
     private String title;
