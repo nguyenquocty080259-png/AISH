@@ -1,8 +1,10 @@
 import "./Login.css";
 import { FcGoogle } from "react-icons/fc";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
+  const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -47,7 +49,7 @@ const Login = () => {
       alert("Login success");
 
       // sau này chuyển sang dashboard
-      // navigate("/dashboard");
+      navigate("/dashboardPage");
 
     } catch (error) {
       console.error(error);

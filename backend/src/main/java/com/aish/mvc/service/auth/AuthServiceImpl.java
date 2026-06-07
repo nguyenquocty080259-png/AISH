@@ -32,33 +32,113 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final AuthEmailVerificationRepository emailVerificationRepo;
+    private final EmailService emailService;
 
     @Override
     public void signup(SignupRequest request) {
-        if(accountRepo.existsByIdentifier(request.getEmail())) {
-            throw new RuntimeException("Email already exists");
+
+        AuthAccount existingAccount =
+                accountRepo.findByIdentifier(
+                        request.getEmail()
+                ).orElse(null);
+
+        // Email đã tồn tại
+        if (existingAccount != null) {
+
+            // Đã verify => không cho đăng ký lại
+            if (Boolean.TRUE.equals(
+                    existingAccount.getIsVerified()
+            )) {
+                throw new RuntimeException(
+                        "Email already exists"
+                );
+            }
+
+            // Chưa verify => tạo OTP mới và gửi lại
+            String otp =
+                    String.valueOf(
+                            (int) (Math.random() * 900000)
+                                    + 100000
+                    );
+
+            AuthEmailVerification verification =
+                    new AuthEmailVerification();
+
+            verification.setAuthAccount(
+                    existingAccount
+            );
+
+            verification.setVerificationCode(
+                    otp
+            );
+
+            verification.setAttemptCount(0);
+
+            verification.setIsUsed(false);
+
+            verification.setExpiresAt(
+                    Instant.now()
+                            .plusSeconds(120)
+            );
+
+            emailVerificationRepo.save(
+                    verification
+            );
+
+            emailService.sendOtpEmail(
+                    request.getEmail(),
+                    otp
+            );
+
+            return;
         }
 
+        // ==========================
+        // Email chưa tồn tại
+        // ==========================
+
         AuthUser user = new AuthUser();
-        user.setFullName(request.getFullName());
-        user.setStatus(UserStatus.PENDING);
+
+        user.setFullName(
+                request.getFullName()
+        );
+
+        user.setStatus(
+                UserStatus.PENDING
+        );
 
         AuthRole role =
-                roleRepo.findByRoleName("STUDENT")
+                roleRepo.findByRoleName(
+                                "STUDENT"
+                        )
                         .orElseThrow(
-                                () -> new RuntimeException("Role STUDENT not found")
+                                () -> new RuntimeException(
+                                        "Role STUDENT not found"
+                                )
                         );
 
-        user.getAuthRoles().add(role);
+        user.getAuthRoles().add(
+                role
+        );
 
-        userRepo.save(user);
+        userRepo.save(
+                user
+        );
 
-        AuthAccount account = new AuthAccount();
-        account.setUser(user);
+        AuthAccount account =
+                new AuthAccount();
 
-        account.setProvider(AuthProvider.LOCAL);
+        account.setUser(
+                user
+        );
 
-        account.setIdentifier(request.getEmail());
+        account.setProvider(
+                AuthProvider.LOCAL
+        );
+
+        account.setIdentifier(
+                request.getEmail()
+        );
 
         account.setPasswordHash(
                 passwordEncoder.encode(
@@ -66,36 +146,56 @@ public class AuthServiceImpl implements AuthService {
                 )
         );
 
-        accountRepo.save(account);
+        accountRepo.save(
+                account
+        );
+
         String otp =
                 String.valueOf(
-                        (int)(
-                                Math.random()
-                                        * 900000
+                        (int) (
+                                Math.random() * 900000
                         ) + 100000
                 );
+
         AuthEmailVerification verification =
                 new AuthEmailVerification();
 
-        verification.setAuthAccount(account);
+        verification.setAuthAccount(
+                account
+        );
 
-        verification.setVerificationCode(otp);
+        verification.setVerificationCode(
+                otp
+        );
 
-        verification.setAttemptCount(0);
+        verification.setAttemptCount(
+                0
+        );
 
-        verification.setIsUsed(false);
+        verification.setIsUsed(
+                false
+        );
 
         verification.setExpiresAt(
                 Instant.now()
-                        .plusSeconds(300)
+                        .plusSeconds(120)
         );
 
         emailVerificationRepo.save(
                 verification
         );
+
         System.out.println(
                 "OTP = " + otp
         );
+
+        try {
+            emailService.sendOtpEmail(request.getEmail(), otp);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("[DEV] Email failed, OTP = " + otp);
+        }
+
     }
 
     @Override
@@ -139,9 +239,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void verifyOtp(VerifyOtpRequest request) {
-        AuthAccount account =
-                accountRepo
-                        .findByIdentifier(
+        AuthAccount account = accountRepo.findByIdentifier(
                                 request.getEmail()
                         )
                         .orElseThrow(
@@ -216,5 +314,45 @@ public class AuthServiceImpl implements AuthService {
         );
 
         userRepo.save(user);
+    }
+
+    @Override
+    public void resendOtp(String email) {
+
+        AuthAccount account =
+                accountRepo.findByIdentifier(email)
+                        .orElseThrow(
+                                () -> new RuntimeException("Email not found")
+                        );
+
+        String otp =
+                String.valueOf(
+                        (int) (Math.random() * 900000) + 100000
+                );
+
+        AuthEmailVerification verification =
+                new AuthEmailVerification();
+
+        verification.setAuthAccount(account);
+
+        verification.setVerificationCode(otp);
+
+        verification.setAttemptCount(0);
+
+        verification.setIsUsed(false);
+
+        verification.setExpiresAt(
+                Instant.now().plusSeconds(120)
+        );
+
+        emailVerificationRepo.save(verification);
+
+        // Sau khi có EmailService
+        try {
+            emailService.sendOtpEmail(email, otp);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("[DEV] Email failed, NEW OTP = " + otp);
+        }
     }
 }

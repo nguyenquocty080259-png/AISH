@@ -46,7 +46,7 @@ const SignUp = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:8080/api/auth/register",
+        "http://localhost:8080/api/auth/signup",
         {
           method: "POST",
           headers: {
@@ -55,26 +55,28 @@ const SignUp = () => {
           body: JSON.stringify({
             fullName: formData.fullName,
             email: formData.email,
-            phoneNumber: formData.phone,
+           // phoneNumber: formData.phone,
             password: formData.password,
           }),
         }
       );
 
-      const data = await response.json();
+      const text = await response.text();
+
+      console.log("Response:", text);
 
       if (response.ok) {
-        alert("Register successful. OTP sent to your email!");
 
-        // lưu email cho màn OTP
         localStorage.setItem(
           "verifyEmail",
           formData.email
         );
 
-        navigate("/otp-verification");
-      } else {
-        alert(data.message || "Register failed");
+        // LỖI 2 FIX: thêm state: { email } để OTPVerification
+        // nhận được email qua location.state (không chỉ localStorage)
+        navigate("/otp-verification", {
+          state: { email: formData.email },
+        });
       }
     } catch (error) {
       console.error(error);
@@ -152,7 +154,7 @@ const SignUp = () => {
                 />
               </div>
 
-              <div className="signup-input-group">
+              {/* <div className="signup-input-group">
                 <input
                   type="tel"
                   name="phone"
@@ -160,7 +162,7 @@ const SignUp = () => {
                   value={formData.phone}
                   onChange={handleChange}
                 />
-              </div>
+              </div> */}
 
               <div className="signup-input-group password-box">
                 <input

@@ -13,17 +13,18 @@ const OTPVerification = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const email = location.state?.email;
+  const email =
+  location.state?.email || localStorage.getItem("verifyEmail");
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const [timer, setTimer] = useState(119);
+  const [timer, setTimer] = useState(120);
   const [loading, setLoading] = useState(false);
 
   const inputRefs = useRef([]);
 
   useEffect(() => {
     if (!email) {
-      navigate("/register");
+      navigate("/signup");
     }
   }, [email, navigate]);
 
@@ -67,6 +68,11 @@ const OTPVerification = () => {
     e.preventDefault();
 
     const otpCode = otp.join("");
+
+    if (timer <= 0) {
+      alert("OTP expired. Please resend OTP.");
+      return;
+    }
 
     if (otpCode.length !== 6) {
       alert("Please enter all 6 OTP digits");
@@ -126,7 +132,7 @@ const OTPVerification = () => {
       if (response.ok) {
         alert("A new OTP has been sent!");
 
-        setTimer(119);
+        setTimer(120);
 
         setOtp(["", "", "", "", "", ""]);
 
@@ -189,6 +195,12 @@ const OTPVerification = () => {
                 {formatTime(timer)}
               </div>
 
+              {timer === 0 && (
+                <p className="expired-message">
+                  OTP expired. Please resend OTP.
+                </p>
+              )}
+
               <p>
                 Didn’t receive the code?
                 <button
@@ -225,11 +237,12 @@ const OTPVerification = () => {
         </div>
 
         <div className="otp-footer">
-          © 2024 AI Study Hub
+          © 2026 AI Study Hub
         </div>
       </div>
     </div>
   );
+
 };
 
 export default OTPVerification;
