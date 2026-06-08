@@ -18,9 +18,6 @@ const SUGGESTIONS = [
   "Phân biệt cung và cầu",
 ];
 
-const AI_SYSTEM_PROMPT = `Bạn là trợ lý AI của "AI Study Hub" — nền tảng học tập dành cho sinh viên Việt Nam.
-Nhiệm vụ: giải thích khái niệm học thuật rõ ràng, ngắn gọn, dễ hiểu bằng tiếng Việt.
-Luôn trả lời bằng tiếng Việt. Độ dài tối đa 120 từ. Không dùng markdown heading. Có thể dùng danh sách ngắn nếu cần.`;
 
 const INITIAL_MESSAGE = {
   role: "ai",
@@ -33,52 +30,82 @@ function AiShowcaseSection() {
   const [messages, setMessages] = useState([INITIAL_MESSAGE]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [history, setHistory] = useState([]);
+  
   const chatBodyRef = useRef(null);
 
   useEffect(() => {
     chatBodyRef.current?.scrollTo({ top: chatBodyRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading]);
 
-  async function sendMessage(text) {
-    const q = (text ?? input).trim();
-    if (!q || loading) return;
+async function sendMessage(text) {
+const q = (text ?? input).trim();
 
-    setInput("");
-    const userMsg = { role: "user", text: q };
-    setMessages((prev) => [...prev, userMsg]);
+if (!q || loading) return;
 
-    const newHistory = [...history, { role: "user", content: q }];
-    setHistory(newHistory);
-    setLoading(true);
+setInput("");
 
-    try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          system: AI_SYSTEM_PROMPT,
-          messages: newHistory,
-        }),
-      });
-      const data = await res.json();
-      const reply =
-        data.content?.map((b) => b.text || "").join("") ||
-        "Xin lỗi, tôi không thể trả lời lúc này.";
+setMessages((prev) => [
+...prev,
+{
+role: "user",
+text: q,
+},
+]);
 
-      setMessages((prev) => [...prev, { role: "ai", text: reply }]);
-      setHistory((prev) => [...prev, { role: "assistant", content: reply }]);
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        { role: "ai", text: "Có lỗi kết nối. Vui lòng thử lại." },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  }
+setLoading(true);
+
+try {
+const response = await fetch(
+"http://localhost:8080/api/ai/chat",
+{
+method: "POST",
+headers: {
+"Content-Type": "application/json",
+},
+body: JSON.stringify({
+message: q,
+documentId: null,
+conversationId: null,
+}),
+}
+);
+
+
+if (!response.ok) {
+  throw new Error(`HTTP ${response.status}`);
+}
+
+const data = await response.json();
+
+setMessages((prev) => [
+  ...prev,
+  {
+    role: "ai",
+    text:
+      data.message ||
+      "Xin lỗi, tôi không thể trả lời lúc này.",
+  },
+]);
+
+
+} catch (error) {
+console.error(error);
+
+
+setMessages((prev) => [
+  ...prev,
+  {
+    role: "ai",
+    text: "Không thể kết nối tới AI Server.",
+  },
+]);
+
+
+} finally {
+setLoading(false);
+}
+}
+
 
   function handleKey(e) {
     if (e.key === "Enter" && !e.shiftKey) {

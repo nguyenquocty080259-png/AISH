@@ -7,7 +7,6 @@ function Navbar() {
 function NavbarHomePage() {
   return (
     <nav className="navbar-homepage">
-
       {/* Logo */}
       <a href="#heroSection" className="logo">
         <div className="logo-img">
@@ -21,22 +20,35 @@ function NavbarHomePage() {
       {/* Nav links */}
       <div className="menu">
         <ul>
-          <li><a href="#heroSection">Hero</a></li>
-          <li><a href="#featureSection">Features</a></li>
-          <li><a href="#popularDocumentSection">Documents</a></li>
-          <li><a href="#ai-showcase">AI Showcase</a></li>
-          <li><a href="#statistics">Statistics</a></li>
+          <li>
+            <a href="#heroSection">Hero</a>
+          </li>
+          <li>
+            <a href="#featureSection">Features</a>
+          </li>
+          <li>
+            <a href="#popularDocumentSection">Documents</a>
+          </li>
+          <li>
+            <a href="#ai-showcase">AI Showcase</a>
+          </li>
+          <li>
+            <a href="#statistics">Statistics</a>
+          </li>
         </ul>
       </div>
 
       {/* Auth buttons */}
       <div className="auth">
         <ul>
-          <li><a href="#">Login</a></li>
-          <li><a href="#">Sign Up</a></li>
+          <li>
+            <a href="/Login">Login</a>
+          </li>
+          <li>
+            <a href="/Signup">Sign Up</a>
+          </li>
         </ul>
       </div>
-
     </nav>
   );
 }
