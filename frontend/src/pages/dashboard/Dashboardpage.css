@@ -1,0 +1,127 @@
+.dashboard {
+  display: flex;
+  min-height: 100vh;
+  background: var(--color-background);
+}
+
+/* ── Sidebar ── */
+.dashboard__sidebar {
+  width: 240px;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-lg);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.dashboard__logo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xl);
+}
+
+.dashboard__logo-icon {
+  font-size: 18px;
+  color: var(--color-primary);
+}
+
+.dashboard__logo-text {
+  font-size: var(--title-md);
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--color-text);
+}
+
+.dashboard__nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  flex: 1;
+}
+
+.dashboard__nav-item {
+  padding: 10px var(--spacing-md);
+  border-radius: var(--radius-input);
+  font-size: var(--body-sm);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  transition: background 0.2s, color 0.2s;
+  text-decoration: none;
+}
+
+.dashboard__nav-item:hover,
+.dashboard__nav-item--active {
+  background: rgba(224, 131, 7, 0.08);
+  color: var(--color-primary);
+}
+
+.dashboard__logout {
+  margin-top: var(--spacing-lg);
+  padding: 10px var(--spacing-md);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-input);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--body-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+  text-align: left;
+}
+
+.dashboard__logout:hover {
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+/* ── Main ── */
+.dashboard__main {
+  flex: 1;
+  padding: var(--spacing-xl);
+  overflow-y: auto;
+}
+
+.dashboard__header {
+  margin-bottom: var(--spacing-xl);
+}
+
+.dashboard__title {
+  font-size: var(--headline-lg);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.dashboard__subtitle {
+  font-size: var(--body-lg);
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+.dashboard__content {
+  display: grid;
+  gap: var(--spacing-lg);
+}
+
+.dashboard__card {
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+  padding: var(--spacing-xl);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard__card h3 {
+  font-size: var(--title-md);
+  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-text);
+}
+
+.dashboard__card p {
+  color: var(--color-text-secondary);
+  font-size: var(--body-sm);
+}

@@ -1,45 +1,49 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
-import { useAuth } from "../pages/dashboard/AuthContext";
+import HomePage             from "../pages/home/HomePage";
+import LoginPage            from "../pages/auth/LoginPage";
+import RegisterPage         from "../pages/auth/RegisterPage";
+import OTPVerificationPage  from "../pages/auth/OTPVerificationPage";
+import DashboardPage        from "../pages/dashboard/DashboardPage";
+import NotFoundPage         from "../pages/error/Notfoundpage";
 
-import HomePage       from "../pages/home/HomePage";
-import LoginPage      from "../pages/auth/LoginPage";
-import RegisterPage   from "../pages/auth/RegisterPage";
-import NotFoundPage   from "../pages/error/NotFoundPage";
-import Dashboard      from "../pages/dashboard/Dashboard";
-
-// ============================================================
-// PrivateRoute — bảo vệ các route cần đăng nhập
-// Nếu chưa login → redirect về /login
-// Nếu đang load (chờ API /auth/me) → hiện loading nhỏ
-// ============================================================
-
+// ── Bảo vệ route cần đăng nhập ──────────────────────────
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
 
-  if (loading) return null; // hoặc thay bằng <LoadingSpinner />
+  if (loading) return <div className="auth-loading">Đang tải...</div>;
 
   return user ? children : <Navigate to="/login" replace />;
 }
 
-// ============================================================
-// AppRoutes
-// ============================================================
+// ── Redirect nếu đã đăng nhập ────────────────────────────
+function GuestRoute({ children }) {
+  const { user, loading } = useAuth();
 
-function AppRoutes() {
+  if (loading) return null;
+
+  return user ? <Navigate to="/dashboard" replace /> : children;
+}
+
+// ── Routes ───────────────────────────────────────────────
+export default function AppRoutes() {
   return (
     <Routes>
-      {/* Public routes */}
-      <Route path="/"          element={<HomePage />}     />
-      <Route path="/login"     element={<LoginPage />}    />
-      <Route path="/register"  element={<RegisterPage />} />
+      {/* Public */}
+      <Route path="/" element={<HomePage />} />
 
-      {/* Protected routes — cần đăng nhập */}
+      {/* Guest only — đã login thì redirect dashboard */}
+      <Route path="/login"            element={<GuestRoute><LoginPage /></GuestRoute>} />
+      <Route path="/register"         element={<GuestRoute><RegisterPage /></GuestRoute>} />
+      <Route path="/otp-verification" element={<OTPVerificationPage />} />
+
+      {/* Private — cần login */}
       <Route
         path="/dashboard"
         element={
           <PrivateRoute>
-            <Dashboard />
+            <DashboardPage />
           </PrivateRoute>
         }
       />
@@ -49,5 +53,3 @@ function AppRoutes() {
     </Routes>
   );
 }
-
-export default AppRoutes;

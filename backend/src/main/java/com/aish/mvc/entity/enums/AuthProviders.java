@@ -1,6 +1,6 @@
 package com.aish.mvc.entity.enums;
 
-public enum AuthProvider {
+public enum AuthProviders {
     LOCAL,
     GOOGLE,
     FACEBOOK,

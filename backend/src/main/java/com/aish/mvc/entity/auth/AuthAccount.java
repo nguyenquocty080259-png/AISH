@@ -1,7 +1,7 @@
 package com.aish.mvc.entity.auth;
 
 
-import com.aish.mvc.entity.enums.AuthProvider;
+import com.aish.mvc.entity.enums.AuthProviders;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -31,7 +31,7 @@ public class AuthAccount  {
     @Enumerated(EnumType.STRING)
     @NotNull
     @Column(name = "provider", nullable = false, length = 20)
-    private AuthProvider provider;
+    private AuthProviders provider;
 
     @Size(max = 255)
     @Column(name = "identifier")
