@@ -6,8 +6,9 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser]       = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // chỉ true lần đầu
 
+  // Chỉ chạy 1 lần khi app khởi động — kiểm tra token cũ
   useEffect(() => {
     async function fetchMe() {
       const token = getAccessToken();
@@ -35,7 +36,7 @@ export function AuthProvider({ children }) {
     }
 
     fetchMe();
-  }, []);
+  }, []); // ← dependency rỗng, chỉ chạy 1 lần
 
   const logout = () => {
     clearTokens();
