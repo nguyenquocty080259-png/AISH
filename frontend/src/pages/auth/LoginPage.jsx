@@ -1,10 +1,14 @@
+
+// LoginPage.jsx
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { login, saveTokens } from "../../services/authService";
+import { useAuth } from "../../context/AuthContext"; // ← thêm
 import "./AuthPage.css";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { setUser } = useAuth(); // ← thêm
 
   const [form, setForm]       = useState({ email: "", password: "" });
   const [error, setError]     = useState("");
@@ -15,21 +19,26 @@ export default function LoginPage() {
     setError("");
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError("");
 
-    try {
-      const data = await login(form);
-      saveTokens(data);
-      navigate("/dashboard");
-    } catch (err) {
-      setError(err.message || "Đăng nhập thất bại");
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    const data = await login(form);
+    saveTokens(data);
+    setUser({ email: form.email }); // set user trước
+    navigate("/dashboard", { replace: true }); // replace: true để không back về login được
+  } catch (err) {
+    setError(err.message || "Đăng nhập thất bại");
+  } finally {
+    setLoading(false);
+  }
+};
+
+  // ... phần JSX giữ nguyên
+
+
 
   return (
     <div className="auth-page">
