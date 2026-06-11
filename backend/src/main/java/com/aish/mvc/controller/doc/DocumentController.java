@@ -31,8 +31,10 @@ public class DocumentController {
     public ResponseEntity<DocumentResponseDTO> upload(
             @RequestParam("title") String title,
             @RequestParam("description") String description,
+            @RequestParam(value = "subjectId", required = false) Long subjectId,
+            @RequestParam(value = "tags", required = false) java.util.List<String> tags,
             @RequestParam("file") MultipartFile file) {
-        return new ResponseEntity<>(documentService.uploadDocumentWithFile(title, description, file), HttpStatus.CREATED);
+        return new ResponseEntity<>(documentService.uploadDocumentWithFile(title, description, subjectId, tags, file), HttpStatus.CREATED);
     }
 
     @PostMapping("/{id}/favorite")
@@ -69,7 +71,15 @@ public class DocumentController {
         documentService.restoreDocument(id);
         return ResponseEntity.ok().build();
     }
-
+    @PutMapping("/{id}/toggle-visibility")
+    public ResponseEntity<Void> toggleVisibility(@PathVariable Long id) {
+        documentService.toggleVisibility(id);
+        return ResponseEntity.ok().build();
+    }
+    @GetMapping("/{id}")
+    public ResponseEntity<DocumentResponseDTO> getOne(@PathVariable Long id) {
+        return ResponseEntity.ok(documentService.getDocumentById(id));
+    }
     @GetMapping("/{id}/download")
     public ResponseEntity<Resource> downloadFile(@PathVariable Long id) {
         DocFile docFile = documentService.getFileByDocumentId(id);
