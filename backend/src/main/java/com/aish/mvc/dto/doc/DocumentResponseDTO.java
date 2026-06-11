@@ -31,4 +31,9 @@ public class DocumentResponseDTO {
     private Boolean favorited;
 
     private List<CommentDTO> comments;
+    private Long subjectId;
+    private String subjectName;
+    private java.util.List<String> tags;
+    private String fileUrl;   // tên file vật lý để xem trước
+    private String fileType;  // loại file (application/pdf, image/png...)
 }
