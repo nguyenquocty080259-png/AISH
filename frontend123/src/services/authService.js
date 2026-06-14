@@ -34,6 +34,7 @@ export const login = async ({ email, password }) => {
   return data; // { accessToken, refreshToken, tokenType }
 };
 
+
 // ─── Verify OTP ───────────────────────────────────────────
 // POST /api/auth/verify-otp
 // Body: { email, otp }
@@ -66,6 +67,42 @@ export const resendOtp = async (email) => {
   return text;
 };
 
+// ======================================================
+// Refresh Token
+// POST /api/auth/refresh-token
+// ======================================================
+
+export const refreshAccessToken =
+  async () => {
+    const refreshToken =
+      localStorage.getItem("refreshToken");
+
+    const res = await fetch(
+      `${AUTH_URL}/refresh-token`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+        body: JSON.stringify({
+          refreshToken,
+        }),
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(
+        data.message ||
+          "Refresh token failed"
+      );
+    }
+
+    return data;
+  };
+
 // ─── Token helpers ────────────────────────────────────────
 export const saveTokens = ({ accessToken, refreshToken }) => {
   localStorage.setItem("accessToken", accessToken);
@@ -78,3 +115,19 @@ export const clearTokens = () => {
 };
 
 export const getAccessToken = () => localStorage.getItem("accessToken");
+
+export const logout = async () => {
+  const token = getAccessToken();
+
+  const res = await fetch(`${AUTH_URL}/logout`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Logout failed");
+  }
+};
+

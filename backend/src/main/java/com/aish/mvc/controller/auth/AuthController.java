@@ -5,6 +5,7 @@ import com.aish.mvc.entity.auth.AuthAccount;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.service.auth.AuthService;
 import com.aish.mvc.service.auth.security.JwtUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
@@ -80,6 +81,26 @@ public class AuthController {
         result.put("fullName", account.getUser().getFullName());
         result.put("status", account.getUser().getStatus());
         return ResponseEntity.ok(result);
+    }
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(
+            HttpServletRequest request) {
+
+        String authHeader =
+                request.getHeader("Authorization");
+
+        if (authHeader == null ||
+                !authHeader.startsWith("Bearer ")) {
+
+            return ResponseEntity.badRequest()
+                    .body("Token missing");
+        }
+
+        String token = authHeader.substring(7);
+
+        authService.logout(token);
+
+        return ResponseEntity.ok("Logout successful");
     }
 
 }

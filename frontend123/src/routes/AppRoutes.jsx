@@ -5,8 +5,11 @@ import HomePage             from "../pages/home/HomePage";
 import LoginPage            from "../pages/auth/LoginPage";
 import RegisterPage         from "../pages/auth/RegisterPage";
 import OTPVerificationPage  from "../pages/auth/OTPVerificationPage";
-import DashboardPage        from "../pages/dashboard/DashboardPage";
+import DashboardLayout from "../pages/dashboard/DashboardLayout";
+import StudentDashboard from "../pages/dashboard/StudentDashboard";
+import AdminDashboard from "../pages/dashboard/AdminDashboard";
 import NotFoundPage         from "../pages/error/Notfoundpage";
+import Profile from "../pages/profile/Profile";
 
 // ── Bảo vệ route cần đăng nhập ──────────────────────────
 function PrivateRoute({ children }) {
@@ -26,6 +29,18 @@ function GuestRoute({ children }) {
   return user ? <Navigate to="/dashboard" replace /> : children;
 }
 
+function DashboardRouter() {
+  const { role } = useAuth();
+
+  return (
+    <DashboardLayout>
+      {role === "admin"
+        ? <AdminDashboard />
+        : <StudentDashboard />}
+    </DashboardLayout>
+  );
+}
+
 // ── Routes ───────────────────────────────────────────────
 export default function AppRoutes() {
   return (
@@ -43,13 +58,24 @@ export default function AppRoutes() {
         path="/dashboard"
         element={
           <PrivateRoute>
-            <DashboardPage />
+            <DashboardRouter />
           </PrivateRoute>
         }
       />
 
       {/* 404 */}
       <Route path="*" element={<NotFoundPage />} />
+      <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <DashboardLayout>
+                <Profile />
+              </DashboardLayout>
+            </PrivateRoute>
+          }
+        />
     </Routes>
+    
   );
 }
