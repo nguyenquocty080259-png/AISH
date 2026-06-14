@@ -2,9 +2,9 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 import HomePage             from "../pages/home/HomePage";
-import LoginPage            from "../pages/auth/LoginPage";
-import RegisterPage         from "../pages/auth/RegisterPage";
-import OTPVerificationPage  from "../pages/auth/OTPVerificationPage";
+import Login from "../pages/auth/Login"; 
+import SignUp         from "../pages/auth/SignUp";
+import OTPVerification  from "../pages/auth/OTPVerification";
 import DashboardLayout from "../pages/dashboard/DashboardLayout";
 import StudentDashboard from "../pages/dashboard/StudentDashboard";
 import AdminDashboard from "../pages/dashboard/AdminDashboard";
@@ -49,9 +49,9 @@ export default function AppRoutes() {
       <Route path="/" element={<HomePage />} />
 
       {/* Guest only — đã login thì redirect dashboard */}
-      <Route path="/login"            element={<GuestRoute><LoginPage /></GuestRoute>} />
-      <Route path="/register"         element={<GuestRoute><RegisterPage /></GuestRoute>} />
-      <Route path="/otp-verification" element={<OTPVerificationPage />} />
+      <Route path="/login"            element={<GuestRoute><Login /></GuestRoute>} />
+      <Route path="/register"         element={<GuestRoute><SignUp /></GuestRoute>} />
+      <Route path="/otp-verification" element={<OTPVerification />} />
 
       {/* Private — cần login */}
       <Route

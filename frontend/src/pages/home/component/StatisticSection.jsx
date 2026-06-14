@@ -131,7 +131,7 @@ function StatisticSection() {
   }, []);
 
   return (
-    <section id="statistics" className="statistic-section" ref={sectionRef}>
+    <section id="statisticSection" className="statistic-section" ref={sectionRef}>
 
       <div className="statistic-header">
         <div className="statistic-header__left">

@@ -3,7 +3,6 @@
 // Ví dụ: const { data } = useSWR('/api/admin/dashboard')
 // ============================================================
 
-
 const MOCK_STATS = [
   { id: "users",    icon: "👥", label: "Tổng sinh viên",  value: "8,241",  suffix: "",   sub: "+124 tuần này",     trend: "up"   },
   { id: "docs",     icon: "📄", label: "Tổng tài liệu",   value: "12,480", suffix: "",   sub: "+89 hôm nay",       trend: "up"   },
