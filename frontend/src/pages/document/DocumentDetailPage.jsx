@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { documentApi } from '../../api/documentApi';
-import { Document, Page, pdfjs } from 'react-pdf';
-import 'react-pdf/dist/Page/AnnotationLayer.css';
-import 'react-pdf/dist/Page/TextLayer.css';
-
-// cấu hình worker cho react-pdf
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 const FILE_BASE = 'http://localhost:8080/uploads/';
 
@@ -16,11 +10,6 @@ const DocumentDetailPage = () => {
     const [doc, setDoc] = useState(null);
     const [loading, setLoading] = useState(true);
     const [comment, setComment] = useState('');
-
-    // state cho PDF viewer
-    const [numPages, setNumPages] = useState(null);
-    const [pageNumber, setPageNumber] = useState(1);
-    const [scale, setScale] = useState(1.0);
 
     useEffect(() => { load(); }, [id]);
 
@@ -59,9 +48,23 @@ const DocumentDetailPage = () => {
     if (loading) return <div className="p-10 text-gray-400 font-bold">Đang tải...</div>;
     if (!doc) return <div className="p-10 text-red-400 font-bold">Không tìm thấy tài liệu.</div>;
 
-    const fileUrl = doc.fileUrl ? FILE_BASE + doc.fileUrl : null;
-    const isPdf = doc.fileType?.includes('pdf');
-    const isImage = doc.fileType?.includes('image');
+    // URL file: Cloudinary (http...) dùng trực tiếp, file local cũ thì prepend
+    const fileUrl = doc.fileUrl
+        ? (doc.fileUrl.startsWith('http') ? doc.fileUrl : FILE_BASE + doc.fileUrl)
+        : null;
+
+    const type = (doc.fileType || '').toLowerCase();
+    const name = (doc.fileName || '').toLowerCase();
+    const isImage = type.includes('image') || /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(name);
+    const isPdf = type.includes('pdf') || name.endsWith('.pdf');
+    const isOffice = /\.(docx?|pptx?|xlsx?)$/.test(name)
+        || type.includes('word') || type.includes('presentation')
+        || type.includes('sheet') || type.includes('officedocument');
+    // Office Online viewer cần URL công khai trên Internet
+    // Google Docs viewer — thường mở được Office tốt hơn Microsoft
+    const officeViewer = isOffice && fileUrl
+        ? `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`
+        : null;
 
     return (
         <div className="min-h-screen bg-[#F8F9FD] p-6 md:p-10">
@@ -70,45 +73,46 @@ const DocumentDetailPage = () => {
 
                 {/* KHU VỰC XEM TRƯỚC FILE */}
                 <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 mb-6">
-                    <h3 className="text-lg font-black text-gray-800 mb-4">Xem trước</h3>
-
-                    {isPdf && fileUrl && (
-                        <div>
-                            {/* Thanh điều khiển */}
-                            <div className="flex flex-wrap items-center justify-center gap-3 mb-4 bg-gray-50 p-3 rounded-xl">
-                                <button onClick={() => setPageNumber(p => Math.max(1, p - 1))} disabled={pageNumber <= 1}
-                                    className="px-3 py-1 bg-white rounded-lg font-bold text-sm disabled:opacity-40">← Trước</button>
-                                <span className="text-sm font-bold text-gray-600">Trang {pageNumber} / {numPages || '?'}</span>
-                                <button onClick={() => setPageNumber(p => Math.min(numPages, p + 1))} disabled={pageNumber >= numPages}
-                                    className="px-3 py-1 bg-white rounded-lg font-bold text-sm disabled:opacity-40">Sau →</button>
-                                <span className="mx-2 text-gray-300">|</span>
-                                <button onClick={() => setScale(s => Math.max(0.5, s - 0.2))} className="px-3 py-1 bg-white rounded-lg font-bold text-sm">➖</button>
-                                <span className="text-sm font-bold text-gray-600">{Math.round(scale * 100)}%</span>
-                                <button onClick={() => setScale(s => Math.min(2.5, s + 0.2))} className="px-3 py-1 bg-white rounded-lg font-bold text-sm">➕</button>
-                            </div>
-                            {/* Vùng hiển thị PDF */}
-                            <div className="flex justify-center overflow-auto max-h-[70vh] bg-gray-100 rounded-xl p-4">
-                                <Document
-                                    file={fileUrl}
-                                    onLoadSuccess={({ numPages }) => setNumPages(numPages)}
-                                    loading={<div className="py-10 text-gray-400 font-bold">Đang tải PDF...</div>}
-                                    error={<div className="py-10 text-red-400 font-bold">Không tải được PDF.</div>}
-                                >
-                                    <Page pageNumber={pageNumber} scale={scale} />
-                                </Document>
-                            </div>
-                        </div>
-                    )}
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-black text-gray-800">Xem trước</h3>
+                        {fileUrl && (
+                            <a href={fileUrl} target="_blank" rel="noreferrer"
+                               className="text-xs font-bold text-[#DB6700] hover:underline">
+                                ↗ Mở tab mới
+                            </a>
+                        )}
+                    </div>
 
                     {isImage && fileUrl && (
                         <div className="flex justify-center bg-gray-100 rounded-xl p-4">
-                            <img src={fileUrl} alt={doc.title} className="max-h-[70vh] rounded-lg" />
+                            <img src={fileUrl} alt={doc.title} className="max-h-[75vh] rounded-lg" />
                         </div>
                     )}
 
-                    {!isPdf && !isImage && (
+                    {isPdf && fileUrl && (
+                        <iframe
+                            src={fileUrl}
+                            title={doc.title}
+                            className="w-full h-[75vh] rounded-xl border border-gray-100 bg-gray-50"
+                        />
+                    )}
+
+                    {isOffice && officeViewer && (
+                        <iframe
+                            src={officeViewer}
+                            title={doc.title}
+                            className="w-full h-[75vh] rounded-xl border border-gray-100 bg-gray-50"
+                        />
+                    )}
+
+                    {!isImage && !isPdf && !isOffice && (
                         <div className="text-center py-10 bg-gray-50 rounded-xl text-gray-400 font-bold">
-                            Loại file này không xem trước được. Vui lòng tải về để xem.
+                            Loại file này không xem trước được.
+                            {fileUrl && (
+                                <a href={fileUrl} target="_blank" rel="noreferrer" className="block mt-2 text-[#DB6700] hover:underline">
+                                    Mở trong tab mới
+                                </a>
+                            )}
                         </div>
                     )}
                 </div>

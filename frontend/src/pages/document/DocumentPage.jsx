@@ -154,6 +154,12 @@ const DocumentPage = () => {
                             <span>📊</span> Dashboard
                         </button>
                         <button
+                            onClick={() => navigate('/cloud-storage')}
+                            className="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 font-bold text-sm hover:bg-gray-50 transition-all"
+                        >
+                            <span>☁️</span> Cloud Storage
+                        </button>
+                        <button
                             onClick={() => setViewMode('active')}
                             className={`flex items-center justify-between px-4 py-3 rounded-xl font-bold text-sm transition-all ${viewMode === 'active' ? 'bg-[#DB6700]/10 text-[#DB6700]' : 'text-gray-400 hover:bg-gray-50'}`}
                         >

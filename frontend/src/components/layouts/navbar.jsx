@@ -35,6 +35,9 @@ function NavbarHomePage() {
           <li>
             <a href="#statistics">Statistics</a>
           </li>
+          <li>
+            <a href="/cloud-storage">Cloud Storage</a>
+          </li>
         </ul>
       </div>
 

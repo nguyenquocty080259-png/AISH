@@ -80,13 +80,20 @@ public class DocumentController {
     public ResponseEntity<DocumentResponseDTO> getOne(@PathVariable Long id) {
         return ResponseEntity.ok(documentService.getDocumentById(id));
     }
+
     @GetMapping("/{id}/download")
     public ResponseEntity<Resource> downloadFile(@PathVariable Long id) {
         DocFile docFile = documentService.getFileByDocumentId(id);
         try {
-            documentService.logDownload(id); // Ghi nhận download vào bảng lịch sử theo ERD
-            Path filePath = Paths.get(uploadDir).resolve(docFile.getFileUrl()).normalize();
-            Resource resource = new UrlResource(filePath.toUri());
+            documentService.logDownload(id);
+            String fileUrl = docFile.getFileUrl();
+            Resource resource;
+            if (fileUrl != null && fileUrl.startsWith("http")) {
+                resource = new UrlResource(new java.net.URL(fileUrl));
+            } else {
+                Path filePath = Paths.get(uploadDir).resolve(fileUrl).normalize();
+                resource = new UrlResource(filePath.toUri());
+            }
             if (resource.exists() || resource.isReadable()) {
                 return ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + docFile.getFileName() + "\"")
