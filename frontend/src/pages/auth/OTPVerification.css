@@ -1,0 +1,150 @@
+.otp-page {
+  min-height: 100vh;
+  background: #fdf6ed;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: Arial, sans-serif;
+}
+
+.otp-container {
+  width: 100%;
+  max-width: 1200px;
+  text-align: center;
+}
+
+.otp-brand h1 {
+  font-size: 64px;
+  font-weight: 700;
+  color: #3c0000;
+}
+
+.otp-brand p {
+  margin-top: 12px;
+  color: #8b5e3c;
+  font-size: 14px;
+  letter-spacing: 4px;
+  font-weight: 700;
+}
+
+.otp-card {
+  margin: 50px auto;
+  width: 520px;
+  background: rgba(255,255,255,0.85);
+  border-radius: 32px;
+  padding: 50px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+}
+
+.otp-icon {
+  width: 70px;
+  height: 70px;
+  margin: auto;
+  background: #fff4e5;
+  border-radius: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 34px;
+  color: #e08307;
+}
+
+.otp-card h2 {
+  margin-top: 25px;
+  font-size: 34px;
+  color: #2d1700;
+}
+
+.otp-subtitle {
+  margin-top: 18px;
+  color: #666;
+  line-height: 1.6;
+}
+
+.otp-inputs {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin: 35px 0;
+}
+
+.otp-inputs input {
+  width: 60px;
+  height: 80px;
+  border-radius: 18px;
+  border: 1px solid #ddd;
+  text-align: center;
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.otp-inputs input:focus {
+  border-color: #f5870a;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(245,135,10,0.15);
+}
+
+.otp-timer {
+  margin-bottom: 35px;
+}
+
+.otp-timer div {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  color: #666;
+  font-weight: 600;
+}
+
+.otp-timer p {
+  margin-top: 12px;
+  color: #666;
+}
+
+.otp-timer button {
+  background: none;
+  border: none;
+  color: #f5870a;
+  font-weight: 700;
+  cursor: pointer;
+  margin-left: 6px;
+}
+
+.otp-btn {
+  width: 100%;
+  height: 72px;
+  border: none;
+  border-radius: 20px;
+  background: #960018;
+  color: white;
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.otp-btn:hover {
+  background: #670010;
+}
+
+.otp-back {
+  margin-top: 28px;
+  border: none;
+  background: none;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.otp-footer {
+  color: #888;
+  font-size: 13px;
+}
