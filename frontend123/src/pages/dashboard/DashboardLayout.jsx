@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useAuth } from "./AuthContext";
-import "./dashboard.css";
+import { useAuth } from "../../context/AuthContext";
+import "./Dashboardpage.css";
 
 // ============================================================
 // Nav theo từng role — thêm role mới chỉ cần thêm key vào đây

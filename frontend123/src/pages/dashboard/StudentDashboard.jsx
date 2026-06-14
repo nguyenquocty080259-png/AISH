@@ -1,4 +1,5 @@
-import { useAuth } from "./AuthContext";
+import { useAuth } from "../../context/AuthContext";
+import "./Dashboardpage.css";
 
 // ============================================================
 // DATA — thay bằng API call sau này
