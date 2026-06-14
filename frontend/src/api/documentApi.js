@@ -22,7 +22,10 @@ export const documentApi = {
     upload: (formData) => api.post('/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
     }),
-    update: (id, data) => api.put(`/${id}`, data),
+    upload: (formData, onProgress) => api.post('/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: onProgress
+    }),
     toggleVisibility: (id) => api.put(`/${id}/toggle-visibility`),
     delete: (id) => api.delete(`/${id}`),
     download: (id) => api.get(`/${id}/download`, { responseType: 'blob' }),

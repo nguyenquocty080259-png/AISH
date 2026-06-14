@@ -28,6 +28,9 @@ public class DocFile {
 
     private Long fileSize;   // Dung lượng file (bytes)
 
+    private String publicId;     // public_id trên Cloudinary
+    private String resourceType; // image | raw
+
     // Quan hệ: Nhiều file thuộc về 1 Document
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "document_id", nullable = false)

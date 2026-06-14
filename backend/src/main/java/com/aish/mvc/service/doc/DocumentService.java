@@ -9,6 +9,7 @@ import com.aish.mvc.entity.enums.DocumentVisibility;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.repository.auth.AuthUserRepository;
 import com.aish.mvc.repository.stor.*;
+import com.aish.mvc.service.stor.CloudinaryService;
 import com.aish.mvc.service.stor.FileStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,6 +25,7 @@ import com.aish.mvc.entity.doc.Tag;
 import com.aish.mvc.repository.stor.TagRepository;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.Map;
 
 @Service
 public class DocumentService {
@@ -39,6 +41,7 @@ public class DocumentService {
     @Autowired private AuthUserRepository authUserRepository;
     @Autowired private AuthAccountRepository authAccountRepository;
     @Autowired private SubjectRepository subjectRepository;
+    @Autowired private CloudinaryService cloudinaryService;
 
     // Lấy user đang đăng nhập từ token (JwtAuthFilter đã set email làm principal)
     private AuthUser getCurrentUser() {
@@ -59,7 +62,7 @@ public class DocumentService {
     @Transactional
     public DocumentResponseDTO uploadDocumentWithFile(String title, String description, Long subjectId,
                                                       List<String> tagNames, MultipartFile file) {
-        String storedFileName = fileStorageService.storeFile(file);
+        Map<String, String> uploaded = cloudinaryService.upload(file);
         DocDocument doc = new DocDocument();
         doc.setTitle(title);
         doc.setDescription(description);
@@ -89,7 +92,9 @@ public class DocumentService {
 
         DocFile docFile = DocFile.builder()
                 .fileName(file.getOriginalFilename())
-                .fileUrl(storedFileName)
+                .fileUrl(uploaded.get("url"))
+                .publicId(uploaded.get("publicId"))
+                .resourceType(uploaded.get("resourceType"))
                 .fileType(file.getContentType())
                 .fileSize(file.getSize())
                 .document(savedDoc)

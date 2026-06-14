@@ -6,6 +6,7 @@ import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import OTPVerificationPage from './pages/auth/OTPVerificationPage';
 import DocumentPage from './pages/document/DocumentPage';
+import CloudStoragePage from './pages/cloud/CloudStoragePage';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           <Route path="/dashboard" element={<DocumentPage />} />
           <Route path="/documents" element={<DocumentPage />} />
           <Route path="/documents/:id" element={<DocumentDetailPage />} />
+          <Route path="/cloud-storage" element={<CloudStoragePage />} />
 
           {/* Catch-all phải nằm CUỐI CÙNG */}
           <Route path="*" element={<div style={{padding:20}}>404 - Không có trang: {window.location.pathname}</div>} />
