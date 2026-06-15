@@ -1,5 +1,98 @@
+<<<<<<< HEAD
 # Created by https://www.toptal.com/developers/gitignore/api/intellij,intellij+iml,intellij+all,maven,java
 # Edit at https://www.toptal.com/developers/gitignore?templates=intellij,intellij+iml,intellij+all,maven,java
+=======
+<<<<<<< HEAD
+# ============================
+# FRONTEND .gitignore
+# Stack: React, Node, VSCode
+# ============================
+
+### Logs ###
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+### Dependencies ###
+node_modules/
+jspm_packages/
+bower_components
+web_modules/
+
+### Build Output ###
+dist
+dist-ssr
+.next
+out
+.nuxt
+.vuepress/dist
+.svelte-kit
+
+### Environment ###
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.local
+
+### Cache ###
+.cache
+.cache/
+.parcel-cache
+.npm
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+### Testing & Coverage ###
+coverage
+*.lcov
+.nyc_output
+
+### Runtime ###
+pids
+*.pid
+*.seed
+*.pid.lock
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+### Misc Node ###
+lib-cov
+.grunt
+.lock-wscript
+build/Release
+*.tsbuildinfo
+.node_repl_history
+*.tgz
+.yarn-integrity
+.webpack/
+.tern-port
+.vscode-test
+.temp
+.docusaurus
+.serverless/
+.fusebox/
+.dynamodb/
+
+### React ###
+.DS_*
+.DS_Store
+=======
+# Generated and merged from gitignore.io
+# Stack: Java, Spring Boot, Maven, IntelliJ, Node, React, VSCode
+>>>>>>> 342dab18e14e01704905c6012abbfdef2700ad24
 
 ### Intellij ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
@@ -420,6 +513,7 @@ dist
 
 ### react ###
 .DS_*
+>>>>>>> 8562e639fee4fa1a0e779e5b9fcbf01ebddda1dc
 **/*.backup.*
 **/*.back.*
 
@@ -449,5 +543,20 @@ sketch
 # Ignore all local history of files
 .history
 .ionide
+<<<<<<< HEAD
 
 # End of https://www.toptal.com/developers/gitignore/api/node,react,visualstudiocode
+=======
+<<<<<<< HEAD
+*.vsix
+
+### Visual Studio ###
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+=======
+*.vsix
+>>>>>>> 8562e639fee4fa1a0e779e5b9fcbf01ebddda1dc
+>>>>>>> 342dab18e14e01704905c6012abbfdef2700ad24

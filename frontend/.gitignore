@@ -1,5 +1,13 @@
+<<<<<<< HEAD
 # Created by https://www.toptal.com/developers/gitignore/api/node,react,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=node,react,visualstudiocode
+=======
+
+# ============================
+# FRONTEND .gitignore
+# Stack: React, Node, VSCode
+# ============================
+>>>>>>> 342dab18e14e01704905c6012abbfdef2700ad24
 
 ### Node ###
 # Logs
@@ -168,9 +176,19 @@ sketch
 # Built Visual Studio Code Extensions
 *.vsix
 
+<<<<<<< HEAD
 ### VisualStudioCode Patch ###
 # Ignore all local history of files
 .history
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/node,react,visualstudiocode
+=======
+### Visual Studio ###
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+>>>>>>> 342dab18e14e01704905c6012abbfdef2700ad24
