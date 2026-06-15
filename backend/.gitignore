@@ -305,3 +305,16 @@ logs/
 # Ví dụ thư mục chứa tài liệu test ở gốc:
 /data_test/
 /documents_storage/
+# === FILE CƠ SỞ DỮ LIỆU (SQL & DATABASE) ===
+# Chặn tất cả các file dump/backup dữ liệu SQL
+*.sql
+
+# Nếu bạn dùng MySQL/PostgreSQL lưu dữ liệu dạng file vật lý hoặc container local
+*.db
+*.sqlite
+*.sqlite3
+
+# Chặn các thư mục data của Docker nếu bạn chạy DB bằng Docker
+/docker/db_data/
+mysql_data/
+postgres_data/
