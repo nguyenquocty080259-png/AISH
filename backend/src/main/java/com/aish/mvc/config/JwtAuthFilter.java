@@ -1,6 +1,6 @@
 package com.aish.mvc.config;
 
-import com.aish.mvc.service.auth.security.JwtUtil;
+import com.aish.mvc.service.auth.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

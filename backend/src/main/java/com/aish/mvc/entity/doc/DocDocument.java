@@ -58,4 +58,16 @@ public class DocDocument {
     // Quan hệ với danh sách các file vật lý đính kèm
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DocFile> files;
+    @ManyToOne(fetch = FetchType.LAZY)
+
+    @JoinColumn(name = "subject_id")
+    private Subject subject;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "document_tags",
+            joinColumns = @JoinColumn(name = "document_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private java.util.Set<Tag> tags = new java.util.HashSet<>();
 }

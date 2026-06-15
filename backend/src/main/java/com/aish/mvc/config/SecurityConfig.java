@@ -35,6 +35,7 @@ public class SecurityConfig {
                                 "/api/auth/resend-otp"
                         ).permitAll()
                         .requestMatchers("/api/ai/chat").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()   // ← để TRƯỚC anyRequest
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class); // ← thêm

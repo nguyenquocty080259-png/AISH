@@ -4,8 +4,12 @@ import com.aish.mvc.dto.auth.*;
 import com.aish.mvc.entity.auth.AuthAccount;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.service.auth.AuthService;
+<<<<<<< HEAD
 import com.aish.mvc.service.auth.security.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
+=======
+import com.aish.mvc.service.auth.JwtUtil;
+>>>>>>> 342dab18e14e01704905c6012abbfdef2700ad24
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
@@ -104,4 +108,3 @@ public class AuthController {
     }
 
 }
-
