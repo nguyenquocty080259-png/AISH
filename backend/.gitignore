@@ -275,3 +275,33 @@ buildNumber.properties
 .classpath
 
 # End of https://www.toptal.com/developers/gitignore/api/intellij,intellij+iml,intellij+all,maven,java
+# === IDE và Hệ điều hành ===
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.DS_Store
+Thumbs.db
+
+# === File log hệ thống ===
+*.log
+logs/
+
+# === FILE TÀI LIỆU (QUAN TRỌNG CHO DỰ ÁN AI) ===
+# Chặn toàn bộ các file tài liệu test do người dùng upload lên trong quá trình phát triển
+*.pdf
+*.docx
+*.doc
+*.xlsx
+*.xls
+*.csv
+*.txt
+*.png
+*.jpg
+*.jpeg
+
+# Tạo riêng một thư mục chứa tài liệu mẫu nếu cần, nhưng chặn nội dung bên trong
+# Ví dụ thư mục chứa tài liệu test ở gốc:
+/data_test/
+/documents_storage/
