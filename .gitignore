@@ -560,3 +560,33 @@ sketch
 *.vsix
 >>>>>>> 8562e639fee4fa1a0e779e5b9fcbf01ebddda1dc
 >>>>>>> 342dab18e14e01704905c6012abbfdef2700ad24
+# === IDE và Hệ điều hành ===
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.DS_Store
+Thumbs.db
+
+# === File log hệ thống ===
+*.log
+logs/
+
+# === FILE TÀI LIỆU (QUAN TRỌNG CHO DỰ ÁN AI) ===
+# Chặn toàn bộ các file tài liệu test do người dùng upload lên trong quá trình phát triển
+*.pdf
+*.docx
+*.doc
+*.xlsx
+*.xls
+*.csv
+*.txt
+*.png
+*.jpg
+*.jpeg
+
+# Tạo riêng một thư mục chứa tài liệu mẫu nếu cần, nhưng chặn nội dung bên trong
+# Ví dụ thư mục chứa tài liệu test ở gốc:
+/data_test/
+/documents_storage/
