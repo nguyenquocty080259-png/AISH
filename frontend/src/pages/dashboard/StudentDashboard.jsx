@@ -1,4 +1,4 @@
-import { useAuth } from "./AuthContext";
+import { useAuth } from "../../context/AuthContext";
 
 // ============================================================
 // DATA — thay bằng API call sau này
@@ -71,6 +71,8 @@ function ProgressBar({ subject, pct, color }) {
 
 export default function StudentDashboard() {
   const { user } = useAuth();
+  const displayName = user?.name ?? user?.fullName ?? "bạn";
+  const school = user?.school ?? user?.university ?? "StudyHub";
 
   return (
     <div className="main-content">
@@ -78,9 +80,9 @@ export default function StudentDashboard() {
       {/* Welcome */}
       <div className="welcome-row">
         <div>
-          <h1 className="welcome-h1">Chào buổi sáng, {user?.name ?? "bạn"}! 👋</h1>
+          <h1 className="welcome-h1">Chào buổi sáng, {displayName}! 👋</h1>
           <p className="welcome-sub">
-            {user?.school} · Hôm nay có <b>3 flashcard</b> cần ôn và <b>2 tài liệu</b> chưa đọc xong.
+            {school} · Hôm nay có <b>3 flashcard</b> cần ôn và <b>2 tài liệu</b> chưa đọc xong.
           </p>
         </div>
         <div className="streak-badge">

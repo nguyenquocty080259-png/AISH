@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "../../context/AuthContext";
 import "./dashboard.css";
 
 // ============================================================
@@ -56,6 +56,7 @@ export default function DashboardLayout({ children }) {
   const [activeNav, setActiveNav] = useState("dashboard");
 
   const nav = NAV_BY_ROLE[role] ?? [];
+  const displayName = user?.name ?? user?.fullName ?? user?.email ?? "...";
 
   return (
     <div className="db-root">
@@ -73,9 +74,9 @@ export default function DashboardLayout({ children }) {
           </div>
           <button className="tb-btn" aria-label="Thông báo">🔔</button>
           <div className="tb-user" onClick={logout} title="Đăng xuất" aria-label="Đăng xuất">
-            <div className="tb-avatar">{getInitials(user?.name)}</div>
+            <div className="tb-avatar">{getInitials(displayName)}</div>
             <div className="tb-user-info">
-              <span className="tb-user-name">{user?.name ?? "..."}</span>
+              <span className="tb-user-name">{displayName}</span>
               <span className="tb-user-role">{role === "admin" ? "Quản trị viên" : "Sinh viên"}</span>
             </div>
           </div>

@@ -1,10 +1,14 @@
 import "./Login.css";
-import { FcGoogle } from "react-icons/fc";
+import { Globe } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import API_BASE_URL from "../../api/api";
+import { useAuth } from "../../context/AuthContext";
+import { getAccessToken, saveTokens } from "../../services/authService";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { setUser } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,20 +40,22 @@ const Login = () => {
 
       console.log(data);
 
-      localStorage.setItem(
-        "accessToken",
-        data.accessToken
-      );
+      saveTokens(data);
 
-      localStorage.setItem(
-        "refreshToken",
-        data.refreshToken
-      );
+      const meResponse = await fetch(`${API_BASE_URL}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${getAccessToken()}` },
+      });
+
+      if (meResponse.ok) {
+        setUser(await meResponse.json());
+      } else {
+        setUser({ email, role: "student" });
+      }
 
       alert("Login success");
 
       // sau này chuyển sang dashboard
-      navigate("/dashboardPage");
+      navigate("/dashboard");
 
     } catch (error) {
       console.error(error);
@@ -124,11 +130,14 @@ const Login = () => {
             <div className="social-row">
 
               <button className="signUp-btn google-btn">
-                <FcGoogle className="google-icon" />
+                <Globe className="google-icon" />
                 Google
               </button>
 
-              <button className="signUp-btn">
+              <button
+                className="signUp-btn"
+                onClick={() => navigate("/register")}
+              >
                 Sign up
               </button>
 

@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Signup.css";
-import { FcGoogle } from "react-icons/fc";
 import {
-  MdVisibility,
-  MdVisibilityOff,
-  MdSms,
-} from "react-icons/md";
+  Globe,
+  Eye,
+  EyeOff,
+  MessageSquareText,
+} from "lucide-react";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -118,7 +118,7 @@ const SignUp = () => {
                 type="button"
                 className="signup-social-btn"
               >
-                <MdSms />
+                <MessageSquareText />
                 OTP SMS
               </button>
 
@@ -126,7 +126,7 @@ const SignUp = () => {
                 type="button"
                 className="signup-social-btn"
               >
-                <FcGoogle />
+                <Globe />
                 Google
               </button>
             </div>
@@ -186,9 +186,9 @@ const SignUp = () => {
                   }
                 >
                   {showPassword ? (
-                    <MdVisibilityOff />
+                    <EyeOff />
                   ) : (
-                    <MdVisibility />
+                    <Eye />
                   )}
                 </button>
               </div>
@@ -226,7 +226,7 @@ const SignUp = () => {
 
             <p className="signup-login-link">
               Already have an account?
-              <span> Log in</span>
+              <span onClick={() => navigate("/login")}> Log in</span>
             </p>
 
           </div>

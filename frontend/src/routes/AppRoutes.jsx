@@ -8,7 +8,7 @@ import OTPVerification  from "../pages/auth/OTPVerification";
 import DashboardLayout from "../pages/dashboard/DashboardLayout";
 import StudentDashboard from "../pages/dashboard/StudentDashboard";
 import AdminDashboard from "../pages/dashboard/AdminDashboard";
-import NotFoundPage         from "../pages/error/Notfoundpage";
+import NotFoundPage         from "../pages/error/NotFoundPage";
 import Profile from "../pages/profile/Profile";
 
 // ── Bảo vệ route cần đăng nhập ──────────────────────────
@@ -63,8 +63,6 @@ export default function AppRoutes() {
         }
       />
 
-      {/* 404 */}
-      <Route path="*" element={<NotFoundPage />} />
       <Route
           path="/profile"
           element={
@@ -75,7 +73,8 @@ export default function AppRoutes() {
             </PrivateRoute>
           }
         />
+      {/* 404 */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
-    
   );
 }

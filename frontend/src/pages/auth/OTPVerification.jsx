@@ -3,11 +3,11 @@ import { useNavigate, useLocation } from "react-router-dom";
 import "./OTPVerification.css";
 
 import {
-  MdVerifiedUser,
-  MdSchedule,
-  MdArrowForward,
-  MdWest,
-} from "react-icons/md";
+  ShieldCheck,
+  Clock,
+  ArrowRight,
+  ArrowLeft,
+} from "lucide-react";
 
 const OTPVerification = () => {
   const navigate = useNavigate();
@@ -24,7 +24,7 @@ const OTPVerification = () => {
 
   useEffect(() => {
     if (!email) {
-      navigate("/signup");
+      navigate("/register");
     }
   }, [email, navigate]);
 
@@ -157,7 +157,7 @@ const OTPVerification = () => {
 
         <div className="otp-card">
           <div className="otp-icon">
-            <MdVerifiedUser />
+            <ShieldCheck />
           </div>
 
           <h2>OTP Verification</h2>
@@ -191,7 +191,7 @@ const OTPVerification = () => {
 
             <div className="otp-timer">
               <div>
-                <MdSchedule />
+                <Clock />
                 {formatTime(timer)}
               </div>
 
@@ -222,7 +222,7 @@ const OTPVerification = () => {
                 ? "Verifying..."
                 : "Verify & Continue"}
 
-              <MdArrowForward />
+              <ArrowRight />
             </button>
           </form>
 
@@ -231,7 +231,7 @@ const OTPVerification = () => {
             type="button"
             onClick={() => navigate("/login")}
           >
-            <MdWest />
+            <ArrowLeft />
             Back to login
           </button>
         </div>

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { documentApi } from '../../api/documentApi';
 import { subjectApi } from '../../api/subjectApi';
 import { useAuth } from '../../context/AuthContext';
-import UploadModal from '../../components/Document/UploadModal';
+import UploadModal from '../../components/document/UploadModal';
 import { useNavigate } from 'react-router-dom';
 const DocumentPage = () => {
     const { user } = useAuth();
@@ -15,7 +15,7 @@ const DocumentPage = () => {
     const [subjects, setSubjects] = useState([]);
     const [selectedSubject, setSelectedSubject] = useState(null);
     const navigate = useNavigate();
-    const [uploadingFiles, setUploadingFiles] = useState([
+    const [uploadingFiles] = useState([
         { id: 1, name: 'BaoCao_DoAn_SWP.pdf', progress: 75 },
         { id: 2, name: 'TaiLieu_ThamKhao.docx', progress: 40 }
     ]);
@@ -24,15 +24,15 @@ const DocumentPage = () => {
         subjectApi.getAll().then(res => setSubjects(res.data || [])).catch(() => setSubjects([]));
     }, []);
 
-    useEffect(() => { loadData(); }, [viewMode]);
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         try {
             setLoading(true);
             const res = viewMode === 'active' ? await documentApi.getAll() : await documentApi.getTrash();
             setDocuments(res.data || []);
-        } catch (err) { setDocuments([]); } finally { setLoading(false); }
-    };
+        } catch { setDocuments([]); } finally { setLoading(false); }
+    }, [viewMode]);
+
+    useEffect(() => { loadData(); }, [loadData]);
 
     const handleUpload = async (data) => {
         const formData = new FormData();
@@ -48,7 +48,7 @@ const DocumentPage = () => {
             loadData();
             setIsModalOpen(false);
             alert("Tải lên tài liệu thành công!");
-        } catch (err) { alert("Lỗi khi tải tệp lên!"); }
+        } catch { alert("Lỗi khi tải tệp lên!"); }
     };
 
     const handleFavorite = async (id) => {
@@ -65,7 +65,7 @@ const DocumentPage = () => {
                 }
                 return doc;
             }));
-        } catch (err) { alert("Lỗi tương tác yêu thích!"); }
+        } catch { alert("Lỗi tương tác yêu thích!"); }
     };
 
     const handleComment = async (id) => {
@@ -75,7 +75,7 @@ const DocumentPage = () => {
             await documentApi.addComment(id, content);
             setCommentInputs(prev => ({ ...prev, [id]: '' }));
             loadData();
-        } catch (err) { alert("Không thể gửi bình luận!"); }
+        } catch { alert("Không thể gửi bình luận!"); }
     };
 
     const handleRate = async (id, star) => {
@@ -83,7 +83,7 @@ const DocumentPage = () => {
             await documentApi.rate(id, star);
             loadData();
             alert(`Đã đánh giá ${star} sao!`);
-        } catch (err) { alert("Lỗi đánh giá!"); }
+        } catch { alert("Lỗi đánh giá!"); }
     };
 
     const handleDelete = async (id) => {
@@ -91,7 +91,7 @@ const DocumentPage = () => {
             try {
                 await documentApi.delete(id);
                 setDocuments(prev => prev.filter(doc => doc.id !== id));
-            } catch (err) { alert("Lỗi khi xóa!"); }
+            } catch { alert("Lỗi khi xóa!"); }
         }
     };
 
@@ -99,7 +99,7 @@ const DocumentPage = () => {
         try {
             await documentApi.restore(id);
             setDocuments(prev => prev.filter(doc => doc.id !== id));
-        } catch (err) { alert("Lỗi khi khôi phục!"); }
+        } catch { alert("Lỗi khi khôi phục!"); }
     };
 
     const handleDownload = async (id, fileName) => {
@@ -114,7 +114,7 @@ const DocumentPage = () => {
             link.click();
             link.remove();
             setDocuments(prevDocs => prevDocs.map(doc => doc.id === id ? { ...doc, downloadCount: doc.downloadCount + 1 } : doc));
-        } catch (err) { alert("Lỗi tải file!"); }
+        } catch { alert("Lỗi tải file!"); }
     };
 
     const handleToggleVisibility = async (id) => {
@@ -125,7 +125,7 @@ const DocumentPage = () => {
                     ? { ...doc, visibility: doc.visibility === 'PUBLIC' ? 'PRIVATE' : 'PUBLIC' }
                     : doc
             ));
-        } catch (err) {
+        } catch {
             alert("Không đổi được quyền (chỉ chủ tài liệu mới đổi được)!");
         }
     };
