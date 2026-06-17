@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { subjectApi } from '../../api/subjectApi';
 
 const UploadModal = ({ isOpen, onClose, onUploadSuccess }) => {

@@ -4,13 +4,11 @@
 @import "./assets/styles/reset.css";
 @import "./assets/styles/variable.css";
 @import "./assets/styles/global.css";
+@import "./assets/styles/utility-compat.css";
 
 /* =========================================================================
-   2. TAILWIND DIRECTIVES
+   2. LOCAL UTILITY COMPATIBILITY
    ========================================================================= */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 /* =========================================================================
    3. RESET CHUẨN FULL SCREEN

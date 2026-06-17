@@ -19,9 +19,6 @@ api.interceptors.request.use((config) => {
 
 export const documentApi = {
     getAll: () => api.get(''),
-    upload: (formData) => api.post('/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-    }),
     upload: (formData, onProgress) => api.post('/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress: onProgress

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { documentApi } from '../../api/documentApi';
 
@@ -11,15 +11,15 @@ const DocumentDetailPage = () => {
     const [loading, setLoading] = useState(true);
     const [comment, setComment] = useState('');
 
-    useEffect(() => { load(); }, [id]);
-
-    const load = async () => {
+    const load = useCallback(async () => {
         try {
             setLoading(true);
             const res = await documentApi.getById(id);
             setDoc(res.data);
         } catch { setDoc(null); } finally { setLoading(false); }
-    };
+    }, [id]);
+
+    useEffect(() => { load(); }, [load]);
 
     const handleRate = async (star) => {
         try { await documentApi.rate(id, star); load(); } catch { alert('Lỗi đánh giá!'); }

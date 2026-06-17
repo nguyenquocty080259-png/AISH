@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { documentApi } from '../../api/documentApi';
 import { subjectApi } from '../../api/subjectApi';
@@ -74,7 +74,7 @@ const CloudStoragePage = () => {
             setProgress(100);
             setMessage({ type: 'success', text: 'Tải tài liệu lên cloud thành công!' });
             reset();
-        } catch (err) {
+        } catch {
             setMessage({ type: 'error', text: 'Lỗi khi tải tệp lên cloud!' });
         } finally {
             setUploading(false);

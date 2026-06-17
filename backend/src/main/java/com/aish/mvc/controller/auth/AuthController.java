@@ -4,12 +4,8 @@ import com.aish.mvc.dto.auth.*;
 import com.aish.mvc.entity.auth.AuthAccount;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.service.auth.AuthService;
-<<<<<<< HEAD
-import com.aish.mvc.service.auth.security.JwtUtil;
-import jakarta.servlet.http.HttpServletRequest;
-=======
 import com.aish.mvc.service.auth.JwtUtil;
->>>>>>> 342dab18e14e01704905c6012abbfdef2700ad24
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
@@ -50,28 +46,6 @@ public class AuthController {
     public ResponseEntity<?> resendOtp(@RequestBody ResendOtpRequest request) {
         authService.resendOtp(request.getEmail());
         return ResponseEntity.ok("OTP resent successfully");
-    }
-
-    @RestController
-    @RequestMapping("/test")
-    @RequiredArgsConstructor
-    public class TestController {
-
-        private final JavaMailSender mailSender;
-
-        @GetMapping("/mail")
-        public String testMail() {
-
-            SimpleMailMessage mail = new SimpleMailMessage();
-
-            mail.setTo("your_email@gmail.com");
-            mail.setSubject("Test");
-            mail.setText("Hello");
-
-            mailSender.send(mail);
-
-            return "OK";
-        }
     }
 
     @GetMapping("/me")

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "../api/api";
@@ -63,8 +64,10 @@ const logout = async () => {
   }
 };
 
+  const role = user?.role ?? "student";
+
   return (
-    <AuthContext.Provider value={{user, role: user?.role, setUser, loading, logout}}>
+    <AuthContext.Provider value={{user, role, setUser, loading, logout}}>
       {children}
     </AuthContext.Provider>
   );
