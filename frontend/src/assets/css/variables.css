@@ -1,0 +1,71 @@
+:root {
+
+    /* ========= COLORS ========= */
+
+    --color-primary: #E08307;
+    --color-primary-dark: #DB6700;
+    --color-accent: #E8B631;
+
+    --color-background: #F8F9FA;
+    --color-surface: #FFFFFF;
+    --color-surface-soft: #FCEFD8;
+
+    --color-text: #191C1D;
+    --color-text-secondary: #544435;
+
+    --color-border: #DAC2AF;
+
+    --color-success: #2E7D32;
+    --color-warning: #F57C00;
+    --color-error: #BA1A1A;
+
+    /* ========= GLASS ========= */
+
+    --glass-light: rgba(255, 255, 255, 0.7);
+
+    --glass-dark: rgba(20, 22, 26, 0.6);
+
+    --glass-border: rgba(255, 255, 255, 0.2);
+
+    --glass-blur: 20px;
+
+    /* ========= SHADOW ========= */
+
+    --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.03);
+
+    --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.04);
+
+    --shadow-lg: 0 12px 48px rgba(0, 0, 0, 0.08);
+
+    /* ========= RADIUS ========= */
+
+    --radius-input: 12px;
+
+    --radius-card: 20px;
+
+    --radius-pill: 999px;
+
+    /* ========= LAYOUT ========= */
+
+    --container-width: 1440px;
+
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 48px;
+
+    /* ========= TYPOGRAPHY ========= */
+
+    --font-family: "Inter", sans-serif;
+
+    --display-lg: 48px;
+
+    --headline-lg: 32px;
+
+    --title-md: 20px;
+
+    --body-lg: 16px;
+
+    --body-sm: 14px;
+}

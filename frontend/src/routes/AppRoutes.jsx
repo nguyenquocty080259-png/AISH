@@ -1,79 +1,44 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { Routes, Route } from "react-router-dom";
+import { ROUTES } from "../constants/routes";
+import AppLayout from "./AppLayout";
+import PrivateRoute from "./PrivateRoute";
+import GuestRoute from "./GuestRoute";
 
-import HomePage             from "../pages/home/HomePage";
-import Login from "../pages/auth/Login"; 
-import SignUp         from "../pages/auth/SignUp";
-import OTPVerification  from "../pages/auth/OTPVerification";
-import DashboardLayout from "../pages/dashboard/DashboardLayout";
-import StudentDashboard from "../pages/dashboard/StudentDashboard";
-import AdminDashboard from "../pages/dashboard/AdminDashboard";
-import NotFoundPage         from "../pages/error/NotFoundPage";
-import Profile from "../pages/profile/Profile";
+import LoginPage from "../pages/auth/LoginPage";
+import SignUpPage from "../pages/auth/SignUpPage";
+import OtpPage from "../pages/auth/OtpPage";
+import HomePage from "../pages/home/HomePage";
+import DashboardPage from "../pages/dashboard/DashboardPage";
+import DocumentPage from "../pages/document/DocumentPage";
+import DocumentDetailPage from "../pages/document-detail/DocumentDetailPage";
+import ProfilePage from "../pages/profile/ProfilePage";
+import AiChatPage from "../pages/ai-chat/AiChatPage";
+import NotFoundPage from "../pages/error/NotFoundPage";
 
-// ── Bảo vệ route cần đăng nhập ──────────────────────────
-function PrivateRoute({ children }) {
-  const { user, loading } = useAuth();
-
-  if (loading) return <div className="auth-loading">Đang tải...</div>;
-
-  return user ? children : <Navigate to="/login" replace />;
-}
-
-// ── Redirect nếu đã đăng nhập ────────────────────────────
-function GuestRoute({ children }) {
-  const { user, loading } = useAuth();
-
-  if (loading) return null;
-
-  return user ? <Navigate to="/dashboard" replace /> : children;
-}
-
-function DashboardRouter() {
-  const { role } = useAuth();
-
-  return (
-    <DashboardLayout>
-      {role === "admin"
-        ? <AdminDashboard />
-        : <StudentDashboard />}
-    </DashboardLayout>
-  );
-}
-
-// ── Routes ───────────────────────────────────────────────
 export default function AppRoutes() {
   return (
     <Routes>
-      {/* Public */}
-      <Route path="/" element={<HomePage />} />
+      <Route element={<AppLayout />}>
+        {/* Public */}
+        <Route path={ROUTES.HOME} element={<HomePage />} />
+        <Route path={ROUTES.AI_CHAT} element={<AiChatPage />} />
 
-      {/* Guest only — đã login thì redirect dashboard */}
-      <Route path="/login"            element={<GuestRoute><Login /></GuestRoute>} />
-      <Route path="/register"         element={<GuestRoute><SignUp /></GuestRoute>} />
-      <Route path="/otp-verification" element={<OTPVerification />} />
+        {/* Chỉ dành cho khách (chưa đăng nhập) */}
+        <Route element={<GuestRoute />}>
+          <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+          <Route path={ROUTES.SIGNUP} element={<SignUpPage />} />
+          <Route path={ROUTES.VERIFY_OTP} element={<OtpPage />} />
+        </Route>
 
-      {/* Private — cần login */}
-      <Route
-        path="/dashboard"
-        element={
-          <PrivateRoute>
-            <DashboardRouter />
-          </PrivateRoute>
-        }
-      />
+        {/* Chỉ dành cho user đã đăng nhập */}
+        <Route element={<PrivateRoute />}>
+          <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
+          <Route path={ROUTES.DOCUMENTS} element={<DocumentPage />} />
+          <Route path={ROUTES.DOCUMENT_DETAIL} element={<DocumentDetailPage />} />
+          <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
+        </Route>
+      </Route>
 
-      <Route
-          path="/profile"
-          element={
-            <PrivateRoute>
-              <DashboardLayout>
-                <Profile />
-              </DashboardLayout>
-            </PrivateRoute>
-          }
-        />
-      {/* 404 */}
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
