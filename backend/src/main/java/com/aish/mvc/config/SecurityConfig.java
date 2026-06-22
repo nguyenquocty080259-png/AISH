@@ -1,5 +1,6 @@
 package com.aish.mvc.config;
 
+import com.aish.mvc.security.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +19,7 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter; // ← thêm
 
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
@@ -32,14 +34,23 @@ public class SecurityConfig {
                                 "/api/auth/login",
                                 "/api/auth/signup",
                                 "/api/auth/verify-otp",
-                                "/api/auth/resend-otp"
-                        ).permitAll()
+                                "/api/auth/resend-otp",
+
+                                "/oauth2/**",
+                                "/login/oauth2/**"
+                        )
+                        .permitAll()
                         .requestMatchers("/api/ai/chat").permitAll()
                         .requestMatchers("/uploads/**").permitAll()   // ← để TRƯỚC anyRequest
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class); // ← thêm
-
+                .oauth2Login(oauth -> oauth
+                        .successHandler(oAuth2SuccessHandler)
+                )
+                .addFilterBefore(
+                        jwtAuthFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
         return http.build();
     }
 }
