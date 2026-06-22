@@ -71,7 +71,17 @@ public class AuthServiceImpl implements AuthService {
         account.setUser(user);
         account.setProvider(AuthProviders.LOCAL);
         account.setIdentifier(request.getEmail());
-        account.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        if(request.getPassword() != null &&
+                !request.getPassword().isBlank()) {
+
+            account.setPasswordHash(
+                    passwordEncoder.encode(request.getPassword())
+            );
+
+        } else {
+
+            account.setPasswordHash(null);
+        }
         accountRepo.save(account);
         // đã có account và giờ tạo OTP để accept
         String otp = String.valueOf((int) (Math.random() * 900000) + 100000);
@@ -96,7 +106,9 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse login(LoginRequest request) {
-        AuthAccount account = accountRepo.findByIdentifier(request.getEmail()).orElseThrow(() -> new RuntimeException("User not found"));
+        AuthAccount account = accountRepo.findByProviderAndIdentifier(AuthProviders.LOCAL, request.getEmail()
+                                            ).orElseThrow(() ->new RuntimeException("Uer not found"));
+
         if (!Boolean.TRUE.equals(account.getIsVerified())) {
             throw new RuntimeException("Please verify your email first");
         }
@@ -110,7 +122,9 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void verifyOtp(VerifyOtpRequest request) {
-        AuthAccount account = accountRepo.findByIdentifier(request.getEmail()).orElseThrow(() -> new RuntimeException("Email not found"));
+        AuthAccount account =
+                accountRepo.findByIdentifier(request.getEmail()).orElseThrow(() -> new RuntimeException("Email not found"));
+
         AuthEmailVerification verification = emailVerificationRepo.findTopByAuthAccountOrderByCreatedAtDesc(account).orElseThrow(() -> new RuntimeException("OTP not found"));
         if (Boolean.TRUE.equals(verification.getIsUsed())) {
             throw new RuntimeException("OTP already used");

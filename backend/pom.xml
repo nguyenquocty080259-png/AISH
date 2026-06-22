@@ -118,6 +118,12 @@
 			<artifactId>cloudinary-http44</artifactId>
 			<version>1.39.0</version>
 		</dependency>
+
+		<!--  -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-oauth2-client</artifactId>
+		</dependency>
 	</dependencies>
 
 	<!-- Spring AI milestone repo -->
@@ -128,6 +134,7 @@
 			<url>https://repo.spring.io/milestone</url>
 		</repository>
 	</repositories>
+
 
 	<build>
 		<plugins>
