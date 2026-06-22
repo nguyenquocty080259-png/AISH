@@ -48,6 +48,56 @@ public class AuthController {
         return ResponseEntity.ok("OTP resent successfully");
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(
+            @RequestBody
+            ForgotPasswordRequest request
+    ) {
+        System.out.println("Email: " + request.getEmail());
+        authService.forgotPassword(
+                request.getEmail()
+        );
+        System.out.println("Forgot password done");
+        return ResponseEntity.ok(
+                "OTP sent"
+        );
+    }
+
+    @PostMapping(
+            "/verify-forgot-password"
+    )
+    public ResponseEntity<?> verifyForgotPassword(
+            @RequestBody
+            VerifyOtpRequest request
+    ) {
+
+        authService.verifyForgotPasswordOtp(
+                request
+        );
+
+        return ResponseEntity.ok(
+                "OTP verified"
+        );
+    }
+
+    @PostMapping(
+            "/reset-password"
+    )
+    public ResponseEntity<?> resetPassword(
+            @RequestBody
+            ResetPasswordRequest request
+    ) {
+
+        authService.resetPassword(
+                request.getEmail(),
+                request.getPassword()
+        );
+
+        return ResponseEntity.ok(
+                "Password changed"
+        );
+    }
+
     @GetMapping("/me")
     public ResponseEntity<?> getMe(@RequestHeader("Authorization") String authHeader) {
         String token = authHeader.replace("Bearer ", "");

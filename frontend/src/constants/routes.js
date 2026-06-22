@@ -11,6 +11,8 @@ export const ROUTES = {
   PROFILE: "/profile",
   AI_CHAT: "/ai-chat",
   NOT_FOUND: "/404",
+  FORGOT_PASSWORD: "/forgot-password",
+  RESET_PASSWORD: "/reset-password",
 };
 
 // Helper build path động, ví dụ: buildRoute(ROUTES.DOCUMENT_DETAIL, { id: 12 })
