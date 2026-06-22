@@ -147,7 +147,14 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void resendOtp(String email) {
         AuthAccount account = accountRepo.findByIdentifier(email).orElseThrow(() -> new RuntimeException("Email not found"));
+        System.out.println(
+                "ACCOUNT FOUND = " +
+                        account.getId()
+        );
         String otp = String.valueOf((int) (Math.random() * 900000) + 100000);
+        System.out.println(
+                "OTP = " + otp
+        );
         AuthEmailVerification verification = new AuthEmailVerification();
         verification.setAuthAccount(account);
         verification.setVerificationCode(otp);
@@ -168,5 +175,92 @@ public class AuthServiceImpl implements AuthService {
     public void logout(String accessToken) {
         String email = jwtUtil.extractUsername(accessToken);
         System.out.println("User logout: " + email);
+    }
+
+    @Override
+    public void forgotPassword(String email) {
+
+        AuthAccount account =
+                accountRepo.findByIdentifier(email)
+                        .orElseThrow(
+                                () -> new RuntimeException(
+                                        "Email not found"
+                                )
+                        );
+
+        String otp =
+                String.valueOf(
+                        (int) (
+                                Math.random() * 900000
+                        ) + 100000
+                );
+
+        AuthEmailVerification verification =
+                new AuthEmailVerification();
+
+        verification.setAuthAccount(account);
+
+        verification.setVerificationCode(otp);
+
+        verification.setAttemptCount(0);
+
+        verification.setIsUsed(false);
+
+        verification.setExpiresAt(
+                Instant.now().plusSeconds(120)
+        );
+
+        emailVerificationRepo.save(
+                verification
+        );
+
+        emailService.sendOtpEmail(
+                email,
+                otp
+        );
+    }
+
+    @Override
+    public void verifyForgotPasswordOtp(VerifyOtpRequest request) {
+        AuthAccount account =
+                accountRepo.findByIdentifier(request.getEmail()).orElseThrow(() -> new RuntimeException("Email not found"));
+
+        AuthEmailVerification verification = emailVerificationRepo.findTopByAuthAccountOrderByCreatedAtDesc(account).orElseThrow(() -> new RuntimeException("OTP not found"));
+        if (Boolean.TRUE.equals(verification.getIsUsed())) {
+            throw new RuntimeException("OTP already used");
+        }
+        if (Instant.now().isAfter(verification.getExpiresAt())) {
+            throw new RuntimeException("OTP expired");
+        }
+        if (!verification.getVerificationCode().equals(request.getOtp())) {
+            throw new RuntimeException("Invalid OTP");
+        }
+        verification.setIsUsed(true);
+        verification.setVerifiedAt(Instant.now());
+        emailVerificationRepo.save(verification);
+        accountRepo.save(account);
+        AuthUser user = account.getUser();
+        userRepo.save(user);
+    }
+
+    @Override
+    public void resetPassword(
+            String email,
+            String password
+    ) {
+
+        AuthAccount account =
+                accountRepo.findByIdentifier(email)
+                        .orElseThrow(
+                                () -> new RuntimeException(
+                                        "User not found"
+                                )
+                        );
+
+        account.setPasswordHash(
+                passwordEncoder.encode(password)
+        );
+
+        accountRepo.save(account);
     }
 }
