@@ -1,7 +1,7 @@
 package com.aish.mvc.controller.doc;
 
 import com.aish.mvc.entity.doc.Tag;
-import com.aish.mvc.repository.stor.TagRepository;
+import com.aish.mvc.repository.doc.TagRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
