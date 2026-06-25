@@ -27,14 +27,30 @@ public class DocumentController {
         return ResponseEntity.ok(documentService.getAllDocuments());
     }
 
-    @PostMapping("/upload")
-    public ResponseEntity<DocumentResponseDTO> upload(
+    // LUỒNG 1: lên server (ổ đĩa)
+    @PostMapping("/upload-server")
+    public ResponseEntity<DocumentResponseDTO> uploadServer(
             @RequestParam("title") String title,
             @RequestParam("description") String description,
             @RequestParam(value = "subjectId", required = false) Long subjectId,
             @RequestParam(value = "tags", required = false) java.util.List<String> tags,
             @RequestParam("file") MultipartFile file) {
-        return new ResponseEntity<>(documentService.uploadDocumentWithFile(title, description, subjectId, tags, file), HttpStatus.CREATED);
+        return new ResponseEntity<>(
+                documentService.uploadDocumentToServer(title, description, subjectId, tags, file),
+                HttpStatus.CREATED);
+    }
+
+    // LUỒNG 2: lên cloud (Cloudinary)
+    @PostMapping("/upload-cloud")
+    public ResponseEntity<DocumentResponseDTO> uploadCloud(
+            @RequestParam("title") String title,
+            @RequestParam("description") String description,
+            @RequestParam(value = "subjectId", required = false) Long subjectId,
+            @RequestParam(value = "tags", required = false) java.util.List<String> tags,
+            @RequestParam("file") MultipartFile file) {
+        return new ResponseEntity<>(
+                documentService.uploadDocumentToCloud(title, description, subjectId, tags, file),
+                HttpStatus.CREATED);
     }
 
     @PostMapping("/{id}/favorite")

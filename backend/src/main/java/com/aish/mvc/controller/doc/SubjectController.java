@@ -1,7 +1,7 @@
 package com.aish.mvc.controller.doc;
 
 import com.aish.mvc.entity.doc.Subject;
-import com.aish.mvc.repository.stor.SubjectRepository;
+import com.aish.mvc.repository.doc.SubjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
