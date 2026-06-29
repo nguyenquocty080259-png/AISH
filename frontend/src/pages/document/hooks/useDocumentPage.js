@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import * as documentApi from "../../../api/documentApi";
 import * as subjectApi from "../../../api/subjectApi";
-import * as tagApi from "../../../api/tagApi";
 import { useToast } from "../../../hooks/useToast";
 import { useDebounce } from "../../../hooks/useDebounce";
 
@@ -12,13 +11,11 @@ export function useDocumentPage() {
 
   const [documents, setDocuments] = useState([]);
   const [subjects, setSubjects] = useState([]);
-  const [tags, setTags] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [searchText, setSearchText] = useState("");
   const debouncedSearch = useDebounce(searchText, 350);
   const [subjectFilter, setSubjectFilter] = useState("");
-  const [tagFilter, setTagFilter] = useState("");
   const [page, setPage] = useState(1);
 
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -27,14 +24,12 @@ export function useDocumentPage() {
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [docs, subjectList, tagList] = await Promise.all([
+      const [docs, subjectList] = await Promise.all([
         documentApi.getAll(),
         subjectApi.getAll(),
-        tagApi.getAll(),
       ]);
       setDocuments(docs);
       setSubjects(subjectList);
-      setTags(tagList);
     } catch (err) {
       showError(err.message);
     } finally {
@@ -47,7 +42,7 @@ export function useDocumentPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Backend hiện chưa hỗ trợ search/filter qua query param nên xử lý phía client.
+  // Lọc phía client: theo tên (và mô tả) + môn học.
   const filteredDocuments = useMemo(() => {
     return documents.filter((doc) => {
       const keyword = debouncedSearch.trim().toLowerCase();
@@ -57,10 +52,9 @@ export function useDocumentPage() {
         doc.description?.toLowerCase().includes(keyword);
       const matchesSubject =
         !subjectFilter || String(doc.subjectId) === String(subjectFilter);
-      const matchesTag = !tagFilter || doc.tags?.includes(tagFilter);
-      return matchesKeyword && matchesSubject && matchesTag;
+      return matchesKeyword && matchesSubject;
     });
-  }, [documents, debouncedSearch, subjectFilter, tagFilter]);
+  }, [documents, debouncedSearch, subjectFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredDocuments.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -72,7 +66,6 @@ export function useDocumentPage() {
   const resetFilters = () => {
     setSearchText("");
     setSubjectFilter("");
-    setTagFilter("");
     setPage(1);
   };
 
@@ -85,28 +78,13 @@ export function useDocumentPage() {
     }
   };
 
-  const handleUpload = async ({
-    title,
-    description,
-    subjectId,
-    newSubjectName,
-    tags,
-    file,
-  }) => {
+  const handleUpload = async ({ title, description, subjectId, tags, file }) => {
     setUploading(true);
     try {
-      let resolvedSubjectId = subjectId || null;
-
-      // Nếu user nhập môn học mới (chưa có trong danh sách), tạo trước để lấy id.
-      if (!resolvedSubjectId && newSubjectName?.trim()) {
-        const subject = await subjectApi.create({ name: newSubjectName.trim() });
-        resolvedSubjectId = subject.id;
-      }
-
       const formData = new FormData();
       formData.append("title", title);
       formData.append("description", description);
-      if (resolvedSubjectId) formData.append("subjectId", resolvedSubjectId);
+      if (subjectId) formData.append("subjectId", subjectId);
       tags.forEach((tag) => formData.append("tags", tag));
       formData.append("file", file);
 
@@ -125,13 +103,10 @@ export function useDocumentPage() {
     loading,
     documents: paginatedDocuments,
     subjects,
-    tags,
     searchText,
     setSearchText,
     subjectFilter,
     setSubjectFilter,
-    tagFilter,
-    setTagFilter,
     resetFilters,
     page: currentPage,
     totalPages,
