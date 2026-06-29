@@ -149,4 +149,10 @@ public class AuthServiceImpl implements AuthService {
             System.out.println("[DEV] Email failed, NEW OTP = " + otp);
         }
     }
+
+    @Override
+    public void logout(String accessToken) {
+        String email = jwtUtil.extractUsername(accessToken);
+        System.out.println("User logout: " + email);
+    }
 }
