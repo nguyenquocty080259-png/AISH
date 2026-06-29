@@ -1,4 +1,4 @@
-package com.aish.mvc.service.auth;
+package com.aish.mvc.service.auth.impl;
 
 import com.aish.mvc.dto.auth.AuthResponse;
 import com.aish.mvc.dto.auth.LoginRequest;
@@ -14,6 +14,8 @@ import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.repository.auth.AuthEmailVerificationRepository;
 import com.aish.mvc.repository.auth.AuthRoleRepository;
 import com.aish.mvc.repository.auth.AuthUserRepository;
+import com.aish.mvc.service.auth.AuthService;
+import com.aish.mvc.service.auth.EmailService;
 import com.aish.mvc.service.auth.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -71,17 +73,7 @@ public class AuthServiceImpl implements AuthService {
         account.setUser(user);
         account.setProvider(AuthProviders.LOCAL);
         account.setIdentifier(request.getEmail());
-        if(request.getPassword() != null &&
-                !request.getPassword().isBlank()) {
-
-            account.setPasswordHash(
-                    passwordEncoder.encode(request.getPassword())
-            );
-
-        } else {
-
-            account.setPasswordHash(null);
-        }
+        account.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         accountRepo.save(account);
         // đã có account và giờ tạo OTP để accept
         String otp = String.valueOf((int) (Math.random() * 900000) + 100000);
@@ -106,9 +98,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse login(LoginRequest request) {
-        AuthAccount account = accountRepo.findByProviderAndIdentifier(AuthProviders.LOCAL, request.getEmail()
-                                            ).orElseThrow(() ->new RuntimeException("Uer not found"));
-
+        AuthAccount account = accountRepo.findByIdentifier(request.getEmail()).orElseThrow(() -> new RuntimeException("User not found"));
         if (!Boolean.TRUE.equals(account.getIsVerified())) {
             throw new RuntimeException("Please verify your email first");
         }
@@ -122,9 +112,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void verifyOtp(VerifyOtpRequest request) {
-        AuthAccount account =
-                accountRepo.findByIdentifier(request.getEmail()).orElseThrow(() -> new RuntimeException("Email not found"));
-
+        AuthAccount account = accountRepo.findByIdentifier(request.getEmail()).orElseThrow(() -> new RuntimeException("Email not found"));
         AuthEmailVerification verification = emailVerificationRepo.findTopByAuthAccountOrderByCreatedAtDesc(account).orElseThrow(() -> new RuntimeException("OTP not found"));
         if (Boolean.TRUE.equals(verification.getIsUsed())) {
             throw new RuntimeException("OTP already used");
@@ -144,6 +132,7 @@ public class AuthServiceImpl implements AuthService {
         user.setStatus(UserStatus.ACTIVE);
         userRepo.save(user);
     }
+
     @Override
     public void resendOtp(String email) {
         AuthAccount account = accountRepo.findByIdentifier(email).orElseThrow(() -> new RuntimeException("Email not found"));
@@ -155,7 +144,6 @@ public class AuthServiceImpl implements AuthService {
         verification.setIsUsed(false);
         verification.setExpiresAt(Instant.now().plusSeconds(120));
         emailVerificationRepo.save(verification);
-        // Sau khi có EmailService
         try {
             emailService.sendOtpEmail(email, otp);
         } catch (Exception e) {
@@ -163,12 +151,4 @@ public class AuthServiceImpl implements AuthService {
             System.out.println("[DEV] Email failed, NEW OTP = " + otp);
         }
     }
-
-    @Override
-    public void logout(String accessToken) {
-        String email = jwtUtil.extractUsername(accessToken);
-        System.out.println("User logout: " + email);
-    }
-
-
 }

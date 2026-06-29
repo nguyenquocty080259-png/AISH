@@ -1,4 +1,4 @@
-package com.aish.mvc.repository.stor;
+package com.aish.mvc.repository.doc;
 
 import com.aish.mvc.entity.doc.Download;
 import org.springframework.data.jpa.repository.JpaRepository;
