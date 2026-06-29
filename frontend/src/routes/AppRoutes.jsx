@@ -9,11 +9,12 @@ import SignUpPage from "../pages/auth/SignUpPage";
 import OtpPage from "../pages/auth/OtpPage";
 import HomePage from "../pages/home/HomePage";
 import DashboardPage from "../pages/dashboard/DashboardPage";
-import DocumentPage from "../pages/document/DocumentPage";
 import DocumentDetailPage from "../pages/document-detail/DocumentDetailPage";
 import ProfilePage from "../pages/profile/ProfilePage";
 import AiChatPage from "../pages/ai-chat/AiChatPage";
 import NotFoundPage from "../pages/error/NotFoundPage";
+import DocumentPage from "../pages/document/DocumentPage";
+import TrashPage from "../pages/document/TrashPage";
 
 export default function AppRoutes() {
   return (
@@ -34,6 +35,7 @@ export default function AppRoutes() {
         <Route element={<PrivateRoute />}>
           <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
           <Route path={ROUTES.DOCUMENTS} element={<DocumentPage />} />
+          <Route path={ROUTES.TRASH} element={<TrashPage />} />
           <Route path={ROUTES.DOCUMENT_DETAIL} element={<DocumentDetailPage />} />
           <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
         </Route>

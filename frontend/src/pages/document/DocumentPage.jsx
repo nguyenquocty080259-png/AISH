@@ -11,13 +11,10 @@ export default function DocumentPage() {
     loading,
     documents,
     subjects,
-    tags,
     searchText,
     setSearchText,
     subjectFilter,
     setSubjectFilter,
-    tagFilter,
-    setTagFilter,
     resetFilters,
     page,
     totalPages,
@@ -42,11 +39,8 @@ export default function DocumentPage() {
         <SearchBar value={searchText} onChange={setSearchText} />
         <FilterBar
           subjects={subjects}
-          tags={tags}
           subjectFilter={subjectFilter}
           onSubjectChange={setSubjectFilter}
-          tagFilter={tagFilter}
-          onTagChange={setTagFilter}
           onReset={resetFilters}
         />
       </div>

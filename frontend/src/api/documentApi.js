@@ -14,9 +14,11 @@ export function getTrash() {
   return apiClient.get("/documents/trash").then((res) => res.data);
 }
 
-export function upload(formData) {
+export function upload(formData, onProgress) {
   // formData: title, description, subjectId?, tags[]?, file
-  return apiClient.post("/documents/upload", formData).then((res) => res.data);
+  return apiClient
+    .post("/documents/upload-server", formData, { onUploadProgress: onProgress })
+    .then((res) => res.data);
 }
 
 export function toggleFavorite(id) {
@@ -35,6 +37,9 @@ export function rateDocument(id, star) {
 
 export function deleteDocument(id) {
   return apiClient.delete(`/documents/${id}`);
+}
+export function permanentDelete(id) {
+  return apiClient.delete(`/documents/${id}/permanent`);
 }
 
 export function restoreDocument(id) {

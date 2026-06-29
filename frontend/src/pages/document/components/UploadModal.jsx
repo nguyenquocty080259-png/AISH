@@ -4,7 +4,6 @@ export default function UploadModal({ open, subjects, submitting, onClose, onSub
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [subjectId, setSubjectId] = useState("");
-  const [newSubjectName, setNewSubjectName] = useState("");
   const [tagsInput, setTagsInput] = useState("");
   const [file, setFile] = useState(null);
 
@@ -18,7 +17,7 @@ export default function UploadModal({ open, subjects, submitting, onClose, onSub
       .map((t) => t.trim())
       .filter(Boolean);
 
-    onSubmit({ title, description, subjectId, newSubjectName, tags, file });
+    onSubmit({ title, description, subjectId, tags, file });
   };
 
   return (
@@ -50,10 +49,7 @@ export default function UploadModal({ open, subjects, submitting, onClose, onSub
             Môn học
             <select
               value={subjectId}
-              onChange={(e) => {
-                setSubjectId(e.target.value);
-                if (e.target.value) setNewSubjectName("");
-              }}
+              onChange={(e) => setSubjectId(e.target.value)}
             >
               <option value="">-- Chọn môn học --</option>
               {subjects.map((subject) => (
@@ -63,18 +59,6 @@ export default function UploadModal({ open, subjects, submitting, onClose, onSub
               ))}
             </select>
           </label>
-
-          {!subjectId && (
-            <label>
-              Hoặc nhập môn học mới
-              <input
-                type="text"
-                value={newSubjectName}
-                onChange={(e) => setNewSubjectName(e.target.value)}
-                placeholder="VD: Lập trình Web"
-              />
-            </label>
-          )}
 
           <label>
             Tags (phân tách bằng dấu phẩy)
@@ -91,7 +75,14 @@ export default function UploadModal({ open, subjects, submitting, onClose, onSub
             <input
               type="file"
               required
-              onChange={(e) => setFile(e.target.files[0])}
+              onChange={(e) => {
+                const f = e.target.files[0];
+                if (!f) return;
+                setFile(f);
+                if (!title.trim()) {
+                  setTitle(f.name.replace(/\.[^/.]+$/, ""));
+                }
+              }}
             />
           </label>
 
