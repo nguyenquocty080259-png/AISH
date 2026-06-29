@@ -1,6 +1,7 @@
-package com.aish.mvc.service.doc;
+package com.aish.mvc.service.doc.impl;
 
 import com.aish.mvc.dto.doc.CommentDTO;
+import com.aish.mvc.dto.doc.DocumentDownloadResult;
 import com.aish.mvc.dto.doc.DocumentResponseDTO;
 import com.aish.mvc.entity.auth.AuthUser;
 import com.aish.mvc.entity.doc.*;
@@ -9,26 +10,32 @@ import com.aish.mvc.entity.enums.DocumentVisibility;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.repository.auth.AuthUserRepository;
 import com.aish.mvc.repository.doc.*;
+import com.aish.mvc.service.doc.DocumentService;
+import com.aish.mvc.service.stor.CloudUploadResult;
 import com.aish.mvc.service.stor.CloudinaryService;
 import com.aish.mvc.service.stor.FileStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import com.aish.mvc.entity.doc.Subject;
-import com.aish.mvc.repository.doc.SubjectRepository;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
-import com.aish.mvc.entity.doc.Tag;
-import com.aish.mvc.repository.doc.TagRepository;
-import java.util.Set;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class DocumentServiceImpl implements DocumentService {
+
+    @Value("${app.upload.dir}")
+    private String uploadDir;
 
     @Autowired private DocDocumentRepository docDocumentRepository;
     @Autowired private DocFileRepository docFileRepository;
@@ -43,7 +50,6 @@ public class DocumentServiceImpl implements DocumentService {
     @Autowired private SubjectRepository subjectRepository;
     @Autowired private CloudinaryService cloudinaryService;
 
-    // Lấy user đang đăng nhập từ token (JwtAuthFilter đã set email làm principal)
     private AuthUser getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return authAccountRepository.findByIdentifier(email)
@@ -60,7 +66,6 @@ public class DocumentServiceImpl implements DocumentService {
                 .collect(Collectors.toList());
     }
 
-    // ===== HÀM CHUNG: tạo document + tags (chưa gắn file) =====
     private DocDocument buildDocument(String title, String description, Long subjectId, List<String> tagNames) {
         DocDocument doc = new DocDocument();
         doc.setTitle(title);
@@ -88,7 +93,6 @@ public class DocumentServiceImpl implements DocumentService {
         return docDocumentRepository.save(doc);
     }
 
-    // ===== LUỒNG 1: Upload file LÊN SERVER (ổ đĩa local) =====
     @Override
     @Transactional
     public DocumentResponseDTO uploadDocumentToServer(String title, String description, Long subjectId,
@@ -111,20 +115,19 @@ public class DocumentServiceImpl implements DocumentService {
         return mapToResponseDTO(savedDoc);
     }
 
-    // ===== LUỒNG 2: Upload file LÊN CLOUD (Cloudinary) =====
     @Override
     @Transactional
     public DocumentResponseDTO uploadDocumentToCloud(String title, String description, Long subjectId,
                                                      List<String> tagNames, MultipartFile file) {
         DocDocument savedDoc = buildDocument(title, description, subjectId, tagNames);
 
-        Map<String, String> uploaded = cloudinaryService.upload(file);
+        CloudUploadResult uploaded = cloudinaryService.upload(file);
 
         DocFile docFile = DocFile.builder()
                 .fileName(file.getOriginalFilename())
-                .fileUrl(uploaded.get("url"))
-                .publicId(uploaded.get("publicId"))
-                .resourceType(uploaded.get("resourceType"))
+                .fileUrl(uploaded.url())
+                .publicId(uploaded.publicId())
+                .resourceType(uploaded.resourceType())
                 .fileType(file.getContentType())
                 .fileSize(file.getSize())
                 .document(savedDoc)
@@ -135,7 +138,6 @@ public class DocumentServiceImpl implements DocumentService {
         return mapToResponseDTO(savedDoc);
     }
 
-    // LOGIC TƯƠNG TÁC 1: Thêm bình luận
     @Override
     @Transactional
     public void addComment(Long documentId, String content) {
@@ -150,7 +152,6 @@ public class DocumentServiceImpl implements DocumentService {
         commentRepository.save(comment);
     }
 
-    // LOGIC TƯƠNG TÁC 2: Toggle Favorite
     @Override
     @Transactional
     public void toggleFavorite(Long documentId) {
@@ -167,7 +168,6 @@ public class DocumentServiceImpl implements DocumentService {
         }
     }
 
-    // LOGIC TƯƠNG TÁC 3: Đánh giá sao
     @Override
     @Transactional
     public void rateDocument(Long documentId, Integer star) {
@@ -183,7 +183,6 @@ public class DocumentServiceImpl implements DocumentService {
         ratingRepository.save(rating);
     }
 
-    // LOGIC TƯƠNG TÁC 4: Ghi nhận Download
     @Override
     @Transactional
     public void logDownload(Long documentId) {
@@ -247,7 +246,37 @@ public class DocumentServiceImpl implements DocumentService {
         docDocumentRepository.save(doc);
     }
 
-    // Ánh xạ entity -> DTO + tính thống kê
+    @Override
+    public DocumentResponseDTO getDocumentById(Long id) {
+        DocDocument doc = docDocumentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
+        return mapToResponseDTO(doc);
+    }
+
+    @Override
+    public DocumentDownloadResult prepareDownload(Long documentId) {
+        DocFile docFile = getFileByDocumentId(documentId);
+        logDownload(documentId);
+        try {
+            String fileUrl = docFile.getFileUrl();
+            Resource resource;
+            if (fileUrl != null && fileUrl.startsWith("http")) {
+                resource = new UrlResource(new java.net.URL(fileUrl));
+            } else {
+                Path filePath = Paths.get(uploadDir).resolve(fileUrl).normalize();
+                resource = new UrlResource(filePath.toUri());
+            }
+            if (!resource.exists() && !resource.isReadable()) {
+                throw new RuntimeException("File không tồn tại hoặc không thể đọc");
+            }
+            return new DocumentDownloadResult(resource, docFile.getFileName());
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi chuẩn bị file tải xuống: " + e.getMessage());
+        }
+    }
+
     private DocumentResponseDTO mapToResponseDTO(DocDocument doc) {
         DocumentResponseDTO dto = new DocumentResponseDTO();
         dto.setId(doc.getId());
@@ -282,12 +311,5 @@ public class DocumentServiceImpl implements DocumentService {
         dto.setComments(commentDTOs);
 
         return dto;
-    }
-
-    @Override
-    public DocumentResponseDTO getDocumentById(Long id) {
-        DocDocument doc = docDocumentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
-        return mapToResponseDTO(doc);
     }
 }
