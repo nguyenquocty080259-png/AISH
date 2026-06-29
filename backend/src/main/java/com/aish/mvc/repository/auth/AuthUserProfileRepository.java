@@ -14,4 +14,5 @@ public interface AuthUserProfileRepository extends JpaRepository<AuthUserProfile
     Optional<AuthUserProfile> findByUsername(String username);
 
     boolean existsByUsername(String username);
+
 }
