@@ -16,4 +16,5 @@ public interface AuthService {
     void resendOtp(String email);
 
     void logout(String accessToken);
+
 }
