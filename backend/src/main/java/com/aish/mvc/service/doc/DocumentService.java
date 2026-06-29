@@ -1,5 +1,6 @@
 package com.aish.mvc.service.doc;
 
+import com.aish.mvc.dto.doc.DocumentDownloadResult;
 import com.aish.mvc.dto.doc.DocumentResponseDTO;
 import com.aish.mvc.entity.doc.DocFile;
 import org.springframework.web.multipart.MultipartFile;
@@ -35,4 +36,6 @@ public interface DocumentService {
     void toggleVisibility(Long documentId);
 
     DocumentResponseDTO getDocumentById(Long id);
+
+    DocumentDownloadResult prepareDownload(Long documentId);
 }

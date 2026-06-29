@@ -1,17 +1,13 @@
 package com.aish.mvc.controller.doc;
 
+import com.aish.mvc.dto.doc.DocumentDownloadResult;
 import com.aish.mvc.dto.doc.DocumentResponseDTO;
-import com.aish.mvc.entity.doc.DocFile;
 import com.aish.mvc.service.doc.DocumentService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 @RestController
@@ -20,7 +16,6 @@ import java.util.List;
 public class DocumentController {
 
     @Autowired private DocumentService documentService;
-    @Value("${app.upload.dir}") private String uploadDir;
 
     @GetMapping
     public ResponseEntity<List<DocumentResponseDTO>> getAll() {
@@ -99,23 +94,14 @@ public class DocumentController {
 
     @GetMapping("/{id}/download")
     public ResponseEntity<Resource> downloadFile(@PathVariable Long id) {
-        DocFile docFile = documentService.getFileByDocumentId(id);
         try {
-            documentService.logDownload(id);
-            String fileUrl = docFile.getFileUrl();
-            Resource resource;
-            if (fileUrl != null && fileUrl.startsWith("http")) {
-                resource = new UrlResource(new java.net.URL(fileUrl));
-            } else {
-                Path filePath = Paths.get(uploadDir).resolve(fileUrl).normalize();
-                resource = new UrlResource(filePath.toUri());
-            }
-            if (resource.exists() || resource.isReadable()) {
-                return ResponseEntity.ok()
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + docFile.getFileName() + "\"")
-                        .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
-                        .body(resource);
-            } else { return ResponseEntity.notFound().build(); }
-        } catch (Exception e) { return ResponseEntity.internalServerError().build(); }
+            DocumentDownloadResult result = documentService.prepareDownload(id);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + result.fileName() + "\"")
+                    .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
+                    .body(result.resource());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }
