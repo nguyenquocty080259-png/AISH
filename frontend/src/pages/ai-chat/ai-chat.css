@@ -1,0 +1,103 @@
+.chat-page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: var(--spacing-xl);
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 64px);
+}
+
+.chat-page__header {
+    margin-bottom: var(--spacing-md);
+}
+
+.chat-page__title {
+    font-size: var(--headline-lg);
+    color: var(--color-text);
+}
+
+.chat-page__context {
+    display: inline-block;
+    margin-top: var(--spacing-xs);
+    font-size: var(--body-sm);
+    color: var(--color-primary);
+}
+
+.chat-window {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    margin-bottom: var(--spacing-md);
+}
+
+.chat-window__empty {
+    margin: auto;
+    color: var(--color-text-secondary);
+    font-size: var(--body-sm);
+    text-align: center;
+}
+
+.chat-message {
+    max-width: 80%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-input);
+    font-size: var(--body-sm);
+    line-height: 1.5;
+}
+
+.chat-message--user {
+    align-self: flex-end;
+    background-color: var(--color-primary);
+    color: var(--color-surface);
+}
+
+.chat-message--ai {
+    align-self: flex-start;
+    background-color: var(--color-background);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+}
+
+.chat-message__mode {
+    display: inline-block;
+    margin-bottom: var(--spacing-xs);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-accent);
+    text-transform: uppercase;
+}
+
+.chat-input {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.chat-input input {
+    flex: 1;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    background-color: var(--color-surface);
+    color: var(--color-text);
+}
+
+.chat-input button {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border: none;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-primary);
+    color: var(--color-surface);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.chat-input button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}

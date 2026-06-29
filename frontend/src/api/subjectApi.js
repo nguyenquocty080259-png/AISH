@@ -1,17 +1,10 @@
-import axios from 'axios';
-import { getAccessToken } from '../services/authService';
+import apiClient from "../lib/apiClient";
 
-const api = axios.create({
-    baseURL: 'http://localhost:8080/api/subjects',
-});
+export function getAll() {
+  return apiClient.get("/subjects").then((res) => res.data);
+}
 
-api.interceptors.request.use((config) => {
-    const token = getAccessToken();
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-    return config;
-});
-
-export const subjectApi = {
-    getAll: () => api.get(''),
-    create: (name) => api.post('', { name }),
-};
+export function create(subject) {
+  // subject: { name, description? } - backend trả về subject đã có nếu trùng tên
+  return apiClient.post("/subjects", subject).then((res) => res.data);
+}

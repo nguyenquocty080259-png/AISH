@@ -1,114 +1,53 @@
-// LoginPage.jsx
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { login, saveTokens, getAccessToken } from "../../services/authService";
-import { useAuth } from "../../context/AuthContext";
-import API_BASE_URL from "../../api/api";
-import "./AuthPage.css";
+import { Link } from "react-router-dom";
+import { useLoginPage } from "./hooks/useLoginPage";
+import { ROUTES } from "../../constants/routes";
+import "./auth.css";
 
 export default function LoginPage() {
-  const navigate = useNavigate();
-  const { setUser } = useAuth();
-
-  const [form, setForm]       = useState({ email: "", password: "" });
-  const [error, setError]     = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-    setError("");
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    try {
-      const data = await login(form);
-      saveTokens(data);
-
-      // Gọi /me để lấy đầy đủ thông tin user (fullName, status...) đổ vào context
-      const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
-        headers: { Authorization: `Bearer ${getAccessToken()}` },
-      });
-      if (res.ok) {
-        setUser(await res.json());
-      } else {
-        setUser({ email: form.email }); // fallback nếu /me lỗi
-      }
-
-      navigate("/dashboard", { replace: true });
-    } catch (err) {
-      setError(err.message || "Đăng nhập thất bại");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { email, setEmail, password, setPassword, submitting, handleSubmit } =
+    useLoginPage();
 
   return (
     <div className="auth-page">
-      {/* Decorative background */}
-      <div className="auth-bg">
-        <div className="auth-bg__blob auth-bg__blob--1" />
-        <div className="auth-bg__blob auth-bg__blob--2" />
-      </div>
-
       <div className="auth-card">
-        {/* Logo */}
-        <div className="auth-card__logo">
-          <span className="auth-card__logo-icon">✦</span>
-          <span className="auth-card__logo-text">AISH</span>
-        </div>
-
+        <p className="auth-card__brand">AISH</p>
         <h1 className="auth-card__title">Đăng nhập</h1>
-        <p className="auth-card__subtitle">Chào mừng bạn trở lại</p>
+        <p className="auth-card__subtitle">
+          Tiếp tục học tập và chia sẻ tài liệu cùng AISH.
+        </p>
 
         <form className="auth-form" onSubmit={handleSubmit}>
-          <div className="auth-form__group">
-            <label className="auth-form__label" htmlFor="email">Email</label>
+          <div className="auth-field">
+            <label htmlFor="email">Email</label>
             <input
               id="email"
-              name="email"
               type="email"
-              className="auth-form__input"
-              placeholder="example@email.com"
-              value={form.email}
-              onChange={handleChange}
               required
-              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="ban@email.com"
             />
           </div>
 
-          <div className="auth-form__group">
-            <label className="auth-form__label" htmlFor="password">Mật khẩu</label>
+          <div className="auth-field">
+            <label htmlFor="password">Mật khẩu</label>
             <input
               id="password"
-              name="password"
               type="password"
-              className="auth-form__input"
-              placeholder="••••••••"
-              value={form.password}
-              onChange={handleChange}
               required
-              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
             />
           </div>
 
-          {error && <p className="auth-form__error">{error}</p>}
-
-          <button
-            type="submit"
-            className="auth-form__btn"
-            disabled={loading}
-          >
-            {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+          <button className="auth-submit" type="submit" disabled={submitting}>
+            {submitting ? "Đang đăng nhập..." : "Đăng nhập"}
           </button>
         </form>
 
-        <p className="auth-card__footer">
-          Chưa có tài khoản?{" "}
-          <Link to="/register" className="auth-card__link">Đăng ký ngay</Link>
+        <p className="auth-footer">
+          Chưa có tài khoản? <Link to={ROUTES.SIGNUP}>Đăng ký ngay</Link>
         </p>
       </div>
     </div>

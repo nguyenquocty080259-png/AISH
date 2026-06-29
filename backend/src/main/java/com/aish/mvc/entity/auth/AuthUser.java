@@ -23,25 +23,16 @@ public class AuthUser {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
     private Long id;
 
     @Size(max = 255)
     @Column(name = "full_name")
     private String fullName;
 
-    @Column(name = "dob")
-    private LocalDate dob;
-
-    @Size(max = 20)
-    @Column(name = "phone_number", length = 20)
-    private String phoneNumber;
-
     @Column(name = "avatar_url", length = Integer.MAX_VALUE)
     private String avatarUrl;
 
     @Enumerated(EnumType.STRING)
-    @ColumnDefault("'ACTIVE'")
     @Column(name = "status", length = 20)
     private UserStatus status = UserStatus.ACTIVE;
 
@@ -55,4 +46,9 @@ public class AuthUser {
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private Set<AuthRole> authRoles = new HashSet<>();
+
+    @OneToOne(mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
+    private AuthUserProfile profile;
 }

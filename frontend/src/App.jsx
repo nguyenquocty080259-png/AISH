@@ -1,35 +1,32 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import DocumentDetailPage from './pages/document/DocumentDetailPage';
-import LoginPage from './pages/auth/LoginPage';
-import RegisterPage from './pages/auth/RegisterPage';
-import OTPVerificationPage from './pages/auth/OTPVerificationPage';
-import DocumentPage from './pages/document/DocumentPage';
-import CloudStoragePage from './pages/cloud/CloudStoragePage';
+import { BrowserRouter } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import AppRoutes from "./routes/AppRoutes";
+import { useToastListener } from "./hooks/useToast";
 
-function App() {
+function ToastStack() {
+  const { toasts, dismiss } = useToastListener();
   return (
-    <AuthProvider>
-      <div className="App">
-        <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/otp-verification" element={<OTPVerificationPage />} />
-
-          {/* DocumentPage làm trang chính sau login */}
-          <Route path="/dashboard" element={<DocumentPage />} />
-          <Route path="/documents" element={<DocumentPage />} />
-          <Route path="/documents/:id" element={<DocumentDetailPage />} />
-          <Route path="/cloud-storage" element={<CloudStoragePage />} />
-
-          {/* Catch-all phải nằm CUỐI CÙNG */}
-          <Route path="*" element={<div style={{padding:20}}>404 - Không có trang: {window.location.pathname}</div>} />
-        </Routes>
-      </div>
-    </AuthProvider>
+    <div className="toast-stack">
+      {toasts.map((toast) => (
+        <div
+          key={toast.id}
+          className={`toast toast--${toast.type}`}
+          onClick={() => dismiss(toast.id)}
+        >
+          {toast.message}
+        </div>
+      ))}
+    </div>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+        <ToastStack />
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}

@@ -1,40 +1,51 @@
-import axios from 'axios';
-import { getAccessToken } from '../services/authService';
+import apiClient from "../lib/apiClient";
 
-const BASE_URL = 'http://localhost:8080/api/documents';
+// Tập trung toàn bộ request liên quan /api/documents/* tại đây.
 
-const api = axios.create({
-    baseURL: BASE_URL,
-    withCredentials: true
-});
+export function getAll() {
+  return apiClient.get("/documents").then((res) => res.data);
+}
 
-// Tự động gắn token vào mọi request
-api.interceptors.request.use((config) => {
-    const token = getAccessToken();
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-});
+export function getOne(id) {
+  return apiClient.get(`/documents/${id}`).then((res) => res.data);
+}
 
-export const documentApi = {
-    getAll: () => api.get(''),
-    upload: (formData) => api.post('/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-    }),
-    upload: (formData, onProgress) => api.post('/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-        onUploadProgress: onProgress
-    }),
-    toggleVisibility: (id) => api.put(`/${id}/toggle-visibility`),
-    delete: (id) => api.delete(`/${id}`),
-    download: (id) => api.get(`/${id}/download`, { responseType: 'blob' }),
-    getTrash: () => api.get('/trash'),
-    restore: (id) => api.put(`/${id}/restore`),
-    toggleFavorite: (id) => api.post(`/${id}/favorite`),
-    addComment: (id, content) => api.post(`/${id}/comment`, content, {
-        headers: { 'Content-Type': 'text/plain' }
-    }),
-    rate: (id, star) => api.post(`/${id}/rate?star=${star}`),
-    getById: (id) => api.get(`/${id}`),
-};
+export function getTrash() {
+  return apiClient.get("/documents/trash").then((res) => res.data);
+}
+
+export function upload(formData) {
+  // formData: title, description, subjectId?, tags[]?, file
+  return apiClient.post("/documents/upload", formData).then((res) => res.data);
+}
+
+export function toggleFavorite(id) {
+  return apiClient.post(`/documents/${id}/favorite`);
+}
+
+export function addComment(id, content) {
+  // Backend nhận @RequestBody String content (chuỗi thô, không phải object)
+  return apiClient.post(`/documents/${id}/comment`, content);
+}
+
+export function rateDocument(id, star) {
+  // Backend nhận star qua query param, không phải body
+  return apiClient.post(`/documents/${id}/rate`, null, { params: { star } });
+}
+
+export function deleteDocument(id) {
+  return apiClient.delete(`/documents/${id}`);
+}
+
+export function restoreDocument(id) {
+  return apiClient.put(`/documents/${id}/restore`);
+}
+
+export function toggleVisibility(id) {
+  return apiClient.put(`/documents/${id}/toggle-visibility`);
+}
+
+export function downloadFile(id) {
+  // Trả về cả response (không chỉ data) để lấy header Content-Disposition
+  return apiClient.get(`/documents/${id}/download`, { responseType: "blob" });
+}

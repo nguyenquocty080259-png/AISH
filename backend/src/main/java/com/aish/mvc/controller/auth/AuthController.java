@@ -5,6 +5,7 @@ import com.aish.mvc.entity.auth.AuthAccount;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.service.auth.AuthService;
 import com.aish.mvc.service.auth.JwtUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
@@ -47,28 +48,6 @@ public class AuthController {
         return ResponseEntity.ok("OTP resent successfully");
     }
 
-    @RestController
-    @RequestMapping("/test")
-    @RequiredArgsConstructor
-    public class TestController {
-
-        private final JavaMailSender mailSender;
-
-        @GetMapping("/mail")
-        public String testMail() {
-
-            SimpleMailMessage mail = new SimpleMailMessage();
-
-            mail.setTo("your_email@gmail.com");
-            mail.setSubject("Test");
-            mail.setText("Hello");
-
-            mailSender.send(mail);
-
-            return "OK";
-        }
-    }
-
     @GetMapping("/me")
     public ResponseEntity<?> getMe(@RequestHeader("Authorization") String authHeader) {
         String token = authHeader.replace("Bearer ", "");
@@ -80,6 +59,26 @@ public class AuthController {
         result.put("fullName", account.getUser().getFullName());
         result.put("status", account.getUser().getStatus());
         return ResponseEntity.ok(result);
+    }
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(
+            HttpServletRequest request) {
+
+        String authHeader =
+                request.getHeader("Authorization");
+
+        if (authHeader == null ||
+                !authHeader.startsWith("Bearer ")) {
+
+            return ResponseEntity.badRequest()
+                    .body("Token missing");
+        }
+
+        String token = authHeader.substring(7);
+
+        authService.logout(token);
+
+        return ResponseEntity.ok("Logout successful");
     }
 
 }
