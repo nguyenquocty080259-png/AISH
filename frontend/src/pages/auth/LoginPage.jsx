@@ -44,8 +44,41 @@ export default function LoginPage() {
           <button className="auth-submit" type="submit" disabled={submitting}>
             {submitting ? "Đang đăng nhập..." : "Đăng nhập"}
           </button>
-        </form>
 
+
+        </form>
+        <button
+          type="button"
+          className="social-btn google"
+          onClick={() => {
+            window.location.href =
+              "http://localhost:8080/oauth2/authorization/google";
+          }}
+        >
+          Google
+        </button>
+
+        <button
+        type="button"
+        className="social-btn github"
+        onClick={() => {
+          window.location.href =
+            "http://localhost:8080/oauth2/authorization/github";
+        }}
+      >
+        GitHub
+      </button>
+
+      <button
+        type="button"
+        className="social-btn facebook"
+        onClick={() => {
+          window.location.href =
+            "http://localhost:8080/oauth2/authorization/facebook";
+        }}
+      >
+        Facebook
+      </button>
         <p className="auth-footer">
           Chưa có tài khoản? <Link to={ROUTES.SIGNUP}>Đăng ký ngay</Link>
         </p>
