@@ -42,16 +42,20 @@ export function useDocumentPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Lọc phía client: theo tên (và mô tả) + môn học.
+  // Lọc client: theo tên + mô tả + môn học (môn là mảng subjectIds)
   const filteredDocuments = useMemo(() => {
     return documents.filter((doc) => {
       const keyword = debouncedSearch.trim().toLowerCase();
       const matchesKeyword =
         !keyword ||
         doc.title?.toLowerCase().includes(keyword) ||
-        doc.description?.toLowerCase().includes(keyword);
+        doc.description?.toLowerCase().includes(keyword) ||
+        (doc.subjectNames || []).some((name) =>
+          name.toLowerCase().includes(keyword)
+        );
       const matchesSubject =
-        !subjectFilter || String(doc.subjectId) === String(subjectFilter);
+        !subjectFilter ||
+        (doc.subjectIds || []).map(String).includes(String(subjectFilter));
       return matchesKeyword && matchesSubject;
     });
   }, [documents, debouncedSearch, subjectFilter]);
@@ -78,14 +82,13 @@ export function useDocumentPage() {
     }
   };
 
-  const handleUpload = async ({ title, description, subjectId, tags, file }) => {
+  const handleUpload = async ({ title, description, subjectIds, file }) => {
     setUploading(true);
     try {
       const formData = new FormData();
       formData.append("title", title);
       formData.append("description", description);
-      if (subjectId) formData.append("subjectId", subjectId);
-      tags.forEach((tag) => formData.append("tags", tag));
+      (subjectIds || []).forEach((id) => formData.append("subjectIds", id));
       formData.append("file", file);
 
       await documentApi.upload(formData);

@@ -179,3 +179,20 @@
   background: #1877f2;
   color: white;
 }
+
+.auth-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -4px;
+  margin-bottom: 12px;
+}
+
+.forgot-password-link {
+  font-size: 14px;
+  text-decoration: none;
+  color: #2563eb;
+}
+
+.forgot-password-link:hover {
+  text-decoration: underline;
+}
