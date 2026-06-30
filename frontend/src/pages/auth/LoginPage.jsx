@@ -41,6 +41,13 @@ export default function LoginPage() {
             />
           </div>
 
+          <div className="auth-actions">
+            <p className="forgot-password-link">
+              <Link to={ROUTES.FORGOT_PASSWORD}> 
+              Quên mật khẩu? </Link>
+            </p>
+          </div>
+
           <button className="auth-submit" type="submit" disabled={submitting}>
             {submitting ? "Đang đăng nhập..." : "Đăng nhập"}
           </button>

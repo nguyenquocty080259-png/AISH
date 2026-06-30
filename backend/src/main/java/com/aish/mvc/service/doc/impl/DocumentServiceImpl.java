@@ -1,6 +1,7 @@
 package com.aish.mvc.service.doc.impl;
 
 import com.aish.mvc.dto.doc.CommentDTO;
+import com.aish.mvc.dto.doc.CommunityPageResponseDTO;
 import com.aish.mvc.dto.doc.DocumentResponseDTO;
 import com.aish.mvc.entity.auth.AuthUser;
 import com.aish.mvc.entity.doc.*;
@@ -102,13 +103,13 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentResponseDTO uploadDocumentToCloud(String title, String description, java.util.List<Long> subjectIds, MultipartFile file) {
         DocDocument savedDoc = buildDocument(title, description, subjectIds);
 
-        Map<String, String> uploaded = cloudinaryService.upload(file);
+        com.aish.mvc.service.stor.CloudUploadResult uploaded = cloudinaryService.upload(file);
 
         DocFile docFile = DocFile.builder()
                 .fileName(file.getOriginalFilename())
-                .fileUrl(uploaded.get("url"))
-                .publicId(uploaded.get("publicId"))
-                .resourceType(uploaded.get("resourceType"))
+                .fileUrl(uploaded.url())
+                .publicId(uploaded.publicId())
+                .resourceType(uploaded.resourceType())
                 .fileType(file.getContentType())
                 .fileSize(file.getSize())
                 .document(savedDoc)
@@ -180,6 +181,9 @@ public class DocumentServiceImpl implements DocumentService {
     public void deleteDocument(Long id) {
         DocDocument doc = docDocumentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
+        if (!doc.getUser().getId().equals(getCurrentUser().getId())) {
+            throw new RuntimeException("Bạn không có quyền xoá tài liệu này!");
+        }
         doc.setDeletedAt(LocalDateTime.now());
         docDocumentRepository.save(doc);
     }
@@ -187,7 +191,9 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     @Transactional(readOnly = true)
     public List<DocumentResponseDTO> getDeletedDocuments() {
-        return docDocumentRepository.findByDeletedAtIsNotNull().stream()
+        Long uid = getCurrentUser().getId();
+        // CHỈ trả về rác của user đang đăng nhập (trước đây bị lỗi trả về rác của TẤT CẢ user)
+        return docDocumentRepository.findByDeletedAtIsNotNullAndUser_Id(uid).stream()
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
     }
@@ -197,6 +203,9 @@ public class DocumentServiceImpl implements DocumentService {
     public void restoreDocument(Long id) {
         DocDocument doc = docDocumentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
+        if (!doc.getUser().getId().equals(getCurrentUser().getId())) {
+            throw new RuntimeException("Bạn không có quyền khôi phục tài liệu này!");
+        }
         doc.setDeletedAt(null);
         docDocumentRepository.save(doc);
     }
@@ -206,6 +215,9 @@ public class DocumentServiceImpl implements DocumentService {
     public void permanentDeleteDocument(Long id) {
         DocDocument doc = docDocumentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
+        if (!doc.getUser().getId().equals(getCurrentUser().getId())) {
+            throw new RuntimeException("Bạn không có quyền xoá vĩnh viễn tài liệu này!");
+        }
 
         if (doc.getFiles() != null) {
             for (DocFile f : doc.getFiles()) {
@@ -231,6 +243,60 @@ public class DocumentServiceImpl implements DocumentService {
         DocDocument doc = docDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tài liệu"));
         return doc.getFiles().getFirst();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DocFile getFileForPreview(Long id) {
+        DocDocument doc = docDocumentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
+        boolean isOwner = doc.getUser().getId().equals(getCurrentUser().getId());
+        boolean isPublic = doc.getVisibility() == DocumentVisibility.PUBLIC;
+        if (!isOwner && !isPublic) {
+            throw new RuntimeException("Bạn không có quyền xem trước tài liệu này!");
+        }
+        if (doc.getFiles() == null || doc.getFiles().isEmpty()) {
+            throw new RuntimeException("Tài liệu chưa có file!");
+        }
+        return doc.getFiles().getFirst();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CommunityPageResponseDTO getCommunityDocuments(String keyword, Long subjectId, String sortBy, int page, int size) {
+        if (page < 0) page = 0;
+        if (size <= 0) size = 12;
+
+        String kw = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
+        List<DocDocument> all = docDocumentRepository.findCommunityDocuments(DocumentVisibility.PUBLIC, kw, subjectId);
+
+        List<DocumentResponseDTO> mapped = all.stream().map(this::mapToResponseDTO).collect(Collectors.toList());
+
+        java.util.Comparator<DocumentResponseDTO> comparator;
+        if ("downloads".equalsIgnoreCase(sortBy)) {
+            comparator = java.util.Comparator.comparing(
+                    (DocumentResponseDTO d) -> d.getDownloadCount() == null ? 0L : d.getDownloadCount()
+            ).reversed();
+        } else if ("rating".equalsIgnoreCase(sortBy)) {
+            comparator = java.util.Comparator.comparing(
+                    (DocumentResponseDTO d) -> d.getAverageRating() == null ? 0.0 : d.getAverageRating()
+            ).reversed();
+        } else {
+            // mặc định: mới nhất trước
+            comparator = java.util.Comparator.comparing(
+                    DocumentResponseDTO::getCreatedAt,
+                    java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())
+            ).reversed();
+        }
+        mapped.sort(comparator);
+
+        long totalItems = mapped.size();
+        int totalPages = (int) Math.ceil(totalItems / (double) size);
+        int fromIndex = Math.min(page * size, mapped.size());
+        int toIndex = Math.min(fromIndex + size, mapped.size());
+        List<DocumentResponseDTO> pageItems = mapped.subList(fromIndex, toIndex);
+
+        return new CommunityPageResponseDTO(pageItems, page, size, totalItems, totalPages);
     }
 
     @Override

@@ -26,10 +26,11 @@ export default function AppLayout() {
           {isAuthenticated ? (
             <>
               <Link to={ROUTES.DOCUMENTS}>Tài liệu</Link>
-              <Link to={ROUTES.TRASH}>Thùng rác</Link>
+             <Link to="/trash">Thùng rác</Link>
               <Link to={ROUTES.AI_CHAT}>AI Chat</Link>
               <Link to={ROUTES.DASHBOARD}>Dashboard</Link>
               <Link to={ROUTES.PROFILE}>Hồ sơ</Link>
+              <Link to={ROUTES.COMMUNITY}>Cộng đồng</Link>
               <span className="app-header__user">{user?.fullName}</span>
               <button className="app-header__logout" onClick={handleLogout}>
                 Đăng xuất
