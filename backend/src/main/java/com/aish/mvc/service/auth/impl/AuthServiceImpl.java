@@ -1,4 +1,4 @@
-package com.aish.mvc.service.auth;
+package com.aish.mvc.service.auth.impl;
 
 import com.aish.mvc.dto.auth.AuthResponse;
 import com.aish.mvc.dto.auth.LoginRequest;
@@ -14,6 +14,8 @@ import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.repository.auth.AuthEmailVerificationRepository;
 import com.aish.mvc.repository.auth.AuthRoleRepository;
 import com.aish.mvc.repository.auth.AuthUserRepository;
+import com.aish.mvc.service.auth.AuthService;
+import com.aish.mvc.service.auth.EmailService;
 import com.aish.mvc.service.auth.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -130,6 +132,7 @@ public class AuthServiceImpl implements AuthService {
         user.setStatus(UserStatus.ACTIVE);
         userRepo.save(user);
     }
+
     @Override
     public void resendOtp(String email) {
         AuthAccount account = accountRepo.findByIdentifier(email).orElseThrow(() -> new RuntimeException("Email not found"));
@@ -141,12 +144,16 @@ public class AuthServiceImpl implements AuthService {
         verification.setIsUsed(false);
         verification.setExpiresAt(Instant.now().plusSeconds(120));
         emailVerificationRepo.save(verification);
-        // Sau khi có EmailService
         try {
             emailService.sendOtpEmail(email, otp);
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("[DEV] Email failed, NEW OTP = " + otp);
         }
+    }
+
+    @Override
+    public void logout(String accessToken) {
+
     }
 }

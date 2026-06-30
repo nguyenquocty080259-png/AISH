@@ -1,4 +1,4 @@
-package com.aish.mvc.service.doc;
+package com.aish.mvc.service.doc.impl;
 
 import com.aish.mvc.dto.doc.CommentDTO;
 import com.aish.mvc.dto.doc.DocumentResponseDTO;
@@ -9,6 +9,7 @@ import com.aish.mvc.entity.enums.DocumentVisibility;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.repository.auth.AuthUserRepository;
 import com.aish.mvc.repository.doc.*;
+import com.aish.mvc.service.doc.DocumentService;
 import com.aish.mvc.service.stor.CloudinaryService;
 import com.aish.mvc.service.stor.FileStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,16 +17,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import com.aish.mvc.entity.doc.Subject;
-import com.aish.mvc.repository.doc.SubjectRepository;
+
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
-import com.aish.mvc.entity.doc.Tag;
-import com.aish.mvc.repository.doc.TagRepository;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class DocumentServiceImpl implements DocumentService {
@@ -33,7 +31,6 @@ public class DocumentServiceImpl implements DocumentService {
     @Autowired private DocDocumentRepository docDocumentRepository;
     @Autowired private DocFileRepository docFileRepository;
     @Autowired private FileStorageService fileStorageService;
-    @Autowired private TagRepository tagRepository;
     @Autowired private CommentRepository commentRepository;
     @Autowired private FavoriteRepository favoriteRepository;
     @Autowired private RatingRepository ratingRepository;
@@ -43,7 +40,6 @@ public class DocumentServiceImpl implements DocumentService {
     @Autowired private SubjectRepository subjectRepository;
     @Autowired private CloudinaryService cloudinaryService;
 
-    // Lấy user đang đăng nhập từ token (JwtAuthFilter đã set email làm principal)
     private AuthUser getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return authAccountRepository.findByIdentifier(email)
@@ -60,8 +56,8 @@ public class DocumentServiceImpl implements DocumentService {
                 .collect(Collectors.toList());
     }
 
-    // ===== HÀM CHUNG: tạo document + tags (chưa gắn file) =====
-    private DocDocument buildDocument(String title, String description, Long subjectId, List<String> tagNames) {
+    // Tạo document + gắn nhiều môn học (chưa gắn file)
+    private DocDocument buildDocument(String title, String description, java.util.List<Long> subjectIds) {
         DocDocument doc = new DocDocument();
         doc.setTitle(title);
         doc.setDescription(description);
@@ -69,31 +65,21 @@ public class DocumentServiceImpl implements DocumentService {
         doc.setStatus(DocumentStatus.COMPLETED);
         doc.setVisibility(DocumentVisibility.PUBLIC);
 
-        if (subjectId != null) {
-            Subject subject = subjectRepository.findById(subjectId).orElse(null);
-            doc.setSubject(subject);
-        }
-
-        if (tagNames != null && !tagNames.isEmpty()) {
-            Set<Tag> tags = new HashSet<>();
-            for (String name : tagNames) {
-                if (name == null || name.trim().isEmpty()) continue;
-                String clean = name.trim();
-                Tag tag = tagRepository.findByName(clean)
-                        .orElseGet(() -> tagRepository.save(Tag.builder().name(clean).build()));
-                tags.add(tag);
+        if (subjectIds != null && !subjectIds.isEmpty()) {
+            Set<Subject> subjects = new HashSet<>();
+            for (Long sid : subjectIds) {
+                if (sid == null) continue;
+                subjectRepository.findById(sid).ifPresent(subjects::add);
             }
-            doc.setTags(tags);
+            doc.setSubjects(subjects);
         }
         return docDocumentRepository.save(doc);
     }
 
-    // ===== LUỒNG 1: Upload file LÊN SERVER (ổ đĩa local) =====
     @Override
     @Transactional
-    public DocumentResponseDTO uploadDocumentToServer(String title, String description, Long subjectId,
-                                                      List<String> tagNames, MultipartFile file) {
-        DocDocument savedDoc = buildDocument(title, description, subjectId, tagNames);
+    public DocumentResponseDTO uploadDocumentToServer(String title, String description, java.util.List<Long> subjectIds, MultipartFile file) {
+        DocDocument savedDoc = buildDocument(title, description, subjectIds);
 
         String storedFileName = fileStorageService.storeFile(file);
 
@@ -111,12 +97,10 @@ public class DocumentServiceImpl implements DocumentService {
         return mapToResponseDTO(savedDoc);
     }
 
-    // ===== LUỒNG 2: Upload file LÊN CLOUD (Cloudinary) =====
     @Override
     @Transactional
-    public DocumentResponseDTO uploadDocumentToCloud(String title, String description, Long subjectId,
-                                                     List<String> tagNames, MultipartFile file) {
-        DocDocument savedDoc = buildDocument(title, description, subjectId, tagNames);
+    public DocumentResponseDTO uploadDocumentToCloud(String title, String description, java.util.List<Long> subjectIds, MultipartFile file) {
+        DocDocument savedDoc = buildDocument(title, description, subjectIds);
 
         Map<String, String> uploaded = cloudinaryService.upload(file);
 
@@ -135,13 +119,11 @@ public class DocumentServiceImpl implements DocumentService {
         return mapToResponseDTO(savedDoc);
     }
 
-    // LOGIC TƯƠNG TÁC 1: Thêm bình luận
     @Override
     @Transactional
     public void addComment(Long documentId, String content) {
         DocDocument doc = docDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
-
         Comment comment = Comment.builder()
                 .document(doc)
                 .user(getCurrentUser())
@@ -150,7 +132,6 @@ public class DocumentServiceImpl implements DocumentService {
         commentRepository.save(comment);
     }
 
-    // LOGIC TƯƠNG TÁC 2: Toggle Favorite
     @Override
     @Transactional
     public void toggleFavorite(Long documentId) {
@@ -167,13 +148,11 @@ public class DocumentServiceImpl implements DocumentService {
         }
     }
 
-    // LOGIC TƯƠNG TÁC 3: Đánh giá sao
     @Override
     @Transactional
     public void rateDocument(Long documentId, Integer star) {
         DocDocument doc = docDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
-
         Rating rating = Rating.builder()
                 .userId(getCurrentUser().getId())
                 .document(doc)
@@ -183,13 +162,11 @@ public class DocumentServiceImpl implements DocumentService {
         ratingRepository.save(rating);
     }
 
-    // LOGIC TƯƠNG TÁC 4: Ghi nhận Download
     @Override
     @Transactional
     public void logDownload(Long documentId) {
         DocDocument doc = docDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
-
         Download download = Download.builder()
                 .userId(getCurrentUser().getId())
                 .document(doc)
@@ -225,6 +202,31 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
+    @Transactional
+    public void permanentDeleteDocument(Long id) {
+        DocDocument doc = docDocumentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
+
+        if (doc.getFiles() != null) {
+            for (DocFile f : doc.getFiles()) {
+                if ("local".equals(f.getResourceType())) {
+                    fileStorageService.deleteFile(f.getFileUrl());
+                } else if (f.getPublicId() != null) {
+                    try { cloudinaryService.delete(f.getPublicId(), f.getResourceType()); }
+                    catch (Exception ignored) {}
+                }
+            }
+        }
+
+        commentRepository.deleteByDocumentId(id);
+        ratingRepository.deleteByDocumentId(id);
+        favoriteRepository.deleteByDocumentId(id);
+        downloadRepository.deleteByDocumentId(id);
+
+        docDocumentRepository.delete(doc);
+    }
+
+    @Override
     public DocFile getFileByDocumentId(Long documentId) {
         DocDocument doc = docDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tài liệu"));
@@ -247,7 +249,6 @@ public class DocumentServiceImpl implements DocumentService {
         docDocumentRepository.save(doc);
     }
 
-    // Ánh xạ entity -> DTO + tính thống kê
     private DocumentResponseDTO mapToResponseDTO(DocDocument doc) {
         DocumentResponseDTO dto = new DocumentResponseDTO();
         dto.setId(doc.getId());
@@ -256,19 +257,17 @@ public class DocumentServiceImpl implements DocumentService {
         dto.setStatus(doc.getStatus() != null ? doc.getStatus().name() : "COMPLETED");
         dto.setVisibility(doc.getVisibility() != null ? doc.getVisibility().name() : "PUBLIC");
         dto.setCreatedAt(doc.getCreatedAt());
+        dto.setDeletedAt(doc.getDeletedAt());
 
         if (doc.getUser() != null) dto.setOwnerName(doc.getUser().getFullName());
-        if (doc.getFiles() != null && !doc.getFiles().isEmpty()) dto.setFileName(doc.getFiles().getFirst().getFileName());
         if (doc.getFiles() != null && !doc.getFiles().isEmpty()) {
+            dto.setFileName(doc.getFiles().getFirst().getFileName());
             dto.setFileUrl(doc.getFiles().getFirst().getFileUrl());
             dto.setFileType(doc.getFiles().getFirst().getFileType());
         }
-        if (doc.getSubject() != null) {
-            dto.setSubjectId(doc.getSubject().getId());
-            dto.setSubjectName(doc.getSubject().getName());
-        }
-        if (doc.getTags() != null && !doc.getTags().isEmpty()) {
-            dto.setTags(doc.getTags().stream().map(Tag::getName).collect(Collectors.toList()));
+        if (doc.getSubjects() != null && !doc.getSubjects().isEmpty()) {
+            dto.setSubjectIds(doc.getSubjects().stream().map(Subject::getId).collect(Collectors.toList()));
+            dto.setSubjectNames(doc.getSubjects().stream().map(Subject::getName).collect(Collectors.toList()));
         }
 
         dto.setFavoriteCount(favoriteRepository.countByDocumentId(doc.getId()));

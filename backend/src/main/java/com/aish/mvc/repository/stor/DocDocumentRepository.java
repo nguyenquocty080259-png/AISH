@@ -1,4 +1,4 @@
-package com.aish.mvc.repository.doc;
+package com.aish.mvc.repository.stor;
 
 import com.aish.mvc.entity.doc.DocDocument;
 import com.aish.mvc.entity.enums.DocumentVisibility;
@@ -7,17 +7,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.List;
-import java.time.LocalDateTime;
 
 @Repository
 public interface DocDocumentRepository extends JpaRepository<DocDocument, Long> {
     List<DocDocument> findByDeletedAtIsNull();
     List<DocDocument> findByDeletedAtIsNotNull();
 
-    // Tài liệu đã ở thùng rác trước mốc thời gian (để dọn sau 30 ngày)
-    List<DocDocument> findByDeletedAtBefore(LocalDateTime time);
-
-    @Query("SELECT DISTINCT d FROM DocDocument d LEFT JOIN FETCH d.subjects WHERE d.deletedAt IS NULL " +
+    // Tài liệu hiển thị được: PUBLIC của mọi người HOẶC tài liệu của chính user đang xem
+    @Query("SELECT DISTINCT d FROM DocDocument d LEFT JOIN FETCH d.tags WHERE d.deletedAt IS NULL " +
             "AND (d.visibility = :pub OR d.user.id = :userId)")
     List<DocDocument> findVisibleDocuments(@Param("pub") DocumentVisibility pub, @Param("userId") Long userId);
 }

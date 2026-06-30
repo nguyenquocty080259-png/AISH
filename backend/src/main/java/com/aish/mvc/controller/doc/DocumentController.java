@@ -3,24 +3,28 @@ package com.aish.mvc.controller.doc;
 import com.aish.mvc.dto.doc.DocumentResponseDTO;
 import com.aish.mvc.entity.doc.DocFile;
 import com.aish.mvc.service.doc.DocumentService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
-import org.springframework.http.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/documents")
-@CrossOrigin(origins = "http://localhost:5173")
+@RequiredArgsConstructor
 public class DocumentController {
 
-    @Autowired private DocumentService documentService;
-    @Value("${app.upload.dir}") private String uploadDir;
+    private final DocumentService documentService;
+
+    @org.springframework.beans.factory.annotation.Value("${app.upload.dir}")
+    private String uploadDir;
 
     @GetMapping
     public ResponseEntity<List<DocumentResponseDTO>> getAll() {
@@ -32,11 +36,10 @@ public class DocumentController {
     public ResponseEntity<DocumentResponseDTO> uploadServer(
             @RequestParam("title") String title,
             @RequestParam("description") String description,
-            @RequestParam(value = "subjectId", required = false) Long subjectId,
-            @RequestParam(value = "tags", required = false) java.util.List<String> tags,
+            @RequestParam(value = "subjectIds", required = false) java.util.List<Long> subjectIds,
             @RequestParam("file") MultipartFile file) {
         return new ResponseEntity<>(
-                documentService.uploadDocumentToServer(title, description, subjectId, tags, file),
+                documentService.uploadDocumentToServer(title, description, subjectIds, file),
                 HttpStatus.CREATED);
     }
 
@@ -45,11 +48,10 @@ public class DocumentController {
     public ResponseEntity<DocumentResponseDTO> uploadCloud(
             @RequestParam("title") String title,
             @RequestParam("description") String description,
-            @RequestParam(value = "subjectId", required = false) Long subjectId,
-            @RequestParam(value = "tags", required = false) java.util.List<String> tags,
+            @RequestParam(value = "subjectIds", required = false) java.util.List<Long> subjectIds,
             @RequestParam("file") MultipartFile file) {
         return new ResponseEntity<>(
-                documentService.uploadDocumentToCloud(title, description, subjectId, tags, file),
+                documentService.uploadDocumentToCloud(title, description, subjectIds, file),
                 HttpStatus.CREATED);
     }
 
@@ -87,11 +89,19 @@ public class DocumentController {
         documentService.restoreDocument(id);
         return ResponseEntity.ok().build();
     }
+
+    @DeleteMapping("/{id}/permanent")
+    public ResponseEntity<Void> permanentDelete(@PathVariable Long id) {
+        documentService.permanentDeleteDocument(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @PutMapping("/{id}/toggle-visibility")
     public ResponseEntity<Void> toggleVisibility(@PathVariable Long id) {
         documentService.toggleVisibility(id);
         return ResponseEntity.ok().build();
     }
+
     @GetMapping("/{id}")
     public ResponseEntity<DocumentResponseDTO> getOne(@PathVariable Long id) {
         return ResponseEntity.ok(documentService.getDocumentById(id));
@@ -115,7 +125,11 @@ public class DocumentController {
                         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + docFile.getFileName() + "\"")
                         .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
                         .body(resource);
-            } else { return ResponseEntity.notFound().build(); }
-        } catch (Exception e) { return ResponseEntity.internalServerError().build(); }
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }

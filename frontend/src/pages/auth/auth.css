@@ -121,3 +121,61 @@
     color: var(--color-text-secondary);
     cursor: not-allowed;
 }
+
+.auth-divider {
+  margin: 24px 0;
+  text-align: center;
+  position: relative;
+}
+
+.auth-divider::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  border-top: 1px solid #e5e7eb;
+}
+
+.auth-divider span {
+  background: white;
+  padding: 0 12px;
+  position: relative;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.social-login {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.social-btn {
+  text-decoration: none;
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.social-btn:hover {
+  opacity: 0.9;
+}
+
+.social-btn.google {
+  background: #ffffff;
+  border: 1px solid #dcdcdc;
+  color: #333;
+}
+
+.social-btn.github {
+  background: #24292f;
+  color: white;
+}
+
+.social-btn.facebook {
+  background: #1877f2;
+  color: white;
+}
