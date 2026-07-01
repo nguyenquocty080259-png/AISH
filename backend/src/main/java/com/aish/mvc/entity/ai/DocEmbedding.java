@@ -27,6 +27,10 @@ public class DocEmbedding {
     @Column(name = "chunk_index", nullable = false)
     private Integer chunkIndex;
 
+    // Số trang gốc trong PDF (1-based) — bắt buộc để tạo citation (documentId+page+snippet)
+    @Column(name = "page")
+    private Integer page;
+
     // Nội dung đoạn văn gốc — AI dùng cái này để trả lời
     @Column(name = "chunk_text", nullable = false, columnDefinition = "TEXT")
     private String chunkText;

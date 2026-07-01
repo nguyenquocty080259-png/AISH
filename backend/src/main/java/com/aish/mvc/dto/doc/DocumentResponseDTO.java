@@ -29,4 +29,8 @@ public class DocumentResponseDTO {
     private java.util.List<String> subjectNames;
     private String fileUrl;
     private String fileType;
+
+    // DEC-035: kết quả kiểm duyệt AI cho lần chuyển PUBLIC gần nhất.
+    private String moderationStatus; // NOT_REQUIRED | PENDING | APPROVED | REJECTED
+    private String moderationReason;
 }

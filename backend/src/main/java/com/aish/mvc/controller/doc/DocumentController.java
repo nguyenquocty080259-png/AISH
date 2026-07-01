@@ -1,8 +1,11 @@
 package com.aish.mvc.controller.doc;
 
+import com.aish.mvc.dto.doc.AppealRequestDTO;
 import com.aish.mvc.dto.doc.DocumentResponseDTO;
+import com.aish.mvc.dto.doc.ModerationAppealResponseDTO;
 import com.aish.mvc.entity.doc.DocFile;
 import com.aish.mvc.service.doc.DocumentService;
+import com.aish.mvc.service.doc.ModerationAppealService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -22,6 +25,7 @@ import java.util.List;
 public class DocumentController {
 
     private final DocumentService documentService;
+    private final ModerationAppealService moderationAppealService;
 
     @org.springframework.beans.factory.annotation.Value("${app.upload.dir}")
     private String uploadDir;
@@ -112,6 +116,14 @@ public class DocumentController {
     public ResponseEntity<Void> toggleVisibility(@PathVariable Long id) {
         documentService.toggleVisibility(id);
         return ResponseEntity.ok().build();
+    }
+
+    // Kháng cáo thủ công sau khi tài liệu bị AI REJECTED — chỉ chủ tài liệu, KHÔNG gọi AI.
+    @PostMapping("/{id}/appeal")
+    public ResponseEntity<ModerationAppealResponseDTO> appeal(@PathVariable Long id, @RequestBody AppealRequestDTO request) {
+        return new ResponseEntity<>(
+                moderationAppealService.appeal(id, request.getReason()),
+                HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")

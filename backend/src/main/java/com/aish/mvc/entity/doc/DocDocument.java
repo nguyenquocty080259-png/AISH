@@ -3,6 +3,7 @@ package com.aish.mvc.entity.doc;
 import com.aish.mvc.entity.auth.AuthUser;
 import com.aish.mvc.entity.enums.DocumentStatus;
 import com.aish.mvc.entity.enums.DocumentVisibility;
+import com.aish.mvc.entity.enums.ModerationStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -38,6 +39,14 @@ public class DocDocument {
     @Enumerated(EnumType.STRING)
     @Column(name = "visibility", length = 20)
     private DocumentVisibility visibility = DocumentVisibility.PRIVATE;
+
+    // DEC-035: kết quả kiểm duyệt AI cho lần chuyển PUBLIC gần nhất — dùng cho Admin flagged queue.
+    @Enumerated(EnumType.STRING)
+    @Column(name = "moderation_status", length = 20)
+    private ModerationStatus moderationStatus = ModerationStatus.NOT_REQUIRED;
+
+    @Column(name = "moderation_reason", columnDefinition = "TEXT")
+    private String moderationReason;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
