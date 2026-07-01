@@ -44,6 +44,12 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers("/api/ai/chat").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
+
+                        .requestMatchers("/api/admin/**")
+                        .hasRole("ADMIN")
+
+                        .requestMatchers("/api/user/**")
+                        .hasAnyRole("USER","ADMIN")
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth -> oauth

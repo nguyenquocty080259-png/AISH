@@ -1,4 +1,4 @@
-package com.aish.mvc.service.auth;
+package com.aish.mvc.service.auth.impl;
 
 import com.aish.mvc.dto.auth.AuthResponse;
 import com.aish.mvc.dto.auth.LoginRequest;
@@ -14,6 +14,8 @@ import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.repository.auth.AuthEmailVerificationRepository;
 import com.aish.mvc.repository.auth.AuthRoleRepository;
 import com.aish.mvc.repository.auth.AuthUserRepository;
+import com.aish.mvc.service.auth.AuthService;
+import com.aish.mvc.service.auth.EmailService;
 import com.aish.mvc.service.auth.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -64,7 +66,7 @@ public class AuthServiceImpl implements AuthService {
         System.out.println(roleRepo.findAll());
         // cung cấp role USER mặc định cho user mới đăng ký
         AuthRole role = roleRepo.findByRoleName("USER").orElseThrow(() -> new RuntimeException("Role USER not found"));
-        user.getAuthRoles().add(role);
+        user.setRole(role);
         userRepo.save(user);
         // tạo Account
         AuthAccount account = new AuthAccount();
@@ -115,7 +117,24 @@ public class AuthServiceImpl implements AuthService {
         if (!passwordEncoder.matches(request.getPassword(), account.getPasswordHash())) {
             throw new RuntimeException("Invalid password");
         }
-        String accessToken = jwtUtil.generateToken(request.getEmail());
+        AuthUser user = account.getUser();
+
+        if (!account.getIsVerified()) {
+            throw new RuntimeException("Email has not been verified.");
+        }
+
+        if (user.getStatus() == UserStatus.PENDING) {
+            throw new RuntimeException("Your account is pending approval.");
+        }
+
+        if (user.getStatus() == UserStatus.BANNED) {
+            throw new RuntimeException("Your account has been blocked.");
+        }
+
+        AuthRole role = user.getRole();
+
+        String accessToken = jwtUtil.generateToken(account.getIdentifier(),
+                                                    role.getRoleName());
         String refreshToken = UUID.randomUUID().toString();
         return new AuthResponse(accessToken, refreshToken, "Bearer");
     }

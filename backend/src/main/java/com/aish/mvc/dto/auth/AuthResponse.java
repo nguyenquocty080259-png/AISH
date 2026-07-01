@@ -12,4 +12,6 @@ public class AuthResponse {
     private String refreshToken;
 
     private String tokenType;
+
+
 }

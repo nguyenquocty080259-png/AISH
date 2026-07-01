@@ -1,5 +1,6 @@
 package com.aish.mvc.service.auth;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
@@ -17,13 +18,23 @@ public class JwtUtil {
     }
 
     // Tạo token từ email
-    public String generateToken(String email) {
+    public String generateToken(String email, String role) {
         return Jwts.builder()
                 .subject(email)
+                .claim("role", role)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + 86400000)) // 24h
                 .signWith(getKey())
                 .compact();
+    }
+
+    // Lấy toàn bộ Claims
+    private Claims extractClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(getKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     // Lấy email từ token
@@ -34,6 +45,11 @@ public class JwtUtil {
                 .parseSignedClaims(token)
                 .getPayload()
                 .getSubject();
+    }
+
+    // Lấy role
+    public String extractRole(String token) {
+        return extractClaims(token).get("role", String.class);
     }
 
     // Kiểm tra token còn hạn không
