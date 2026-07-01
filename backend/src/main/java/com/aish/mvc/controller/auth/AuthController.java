@@ -35,7 +35,7 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(
             @Valid
             @RequestBody LoginRequest request) {
-        System.out.println("========== LOGIN ==========");
+        System.out.println("========== LOGIN CONTROLLER ==========");
         return ResponseEntity.ok(authService.login(request));
     }
 
@@ -68,7 +68,7 @@ public class AuthController {
     }
 
     @PostMapping(
-            "/verify-forgot-password-otp"
+            "/verify-forgot-password"
     )
     public ResponseEntity<?> verifyForgotPassword(
             @RequestBody
