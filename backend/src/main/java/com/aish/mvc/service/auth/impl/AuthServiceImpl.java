@@ -154,11 +154,6 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void logout(String accessToken) {
-<<<<<<< HEAD
-
-    }
-}
-=======
         String email = jwtUtil.extractUsername(accessToken);
         System.out.println("User logout: " + email);
     }
@@ -207,4 +202,3 @@ public class AuthServiceImpl implements AuthService {
         accountRepo.save(account);
     }
 }
->>>>>>> e5f695c026f758d9986ec637827938b50a294f2b
