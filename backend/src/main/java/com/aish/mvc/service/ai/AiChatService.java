@@ -17,7 +17,7 @@ public class AiChatService {
 
     private final ChatClient chatClient;
 
-    // Thông tin hệ thống — Gemini dùng để trả lời câu hỏi về website
+    // Thông tin hệ thống — AI dùng để trả lời câu hỏi về website
     private static final String SYSTEM_PROMPT = """
             Bạn là trợ lý AI của AISH — nền tảng học tập thông minh dành cho sinh viên.
             
@@ -26,7 +26,7 @@ public class AiChatService {
             - Người dùng có thể upload tài liệu PDF và đặt câu hỏi về nội dung tài liệu
             - Hỗ trợ chat AI thông minh, tìm kiếm tài liệu, và quản lý tài liệu cá nhân
             - Tài liệu có thể để PUBLIC (mọi người xem) hoặc PRIVATE (chỉ mình xem)
-            - Được xây dựng bởi nhóm SWP391
+            - Được xây dựng bởi nhóm 6 SWP391 SE1901 SU26
             
             Nguyên tắc trả lời:
             - Nếu câu hỏi liên quan đến AISH → trả lời dựa trên thông tin hệ thống trên

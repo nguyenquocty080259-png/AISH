@@ -22,11 +22,15 @@ public class DocFile {
     private String fileName; // Tên file gốc (VD: bài_tập.pdf)
 
     @Column(nullable = false)
-    private String fileUrl;  // Đường dẫn lưu trữ (VD: /uploads/abc-123.pdf)
+    private String fileUrl;  // Đường dẫn lưu trữ (local: tên file | cloud: URL Cloudinary)
 
     private String fileType; // Loại file (VD: application/pdf)
 
     private Long fileSize;   // Dung lượng file (bytes)
+
+    private String publicId;     // public_id trên Cloudinary
+
+    private String resourceType; // image | raw | local
 
     // Quan hệ: Nhiều file thuộc về 1 Document
     @ManyToOne(fetch = FetchType.LAZY)
