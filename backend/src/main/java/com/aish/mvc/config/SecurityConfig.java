@@ -1,5 +1,7 @@
 package com.aish.mvc.config;
 
+import com.aish.mvc.exception.RestAccessDeniedHandler;
+import com.aish.mvc.exception.RestAuthenticationEntryPoint;
 import com.aish.mvc.security.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -9,10 +11,9 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
-import org.springframework.http.HttpStatus;
 
 @Configuration
 @EnableWebSecurity
@@ -22,6 +23,8 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
 
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
+    private final RestAccessDeniedHandler restAccessDeniedHandler;
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         System.out.println("========== SECURITY LOADED ==========");
@@ -45,17 +48,26 @@ public class SecurityConfig {
                         )
                         .permitAll()
                         .requestMatchers("/api/ai/chat").permitAll()
+                        // Temporary: task 2A embedding verification hook, see EmbeddingVerificationController
+                        .requestMatchers("/api/ai/debug/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
 
                         .requestMatchers("/api/admin/**")
                         .hasRole("ADMIN")
+
+                        // DEC-030: Subject là admin-managed — chỉ GET (duyệt danh sách) mở cho
+                        // mọi user đã đăng nhập, các thao tác ghi phải là ADMIN.
+                        .requestMatchers(HttpMethod.POST, "/api/subjects/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/subjects/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/subjects/**").hasRole("ADMIN")
 
                         .requestMatchers("/api/user/**")
                         .hasAnyRole("USER","ADMIN")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+                        .authenticationEntryPoint(restAuthenticationEntryPoint)
+                        .accessDeniedHandler(restAccessDeniedHandler)
                 )
                 .oauth2Login(oauth -> oauth
                         .successHandler(oAuth2SuccessHandler)

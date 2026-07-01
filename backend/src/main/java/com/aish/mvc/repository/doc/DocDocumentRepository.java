@@ -20,6 +20,14 @@ public interface DocDocumentRepository extends JpaRepository<DocDocument, Long> 
     // Thùng rác CHỈ của user đang đăng nhập
     List<DocDocument> findByDeletedAtIsNotNullAndUser_Id(Long userId);
 
+    // Tài liệu KHÔNG bị xoá của 1 user — dùng để giới hạn phạm vi truy xuất RAG vào
+    // đúng tài liệu của chính user đó (DEC-011), không rò rỉ private của người khác.
+    List<DocDocument> findByDeletedAtIsNullAndUser_Id(Long userId);
+
+    // Cho GET /api/admin/stats — đếm rẻ, không load entity.
+    long countByDeletedAtIsNull();
+    long countByVisibilityAndDeletedAtIsNull(DocumentVisibility visibility);
+
     @Query("SELECT DISTINCT d FROM DocDocument d LEFT JOIN FETCH d.subjects WHERE d.deletedAt IS NULL " +
             "AND (d.visibility = :pub OR d.user.id = :userId)")
     List<DocDocument> findVisibleDocuments(@Param("pub") DocumentVisibility pub, @Param("userId") Long userId);

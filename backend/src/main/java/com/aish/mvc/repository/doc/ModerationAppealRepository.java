@@ -1,0 +1,23 @@
+package com.aish.mvc.repository.doc;
+
+import com.aish.mvc.entity.doc.ModerationAppeal;
+import com.aish.mvc.entity.enums.AppealStatus;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface ModerationAppealRepository extends JpaRepository<ModerationAppeal, Long> {
+
+    // Hàng chờ Admin: mọi appeal đang ở 1 trạng thái cho trước, cũ nhất trước.
+    List<ModerationAppeal> findByStatusOrderByCreatedAtAsc(AppealStatus status);
+
+    // Lịch sử kháng cáo của 1 tài liệu (mới nhất trước).
+    List<ModerationAppeal> findByDocument_IdOrderByCreatedAtDesc(Long documentId);
+
+    // Guard chống appeal trùng: 1 tài liệu chỉ được có tối đa 1 appeal đang PENDING tại 1 thời điểm.
+    boolean existsByDocument_IdAndStatus(Long documentId, AppealStatus status);
+
+    long countByStatus(AppealStatus status);
+}

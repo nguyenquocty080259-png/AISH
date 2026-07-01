@@ -89,10 +89,22 @@
 			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
 
-		<!-- Spring AI: Groq/OpenAI compatible -->
+		<!-- Spring AI: Groq/OpenAI compatible (chat) -->
 		<dependency>
 			<groupId>org.springframework.ai</groupId>
 			<artifactId>spring-ai-starter-model-openai</artifactId>
+		</dependency>
+
+		<!-- Spring AI: Google Gemini (embedding only — chat autoconfig disabled via application.properties) -->
+		<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-starter-model-google-genai</artifactId>
+		</dependency>
+
+		<!-- Spring AI: in-memory vector store (SimpleVectorStore) -->
+		<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-vector-store</artifactId>
 		</dependency>
 
 		<!-- Spring AI: đọc PDF -->

@@ -1,5 +1,8 @@
 package com.aish.mvc.service.doc.impl;
 
+import com.aish.mvc.dto.ai.ModerationDecision;
+import com.aish.mvc.dto.ai.ModerationResultDTO;
+import com.aish.mvc.dto.doc.AdminDocumentSummaryDTO;
 import com.aish.mvc.dto.doc.CommentDTO;
 import com.aish.mvc.dto.doc.CommunityPageResponseDTO;
 import com.aish.mvc.dto.doc.DocumentResponseDTO;
@@ -7,13 +10,19 @@ import com.aish.mvc.entity.auth.AuthUser;
 import com.aish.mvc.entity.doc.*;
 import com.aish.mvc.entity.enums.DocumentStatus;
 import com.aish.mvc.entity.enums.DocumentVisibility;
+import com.aish.mvc.entity.enums.ModerationStatus;
+import com.aish.mvc.exception.ForbiddenException;
+import com.aish.mvc.exception.ResourceNotFoundException;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.repository.auth.AuthUserRepository;
 import com.aish.mvc.repository.doc.*;
+import com.aish.mvc.service.ai.AiModerationService;
 import com.aish.mvc.service.doc.DocumentService;
 import com.aish.mvc.service.stor.CloudinaryService;
 import com.aish.mvc.service.stor.FileStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,11 +49,12 @@ public class DocumentServiceImpl implements DocumentService {
     @Autowired private AuthAccountRepository authAccountRepository;
     @Autowired private SubjectRepository subjectRepository;
     @Autowired private CloudinaryService cloudinaryService;
+    @Autowired private AiModerationService aiModerationService;
 
     private AuthUser getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return authAccountRepository.findByIdentifier(email)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy user đang đăng nhập"))
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy user đang đăng nhập"))
                 .getUser();
     }
 
@@ -64,7 +74,10 @@ public class DocumentServiceImpl implements DocumentService {
         doc.setDescription(description);
         doc.setUser(getCurrentUser());
         doc.setStatus(DocumentStatus.COMPLETED);
-        doc.setVisibility(DocumentVisibility.PUBLIC);
+        // DEC-006: Private by default — không kiểm duyệt lúc upload, chỉ khi user chủ động
+        // chuyển sang PUBLIC (toggleVisibility) mới bắt buộc AI pre-screen (DEC-035).
+        doc.setVisibility(DocumentVisibility.PRIVATE);
+        doc.setModerationStatus(ModerationStatus.NOT_REQUIRED);
 
         if (subjectIds != null && !subjectIds.isEmpty()) {
             Set<Subject> subjects = new HashSet<>();
@@ -124,7 +137,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Transactional
     public void addComment(Long documentId, String content) {
         DocDocument doc = docDocumentRepository.findById(documentId)
-                .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
         Comment comment = Comment.builder()
                 .document(doc)
                 .user(getCurrentUser())
@@ -153,7 +166,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Transactional
     public void rateDocument(Long documentId, Integer star) {
         DocDocument doc = docDocumentRepository.findById(documentId)
-                .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
         Rating rating = Rating.builder()
                 .userId(getCurrentUser().getId())
                 .document(doc)
@@ -167,7 +180,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Transactional
     public void logDownload(Long documentId) {
         DocDocument doc = docDocumentRepository.findById(documentId)
-                .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
         Download download = Download.builder()
                 .userId(getCurrentUser().getId())
                 .document(doc)
@@ -180,9 +193,9 @@ public class DocumentServiceImpl implements DocumentService {
     @Transactional
     public void deleteDocument(Long id) {
         DocDocument doc = docDocumentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
         if (!doc.getUser().getId().equals(getCurrentUser().getId())) {
-            throw new RuntimeException("Bạn không có quyền xoá tài liệu này!");
+            throw new ForbiddenException("Bạn không có quyền xoá tài liệu này!");
         }
         doc.setDeletedAt(LocalDateTime.now());
         docDocumentRepository.save(doc);
@@ -202,9 +215,9 @@ public class DocumentServiceImpl implements DocumentService {
     @Transactional
     public void restoreDocument(Long id) {
         DocDocument doc = docDocumentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
         if (!doc.getUser().getId().equals(getCurrentUser().getId())) {
-            throw new RuntimeException("Bạn không có quyền khôi phục tài liệu này!");
+            throw new ForbiddenException("Bạn không có quyền khôi phục tài liệu này!");
         }
         doc.setDeletedAt(null);
         docDocumentRepository.save(doc);
@@ -214,9 +227,9 @@ public class DocumentServiceImpl implements DocumentService {
     @Transactional
     public void permanentDeleteDocument(Long id) {
         DocDocument doc = docDocumentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
         if (!doc.getUser().getId().equals(getCurrentUser().getId())) {
-            throw new RuntimeException("Bạn không có quyền xoá vĩnh viễn tài liệu này!");
+            throw new ForbiddenException("Bạn không có quyền xoá vĩnh viễn tài liệu này!");
         }
 
         if (doc.getFiles() != null) {
@@ -241,7 +254,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public DocFile getFileByDocumentId(Long documentId) {
         DocDocument doc = docDocumentRepository.findById(documentId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài liệu"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài liệu"));
         return doc.getFiles().getFirst();
     }
 
@@ -249,14 +262,14 @@ public class DocumentServiceImpl implements DocumentService {
     @Transactional(readOnly = true)
     public DocFile getFileForPreview(Long id) {
         DocDocument doc = docDocumentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
         boolean isOwner = doc.getUser().getId().equals(getCurrentUser().getId());
         boolean isPublic = doc.getVisibility() == DocumentVisibility.PUBLIC;
         if (!isOwner && !isPublic) {
-            throw new RuntimeException("Bạn không có quyền xem trước tài liệu này!");
+            throw new ForbiddenException("Bạn không có quyền xem trước tài liệu này!");
         }
         if (doc.getFiles() == null || doc.getFiles().isEmpty()) {
-            throw new RuntimeException("Tài liệu chưa có file!");
+            throw new ResourceNotFoundException("Tài liệu chưa có file!");
         }
         return doc.getFiles().getFirst();
     }
@@ -303,15 +316,36 @@ public class DocumentServiceImpl implements DocumentService {
     @Transactional
     public void toggleVisibility(Long documentId) {
         DocDocument doc = docDocumentRepository.findById(documentId)
-                .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
         if (!doc.getUser().getId().equals(getCurrentUser().getId())) {
-            throw new RuntimeException("Bạn không có quyền đổi tài liệu này!");
+            throw new ForbiddenException("Bạn không có quyền đổi tài liệu này!");
         }
-        doc.setVisibility(
-                doc.getVisibility() == DocumentVisibility.PUBLIC
-                        ? DocumentVisibility.PRIVATE
-                        : DocumentVisibility.PUBLIC
-        );
+
+        boolean goingPublic = doc.getVisibility() != DocumentVisibility.PUBLIC;
+
+        if (!goingPublic) {
+            // PUBLIC -> PRIVATE: không cần kiểm duyệt, luôn an toàn khi ẩn bớt.
+            doc.setVisibility(DocumentVisibility.PRIVATE);
+            docDocumentRepository.save(doc);
+            return;
+        }
+
+        // -> PUBLIC: bắt buộc AI pre-screen trước (DEC-035).
+        ModerationResultDTO result = aiModerationService.screen(documentId);
+        doc.setModerationReason(result.getReason());
+
+        if (result.getDecision() == ModerationDecision.PASS) {
+            doc.setVisibility(DocumentVisibility.PUBLIC);
+            doc.setModerationStatus(ModerationStatus.APPROVED);
+        }
+        else {
+            // FLAG: KHÔNG public, coi như bị từ chối (REJECTED) — không còn ở trạng thái
+            // "chờ" nữa. Nếu user không đồng ý, họ appeal thủ công (ModerationAppeal,
+            // không qua AI) — appeal đó mới thật sự vào hàng chờ Admin (APPEAL_PENDING).
+            doc.setVisibility(DocumentVisibility.PRIVATE);
+            doc.setModerationStatus(ModerationStatus.REJECTED);
+        }
+
         docDocumentRepository.save(doc);
     }
 
@@ -322,6 +356,8 @@ public class DocumentServiceImpl implements DocumentService {
         dto.setDescription(doc.getDescription());
         dto.setStatus(doc.getStatus() != null ? doc.getStatus().name() : "COMPLETED");
         dto.setVisibility(doc.getVisibility() != null ? doc.getVisibility().name() : "PUBLIC");
+        dto.setModerationStatus(doc.getModerationStatus() != null ? doc.getModerationStatus().name() : ModerationStatus.NOT_REQUIRED.name());
+        dto.setModerationReason(doc.getModerationReason());
         dto.setCreatedAt(doc.getCreatedAt());
         dto.setDeletedAt(doc.getDeletedAt());
 
@@ -352,7 +388,35 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public DocumentResponseDTO getDocumentById(Long id) {
         DocDocument doc = docDocumentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
         return mapToResponseDTO(doc);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<AdminDocumentSummaryDTO> getAllDocumentsForAdmin(Pageable pageable) {
+        return docDocumentRepository.findAll(pageable).map(this::toAdminSummaryDTO);
+    }
+
+    @Override
+    @Transactional
+    public void adminDeleteDocument(Long id) {
+        // DEC-009: admin gỡ tài liệu vi phạm nhưng KHÔNG trở thành owner — document.user
+        // không bị đổi. Không kiểm tra ownership ở đây vì quyền admin đã được xác thực
+        // ở tầng route (/api/admin/** -> hasRole("ADMIN")).
+        DocDocument doc = docDocumentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
+        doc.setDeletedAt(LocalDateTime.now());
+        docDocumentRepository.save(doc);
+    }
+
+    private AdminDocumentSummaryDTO toAdminSummaryDTO(DocDocument doc) {
+        return new AdminDocumentSummaryDTO(
+                doc.getId(),
+                doc.getTitle(),
+                doc.getUser() != null ? doc.getUser().getFullName() : null,
+                doc.getVisibility() != null ? doc.getVisibility().name() : null,
+                doc.getModerationStatus() != null ? doc.getModerationStatus().name() : ModerationStatus.NOT_REQUIRED.name(),
+                doc.getCreatedAt());
     }
 }

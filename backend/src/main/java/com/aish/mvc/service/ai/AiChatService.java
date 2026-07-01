@@ -2,74 +2,166 @@ package com.aish.mvc.service.ai;
 
 import com.aish.mvc.dto.ai.AiChatRequest;
 import com.aish.mvc.dto.ai.AiChatResponse;
+import com.aish.mvc.dto.ai.CitationDTO;
+import com.aish.mvc.entity.doc.DocDocument;
+import com.aish.mvc.repository.auth.AuthAccountRepository;
+import com.aish.mvc.repository.doc.DocDocumentRepository;
+import com.aish.mvc.service.doc.DocEmbeddingService;
+import com.aish.mvc.service.doc.DocumentAccessPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.document.Document;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class AiChatService {
 
-    private final ChatClient chatClient;
+    private static final int TOP_K = 4;
+    // Đo thực tế với gemini-embedding-001 (768d): câu hỏi liên quan trực tiếp tới 1 trang
+    // ra ~0.69 cosine similarity; câu hỏi hoàn toàn không liên quan vẫn ra ~0.41-0.45 (không
+    // phải 0 — Gemini's embedding space có "sàn" khá cao). 0.55 nằm giữa 2 vùng này. Đây là
+    // hiệu chỉnh trên 1 tài liệu demo nhỏ — cần tinh chỉnh lại khi có dữ liệu thật đa dạng hơn.
+    private static final double SIMILARITY_THRESHOLD = 0.55;
+    private static final int SNIPPET_LENGTH = 240;
 
-    // Thông tin hệ thống — AI dùng để trả lời câu hỏi về website
+    private final ChatClient chatClient;
+    private final DocEmbeddingService docEmbeddingService;
+    private final DocumentAccessPort documentAccessPort;
+    private final DocDocumentRepository docDocumentRepository;
+    private final AuthAccountRepository authAccountRepository;
+
+    // Thông tin hệ thống — dùng cho GENERAL mode (không tìm thấy đoạn tài liệu liên quan)
     private static final String SYSTEM_PROMPT = """
             Bạn là trợ lý AI của AISH — nền tảng học tập thông minh dành cho sinh viên.
-            
+
             Thông tin hệ thống AISH:
             - AISH là nền tảng hỗ trợ học tập bằng AI
             - Người dùng có thể upload tài liệu PDF và đặt câu hỏi về nội dung tài liệu
             - Hỗ trợ chat AI thông minh, tìm kiếm tài liệu, và quản lý tài liệu cá nhân
             - Tài liệu có thể để PUBLIC (mọi người xem) hoặc PRIVATE (chỉ mình xem)
             - Được xây dựng bởi nhóm 6 SWP391 SE1901 SU26
-            
+
             Nguyên tắc trả lời:
             - Nếu câu hỏi liên quan đến AISH → trả lời dựa trên thông tin hệ thống trên
             - Nếu không liên quan → trả lời như AI thông thường
             - Luôn trả lời thân thiện, ngắn gọn, bằng tiếng Việt
             """;
 
+    private static final String RAG_PROMPT_TEMPLATE = """
+            Bạn là trợ lý AI của AISH. Dưới đây là các đoạn trích từ (các) tài liệu người dùng đang hỏi.
+            Chỉ trả lời dựa trên nội dung trích dẫn bên dưới. Nếu trích dẫn không đủ để trả lời,
+            hãy nói rõ là tài liệu không có thông tin đó, đừng bịa thêm.
+            Luôn trả lời ngắn gọn, chính xác, bằng tiếng Việt.
+
+            Trích dẫn tài liệu:
+            %s
+            """;
+
     /**
-     * Xử lý câu hỏi theo 3 mode:
-     * - RAG:     có documentId → tìm chunk → trả lời theo tài liệu
-     * - SYSTEM:  không có documentId → trả lời theo thông tin hệ thống
-     * - GENERAL: câu hỏi thông thường (Gemini tự xử lý trong system prompt)
+     * Early-stop hybrid (DEC-027): thử từng tier theo thứ tự ưu tiên, dừng ngay ở tier
+     * đầu tiên có kết quả đủ tốt (non-empty sau ngưỡng similarity).
+     * Tier 1: tài liệu đang mở (documentId trong request), nếu có — DEC-011 kiểm tra quyền xem trước.
+     * Tier 2: các tài liệu khác của chính user đang đăng nhập (không đụng private của người khác).
+     * Tier 3: GENERAL — không tìm thấy đoạn liên quan, trả lời bằng kiến thức chung (DEC-028).
      */
     public AiChatResponse chat(AiChatRequest request) {
-        if (request.getDocumentId() != null) {
-            return chatWithDocument(request);
+        String message = request.getMessage();
+        Long documentId = request.getDocumentId();
+        Long currentUserId = currentUserIdOrNull();
+
+        if (documentId != null) {
+            if (!documentAccessPort.isAvailableTo(documentId, currentUserId)) {
+                throw new RuntimeException("Bạn không có quyền hỏi AI về tài liệu này!");
+            }
+            List<Document> hits = docEmbeddingService.retrieveChunks(message, List.of(documentId), TOP_K, SIMILARITY_THRESHOLD);
+            if (!hits.isEmpty()) {
+                return buildRagResponse(message, hits);
+            }
         }
-        return chatWithSystem(request.getMessage());
+
+        if (currentUserId != null) {
+            List<Long> ownDocIds = docDocumentRepository.findByDeletedAtIsNullAndUser_Id(currentUserId).stream()
+                    .map(DocDocument::getId)
+                    .filter(id -> !id.equals(documentId))
+                    .collect(Collectors.toList());
+            if (!ownDocIds.isEmpty()) {
+                List<Document> hits = docEmbeddingService.retrieveChunks(message, ownDocIds, TOP_K, SIMILARITY_THRESHOLD);
+                if (!hits.isEmpty()) {
+                    return buildRagResponse(message, hits);
+                }
+            }
+        }
+
+        return buildGeneralResponse(message);
     }
 
-    // Mode SYSTEM / GENERAL
-    private AiChatResponse chatWithSystem(String userMessage) {
+    private AiChatResponse buildRagResponse(String userMessage, List<Document> hits) {
+        String context = hits.stream()
+                .map(d -> "[Trang " + pageOf(d) + "] " + d.getText())
+                .collect(Collectors.joining("\n\n---\n\n"));
+
+        Prompt prompt = new Prompt(List.of(
+                new SystemMessage(String.format(RAG_PROMPT_TEMPLATE, context)),
+                new UserMessage(userMessage)
+        ));
+
+        String answer = chatClient.prompt(prompt).call().content();
+
+        List<CitationDTO> citations = hits.stream()
+                .map(d -> new CitationDTO(
+                        documentIdOf(d),
+                        (String) d.getMetadata().get("documentTitle"),
+                        pageOf(d),
+                        snippet(d.getText())))
+                .collect(Collectors.toList());
+
+        return new AiChatResponse(answer, "RAG", citations, List.of());
+    }
+
+    private AiChatResponse buildGeneralResponse(String userMessage) {
         Prompt prompt = new Prompt(List.of(
                 new SystemMessage(SYSTEM_PROMPT),
                 new UserMessage(userMessage)
         ));
-
-        String response = chatClient.prompt(prompt)
-                .call()
-                .content();
-
-        return new AiChatResponse(response, "SYSTEM");
+        String answer = chatClient.prompt(prompt).call().content();
+        return new AiChatResponse(answer, "GENERAL", List.of(), List.of());
     }
 
-    // Mode RAG — documentId có → tìm chunk liên quan
-    // DocEmbeddingService sẽ được inject sau khi implement
-    private AiChatResponse chatWithDocument(AiChatRequest request) {
-        // TODO: implement sau khi có DocEmbeddingService
-        // 1. Embed câu hỏi → vector
-        // 2. Tìm top 3 chunk trong document
-        // 3. Ghép context + câu hỏi → gọi Gemini
+    // null = guest hoặc chưa đăng nhập — /api/ai/chat vẫn public, chỉ giới hạn tier 2 khi có user.
+    private Long currentUserIdOrNull() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+            return null;
+        }
+        return authAccountRepository.findByIdentifier(auth.getName())
+                .map(a -> a.getUser().getId())
+                .orElse(null);
+    }
 
-        // Tạm thời fallback về SYSTEM mode
-        return chatWithSystem(request.getMessage());
+    private static Integer pageOf(Document d) {
+        Object page = d.getMetadata().get("page");
+        return page instanceof Integer ? (Integer) page : null;
+    }
+
+    private static Long documentIdOf(Document d) {
+        Object id = d.getMetadata().get("documentId");
+        if (id instanceof Long l) return l;
+        if (id instanceof Number n) return n.longValue();
+        return null;
+    }
+
+    private static String snippet(String text) {
+        if (text == null) return "";
+        String trimmed = text.trim();
+        return trimmed.length() <= SNIPPET_LENGTH ? trimmed : trimmed.substring(0, SNIPPET_LENGTH) + "...";
     }
 }
