@@ -17,7 +17,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthFilter jwtAuthFilter; // ← thêm
+    private final JwtAuthFilter jwtAuthFilter;
 
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     @Bean
@@ -35,13 +35,15 @@ public class SecurityConfig {
                                 "/api/auth/signup",
                                 "/api/auth/verify-otp",
                                 "/api/auth/resend-otp",
-
+                                "/api/auth/forgot-password",
+                                "/api/auth/verify-forgot-password-otp",
+                                "/api/auth/reset-password",
                                 "/oauth2/**",
                                 "/login/oauth2/**"
                         )
                         .permitAll()
                         .requestMatchers("/api/ai/chat").permitAll()
-                        .requestMatchers("/uploads/**").permitAll()   // ← để TRƯỚC anyRequest
+                        .requestMatchers("/uploads/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth -> oauth

@@ -28,3 +28,32 @@ export function getMe() {
 export function logout() {
   return apiClient.post("/auth/logout");
 }
+
+export function forgotPassword(email) {
+  return apiClient.post(
+    "/auth/forgot-password",
+    { email }
+  );
+}
+
+export function verifyForgotPassword(
+  { email, otp }
+) {
+  return apiClient.post(
+    "/auth/verify-forgot-password",
+    { email, otp }
+  );
+}
+
+export function resetPassword(
+  { email, password }
+) {
+  return apiClient.post(
+    "/auth/reset-password",
+    {
+      email,
+      password
+    }
+  );
+}
+
