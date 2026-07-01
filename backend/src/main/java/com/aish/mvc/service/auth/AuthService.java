@@ -5,7 +5,7 @@ import com.aish.mvc.dto.auth.LoginRequest;
 import com.aish.mvc.dto.auth.SignupRequest;
 import com.aish.mvc.dto.auth.VerifyOtpRequest;
 
-public interface AuthService {
+public interface  AuthService {
 
     void signup(SignupRequest request);
 
@@ -17,4 +17,14 @@ public interface AuthService {
 
     void logout(String accessToken);
 
+    void forgotPassword(String email);
+
+    void verifyForgotPasswordOtp(
+            VerifyOtpRequest request
+    );
+
+    void resetPassword(
+            String email,
+            String password
+    );
 }

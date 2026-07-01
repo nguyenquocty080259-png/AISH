@@ -1,7 +1,7 @@
 package com.aish.mvc.service.doc.impl;
 
 import com.aish.mvc.dto.doc.CommentDTO;
-import com.aish.mvc.dto.doc.DocumentDownloadResult;
+import com.aish.mvc.dto.doc.CommunityPageResponseDTO;
 import com.aish.mvc.dto.doc.DocumentResponseDTO;
 import com.aish.mvc.entity.auth.AuthUser;
 import com.aish.mvc.entity.doc.*;
@@ -11,36 +11,27 @@ import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.repository.auth.AuthUserRepository;
 import com.aish.mvc.repository.doc.*;
 import com.aish.mvc.service.doc.DocumentService;
-import com.aish.mvc.service.stor.CloudUploadResult;
 import com.aish.mvc.service.stor.CloudinaryService;
 import com.aish.mvc.service.stor.FileStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 public class DocumentServiceImpl implements DocumentService {
 
-    @Value("${app.upload.dir}")
-    private String uploadDir;
-
     @Autowired private DocDocumentRepository docDocumentRepository;
     @Autowired private DocFileRepository docFileRepository;
     @Autowired private FileStorageService fileStorageService;
-    @Autowired private TagRepository tagRepository;
     @Autowired private CommentRepository commentRepository;
     @Autowired private FavoriteRepository favoriteRepository;
     @Autowired private RatingRepository ratingRepository;
@@ -66,7 +57,8 @@ public class DocumentServiceImpl implements DocumentService {
                 .collect(Collectors.toList());
     }
 
-    private DocDocument buildDocument(String title, String description, Long subjectId, List<String> tagNames) {
+    // Tạo document + gắn nhiều môn học (chưa gắn file)
+    private DocDocument buildDocument(String title, String description, java.util.List<Long> subjectIds) {
         DocDocument doc = new DocDocument();
         doc.setTitle(title);
         doc.setDescription(description);
@@ -74,30 +66,21 @@ public class DocumentServiceImpl implements DocumentService {
         doc.setStatus(DocumentStatus.COMPLETED);
         doc.setVisibility(DocumentVisibility.PUBLIC);
 
-        if (subjectId != null) {
-            Subject subject = subjectRepository.findById(subjectId).orElse(null);
-            doc.setSubject(subject);
-        }
-
-        if (tagNames != null && !tagNames.isEmpty()) {
-            Set<Tag> tags = new HashSet<>();
-            for (String name : tagNames) {
-                if (name == null || name.trim().isEmpty()) continue;
-                String clean = name.trim();
-                Tag tag = tagRepository.findByName(clean)
-                        .orElseGet(() -> tagRepository.save(Tag.builder().name(clean).build()));
-                tags.add(tag);
+        if (subjectIds != null && !subjectIds.isEmpty()) {
+            Set<Subject> subjects = new HashSet<>();
+            for (Long sid : subjectIds) {
+                if (sid == null) continue;
+                subjectRepository.findById(sid).ifPresent(subjects::add);
             }
-            doc.setTags(tags);
+            doc.setSubjects(subjects);
         }
         return docDocumentRepository.save(doc);
     }
 
     @Override
     @Transactional
-    public DocumentResponseDTO uploadDocumentToServer(String title, String description, Long subjectId,
-                                                      List<String> tagNames, MultipartFile file) {
-        DocDocument savedDoc = buildDocument(title, description, subjectId, tagNames);
+    public DocumentResponseDTO uploadDocumentToServer(String title, String description, java.util.List<Long> subjectIds, MultipartFile file) {
+        DocDocument savedDoc = buildDocument(title, description, subjectIds);
 
         String storedFileName = fileStorageService.storeFile(file);
 
@@ -117,11 +100,10 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     @Transactional
-    public DocumentResponseDTO uploadDocumentToCloud(String title, String description, Long subjectId,
-                                                     List<String> tagNames, MultipartFile file) {
-        DocDocument savedDoc = buildDocument(title, description, subjectId, tagNames);
+    public DocumentResponseDTO uploadDocumentToCloud(String title, String description, java.util.List<Long> subjectIds, MultipartFile file) {
+        DocDocument savedDoc = buildDocument(title, description, subjectIds);
 
-        CloudUploadResult uploaded = cloudinaryService.upload(file);
+        com.aish.mvc.service.stor.CloudUploadResult uploaded = cloudinaryService.upload(file);
 
         DocFile docFile = DocFile.builder()
                 .fileName(file.getOriginalFilename())
@@ -143,7 +125,6 @@ public class DocumentServiceImpl implements DocumentService {
     public void addComment(Long documentId, String content) {
         DocDocument doc = docDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
-
         Comment comment = Comment.builder()
                 .document(doc)
                 .user(getCurrentUser())
@@ -173,7 +154,6 @@ public class DocumentServiceImpl implements DocumentService {
     public void rateDocument(Long documentId, Integer star) {
         DocDocument doc = docDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
-
         Rating rating = Rating.builder()
                 .userId(getCurrentUser().getId())
                 .document(doc)
@@ -188,7 +168,6 @@ public class DocumentServiceImpl implements DocumentService {
     public void logDownload(Long documentId) {
         DocDocument doc = docDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
-
         Download download = Download.builder()
                 .userId(getCurrentUser().getId())
                 .document(doc)
@@ -202,6 +181,9 @@ public class DocumentServiceImpl implements DocumentService {
     public void deleteDocument(Long id) {
         DocDocument doc = docDocumentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
+        if (!doc.getUser().getId().equals(getCurrentUser().getId())) {
+            throw new RuntimeException("Bạn không có quyền xoá tài liệu này!");
+        }
         doc.setDeletedAt(LocalDateTime.now());
         docDocumentRepository.save(doc);
     }
@@ -209,7 +191,9 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     @Transactional(readOnly = true)
     public List<DocumentResponseDTO> getDeletedDocuments() {
-        return docDocumentRepository.findByDeletedAtIsNotNull().stream()
+        Long uid = getCurrentUser().getId();
+        // CHỈ trả về rác của user đang đăng nhập (trước đây bị lỗi trả về rác của TẤT CẢ user)
+        return docDocumentRepository.findByDeletedAtIsNotNullAndUser_Id(uid).stream()
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
     }
@@ -219,8 +203,39 @@ public class DocumentServiceImpl implements DocumentService {
     public void restoreDocument(Long id) {
         DocDocument doc = docDocumentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
+        if (!doc.getUser().getId().equals(getCurrentUser().getId())) {
+            throw new RuntimeException("Bạn không có quyền khôi phục tài liệu này!");
+        }
         doc.setDeletedAt(null);
         docDocumentRepository.save(doc);
+    }
+
+    @Override
+    @Transactional
+    public void permanentDeleteDocument(Long id) {
+        DocDocument doc = docDocumentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
+        if (!doc.getUser().getId().equals(getCurrentUser().getId())) {
+            throw new RuntimeException("Bạn không có quyền xoá vĩnh viễn tài liệu này!");
+        }
+
+        if (doc.getFiles() != null) {
+            for (DocFile f : doc.getFiles()) {
+                if ("local".equals(f.getResourceType())) {
+                    fileStorageService.deleteFile(f.getFileUrl());
+                } else if (f.getPublicId() != null) {
+                    try { cloudinaryService.delete(f.getPublicId(), f.getResourceType()); }
+                    catch (Exception ignored) {}
+                }
+            }
+        }
+
+        commentRepository.deleteByDocumentId(id);
+        ratingRepository.deleteByDocumentId(id);
+        favoriteRepository.deleteByDocumentId(id);
+        downloadRepository.deleteByDocumentId(id);
+
+        docDocumentRepository.delete(doc);
     }
 
     @Override
@@ -228,6 +243,60 @@ public class DocumentServiceImpl implements DocumentService {
         DocDocument doc = docDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tài liệu"));
         return doc.getFiles().getFirst();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DocFile getFileForPreview(Long id) {
+        DocDocument doc = docDocumentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
+        boolean isOwner = doc.getUser().getId().equals(getCurrentUser().getId());
+        boolean isPublic = doc.getVisibility() == DocumentVisibility.PUBLIC;
+        if (!isOwner && !isPublic) {
+            throw new RuntimeException("Bạn không có quyền xem trước tài liệu này!");
+        }
+        if (doc.getFiles() == null || doc.getFiles().isEmpty()) {
+            throw new RuntimeException("Tài liệu chưa có file!");
+        }
+        return doc.getFiles().getFirst();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CommunityPageResponseDTO getCommunityDocuments(String keyword, Long subjectId, String sortBy, int page, int size) {
+        if (page < 0) page = 0;
+        if (size <= 0) size = 12;
+
+        String kw = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
+        List<DocDocument> all = docDocumentRepository.findCommunityDocuments(DocumentVisibility.PUBLIC, kw, subjectId);
+
+        List<DocumentResponseDTO> mapped = all.stream().map(this::mapToResponseDTO).collect(Collectors.toList());
+
+        java.util.Comparator<DocumentResponseDTO> comparator;
+        if ("downloads".equalsIgnoreCase(sortBy)) {
+            comparator = java.util.Comparator.comparing(
+                    (DocumentResponseDTO d) -> d.getDownloadCount() == null ? 0L : d.getDownloadCount()
+            ).reversed();
+        } else if ("rating".equalsIgnoreCase(sortBy)) {
+            comparator = java.util.Comparator.comparing(
+                    (DocumentResponseDTO d) -> d.getAverageRating() == null ? 0.0 : d.getAverageRating()
+            ).reversed();
+        } else {
+            // mặc định: mới nhất trước
+            comparator = java.util.Comparator.comparing(
+                    DocumentResponseDTO::getCreatedAt,
+                    java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())
+            ).reversed();
+        }
+        mapped.sort(comparator);
+
+        long totalItems = mapped.size();
+        int totalPages = (int) Math.ceil(totalItems / (double) size);
+        int fromIndex = Math.min(page * size, mapped.size());
+        int toIndex = Math.min(fromIndex + size, mapped.size());
+        List<DocumentResponseDTO> pageItems = mapped.subList(fromIndex, toIndex);
+
+        return new CommunityPageResponseDTO(pageItems, page, size, totalItems, totalPages);
     }
 
     @Override
@@ -246,37 +315,6 @@ public class DocumentServiceImpl implements DocumentService {
         docDocumentRepository.save(doc);
     }
 
-    @Override
-    public DocumentResponseDTO getDocumentById(Long id) {
-        DocDocument doc = docDocumentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
-        return mapToResponseDTO(doc);
-    }
-
-    @Override
-    public DocumentDownloadResult prepareDownload(Long documentId) {
-        DocFile docFile = getFileByDocumentId(documentId);
-        logDownload(documentId);
-        try {
-            String fileUrl = docFile.getFileUrl();
-            Resource resource;
-            if (fileUrl != null && fileUrl.startsWith("http")) {
-                resource = new UrlResource(new java.net.URL(fileUrl));
-            } else {
-                Path filePath = Paths.get(uploadDir).resolve(fileUrl).normalize();
-                resource = new UrlResource(filePath.toUri());
-            }
-            if (!resource.exists() && !resource.isReadable()) {
-                throw new RuntimeException("File không tồn tại hoặc không thể đọc");
-            }
-            return new DocumentDownloadResult(resource, docFile.getFileName());
-        } catch (RuntimeException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new RuntimeException("Lỗi chuẩn bị file tải xuống: " + e.getMessage());
-        }
-    }
-
     private DocumentResponseDTO mapToResponseDTO(DocDocument doc) {
         DocumentResponseDTO dto = new DocumentResponseDTO();
         dto.setId(doc.getId());
@@ -285,19 +323,17 @@ public class DocumentServiceImpl implements DocumentService {
         dto.setStatus(doc.getStatus() != null ? doc.getStatus().name() : "COMPLETED");
         dto.setVisibility(doc.getVisibility() != null ? doc.getVisibility().name() : "PUBLIC");
         dto.setCreatedAt(doc.getCreatedAt());
+        dto.setDeletedAt(doc.getDeletedAt());
 
         if (doc.getUser() != null) dto.setOwnerName(doc.getUser().getFullName());
-        if (doc.getFiles() != null && !doc.getFiles().isEmpty()) dto.setFileName(doc.getFiles().getFirst().getFileName());
         if (doc.getFiles() != null && !doc.getFiles().isEmpty()) {
+            dto.setFileName(doc.getFiles().getFirst().getFileName());
             dto.setFileUrl(doc.getFiles().getFirst().getFileUrl());
             dto.setFileType(doc.getFiles().getFirst().getFileType());
         }
-        if (doc.getSubject() != null) {
-            dto.setSubjectId(doc.getSubject().getId());
-            dto.setSubjectName(doc.getSubject().getName());
-        }
-        if (doc.getTags() != null && !doc.getTags().isEmpty()) {
-            dto.setTags(doc.getTags().stream().map(Tag::getName).collect(Collectors.toList()));
+        if (doc.getSubjects() != null && !doc.getSubjects().isEmpty()) {
+            dto.setSubjectIds(doc.getSubjects().stream().map(Subject::getId).collect(Collectors.toList()));
+            dto.setSubjectNames(doc.getSubjects().stream().map(Subject::getName).collect(Collectors.toList()));
         }
 
         dto.setFavoriteCount(favoriteRepository.countByDocumentId(doc.getId()));
@@ -311,5 +347,12 @@ public class DocumentServiceImpl implements DocumentService {
         dto.setComments(commentDTOs);
 
         return dto;
+    }
+
+    @Override
+    public DocumentResponseDTO getDocumentById(Long id) {
+        DocDocument doc = docDocumentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
+        return mapToResponseDTO(doc);
     }
 }
