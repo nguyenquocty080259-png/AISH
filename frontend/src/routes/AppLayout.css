@@ -1,10 +1,127 @@
-.app-layout {
+.app-shell {
     min-height: 100vh;
+    display: flex;
+}
+
+/* ===== Sidebar (authenticated shell) ===== */
+
+.sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-surface);
+    border-right: 1px solid var(--color-border);
+    padding: var(--spacing-lg) var(--spacing-md);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.sidebar__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-xl);
+    padding: 0 var(--spacing-sm);
+    font-size: var(--title-md);
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.sidebar__brand-icon {
+    font-size: var(--headline-lg);
+    line-height: 1;
+}
+
+.sidebar__nav {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.sidebar__link {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-pill);
+    color: var(--color-text-secondary);
+    font-size: var(--body-sm);
+    font-weight: 500;
+}
+
+.sidebar__link:hover {
+    background-color: var(--color-surface-soft);
+    color: var(--color-primary-dark);
+}
+
+.sidebar__link--active,
+.sidebar__link--active:hover {
+    background-color: var(--color-primary);
+    color: var(--color-surface);
+}
+
+.sidebar__link-icon {
+    font-size: var(--body-lg);
+    line-height: 1;
+}
+
+.sidebar__link--admin {
+    margin-top: var(--spacing-md);
+    padding-top: calc(var(--spacing-md) + var(--spacing-xs));
+    border-top: 1px solid var(--color-border);
+}
+
+.sidebar__footer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-sm) 0;
+    margin-top: var(--spacing-md);
+    border-top: 1px solid var(--color-border);
+}
+
+.sidebar__user {
+    font-size: var(--body-sm);
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.sidebar__logout {
+    align-self: flex-start;
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border);
+    background: none;
+    color: var(--color-text);
+    font-size: var(--body-sm);
+    cursor: pointer;
+}
+
+.sidebar__logout:hover {
+    border-color: var(--color-error);
+    color: var(--color-error);
+}
+
+/* ===== Body (right of sidebar / full width for guests) ===== */
+
+.app-shell__body {
+    flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
 }
 
-.app-header {
+.app-main {
+    flex: 1;
+}
+
+/* ===== Guest top bar (Home/Login/SignUp/AI Chat when not authenticated) ===== */
+
+.guest-topbar {
     height: 64px;
     display: flex;
     align-items: center;
@@ -17,70 +134,55 @@
     z-index: 10;
 }
 
-.app-header__brand {
+.guest-topbar__brand {
     font-size: var(--title-md);
     font-weight: 700;
     color: var(--color-primary);
 }
 
-.app-header__nav {
+.guest-topbar__nav {
     display: flex;
     align-items: center;
     gap: var(--spacing-lg);
     font-size: var(--body-sm);
 }
 
-.app-header__nav a {
+.guest-topbar__nav a {
     color: var(--color-text);
 }
 
-.app-header__nav a:hover {
+.guest-topbar__nav a:hover {
     color: var(--color-primary);
 }
 
-.app-header__user {
-    color: var(--color-text-secondary);
-}
-
-.app-header__logout {
-    padding: var(--spacing-xs) var(--spacing-md);
-    border-radius: var(--radius-pill);
-    border: 1px solid var(--color-border);
-    background: none;
-    color: var(--color-text);
-    cursor: pointer;
-}
-
-.app-header__logout:hover {
-    border-color: var(--color-error);
-    color: var(--color-error);
-}
-
-.app-header__cta {
+.guest-topbar__cta {
     padding: var(--spacing-xs) var(--spacing-md);
     border-radius: var(--radius-pill);
     background-color: var(--color-primary);
     color: var(--color-surface);
 }
 
-.app-header__cta:hover {
+.guest-topbar__cta:hover {
     background-color: var(--color-primary-dark);
 }
 
-.app-main {
-    flex: 1;
-}
-
 @media (max-width: 640px) {
-    .app-header {
+    .sidebar {
+        width: 72px;
+        padding: var(--spacing-lg) var(--spacing-sm);
+    }
+
+    .sidebar__brand-name,
+    .sidebar__link-label,
+    .sidebar__user {
+        display: none;
+    }
+
+    .guest-topbar {
         padding: 0 var(--spacing-md);
     }
 
-    .app-header__nav {
+    .guest-topbar__nav {
         gap: var(--spacing-sm);
-    }
-
-    .app-header__user {
-        display: none;
     }
 }

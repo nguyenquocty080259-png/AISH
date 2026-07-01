@@ -4,6 +4,7 @@ import { ROUTES } from "../constants/routes";
 import AppLayout from "./AppLayout";
 import PrivateRoute from "./PrivateRoute";
 import GuestRoute from "./GuestRoute";
+import AdminRoute from "./AdminRoute";
 
 import LoginPage from "../pages/auth/LoginPage";
 import SignUpPage from "../pages/auth/SignUpPage";
@@ -19,6 +20,7 @@ import CommunityPage from "../pages/community/CommunityPage";
 import DocumentDetailPage from "../pages/document-detail/DocumentDetailPage";
 import ProfilePage from "../pages/profile/ProfilePage";
 import AiChatPage from "../pages/ai-chat/AiChatPage";
+import AdminPlaceholderPage from "../pages/admin/AdminPlaceholderPage";
 import NotFoundPage from "../pages/error/NotFoundPage";
 
 export default function AppRoutes() {
@@ -43,6 +45,10 @@ export default function AppRoutes() {
           <Route path={ROUTES.COMMUNITY} element={<CommunityPage />} />
           <Route path={ROUTES.DOCUMENT_DETAIL} element={<DocumentDetailPage />} />
           <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
+        </Route>
+
+        <Route element={<AdminRoute />}>
+          <Route path={ROUTES.ADMIN} element={<AdminPlaceholderPage />} />
         </Route>
       </Route>
 
