@@ -3,12 +3,19 @@ package com.aish.mvc.service.ai;
 import com.aish.mvc.dto.ai.AiChatRequest;
 import com.aish.mvc.dto.ai.AiChatResponse;
 import com.aish.mvc.dto.ai.CitationDTO;
+import com.aish.mvc.dto.ai.RecommendedDocumentDTO;
+import com.aish.mvc.dto.ai.RelatedDocDTO;
 import com.aish.mvc.entity.doc.DocDocument;
+import com.aish.mvc.entity.enums.DocumentVisibility;
+import com.aish.mvc.entity.enums.ModerationStatus;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.repository.doc.DocDocumentRepository;
+import com.aish.mvc.service.ai.AiRecommendationService;
 import com.aish.mvc.service.doc.DocEmbeddingService;
 import com.aish.mvc.service.doc.DocumentAccessPort;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
@@ -18,12 +25,17 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class AiChatService {
+
+    private static final Logger log = LoggerFactory.getLogger(AiChatService.class);
 
     private static final int TOP_K = 4;
     // Đo thực tế với gemini-embedding-001 (768d): câu hỏi liên quan trực tiếp tới 1 trang
@@ -32,12 +44,15 @@ public class AiChatService {
     // hiệu chỉnh trên 1 tài liệu demo nhỏ — cần tinh chỉnh lại khi có dữ liệu thật đa dạng hơn.
     private static final double SIMILARITY_THRESHOLD = 0.55;
     private static final int SNIPPET_LENGTH = 240;
+    // relatedDocs là side-channel gợi ý (DEC-027) — cố tình nhỏ, không phải kết quả chính.
+    private static final int RELATED_LIMIT = 3;
 
     private final ChatClient chatClient;
     private final DocEmbeddingService docEmbeddingService;
     private final DocumentAccessPort documentAccessPort;
     private final DocDocumentRepository docDocumentRepository;
     private final AuthAccountRepository authAccountRepository;
+    private final AiRecommendationService aiRecommendationService;
 
     // Thông tin hệ thống — dùng cho GENERAL mode (không tìm thấy đoạn tài liệu liên quan)
     private static final String SYSTEM_PROMPT = """
@@ -84,7 +99,7 @@ public class AiChatService {
             }
             List<Document> hits = docEmbeddingService.retrieveChunks(message, List.of(documentId), TOP_K, SIMILARITY_THRESHOLD);
             if (!hits.isEmpty()) {
-                return buildRagResponse(message, hits);
+                return buildRagResponse(message, hits, currentUserId);
             }
         }
 
@@ -96,15 +111,15 @@ public class AiChatService {
             if (!ownDocIds.isEmpty()) {
                 List<Document> hits = docEmbeddingService.retrieveChunks(message, ownDocIds, TOP_K, SIMILARITY_THRESHOLD);
                 if (!hits.isEmpty()) {
-                    return buildRagResponse(message, hits);
+                    return buildRagResponse(message, hits, currentUserId);
                 }
             }
         }
 
-        return buildGeneralResponse(message);
+        return buildGeneralResponse(message, currentUserId);
     }
 
-    private AiChatResponse buildRagResponse(String userMessage, List<Document> hits) {
+    private AiChatResponse buildRagResponse(String userMessage, List<Document> hits, Long currentUserId) {
         String context = hits.stream()
                 .map(d -> "[Trang " + pageOf(d) + "] " + d.getText())
                 .collect(Collectors.joining("\n\n---\n\n"));
@@ -124,16 +139,76 @@ public class AiChatService {
                         snippet(d.getText())))
                 .collect(Collectors.toList());
 
-        return new AiChatResponse(answer, "RAG", citations, List.of());
+        // Side-channel gợi ý (DEC-027), KHÔNG ảnh hưởng câu trả lời chính — dựa trên tài liệu
+        // đang được hỏi (chunk có điểm cao nhất) làm seed cho AiRecommendationService.
+        List<RelatedDocDTO> relatedDocs = relatedToTopHit(hits, currentUserId);
+
+        return new AiChatResponse(answer, "RAG", citations, relatedDocs);
     }
 
-    private AiChatResponse buildGeneralResponse(String userMessage) {
+    private AiChatResponse buildGeneralResponse(String userMessage, Long currentUserId) {
         Prompt prompt = new Prompt(List.of(
                 new SystemMessage(SYSTEM_PROMPT),
                 new UserMessage(userMessage)
         ));
         String answer = chatClient.prompt(prompt).call().content();
-        return new AiChatResponse(answer, "GENERAL", List.of(), List.of());
+
+        // DEC-041: user hỏi về chủ đề mà họ KHÔNG có tài liệu nào (mới rơi vào GENERAL) ->
+        // thử gợi ý tài liệu PUBLIC liên quan tới CHÍNH câu hỏi bằng embedding similarity.
+        // Không tốn thêm lượt gọi LLM (chỉ 1 vector search), giữ đúng tinh thần "lightweight".
+        List<RelatedDocDTO> relatedDocs = suggestPublicDocsForTopic(userMessage, currentUserId);
+
+        return new AiChatResponse(answer, "GENERAL", List.of(), relatedDocs);
+    }
+
+    private List<RelatedDocDTO> relatedToTopHit(List<Document> hits, Long currentUserId) {
+        Long seedDocId = hits.isEmpty() ? null : documentIdOf(hits.get(0));
+        if (seedDocId == null) return List.of();
+        try {
+            return aiRecommendationService.recommendRelatedToDocument(seedDocId, currentUserId, RELATED_LIMIT).stream()
+                    .map(r -> new RelatedDocDTO(r.getDocumentId(), r.getTitle(), r.getOwnerName()))
+                    .collect(Collectors.toList());
+        }
+        catch (Exception e) {
+            // relatedDocs là gợi ý phụ — lỗi ở đây không được làm hỏng câu trả lời chính.
+            log.warn("Không lấy được relatedDocs cho seedDoc={}: {}", seedDocId, e.getMessage());
+            return List.of();
+        }
+    }
+
+    private List<RelatedDocDTO> suggestPublicDocsForTopic(String message, Long currentUserId) {
+        try {
+            List<Long> publicDocIds = docDocumentRepository
+                    .findPublicApprovedDocuments(DocumentVisibility.PUBLIC, ModerationStatus.APPROVED)
+                    .stream()
+                    .map(DocDocument::getId)
+                    .filter(id -> documentAccessPort.isAvailableTo(id, currentUserId))
+                    .collect(Collectors.toList());
+            if (publicDocIds.isEmpty()) return List.of();
+
+            List<Document> hits = docEmbeddingService.retrieveChunks(message, publicDocIds, RELATED_LIMIT, SIMILARITY_THRESHOLD);
+            if (hits.isEmpty()) return List.of();
+
+            Set<Long> uniqueIds = new LinkedHashSet<>();
+            for (Document hit : hits) {
+                Long docId = documentIdOf(hit);
+                if (docId != null) uniqueIds.add(docId);
+            }
+            if (uniqueIds.isEmpty()) return List.of();
+
+            Map<Long, DocDocument> byId = docDocumentRepository.findAllById(uniqueIds).stream()
+                    .collect(Collectors.toMap(DocDocument::getId, d -> d));
+
+            return uniqueIds.stream()
+                    .map(byId::get)
+                    .filter(java.util.Objects::nonNull)
+                    .map(d -> new RelatedDocDTO(d.getId(), d.getTitle(), d.getUser() != null ? d.getUser().getFullName() : null))
+                    .collect(Collectors.toList());
+        }
+        catch (Exception e) {
+            log.warn("Không gợi ý được tài liệu PUBLIC cho GENERAL mode: {}", e.getMessage());
+            return List.of();
+        }
     }
 
     // null = guest hoặc chưa đăng nhập — /api/ai/chat vẫn public, chỉ giới hạn tier 2 khi có user.

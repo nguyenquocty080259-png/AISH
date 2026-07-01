@@ -2,6 +2,7 @@ package com.aish.mvc.repository.doc;
 
 import com.aish.mvc.entity.doc.DocDocument;
 import com.aish.mvc.entity.enums.DocumentVisibility;
+import com.aish.mvc.entity.enums.ModerationStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -43,4 +44,12 @@ public interface DocDocumentRepository extends JpaRepository<DocDocument, Long> 
     List<DocDocument> findCommunityDocuments(@Param("pub") DocumentVisibility pub,
                                              @Param("keyword") String keyword,
                                              @Param("subjectId") Long subjectId);
+
+    // Candidate pool cho recommendations: PUBLIC + đã qua kiểm duyệt AI + chưa xoá.
+    // Về mặt cấu trúc PUBLIC luôn kéo theo APPROVED (toggleVisibility chỉ set PUBLIC khi
+    // PASS/Admin-approve), nhưng lọc rõ ràng ở đây để không phụ thuộc ngầm vào invariant đó.
+    @Query("SELECT DISTINCT d FROM DocDocument d LEFT JOIN FETCH d.subjects " +
+            "WHERE d.deletedAt IS NULL AND d.visibility = :pub AND d.moderationStatus = :approved")
+    List<DocDocument> findPublicApprovedDocuments(@Param("pub") DocumentVisibility pub,
+                                                   @Param("approved") ModerationStatus approved);
 }

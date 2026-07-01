@@ -111,6 +111,8 @@ public class AuthController {
         result.put("email", email);
         result.put("fullName", account.getUser().getFullName());
         result.put("status", account.getUser().getStatus());
+        // Cho phép frontend show/hide nav admin + route-guard trang admin.
+        result.put("role", account.getUser().getRole().getRoleName());
         return ResponseEntity.ok(result);
     }
     @PostMapping("/logout")

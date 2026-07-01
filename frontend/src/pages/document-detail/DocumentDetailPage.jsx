@@ -15,10 +15,13 @@ export default function DocumentDetailPage() {
     setCommentText,
     posting,
     downloading,
+    ingesting,
+    ingested,
     handleToggleFavorite,
     handleRate,
     handleAddComment,
     handleDownload,
+    handleIngest,
     handleToggleVisibility,
     handleDelete,
     goAskAi,
@@ -101,6 +104,17 @@ export default function DocumentDetailPage() {
 
         {isLikelyOwner && (
           <>
+            <button
+              className="detail-btn"
+              onClick={handleIngest}
+              disabled={ingesting}
+            >
+              {ingesting
+                ? "Đang chuẩn bị..."
+                : ingested
+                ? "✓ Đã sẵn sàng cho AI"
+                : "🧠 Chuẩn bị cho AI Chat"}
+            </button>
             <button className="detail-btn" onClick={handleToggleVisibility}>
               Đổi sang {doc.visibility === "PUBLIC" ? "riêng tư" : "công khai"}
             </button>

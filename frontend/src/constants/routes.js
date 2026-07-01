@@ -12,6 +12,11 @@ export const ROUTES = {
   COMMUNITY: "/community",
   PROFILE: "/profile",
   AI_CHAT: "/ai-chat",
+  // Reserved — nav items exist in the sidebar, pages/routes not built yet.
+  SPACES: "/spaces",
+  SHARED: "/shared",
+  FAVORITES: "/favorites",
+  ADMIN: "/admin",
   NOT_FOUND: "/404",
 };
 

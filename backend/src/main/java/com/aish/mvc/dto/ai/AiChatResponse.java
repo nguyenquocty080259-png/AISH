@@ -12,5 +12,5 @@ public class AiChatResponse {
     private String answer;
     private String mode; // "RAG" | "GENERAL"
     private List<CitationDTO> citations;
-    private List<Object> relatedDocs; // luôn [] ở MVP này
+    private List<RelatedDocDTO> relatedDocs;
 }

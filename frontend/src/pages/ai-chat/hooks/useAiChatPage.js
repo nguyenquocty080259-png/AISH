@@ -50,9 +50,18 @@ export function useAiChatPage() {
         documentId: documentId ? Number(documentId) : null,
         conversationId: null,
       });
+      // Backend trả { answer, mode, citations[], relatedDocs[] } (AiChatResponse) -
+      // KHÔNG có field "message". citations/relatedDocs mặc định [] nếu backend không gửi.
       setMessages((prev) => [
         ...prev,
-        { id: `a-${Date.now()}`, role: "ai", text: res.message, mode: res.mode },
+        {
+          id: `a-${Date.now()}`,
+          role: "ai",
+          text: res.answer,
+          mode: res.mode,
+          citations: res.citations || [],
+          relatedDocs: res.relatedDocs || [],
+        },
       ]);
     } catch (err) {
       showError(err.message || "AI hiện không phản hồi được, vui lòng thử lại.");
