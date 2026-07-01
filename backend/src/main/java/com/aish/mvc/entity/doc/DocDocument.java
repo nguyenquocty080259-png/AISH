@@ -9,6 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -51,11 +52,32 @@ public class DocDocument {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // THÊM ĐOÀN NÀY: Lưu thời gian xóa mềm, nếu bằng null nghĩa là file chưa bị xóa
+    // Lưu thời gian xóa mềm, null nghĩa là chưa bị xóa
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
     // Quan hệ với danh sách các file vật lý đính kèm
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<DocFile> files;
+    @Builder.Default
+    private List<DocFile> files = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subject_id")
+    private Subject subject;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "document_tags",
+            joinColumns = @JoinColumn(name = "document_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    @Builder.Default
+    private java.util.Set<Tag> tags = new java.util.HashSet<>();
+
+    // Hàm tiện ích: gắn file vào document theo cả 2 chiều
+    public void addFile(DocFile file) {
+        if (this.files == null) this.files = new ArrayList<>();
+        this.files.add(file);
+        file.setDocument(this);
+    }
 }
