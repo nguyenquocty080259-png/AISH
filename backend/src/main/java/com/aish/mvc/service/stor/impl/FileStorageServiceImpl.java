@@ -31,4 +31,14 @@ public class FileStorageServiceImpl implements FileStorageService {
             throw new RuntimeException("Không thể lưu file: " + e.getMessage());
         }
     }
+
+    @Override
+    public void deleteFile(String fileName) {
+        try {
+            Path path = Paths.get(uploadDir).resolve(fileName).normalize();
+            Files.deleteIfExists(path);
+        } catch (IOException e) {
+            // bỏ qua nếu file không tồn tại
+        }
+    }
 }

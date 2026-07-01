@@ -16,11 +16,12 @@ import java.util.Set;
 public class AuthRole {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "role_name", nullable = false, unique = true)
     private String roleName;
 
-    @ManyToMany(mappedBy = "authRoles")
+    @OneToMany(mappedBy = "role", fetch = FetchType.LAZY)
     private Set<AuthUser> users = new HashSet<>();
 }

@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useDocumentDetailPage } from "./hooks/useDocumentDetailPage";
 import RatingStars from "./components/RatingStars";
 import CommentSection from "./components/CommentSection";
+import PdfViewer from "./components/PdfViewer";
 import { ROUTES } from "../../constants/routes";
 import "./document-detail.css";
 
@@ -50,7 +51,7 @@ export default function DocumentDetailPage() {
 
       <div className="detail-meta">
         <span>Người đăng: {doc.ownerName}</span>
-        {doc.subjectName && <span>Môn: {doc.subjectName}</span>}
+        {doc.subjectNames?.length > 0 && <span>Môn: {doc.subjectNames.join(", ")}</span>}
         <span>Lượt tải: {doc.downloadCount ?? 0}</span>
         <span>Yêu thích: {doc.favoriteCount ?? 0}</span>
         <span>Trạng thái: {doc.visibility === "PUBLIC" ? "Công khai" : "Riêng tư"}</span>
@@ -58,15 +59,33 @@ export default function DocumentDetailPage() {
 
       <p className="detail-desc">{doc.description}</p>
 
-      {doc.tags?.length > 0 && (
-        <div className="detail-tags">
-          {doc.tags.map((tag) => (
-            <span key={tag} className="detail-tag">
-              #{tag}
-            </span>
-          ))}
-        </div>
-      )}
+      {doc.fileUrl && (() => {
+        const fileUrl = doc.fileUrl.startsWith("http")
+          ? doc.fileUrl
+          : `http://localhost:8080/uploads/${doc.fileUrl}`;
+        const type = (doc.fileType || "").toLowerCase();
+        const name = (doc.fileName || "").toLowerCase();
+        const isImage = type.includes("image") || /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(name);
+        const isPdf = type.includes("pdf") || name.endsWith(".pdf");
+
+        return (
+          <div style={{ margin: "16px 0" }}>
+            {isImage && (
+              <img
+                src={fileUrl}
+                alt={doc.title}
+                style={{ maxWidth: "100%", maxHeight: "80vh", borderRadius: 8 }}
+              />
+            )}
+            {isPdf && <PdfViewer fileUrl={fileUrl} />}
+            {!isImage && !isPdf && (
+              <a href={fileUrl} target="_blank" rel="noreferrer">
+                Mở file trong tab mới
+              </a>
+            )}
+          </div>
+        );
+      })()}
 
       <div className="detail-actions">
         <button

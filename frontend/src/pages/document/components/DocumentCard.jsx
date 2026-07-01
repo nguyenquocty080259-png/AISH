@@ -5,8 +5,8 @@ export default function DocumentCard({ doc, onToggleFavorite }) {
   return (
     <div className="doc-card">
       <div className="doc-card__top">
-        {doc.subjectName && (
-          <span className="doc-card__subject">{doc.subjectName}</span>
+        {doc.subjectNames?.length > 0 && (
+          <span className="doc-card__subject">{doc.subjectNames.join(", ")}</span>
         )}
         <button
           type="button"
@@ -25,16 +25,6 @@ export default function DocumentCard({ doc, onToggleFavorite }) {
         {doc.title}
       </Link>
       <p className="doc-card__desc">{doc.description}</p>
-
-      {doc.tags?.length > 0 && (
-        <div className="doc-card__tags">
-          {doc.tags.map((tag) => (
-            <span key={tag} className="doc-card__tag">
-              #{tag}
-            </span>
-          ))}
-        </div>
-      )}
 
       <div className="doc-card__meta">
         <span>{doc.ownerName}</span>
