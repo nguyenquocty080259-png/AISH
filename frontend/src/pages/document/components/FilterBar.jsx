@@ -1,10 +1,7 @@
 export default function FilterBar({
   subjects,
-  tags,
   subjectFilter,
   onSubjectChange,
-  tagFilter,
-  onTagChange,
   onReset,
 }) {
   return (
@@ -17,15 +14,6 @@ export default function FilterBar({
         {subjects.map((subject) => (
           <option key={subject.id} value={subject.id}>
             {subject.name}
-          </option>
-        ))}
-      </select>
-
-      <select value={tagFilter} onChange={(e) => onTagChange(e.target.value)}>
-        <option value="">Tất cả tag</option>
-        {tags.map((tag) => (
-          <option key={tag.id} value={tag.name}>
-            {tag.name}
           </option>
         ))}
       </select>

@@ -39,7 +39,6 @@ public class DocDocument {
     @Column(name = "visibility", length = 20)
     private DocumentVisibility visibility = DocumentVisibility.PRIVATE;
 
-    // Quan hệ với User (Chủ sở hữu)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private AuthUser user;
@@ -52,29 +51,23 @@ public class DocDocument {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Lưu thời gian xóa mềm, null nghĩa là chưa bị xóa
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    // Quan hệ với danh sách các file vật lý đính kèm
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<DocFile> files = new ArrayList<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "subject_id")
-    private Subject subject;
-
+    // 1 tài liệu có nhiều môn học, 1 môn học có nhiều tài liệu (nhiều-nhiều)
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-            name = "document_tags",
+            name = "document_subjects",
             joinColumns = @JoinColumn(name = "document_id"),
-            inverseJoinColumns = @JoinColumn(name = "tag_id")
+            inverseJoinColumns = @JoinColumn(name = "subject_id")
     )
     @Builder.Default
-    private java.util.Set<Tag> tags = new java.util.HashSet<>();
+    private java.util.Set<Subject> subjects = new java.util.HashSet<>();
 
-    // Hàm tiện ích: gắn file vào document theo cả 2 chiều
     public void addFile(DocFile file) {
         if (this.files == null) this.files = new ArrayList<>();
         this.files.add(file);

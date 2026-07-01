@@ -39,13 +39,9 @@ public class AuthUser {
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "auth_user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private Set<AuthRole> authRoles = new HashSet<>();
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id", nullable = false)
+    private AuthRole role;
 
     @OneToOne(mappedBy = "user",
             cascade = CascadeType.ALL,

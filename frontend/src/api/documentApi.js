@@ -14,9 +14,21 @@ export function getTrash() {
   return apiClient.get("/documents/trash").then((res) => res.data);
 }
 
-export function upload(formData) {
-  // formData: title, description, subjectId?, tags[]?, file
-  return apiClient.post("/documents/upload", formData).then((res) => res.data);
+export function getCommunity(params) {
+  // params: { keyword, subjectId, sortBy, page, size }
+  return apiClient.get("/documents/community", { params }).then((res) => res.data);
+}
+
+export function previewFile(id) {
+  return apiClient
+    .get(`/documents/${id}/preview`, { responseType: "blob" })
+    .then((res) => res.data);
+}
+
+export function upload(formData, onProgress) {
+  return apiClient
+    .post("/documents/upload-server", formData, { onUploadProgress: onProgress })
+    .then((res) => res.data);
 }
 
 export function toggleFavorite(id) {
@@ -24,17 +36,19 @@ export function toggleFavorite(id) {
 }
 
 export function addComment(id, content) {
-  // Backend nhận @RequestBody String content (chuỗi thô, không phải object)
   return apiClient.post(`/documents/${id}/comment`, content);
 }
 
 export function rateDocument(id, star) {
-  // Backend nhận star qua query param, không phải body
   return apiClient.post(`/documents/${id}/rate`, null, { params: { star } });
 }
 
 export function deleteDocument(id) {
   return apiClient.delete(`/documents/${id}`);
+}
+
+export function permanentDelete(id) {
+  return apiClient.delete(`/documents/${id}/permanent`);
 }
 
 export function restoreDocument(id) {
@@ -46,6 +60,5 @@ export function toggleVisibility(id) {
 }
 
 export function downloadFile(id) {
-  // Trả về cả response (không chỉ data) để lấy header Content-Disposition
   return apiClient.get(`/documents/${id}/download`, { responseType: "blob" });
 }

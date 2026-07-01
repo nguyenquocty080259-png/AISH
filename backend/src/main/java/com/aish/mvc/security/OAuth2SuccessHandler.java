@@ -72,7 +72,7 @@ public class OAuth2SuccessHandler
         if(socialAccount.isPresent()) {
 
             String jwt =
-                    jwtUtil.generateToken(email);
+                    jwtUtil.generateToken(email, socialAccount.get().getUser().getRole().getRoleName());
 
             response.sendRedirect(
                     "http://localhost:3000/oauth-success?token="
@@ -109,7 +109,7 @@ public class OAuth2SuccessHandler
 
         AuthUser user = new AuthUser();
 
-        user.setStatus(UserStatus.PENDING);
+        user.setStatus(UserStatus.ACTIVE);
 
         user.setFullName(null);
 
@@ -117,7 +117,7 @@ public class OAuth2SuccessHandler
                 roleRepo.findByRoleName("USER")
                         .orElseThrow();
 
-        user.getAuthRoles().add(role);
+        user.setRole(role);
 
         userRepo.save(user);
 
@@ -141,8 +141,20 @@ public class OAuth2SuccessHandler
 
         accountRepo.save(account);
 
+        user = socialAccount.get().getUser();
+
+        if (user.getStatus() == UserStatus.BANNED) {
+            response.sendRedirect("http://localhost:3000/login?error=banned");
+            return;
+        }
+
+        if (user.getStatus() == UserStatus.PENDING) {
+            response.sendRedirect("http://localhost:3000/login?error=pending");
+            return;
+        }
+
         String jwt =
-                jwtUtil.generateToken(email);
+                jwtUtil.generateToken(email, socialAccount.get().getUser().getRole().getRoleName());
 
         response.sendRedirect(
                 "http://localhost:3000/profile/setup?token="
