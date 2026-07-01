@@ -62,7 +62,7 @@ public class AuthServiceImpl implements AuthService {
         user.setStatus(UserStatus.PENDING);
         System.out.println(roleRepo.findAll());
         AuthRole role = roleRepo.findByRoleName("USER").orElseThrow(() -> new RuntimeException("Role USER not found"));
-        user.getAuthRoles().add(role);
+        user.setRole(role);
         userRepo.save(user);
 
         AuthAccount account = new AuthAccount();
@@ -105,7 +105,24 @@ public class AuthServiceImpl implements AuthService {
         if (!passwordEncoder.matches(request.getPassword(), account.getPasswordHash())) {
             throw new RuntimeException("Invalid password");
         }
-        String accessToken = jwtUtil.generateToken(request.getEmail());
+        AuthUser user = account.getUser();
+
+        if (!account.getIsVerified()) {
+            throw new RuntimeException("Email has not been verified.");
+        }
+
+        if (user.getStatus() == UserStatus.PENDING) {
+            throw new RuntimeException("Your account is pending approval.");
+        }
+
+        if (user.getStatus() == UserStatus.BANNED) {
+            throw new RuntimeException("Your account has been blocked.");
+        }
+
+        AuthRole role = user.getRole();
+
+        String accessToken = jwtUtil.generateToken(account.getIdentifier(),
+                                                    role.getRoleName());
         String refreshToken = UUID.randomUUID().toString();
         return new AuthResponse(accessToken, refreshToken, "Bearer");
     }
