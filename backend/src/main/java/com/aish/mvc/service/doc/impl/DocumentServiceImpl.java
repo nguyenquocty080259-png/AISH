@@ -69,6 +69,21 @@ public class DocumentServiceImpl implements DocumentService {
 
     // Tạo document + gắn nhiều môn học (chưa gắn file)
     private DocDocument buildDocument(String title, String description, java.util.List<Long> subjectIds) {
+        // DEC-030: mỗi tài liệu phải thuộc >=1 môn học — chặn TRƯỚC khi tạo document/lưu file,
+        // để không tạo ra document/file mồ côi khi validation fail.
+        if (subjectIds == null || subjectIds.isEmpty()) {
+            throw new IllegalArgumentException("Tài liệu phải thuộc ít nhất 1 môn học.");
+        }
+
+        Set<Subject> subjects = new HashSet<>();
+        for (Long sid : subjectIds) {
+            if (sid == null) continue;
+            subjectRepository.findById(sid).ifPresent(subjects::add);
+        }
+        if (subjects.isEmpty()) {
+            throw new IllegalArgumentException("Không tìm thấy môn học hợp lệ nào trong danh sách đã chọn.");
+        }
+
         DocDocument doc = new DocDocument();
         doc.setTitle(title);
         doc.setDescription(description);
@@ -78,15 +93,8 @@ public class DocumentServiceImpl implements DocumentService {
         // chuyển sang PUBLIC (toggleVisibility) mới bắt buộc AI pre-screen (DEC-035).
         doc.setVisibility(DocumentVisibility.PRIVATE);
         doc.setModerationStatus(ModerationStatus.NOT_REQUIRED);
+        doc.setSubjects(subjects);
 
-        if (subjectIds != null && !subjectIds.isEmpty()) {
-            Set<Subject> subjects = new HashSet<>();
-            for (Long sid : subjectIds) {
-                if (sid == null) continue;
-                subjectRepository.findById(sid).ifPresent(subjects::add);
-            }
-            doc.setSubjects(subjects);
-        }
         return docDocumentRepository.save(doc);
     }
 

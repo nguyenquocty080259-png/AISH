@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import * as documentApi from "../../../api/documentApi";
+import * as aiApi from "../../../api/aiApi";
 import { useAuth } from "../../../hooks/useAuth";
 import { useToast } from "../../../hooks/useToast";
 import { ROUTES, buildRoute } from "../../../constants/routes";
@@ -16,6 +17,10 @@ export function useDocumentDetailPage() {
   const [commentText, setCommentText] = useState("");
   const [posting, setPosting] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [ingesting, setIngesting] = useState(false);
+  // Chỉ phản ánh trạng thái trong phiên hiện tại (không có field ingested ở backend) -
+  // reload trang sẽ mất, không phải bug.
+  const [ingested, setIngested] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -99,6 +104,25 @@ export function useDocumentDetailPage() {
     }
   };
 
+  // Chuẩn bị tài liệu cho AI chat (RAG). Endpoint LUÔN trả 200 kể cả khi không ingest được
+  // (vd file không phải PDF) - phải đọc res.status, không thể chỉ dựa vào catch().
+  const handleIngest = async () => {
+    setIngesting(true);
+    try {
+      const res = await aiApi.ingest(id);
+      if (res.status === "INGESTED") {
+        setIngested(true);
+        showSuccess(res.message || "Đã chuẩn bị tài liệu cho AI chat.");
+      } else {
+        showError(res.message || "Không thể chuẩn bị tài liệu này cho AI.");
+      }
+    } catch (err) {
+      showError(err.message || "Không thể chuẩn bị tài liệu cho AI, vui lòng thử lại.");
+    } finally {
+      setIngesting(false);
+    }
+  };
+
   const handleToggleVisibility = async () => {
     try {
       await documentApi.toggleVisibility(id);
@@ -130,10 +154,13 @@ export function useDocumentDetailPage() {
     setCommentText,
     posting,
     downloading,
+    ingesting,
+    ingested,
     handleToggleFavorite,
     handleRate,
     handleAddComment,
     handleDownload,
+    handleIngest,
     handleToggleVisibility,
     handleDelete,
     goAskAi,

@@ -40,7 +40,14 @@ export default function AiChatPage() {
           </p>
         )}
         {messages.map((m) => (
-          <ChatMessage key={m.id} role={m.role} text={m.text} mode={m.mode} />
+          <ChatMessage
+            key={m.id}
+            role={m.role}
+            text={m.text}
+            mode={m.mode}
+            citations={m.citations}
+            relatedDocs={m.relatedDocs}
+          />
         ))}
         {sending && (
           <ChatMessage role="ai" text="AI đang soạn câu trả lời..." />
