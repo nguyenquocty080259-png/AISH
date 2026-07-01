@@ -6,6 +6,7 @@ import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.service.auth.AuthService;
 import com.aish.mvc.service.auth.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
@@ -24,7 +25,7 @@ public class AuthController {
     private final AuthAccountRepository accountRepo;
 
     @PostMapping("/signup")
-    public ResponseEntity<?> signup(@RequestBody SignupRequest request) {
+    public ResponseEntity<?> signup(@Valid@RequestBody SignupRequest request) {
         System.out.println("SIGNUP API CALLED");
         authService.signup(request);
         return ResponseEntity.ok("Register success");
@@ -32,7 +33,9 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(
+            @Valid
             @RequestBody LoginRequest request) {
+        System.out.println("========== LOGIN ==========");
         return ResponseEntity.ok(authService.login(request));
     }
 
@@ -50,6 +53,7 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(
+            @Valid
             @RequestBody
             ForgotPasswordRequest request
     ) {
@@ -64,7 +68,7 @@ public class AuthController {
     }
 
     @PostMapping(
-            "/verify-forgot-password"
+            "/verify-forgot-password-otp"
     )
     public ResponseEntity<?> verifyForgotPassword(
             @RequestBody
@@ -80,10 +84,9 @@ public class AuthController {
         );
     }
 
-    @PostMapping(
-            "/reset-password"
-    )
+    @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(
+            @Valid
             @RequestBody
             ResetPasswordRequest request
     ) {
