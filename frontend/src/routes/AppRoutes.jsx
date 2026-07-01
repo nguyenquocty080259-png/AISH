@@ -3,10 +3,11 @@ import { ROUTES } from "../constants/routes";
 import AppLayout from "./AppLayout";
 import PrivateRoute from "./PrivateRoute";
 import GuestRoute from "./GuestRoute";
-
 import LoginPage from "../pages/auth/LoginPage";
 import SignUpPage from "../pages/auth/SignUpPage";
 import OtpPage from "../pages/auth/OtpPage";
+import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
 import HomePage from "../pages/home/HomePage";
 import DashboardPage from "../pages/dashboard/DashboardPage";
 import DocumentPage from "../pages/document/DocumentPage";
@@ -14,6 +15,7 @@ import DocumentDetailPage from "../pages/document-detail/DocumentDetailPage";
 import ProfilePage from "../pages/profile/ProfilePage";
 import AiChatPage from "../pages/ai-chat/AiChatPage";
 import NotFoundPage from "../pages/error/NotFoundPage";
+
 
 export default function AppRoutes() {
   return (
@@ -28,6 +30,8 @@ export default function AppRoutes() {
           <Route path={ROUTES.LOGIN} element={<LoginPage />} />
           <Route path={ROUTES.SIGNUP} element={<SignUpPage />} />
           <Route path={ROUTES.VERIFY_OTP} element={<OtpPage />} />
+          <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />}/>
+          <Route path={ROUTES.RESET_PASSWORD} element={<ResetPasswordPage />}/>
         </Route>
 
         {/* Chỉ dành cho user đã đăng nhập */}
@@ -38,7 +42,7 @@ export default function AppRoutes() {
           <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
         </Route>
       </Route>
-
+      
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );

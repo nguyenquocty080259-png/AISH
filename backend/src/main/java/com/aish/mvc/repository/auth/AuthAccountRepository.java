@@ -8,8 +8,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface AuthAccountRepository
-        extends JpaRepository<AuthAccount, Long> {
+public interface AuthAccountRepository extends JpaRepository<AuthAccount, Long> {
 
     Optional<AuthAccount> findByIdentifier(String identifier);
 
