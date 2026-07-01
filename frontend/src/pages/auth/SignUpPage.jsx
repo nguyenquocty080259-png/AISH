@@ -58,7 +58,7 @@ export default function SignUpPage() {
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Tối thiểu 6 ký tự"
+              placeholder="Tối thiểu 8 ký tự và phải có một kí tự in hoa"
             />
           </div>
 

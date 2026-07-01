@@ -120,11 +120,18 @@ public class AuthServiceImpl implements AuthService {
         }
 
         AuthRole role = user.getRole();
-
+        System.out.println(role.getId());
+        System.out.println(role.getRoleName());
         String accessToken = jwtUtil.generateToken(account.getIdentifier(),
                                                     role.getRoleName());
         String refreshToken = UUID.randomUUID().toString();
-        return new AuthResponse(accessToken, refreshToken, "Bearer");
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .tokenType("Bearer")
+                .role(role.getRoleName())
+                .status(user.getStatus().name())
+                .build();
     }
 
     @Override
