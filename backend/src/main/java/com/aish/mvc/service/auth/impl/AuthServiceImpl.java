@@ -39,13 +39,11 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void signup(SignupRequest request) {
         AuthAccount existingAccount = accountRepo.findByIdentifier(request.getEmail()).orElse(null);
-        // Email đã tồn tại================================================================
+        // Email đã tồn tại
         if (existingAccount != null) {
-            // Đã verify => không cho đăng ký lại
             if (Boolean.TRUE.equals(existingAccount.getIsVerified())) {
                 throw new RuntimeException("Email already exists");
             }
-            // Chưa verify => tạo OTP mới và gửi lại
             String otp = String.valueOf((int) (Math.random() * 900000) + 100000);
             AuthEmailVerification verification = new AuthEmailVerification();
             verification.setAuthAccount(existingAccount);
@@ -57,27 +55,28 @@ public class AuthServiceImpl implements AuthService {
             emailService.sendOtpEmail(request.getEmail(), otp);
             return;
         }
-        // Email chưa tồn tại==============================================================
+        // Email chưa tồn tại
 
-        // tạo User
         AuthUser user = new AuthUser();
         user.setFullName(request.getFullName());
         user.setStatus(UserStatus.PENDING);
         System.out.println(roleRepo.findAll());
-        // cung cấp role USER mặc định cho user mới đăng ký
         AuthRole role = roleRepo.findByRoleName("USER").orElseThrow(() -> new RuntimeException("Role USER not found"));
         user.getAuthRoles().add(role);
         userRepo.save(user);
-        // tạo Account
+
         AuthAccount account = new AuthAccount();
         account.setUser(user);
         account.setProvider(AuthProviders.LOCAL);
         account.setIdentifier(request.getEmail());
-        account.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            account.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        } else {
+            account.setPasswordHash(null);
+        }
         accountRepo.save(account);
-        // đã có account và giờ tạo OTP để accept
+
         String otp = String.valueOf((int) (Math.random() * 900000) + 100000);
-        // verify email
         AuthEmailVerification verification = new AuthEmailVerification();
         verification.setAuthAccount(account);
         verification.setVerificationCode(otp);
@@ -98,7 +97,8 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse login(LoginRequest request) {
-        AuthAccount account = accountRepo.findByIdentifier(request.getEmail()).orElseThrow(() -> new RuntimeException("User not found"));
+        AuthAccount account = accountRepo.findByProviderAndIdentifier(AuthProviders.LOCAL, request.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
         if (!Boolean.TRUE.equals(account.getIsVerified())) {
             throw new RuntimeException("Please verify your email first");
         }
@@ -154,6 +154,57 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void logout(String accessToken) {
+<<<<<<< HEAD
 
     }
 }
+=======
+        String email = jwtUtil.extractUsername(accessToken);
+        System.out.println("User logout: " + email);
+    }
+
+    @Override
+    public void forgotPassword(String email) {
+        AuthAccount account = accountRepo.findByIdentifier(email)
+                .orElseThrow(() -> new RuntimeException("Email not found"));
+        String otp = String.valueOf((int) (Math.random() * 900000) + 100000);
+        AuthEmailVerification verification = new AuthEmailVerification();
+        verification.setAuthAccount(account);
+        verification.setVerificationCode(otp);
+        verification.setAttemptCount(0);
+        verification.setIsUsed(false);
+        verification.setExpiresAt(Instant.now().plusSeconds(120));
+        emailVerificationRepo.save(verification);
+        emailService.sendOtpEmail(email, otp);
+    }
+
+    @Override
+    public void verifyForgotPasswordOtp(VerifyOtpRequest request) {
+        AuthAccount account = accountRepo.findByIdentifier(request.getEmail()).orElseThrow(() -> new RuntimeException("Email not found"));
+        AuthEmailVerification verification = emailVerificationRepo.findTopByAuthAccountOrderByCreatedAtDesc(account).orElseThrow(() -> new RuntimeException("OTP not found"));
+        if (Boolean.TRUE.equals(verification.getIsUsed())) {
+            throw new RuntimeException("OTP already used");
+        }
+        if (Instant.now().isAfter(verification.getExpiresAt())) {
+            throw new RuntimeException("OTP expired");
+        }
+        if (!verification.getVerificationCode().equals(request.getOtp())) {
+            throw new RuntimeException("Invalid OTP");
+        }
+        verification.setIsUsed(true);
+        verification.setVerifiedAt(Instant.now());
+        emailVerificationRepo.save(verification);
+        accountRepo.save(account);
+        AuthUser user = account.getUser();
+        userRepo.save(user);
+    }
+
+    @Override
+    public void resetPassword(String email, String password) {
+        AuthAccount account = accountRepo.findByIdentifier(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        account.setPasswordHash(passwordEncoder.encode(password));
+        accountRepo.save(account);
+    }
+}
+>>>>>>> e5f695c026f758d9986ec637827938b50a294f2b

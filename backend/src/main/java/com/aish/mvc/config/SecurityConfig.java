@@ -11,13 +11,15 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.http.HttpStatus;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthFilter jwtAuthFilter; // ← thêm
+    private final JwtAuthFilter jwtAuthFilter;
 
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     @Bean
@@ -35,14 +37,19 @@ public class SecurityConfig {
                                 "/api/auth/signup",
                                 "/api/auth/verify-otp",
                                 "/api/auth/resend-otp",
-
+                                "/api/auth/forgot-password",
+                                "/api/auth/verify-forgot-password-otp",
+                                "/api/auth/reset-password",
                                 "/oauth2/**",
                                 "/login/oauth2/**"
                         )
                         .permitAll()
                         .requestMatchers("/api/ai/chat").permitAll()
-                        .requestMatchers("/uploads/**").permitAll()   // ← để TRƯỚC anyRequest
+                        .requestMatchers("/uploads/**").permitAll()
                         .anyRequest().authenticated()
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                 )
                 .oauth2Login(oauth -> oauth
                         .successHandler(oAuth2SuccessHandler)
