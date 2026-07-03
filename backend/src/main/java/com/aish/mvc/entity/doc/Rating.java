@@ -23,5 +23,6 @@ public class Rating {
     private Integer rating; // Số sao đánh giá
 
     @Column(name = "created_at")
+    @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 }

@@ -12,11 +12,15 @@ export const ROUTES = {
   COMMUNITY: "/community",
   PROFILE: "/profile",
   AI_CHAT: "/ai-chat",
-  // Reserved — nav items exist in the sidebar, pages/routes not built yet.
-  SPACES: "/spaces",
-  SHARED: "/shared",
+  // "Spaces" is the nav label for the Collections feature (backend: /api/collections).
+  SPACES: "/collections",
+  COLLECTION_DETAIL: "/collections/:id",
   FAVORITES: "/favorites",
   ADMIN: "/admin",
+  ADMIN_STATS: "/admin/stats",
+  ADMIN_APPEALS: "/admin/appeals",
+  ADMIN_DOCUMENTS: "/admin/documents",
+  ADMIN_SUBJECTS: "/admin/subjects",
   NOT_FOUND: "/404",
 };
 

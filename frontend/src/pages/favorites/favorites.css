@@ -1,0 +1,25 @@
+.favorites-page {
+    max-width: var(--container-width);
+    margin: 0 auto;
+    padding: var(--spacing-xl);
+}
+
+.favorites-page__loading {
+    color: var(--color-text-secondary);
+    font-size: var(--body-sm);
+}
+
+.favorites-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.favorites-page__unfav {
+    background: none;
+    border: none;
+    font-size: var(--title-md);
+    line-height: 1;
+    color: var(--color-error);
+    cursor: pointer;
+}

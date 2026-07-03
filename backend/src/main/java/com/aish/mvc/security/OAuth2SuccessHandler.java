@@ -154,7 +154,7 @@ public class OAuth2SuccessHandler
         }
 
         String jwt =
-                jwtUtil.generateToken(email, socialAccount.get().getUser().getRole().getRoleName());
+                jwtUtil.creteToken(email);
 
         response.sendRedirect(
                 "http://localhost:3000/profile/setup?token="

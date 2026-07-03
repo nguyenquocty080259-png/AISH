@@ -2,7 +2,9 @@ package com.aish.mvc.repository.doc;
 
 import com.aish.mvc.entity.doc.DocDocument;
 import com.aish.mvc.entity.enums.DocumentVisibility;
+import com.aish.mvc.entity.enums.IngestStatus;
 import com.aish.mvc.entity.enums.ModerationStatus;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,9 +27,22 @@ public interface DocDocumentRepository extends JpaRepository<DocDocument, Long> 
     // đúng tài liệu của chính user đó (DEC-011), không rò rỉ private của người khác.
     List<DocDocument> findByDeletedAtIsNullAndUser_Id(Long userId);
 
+    // Dùng bởi DbSeedRunner để dọn TOÀN BỘ document (kể cả đã ở thùng rác) của các user seed —
+    // không lọc deletedAt vì mục đích là xoá sạch, không phải hiển thị.
+    List<DocDocument> findByUser_IdIn(List<Long> userIds);
+
+    // Trang "Yêu thích": lấy đúng các document theo id đã favorite, loại tài liệu đã vào
+    // thùng rác (deletedAt != null) để không hiện lẫn như một favorite bình thường.
+    List<DocDocument> findByIdInAndDeletedAtIsNull(List<Long> ids);
+
     // Cho GET /api/admin/stats — đếm rẻ, không load entity.
     long countByDeletedAtIsNull();
     long countByVisibilityAndDeletedAtIsNull(DocumentVisibility visibility);
+
+    // DEC-030: chặn xóa subject nếu còn BẤT KỲ document nào tham chiếu (kể cả đã ở thùng rác) —
+    // không lọc deletedAt vì document_subjects vẫn còn row cho tới khi xóa vĩnh viễn, xóa subject
+    // lúc đó sẽ vi phạm FK. Không cần phân biệt "còn 1 subject" hay nhiều: attach = chặn, luôn an toàn.
+    boolean existsBySubjects_Id(Long subjectId);
 
     @Query("SELECT DISTINCT d FROM DocDocument d LEFT JOIN FETCH d.subjects WHERE d.deletedAt IS NULL " +
             "AND (d.visibility = :pub OR d.user.id = :userId)")
@@ -44,6 +59,14 @@ public interface DocDocumentRepository extends JpaRepository<DocDocument, Long> 
     List<DocDocument> findCommunityDocuments(@Param("pub") DocumentVisibility pub,
                                              @Param("keyword") String keyword,
                                              @Param("subjectId") Long subjectId);
+
+    // Dùng bởi BulkIngestRunner: lấy 1 lô tài liệu CHƯA ingest, thứ tự id tăng dần để lần
+    // chạy sau (resume sau khi bị rate-limit dừng giữa chừng) luôn nhặt tiếp đúng thứ tự,
+    // không bỏ sót/không lặp lại tài liệu đã xử lý. JOIN FETCH d.files vì BulkIngestRunner đọc
+    // doc.getFiles() để log định dạng SAU KHI phiên gốc của query này đã đóng (không transactional).
+    @Query("SELECT DISTINCT d FROM DocDocument d LEFT JOIN FETCH d.files " +
+            "WHERE d.ingestStatus = :status ORDER BY d.id ASC")
+    List<DocDocument> findNotIngestedBatch(@Param("status") IngestStatus status, Pageable pageable);
 
     // Candidate pool cho recommendations: PUBLIC + đã qua kiểm duyệt AI + chưa xoá.
     // Về mặt cấu trúc PUBLIC luôn kéo theo APPROVED (toggleVisibility chỉ set PUBLIC khi

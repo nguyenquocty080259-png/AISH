@@ -1,9 +1,24 @@
+import { Link } from "react-router-dom";
+import { ROUTES, buildRoute } from "../../../constants/routes";
+
 // DEC-028: UI phải phân biệt rõ RAG (trả lời từ tài liệu) và GENERAL (kiến thức chung),
 // không để người dùng nhầm là AI luôn đọc tài liệu của họ.
 const MODE_DESCRIPTIONS = {
   RAG: "Trả lời từ tài liệu của bạn",
   GENERAL: "Trả lời từ kiến thức chung, không từ tài liệu của bạn",
 };
+
+// Cầu nối citation -> viewer: truyền qua query param (page, highlight) thay vì route state,
+// vì citation luôn mở ở TAB MỚI (giữ nguyên hội thoại chat) — route state không đi qua được
+// target="_blank", còn query param thì luôn hoạt động và có thể chia sẻ/đánh dấu trang.
+function citationHref(citation) {
+  const params = new URLSearchParams();
+  if (citation.page != null) params.set("page", citation.page);
+  if (citation.snippet) params.set("highlight", citation.snippet);
+  const query = params.toString();
+  const base = buildRoute(ROUTES.DOCUMENT_DETAIL, { id: citation.documentId });
+  return query ? `${base}?${query}` : base;
+}
 
 export default function ChatMessage({
   role,
@@ -29,17 +44,39 @@ export default function ChatMessage({
       {hasCitations && (
         <div className="chat-citations">
           <span className="chat-citations__title">Nguồn trích dẫn</span>
-          {citations.map((c, i) => (
-            <div className="chat-citation" key={`${c.documentId}-${c.page}-${i}`}>
-              <div className="chat-citation__head">
-                <span className="chat-citation__doc">{c.documentTitle}</span>
-                {c.page != null && (
-                  <span className="chat-citation__page">Trang {c.page}</span>
-                )}
+          {citations.map((c, i) =>
+            c.documentId != null ? (
+              <Link
+                to={citationHref(c)}
+                target="_blank"
+                rel="noreferrer"
+                className="chat-citation"
+                key={`${c.documentId}-${c.page}-${i}`}
+                title="Mở tài liệu và chuyển tới đoạn trích này"
+              >
+                <div className="chat-citation__head">
+                  <span className="chat-citation__doc">{c.title}</span>
+                  {c.author && (
+                    <span className="chat-citation__author">{c.author}</span>
+                  )}
+                  {c.page != null && (
+                    <span className="chat-citation__page">Trang {c.page}</span>
+                  )}
+                </div>
+                <p className="chat-citation__snippet">{c.snippet}</p>
+              </Link>
+            ) : (
+              <div className="chat-citation" key={`no-doc-${i}`}>
+                <div className="chat-citation__head">
+                  <span className="chat-citation__doc">{c.title}</span>
+                  {c.page != null && (
+                    <span className="chat-citation__page">Trang {c.page}</span>
+                  )}
+                </div>
+                <p className="chat-citation__snippet">{c.snippet}</p>
               </div>
-              <p className="chat-citation__snippet">{c.snippet}</p>
-            </div>
-          ))}
+            )
+          )}
         </div>
       )}
 

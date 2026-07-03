@@ -15,6 +15,7 @@ export default function AiChatPage() {
     sending,
     handleSend,
     bottomRef,
+    isUnsupportedFormat,
   } = useAiChatPage();
 
   return (
@@ -34,7 +35,9 @@ export default function AiChatPage() {
       <div className="chat-window">
         {messages.length === 0 && (
           <p className="chat-window__empty">
-            {documentId
+            {isUnsupportedFormat
+              ? "AI không đọc được nội dung của tài liệu này, nên không thể trả lời câu hỏi về tài liệu."
+              : documentId
               ? "Đặt câu hỏi liên quan tới tài liệu này để AI hỗ trợ bạn."
               : "Hỏi AI bất cứ điều gì về AISH hoặc kiến thức học tập."}
           </p>
@@ -55,12 +58,20 @@ export default function AiChatPage() {
         <div ref={bottomRef} />
       </div>
 
-      <ChatInput
-        value={input}
-        onChange={setInput}
-        onSubmit={handleSend}
-        sending={sending}
-      />
+      {isUnsupportedFormat ? (
+        <p className="chat-unsupported-notice">
+          ⚠️ AI không đọc được nội dung của tài liệu này (định dạng file không được hỗ
+          trợ), nên không thể trả lời câu hỏi về tài liệu này. Bạn vẫn có thể xem hoặc
+          tải tài liệu như bình thường.
+        </p>
+      ) : (
+        <ChatInput
+          value={input}
+          onChange={setInput}
+          onSubmit={handleSend}
+          sending={sending}
+        />
+      )}
     </div>
   );
 }

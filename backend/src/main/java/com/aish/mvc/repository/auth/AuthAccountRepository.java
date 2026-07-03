@@ -5,6 +5,7 @@ import com.aish.mvc.entity.enums.AuthProviders;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -17,4 +18,7 @@ public interface AuthAccountRepository extends JpaRepository<AuthAccount, Long> 
     Optional<AuthAccount> findByProviderAndIdentifier(AuthProviders provider, String identifier);
 
     boolean existsByProviderAndIdentifier(AuthProviders provider, String identifier);
+
+    // Dùng bởi DbSeedRunner để tìm/dọn tài khoản seed theo domain email quy ước (@seed.aish.local).
+    List<AuthAccount> findByIdentifierEndingWithIgnoreCase(String suffix);
 }

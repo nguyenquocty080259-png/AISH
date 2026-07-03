@@ -134,7 +134,8 @@ public class AiChatService {
         List<CitationDTO> citations = hits.stream()
                 .map(d -> new CitationDTO(
                         documentIdOf(d),
-                        (String) d.getMetadata().get("documentTitle"),
+                        titleOf(d),
+                        authorOf(d),
                         pageOf(d),
                         snippet(d.getText())))
                 .collect(Collectors.toList());
@@ -225,6 +226,16 @@ public class AiChatService {
     private static Integer pageOf(Document d) {
         Object page = d.getMetadata().get("page");
         return page instanceof Integer ? (Integer) page : null;
+    }
+
+    private static String titleOf(Document d) {
+        Object title = d.getMetadata().get("documentTitle");
+        return title instanceof String ? (String) title : null;
+    }
+
+    private static String authorOf(Document d) {
+        Object author = d.getMetadata().get("author");
+        return author instanceof String ? (String) author : null;
     }
 
     private static Long documentIdOf(Document d) {

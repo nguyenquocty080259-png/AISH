@@ -28,6 +28,12 @@ export function useAiChatPage() {
       .catch(() => setContextDoc(null));
   }, [documentId]);
 
+  // Tài liệu có documentId nhưng AI không đọc được nội dung (ảnh, video, file rỗng...) ->
+  // khoá luôn ô nhập để người dùng không hỏi vô ích về tài liệu này.
+  const isUnsupportedFormat = Boolean(
+    documentId && contextDoc?.ingestStatus === "UNSUPPORTED_FORMAT"
+  );
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, sending]);
@@ -79,5 +85,6 @@ export function useAiChatPage() {
     sending,
     handleSend,
     bottomRef,
+    isUnsupportedFormat,
   };
 }

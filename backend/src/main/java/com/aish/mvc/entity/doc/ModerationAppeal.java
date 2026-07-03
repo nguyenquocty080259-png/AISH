@@ -37,6 +37,7 @@ public class ModerationAppeal {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20)
+    @Builder.Default
     private AppealStatus status = AppealStatus.APPEAL_PENDING;
 
     // Ghi chú (tuỳ chọn) của Admin khi approve/reject — không bắt buộc.

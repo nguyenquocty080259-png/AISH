@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { ROUTES } from "../constants/routes";
 
 import AppLayout from "./AppLayout";
@@ -17,11 +17,19 @@ import DashboardPage from "../pages/dashboard/DashboardPage";
 import DocumentPage from "../pages/document/DocumentPage";
 import TrashPage from "../pages/document/TrashPage";
 import CommunityPage from "../pages/community/CommunityPage";
+import CollectionsPage from "../pages/collections/CollectionsPage";
+import CollectionDetailPage from "../pages/collection-detail/CollectionDetailPage";
 import DocumentDetailPage from "../pages/document-detail/DocumentDetailPage";
+import FavoritesPage from "../pages/favorites/FavoritesPage";
 import ProfilePage from "../pages/profile/ProfilePage";
 import AiChatPage from "../pages/ai-chat/AiChatPage";
-import AdminPlaceholderPage from "../pages/admin/AdminPlaceholderPage";
+import AdminLayout from "../pages/admin/AdminLayout";
+import AdminStatsPage from "../pages/admin/stats/AdminStatsPage";
+import AdminAppealsPage from "../pages/admin/appeals/AdminAppealsPage";
+import AdminDocumentsPage from "../pages/admin/documents/AdminDocumentsPage";
+import AdminSubjectsPage from "../pages/admin/subjects/AdminSubjectsPage";
 import NotFoundPage from "../pages/error/NotFoundPage";
+import UiPreviewPage from "../pages/ui-preview/UiPreviewPage";
 
 export default function AppRoutes() {
   return (
@@ -43,12 +51,23 @@ export default function AppRoutes() {
           <Route path={ROUTES.DOCUMENTS} element={<DocumentPage />} />
           <Route path={ROUTES.TRASH} element={<TrashPage />} />
           <Route path={ROUTES.COMMUNITY} element={<CommunityPage />} />
+          <Route path={ROUTES.SPACES} element={<CollectionsPage />} />
+          <Route path={ROUTES.COLLECTION_DETAIL} element={<CollectionDetailPage />} />
           <Route path={ROUTES.DOCUMENT_DETAIL} element={<DocumentDetailPage />} />
+          <Route path={ROUTES.FAVORITES} element={<FavoritesPage />} />
           <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
+          {/* TEMPORARY — internal ui/ primitives preview, not linked in nav. Remove before shipping. */}
+          <Route path="/_ui-preview" element={<UiPreviewPage />} />
         </Route>
 
         <Route element={<AdminRoute />}>
-          <Route path={ROUTES.ADMIN} element={<AdminPlaceholderPage />} />
+          <Route path={ROUTES.ADMIN} element={<AdminLayout />}>
+            <Route index element={<Navigate to={ROUTES.ADMIN_STATS} replace />} />
+            <Route path="stats" element={<AdminStatsPage />} />
+            <Route path="appeals" element={<AdminAppealsPage />} />
+            <Route path="documents" element={<AdminDocumentsPage />} />
+            <Route path="subjects" element={<AdminSubjectsPage />} />
+          </Route>
         </Route>
       </Route>
 

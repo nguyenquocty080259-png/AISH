@@ -3,7 +3,9 @@ package com.aish.mvc.repository.doc;
 import com.aish.mvc.entity.doc.ModerationAppeal;
 import com.aish.mvc.entity.enums.AppealStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -20,4 +22,9 @@ public interface ModerationAppealRepository extends JpaRepository<ModerationAppe
     boolean existsByDocument_IdAndStatus(Long documentId, AppealStatus status);
 
     long countByStatus(AppealStatus status);
+
+    // Dùng bởi DbSeedRunner khi dọn seed cũ.
+    @Transactional
+    @Modifying
+    void deleteByDocumentId(Long documentId);
 }

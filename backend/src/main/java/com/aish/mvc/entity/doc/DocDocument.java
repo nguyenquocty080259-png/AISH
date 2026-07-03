@@ -3,6 +3,7 @@ package com.aish.mvc.entity.doc;
 import com.aish.mvc.entity.auth.AuthUser;
 import com.aish.mvc.entity.enums.DocumentStatus;
 import com.aish.mvc.entity.enums.DocumentVisibility;
+import com.aish.mvc.entity.enums.IngestStatus;
 import com.aish.mvc.entity.enums.ModerationStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -34,19 +35,29 @@ public class DocDocument {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "document_status", length = 20)
+    @Builder.Default
     private DocumentStatus status = DocumentStatus.PROCESSING;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "visibility", length = 20)
+    @Builder.Default
     private DocumentVisibility visibility = DocumentVisibility.PRIVATE;
 
     // DEC-035: kết quả kiểm duyệt AI cho lần chuyển PUBLIC gần nhất — dùng cho Admin flagged queue.
     @Enumerated(EnumType.STRING)
     @Column(name = "moderation_status", length = 20)
+    @Builder.Default
     private ModerationStatus moderationStatus = ModerationStatus.NOT_REQUIRED;
 
     @Column(name = "moderation_reason", columnDefinition = "TEXT")
     private String moderationReason;
+
+    // Trạng thái AI-ingest — set khi ingest() chạy xong (INGESTED) hoặc phát hiện định
+    // dạng không hỗ trợ (UNSUPPORTED_FORMAT), để FE không cần gọi lại ingest để biết.
+    @Enumerated(EnumType.STRING)
+    @Column(name = "ingest_status", length = 20)
+    @Builder.Default
+    private IngestStatus ingestStatus = IngestStatus.NOT_INGESTED;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

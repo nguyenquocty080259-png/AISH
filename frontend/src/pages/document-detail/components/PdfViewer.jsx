@@ -6,11 +6,76 @@ import "react-pdf/dist/Page/TextLayer.css";
 // Cấu hình worker cho pdfjs (bắt buộc), khớp đúng version đang dùng
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
-export default function PdfViewer({ fileUrl }) {
+// Rút gọn + chuẩn hoá snippet trước khi tìm trong text layer — snippet lưu ở AI có thể bị
+// backend cắt ngắn kèm "..." (không thật sự có trong PDF gốc), và text layer của pdf.js có
+// thể tách câu thành nhiều span với khoảng trắng khác bản gốc, nên chỉ dùng một đoạn đầu
+// ngắn (best-effort search), không phải khớp ký tự chính xác tuyệt đối.
+function buildSearchNeedle(rawSnippet) {
+  if (!rawSnippet) return "";
+  let s = rawSnippet.trim();
+  if (s.endsWith("...")) s = s.slice(0, -3).trim();
+  return s.replace(/\s+/g, " ").toLowerCase().slice(0, 80);
+}
+
+// Best-effort: nối text của các span trong text layer (cách nhau 1 khoảng trắng), tìm đoạn
+// khớp needle, rồi tô sáng NGUYÊN VẸN các span nằm trong vùng khớp. Không cắt span ở biên
+// khớp (không tách 1 span làm đôi) — đơn giản, đủ để định vị mắt thường, không cần chính xác
+// từng ký tự vì vốn dĩ không có char offset lưu trong DB.
+function highlightMatchInTextLayer(container, needle) {
+  if (!container || !needle) return false;
+  const spans = Array.from(container.querySelectorAll("span"));
+  if (spans.length === 0) return false;
+
+  const texts = spans.map((el) => (el.textContent || "").toLowerCase());
+  const offsets = [];
+  let pos = 0;
+  texts.forEach((t) => {
+    offsets.push(pos);
+    pos += t.length + 1; // +1 cho khoảng trắng nối giữa các span khi ghép chuỗi
+  });
+  const joined = texts.join(" ");
+
+  const idx = joined.indexOf(needle);
+  if (idx === -1) return false;
+  const matchEnd = idx + needle.length;
+
+  spans.forEach((el, i) => {
+    const start = offsets[i];
+    const end = start + texts[i].length;
+    if (end > idx && start < matchEnd) {
+      el.classList.add("pdf-highlight-mark");
+    }
+  });
+  return true;
+}
+
+export default function PdfViewer({ fileUrl, initialPage, highlightText }) {
   const containerRef = useRef(null);
+  const pageRefs = useRef({});
+  const scrolledRef = useRef(false);
   const [numPages, setNumPages] = useState(0);
   const [width, setWidth] = useState(800);
   const [error, setError] = useState(false);
+
+  // Khi trang/nội dung PDF đổi (vd. re-ingest), cho phép scroll-tới-trang chạy lại.
+  useEffect(() => {
+    scrolledRef.current = false;
+  }, [fileUrl, initialPage]);
+
+  const handlePageTextLayerReady = (pageNum) => {
+    if (pageNum !== initialPage) return;
+    const pageEl = pageRefs.current[pageNum];
+    if (!pageEl) return;
+
+    if (!scrolledRef.current) {
+      pageEl.scrollIntoView({ behavior: "smooth", block: "start" });
+      scrolledRef.current = true;
+    }
+    if (highlightText) {
+      const textLayer = pageEl.querySelector(".react-pdf__Page__textLayer");
+      highlightMatchInTextLayer(textLayer, buildSearchNeedle(highlightText));
+    }
+  };
 
   // Tự co giãn theo bề rộng khung chứa
   useEffect(() => {
@@ -59,6 +124,7 @@ export default function PdfViewer({ fileUrl }) {
         {Array.from({ length: numPages }, (_, i) => (
           <div
             key={i}
+            ref={(el) => (pageRefs.current[i + 1] = el)}
             style={{
               marginBottom: 16,
               boxShadow: "0 2px 12px rgba(0,0,0,0.12)",
@@ -72,6 +138,7 @@ export default function PdfViewer({ fileUrl }) {
               width={width}
               renderTextLayer={true}
               renderAnnotationLayer={false}
+              onRenderTextLayerSuccess={() => handlePageTextLayerReady(i + 1)}
             />
             <span
               style={{
