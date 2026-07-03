@@ -100,6 +100,11 @@ public class DocumentController {
         return ResponseEntity.ok(documentService.getDeletedDocuments());
     }
 
+    @GetMapping("/favorites")
+    public ResponseEntity<List<DocumentResponseDTO>> getFavorites() {
+        return ResponseEntity.ok(documentService.getFavoriteDocuments());
+    }
+
     @PutMapping("/{id}/restore")
     public ResponseEntity<Void> restore(@PathVariable Long id) {
         documentService.restoreDocument(id);

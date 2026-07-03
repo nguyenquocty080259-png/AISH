@@ -8,3 +8,18 @@ import apiClient from "../lib/apiClient";
 export function ingest(documentId) {
   return apiClient.post(`/ai/ingest/${documentId}`).then((res) => res.data);
 }
+
+// GET /api/ai/recommendations?documentId=... - tài liệu PUBLIC liên quan tới 1 tài liệu cho trước.
+// Trả về List<RecommendedDocumentDTO>: { documentId, title, ownerName, subjectNames, favoriteCount,
+// downloadCount, averageRating, score }. Không có storageType.
+export function getRelatedDocuments(documentId) {
+  return apiClient
+    .get("/ai/recommendations", { params: { documentId } })
+    .then((res) => res.data);
+}
+
+// GET /api/ai/recommendations (không kèm documentId) - gợi ý "Dành cho bạn" dựa trên tín hiệu cá nhân.
+// Cùng shape RecommendedDocumentDTO như trên.
+export function getRecommendationsForYou() {
+  return apiClient.get("/ai/recommendations").then((res) => res.data);
+}

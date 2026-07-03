@@ -14,6 +14,10 @@ export function getTrash() {
   return apiClient.get("/documents/trash").then((res) => res.data);
 }
 
+export function listFavorites() {
+  return apiClient.get("/documents/favorites").then((res) => res.data);
+}
+
 export function getCommunity(params) {
   // params: { keyword, subjectId, sortBy, page, size }
   return apiClient.get("/documents/community", { params }).then((res) => res.data);

@@ -28,6 +28,9 @@ public interface DocumentService {
 
     void toggleFavorite(Long documentId);
 
+    // Trang "Yêu thích" của user đang đăng nhập — loại tài liệu đã bị xoá mềm (thùng rác).
+    List<DocumentResponseDTO> getFavoriteDocuments();
+
     void rateDocument(Long documentId, Integer star);
 
     void logDownload(Long documentId);

@@ -1,0 +1,42 @@
+.admin-subjects-page__loading {
+    color: var(--color-text-secondary);
+    font-size: var(--body-sm);
+}
+
+.admin-subjects-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.admin-subjects-form__field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    font-size: var(--body-sm);
+    color: var(--color-text-secondary);
+    font-weight: 600;
+}
+
+.admin-subjects-form__field input,
+.admin-subjects-form__field textarea {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
+    font-size: var(--body-sm);
+    font-weight: 400;
+    color: var(--color-text);
+    font-family: var(--font-family);
+}
+
+.admin-subjects-form__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-sm);
+}
+
+.admin-subjects-page__confirm-text {
+    font-size: var(--body-sm);
+    color: var(--color-text);
+    margin-bottom: var(--spacing-lg);
+}

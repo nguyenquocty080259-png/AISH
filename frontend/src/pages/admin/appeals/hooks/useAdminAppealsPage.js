@@ -1,0 +1,85 @@
+import { useEffect, useState } from "react";
+import * as adminApi from "../../../../api/adminApi";
+import { useToast } from "../../../../hooks/useToast";
+
+export function useAdminAppealsPage() {
+  const { showSuccess, showError } = useToast();
+
+  const [appeals, setAppeals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [statusFilter, setStatusFilter] = useState("");
+
+  const [decisionTarget, setDecisionTarget] = useState(null); // { appeal, action: "approve"|"reject" }
+  const [note, setNote] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const load = async (status) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await adminApi.listAppeals(status || undefined);
+      setAppeals(data);
+    } catch (err) {
+      setError(err.message);
+      showError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load(statusFilter);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter]);
+
+  const openDecisionModal = (appeal, action) => {
+    setDecisionTarget({ appeal, action });
+    setNote("");
+  };
+
+  const closeDecisionModal = () => setDecisionTarget(null);
+
+  const submitDecision = async () => {
+    if (!decisionTarget) return;
+    const { appeal, action } = decisionTarget;
+    setSubmitting(true);
+    try {
+      const updated =
+        action === "approve"
+          ? await adminApi.approveAppeal(appeal.appealId, note.trim())
+          : await adminApi.rejectAppeal(appeal.appealId, note.trim());
+
+      setAppeals((prev) => {
+        // Nếu đang lọc theo 1 status cụ thể và kết quả không còn khớp filter đó nữa
+        // (vd đang xem "Đang chờ" mà vừa duyệt xong) -> bỏ khỏi danh sách hiện tại.
+        if (statusFilter && updated.status !== statusFilter) {
+          return prev.filter((a) => a.appealId !== updated.appealId);
+        }
+        return prev.map((a) => (a.appealId === updated.appealId ? updated : a));
+      });
+
+      showSuccess(action === "approve" ? "Đã duyệt kháng nghị." : "Đã từ chối kháng nghị.");
+      setDecisionTarget(null);
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return {
+    appeals,
+    loading,
+    error,
+    statusFilter,
+    setStatusFilter,
+    decisionTarget,
+    note,
+    setNote,
+    submitting,
+    openDecisionModal,
+    closeDecisionModal,
+    submitDecision,
+  };
+}

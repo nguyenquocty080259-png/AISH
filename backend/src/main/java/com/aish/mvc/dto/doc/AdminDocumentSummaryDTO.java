@@ -14,5 +14,6 @@ public class AdminDocumentSummaryDTO {
     private String ownerName;
     private String visibility;
     private String moderationStatus;
+    private String storageType; // LOCAL | CLOUD — chuẩn hóa từ DocFile.resourceType (DEC-031)
     private LocalDateTime createdAt;
 }

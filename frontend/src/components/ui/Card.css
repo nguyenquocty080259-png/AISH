@@ -1,0 +1,16 @@
+.ui-card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    padding: var(--spacing-lg);
+}
+
+.ui-card--clickable {
+    cursor: pointer;
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.ui-card--clickable:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-md);
+}

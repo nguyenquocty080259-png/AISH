@@ -11,6 +11,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
@@ -59,6 +60,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({ IllegalArgumentException.class, IllegalStateException.class })
     public ResponseEntity<ErrorResponse> handleBadRequest(RuntimeException ex, HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
+
+    // Nhiều service (CollectionServiceImpl, ...) ném ResponseStatusException để tự set status +
+    // message tiếng Việt (409 trùng tên, 400 rỗng, 404 không sở hữu...). Không có handler riêng thì
+    // nó rơi vào handleUnexpected(Exception) bên dưới -> mất status thật lẫn message, chỉ còn 500 chung chung.
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ErrorResponse> handleResponseStatus(ResponseStatusException ex, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
+        String message = ex.getReason() != null ? ex.getReason() : status.getReasonPhrase();
+        return build(status, message, request);
     }
 
     @ExceptionHandler(AuthenticationException.class)

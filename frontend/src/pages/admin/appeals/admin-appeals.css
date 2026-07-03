@@ -1,0 +1,46 @@
+.admin-appeals-page__loading {
+    color: var(--color-text-secondary);
+    font-size: var(--body-sm);
+}
+
+.admin-appeals-page__filter {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
+    background-color: var(--color-surface);
+    font-size: var(--body-sm);
+    color: var(--color-text);
+}
+
+.admin-appeals-page__confirm-text {
+    font-size: var(--body-sm);
+    color: var(--color-text);
+    margin-bottom: var(--spacing-md);
+}
+
+.admin-appeals-page__note-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    font-size: var(--body-sm);
+    color: var(--color-text-secondary);
+    font-weight: 600;
+    margin-bottom: var(--spacing-lg);
+}
+
+.admin-appeals-page__note-field textarea {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
+    font-size: var(--body-sm);
+    font-weight: 400;
+    color: var(--color-text);
+    font-family: var(--font-family);
+    resize: vertical;
+}
+
+.admin-appeals-page__modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-sm);
+}

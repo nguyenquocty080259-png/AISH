@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import * as documentApi from "../../../api/documentApi";
 import * as aiApi from "../../../api/aiApi";
+import * as collectionApi from "../../../api/collectionApi";
 import { useAuth } from "../../../hooks/useAuth";
 import { useToast } from "../../../hooks/useToast";
 import { ROUTES, buildRoute } from "../../../constants/routes";
@@ -11,6 +12,13 @@ export function useDocumentDetailPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
+  const [searchParams] = useSearchParams();
+
+  // Cầu nối citation -> viewer (đến từ ChatMessage, xem citationHref()): ?page=&highlight=
+  // Chỉ đọc 1 lần lúc mount trang — không cần đồng bộ lại nếu params đổi sau đó.
+  const highlightPageParam = searchParams.get("page");
+  const highlightPage = highlightPageParam ? Number(highlightPageParam) : null;
+  const highlightSnippet = searchParams.get("highlight") || null;
 
   const [doc, setDoc] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -21,6 +29,18 @@ export function useDocumentDetailPage() {
   // Chỉ phản ánh trạng thái trong phiên hiện tại (không có field ingested ở backend) -
   // reload trang sẽ mất, không phải bug.
   const [ingested, setIngested] = useState(false);
+
+  const [addToCollectionModalOpen, setAddToCollectionModalOpen] = useState(false);
+  const [myCollections, setMyCollections] = useState([]);
+  const [loadingCollections, setLoadingCollections] = useState(false);
+  const [selectedCollectionIds, setSelectedCollectionIds] = useState([]);
+  const [addingToCollections, setAddingToCollections] = useState(false);
+  const [creatingCollection, setCreatingCollection] = useState(false);
+
+  const [activeTab, setActiveTab] = useState("comments");
+  const [relatedDocs, setRelatedDocs] = useState([]);
+  const [loadingRelated, setLoadingRelated] = useState(false);
+  const [relatedLoaded, setRelatedLoaded] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -146,10 +166,86 @@ export function useDocumentDetailPage() {
     navigate(`${ROUTES.AI_CHAT}?documentId=${id}`);
   };
 
+  // Lazy: chỉ gọi API khi tab "Liên quan" thực sự được mở, không gọi kèm mỗi lần load doc.
+  const selectTab = (tab) => {
+    setActiveTab(tab);
+    if (tab === "related" && !relatedLoaded) {
+      setLoadingRelated(true);
+      aiApi
+        .getRelatedDocuments(id)
+        .then((data) => {
+          setRelatedDocs(data);
+          setRelatedLoaded(true);
+        })
+        .catch((err) => showError(err.message))
+        .finally(() => setLoadingRelated(false));
+    }
+  };
+
+  const goToDocument = (documentId) => {
+    navigate(buildRoute(ROUTES.DOCUMENT_DETAIL, { id: documentId }));
+  };
+
+  const openAddToCollectionModal = async () => {
+    setAddToCollectionModalOpen(true);
+    setSelectedCollectionIds([]);
+    setLoadingCollections(true);
+    try {
+      const list = await collectionApi.listMyCollections();
+      setMyCollections(list);
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setLoadingCollections(false);
+    }
+  };
+
+  const closeAddToCollectionModal = () => setAddToCollectionModalOpen(false);
+
+  const toggleSelectCollection = (collectionId) => {
+    setSelectedCollectionIds((prev) =>
+      prev.includes(collectionId) ? prev.filter((x) => x !== collectionId) : [...prev, collectionId]
+    );
+  };
+
+  // Thêm là THAM CHIẾU (DEC-007) — không copy/move, tài liệu vẫn còn nguyên ở đây.
+  const handleAddToCollections = async () => {
+    if (selectedCollectionIds.length === 0) return;
+    setAddingToCollections(true);
+    try {
+      await Promise.all(
+        selectedCollectionIds.map((cid) => collectionApi.addDocuments(cid, [Number(id)]))
+      );
+      showSuccess("Đã thêm vào collection.");
+      setAddToCollectionModalOpen(false);
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setAddingToCollections(false);
+    }
+  };
+
+  const handleCreateCollectionAndAdd = async (name) => {
+    setCreatingCollection(true);
+    try {
+      const created = await collectionApi.createCollection(name);
+      await collectionApi.addDocuments(created.id, [Number(id)]);
+      setMyCollections((prev) => [created, ...prev]);
+      showSuccess(`Đã tạo "${created.name}" và thêm tài liệu vào đó.`);
+      setAddToCollectionModalOpen(false);
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setCreatingCollection(false);
+    }
+  };
+
   return {
     doc,
     loading,
     isLikelyOwner,
+    highlightPage,
+    highlightSnippet,
     commentText,
     setCommentText,
     posting,
@@ -165,5 +261,23 @@ export function useDocumentDetailPage() {
     handleDelete,
     goAskAi,
     documentsRoute: buildRoute(ROUTES.DOCUMENTS),
+
+    activeTab,
+    selectTab,
+    relatedDocs,
+    loadingRelated,
+    goToDocument,
+
+    addToCollectionModalOpen,
+    myCollections,
+    loadingCollections,
+    selectedCollectionIds,
+    addingToCollections,
+    creatingCollection,
+    openAddToCollectionModal,
+    closeAddToCollectionModal,
+    toggleSelectCollection,
+    handleAddToCollections,
+    handleCreateCollectionAndAdd,
   };
 }

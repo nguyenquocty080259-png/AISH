@@ -101,13 +101,23 @@
 }
 
 .chat-citation {
+    display: block;
     background-color: var(--color-surface-soft);
     border-radius: var(--radius-input);
     padding: var(--spacing-sm);
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid transparent;
+    cursor: pointer;
+}
+
+.chat-citation:hover {
+    border-color: var(--color-primary);
 }
 
 .chat-citation__head {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: baseline;
     gap: var(--spacing-sm);
@@ -115,6 +125,17 @@
     font-weight: 600;
     color: var(--color-text);
     margin-bottom: 2px;
+}
+
+.chat-citation__doc {
+    flex: 1 1 auto;
+}
+
+.chat-citation__author {
+    color: var(--color-text-secondary);
+    font-weight: 400;
+    font-style: italic;
+    white-space: nowrap;
 }
 
 .chat-citation__page {
@@ -174,4 +195,17 @@
 .chat-input button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+.chat-unsupported-notice {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-input);
+    background-color: rgba(245, 124, 0, 0.1);
+    color: var(--color-warning);
+    font-size: var(--body-sm);
 }

@@ -10,6 +10,7 @@ import com.aish.mvc.entity.auth.AuthUser;
 import com.aish.mvc.entity.doc.*;
 import com.aish.mvc.entity.enums.DocumentStatus;
 import com.aish.mvc.entity.enums.DocumentVisibility;
+import com.aish.mvc.entity.enums.IngestStatus;
 import com.aish.mvc.entity.enums.ModerationStatus;
 import com.aish.mvc.exception.ForbiddenException;
 import com.aish.mvc.exception.ResourceNotFoundException;
@@ -168,6 +169,17 @@ public class DocumentServiceImpl implements DocumentService {
                     .build();
             favoriteRepository.save(favorite);
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DocumentResponseDTO> getFavoriteDocuments() {
+        Long uid = getCurrentUser().getId();
+        List<Long> favoriteIds = favoriteRepository.findDocumentIdsByUserId(uid);
+        if (favoriteIds.isEmpty()) return List.of();
+        return docDocumentRepository.findByIdInAndDeletedAtIsNull(favoriteIds).stream()
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -357,6 +369,11 @@ public class DocumentServiceImpl implements DocumentService {
         docDocumentRepository.save(doc);
     }
 
+    // DocFile.resourceType: "local" (upload-server) | "image"/"raw" (Cloudinary) -> chuẩn hóa LOCAL/CLOUD cho FE (DEC-031).
+    private String toStorageType(String resourceType) {
+        return "local".equalsIgnoreCase(resourceType) ? "LOCAL" : "CLOUD";
+    }
+
     private DocumentResponseDTO mapToResponseDTO(DocDocument doc) {
         DocumentResponseDTO dto = new DocumentResponseDTO();
         dto.setId(doc.getId());
@@ -366,6 +383,7 @@ public class DocumentServiceImpl implements DocumentService {
         dto.setVisibility(doc.getVisibility() != null ? doc.getVisibility().name() : "PUBLIC");
         dto.setModerationStatus(doc.getModerationStatus() != null ? doc.getModerationStatus().name() : ModerationStatus.NOT_REQUIRED.name());
         dto.setModerationReason(doc.getModerationReason());
+        dto.setIngestStatus(doc.getIngestStatus() != null ? doc.getIngestStatus().name() : IngestStatus.NOT_INGESTED.name());
         dto.setCreatedAt(doc.getCreatedAt());
         dto.setDeletedAt(doc.getDeletedAt());
 
@@ -374,6 +392,7 @@ public class DocumentServiceImpl implements DocumentService {
             dto.setFileName(doc.getFiles().getFirst().getFileName());
             dto.setFileUrl(doc.getFiles().getFirst().getFileUrl());
             dto.setFileType(doc.getFiles().getFirst().getFileType());
+            dto.setStorageType(toStorageType(doc.getFiles().getFirst().getResourceType()));
         }
         if (doc.getSubjects() != null && !doc.getSubjects().isEmpty()) {
             dto.setSubjectIds(doc.getSubjects().stream().map(Subject::getId).collect(Collectors.toList()));
@@ -419,12 +438,16 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     private AdminDocumentSummaryDTO toAdminSummaryDTO(DocDocument doc) {
+        String storageType = doc.getFiles() != null && !doc.getFiles().isEmpty()
+                ? toStorageType(doc.getFiles().getFirst().getResourceType())
+                : null;
         return new AdminDocumentSummaryDTO(
                 doc.getId(),
                 doc.getTitle(),
                 doc.getUser() != null ? doc.getUser().getFullName() : null,
                 doc.getVisibility() != null ? doc.getVisibility().name() : null,
                 doc.getModerationStatus() != null ? doc.getModerationStatus().name() : ModerationStatus.NOT_REQUIRED.name(),
+                storageType,
                 doc.getCreatedAt());
     }
 }

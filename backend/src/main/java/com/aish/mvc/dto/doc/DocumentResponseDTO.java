@@ -29,8 +29,11 @@ public class DocumentResponseDTO {
     private java.util.List<String> subjectNames;
     private String fileUrl;
     private String fileType;
+    private String storageType; // LOCAL | CLOUD — chuẩn hóa từ DocFile.resourceType
 
     // DEC-035: kết quả kiểm duyệt AI cho lần chuyển PUBLIC gần nhất.
     private String moderationStatus; // NOT_REQUIRED | PENDING | APPROVED | REJECTED
     private String moderationReason;
+
+    private String ingestStatus; // NOT_INGESTED | INGESTED | UNSUPPORTED_FORMAT
 }

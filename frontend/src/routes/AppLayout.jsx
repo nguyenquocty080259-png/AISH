@@ -5,16 +5,13 @@ import { ROUTES } from "../constants/routes";
 import { ROLES } from "../constants/roles";
 import "./AppLayout.css";
 
-// Nav chính của sidebar — chỉ hiện khi đã đăng nhập. SPACES/SHARED/FAVORITES trỏ tới
-// route đã được đặt chỗ trong constants/routes.js nhưng CHƯA có trang/route thật, nên
-// bấm vào sẽ rơi vào NotFoundPage cho tới khi các trang đó được xây (đúng như yêu cầu:
-// "create route constants as placeholders even if the page isn't built yet").
+// Nav chính của sidebar — chỉ hiện khi đã đăng nhập.
+// "Shared" đã bị bỏ hẳn khỏi nav: backend isSharedTo() luôn trả false (V2, chưa có dữ liệu share thật).
 const NAV_ITEMS = [
   { to: ROUTES.DASHBOARD, label: "Trang chủ", icon: "🏠" },
   { to: ROUTES.DOCUMENTS, label: "My Hive", icon: "📚" },
   { to: ROUTES.COMMUNITY, label: "Khám phá", icon: "🧭" },
   { to: ROUTES.SPACES, label: "Spaces", icon: "🗂️" },
-  { to: ROUTES.SHARED, label: "Được chia sẻ", icon: "🔗" },
   { to: ROUTES.FAVORITES, label: "Yêu thích", icon: "⭐" },
   { to: ROUTES.AI_CHAT, label: "AI Assistant", icon: "🤖" },
   { to: ROUTES.TRASH, label: "Thùng rác", icon: "🗑️" },

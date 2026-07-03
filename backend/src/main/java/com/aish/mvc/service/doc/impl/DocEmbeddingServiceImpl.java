@@ -5,6 +5,7 @@ import com.aish.mvc.dto.ai.IngestResponseDTO;
 import com.aish.mvc.entity.doc.DocDocument;
 import com.aish.mvc.entity.doc.DocEmbedding;
 import com.aish.mvc.entity.doc.DocFile;
+import com.aish.mvc.entity.enums.IngestStatus;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.repository.doc.DocDocumentRepository;
 import com.aish.mvc.repository.doc.DocEmbeddingRepository;
@@ -18,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.reader.pdf.PagePdfDocumentReader;
+import org.springframework.ai.reader.tika.TikaDocumentReader;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.SimpleVectorStoreContent;
@@ -37,6 +39,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -49,6 +52,27 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
     // Gemini embed — không retry lỗi 4xx khác (input xấu...), vì thử lại không giúp gì.
     private static final int MAX_EMBED_ATTEMPTS = 3;
     private static final long INITIAL_BACKOFF_MS = 1000L;
+
+    // Ngưỡng "đủ nội dung để ingest" sau khi Tika trích xuất — dưới ngưỡng này coi như file
+    // rỗng/không phải văn bản thật (ảnh quét không OCR, file lỗi...), không đáng để embed.
+    // 20 ký tự non-whitespace là ngưỡng nhỏ có chủ đích: đủ để loại rác thật sự, không loại
+    // nhầm file hợp lệ nhưng ngắn (vd. slide chỉ có tiêu đề).
+    private static final int MIN_USEFUL_CONTENT_CHARS = 20;
+
+    // Blocklist: định dạng vô nghĩa khi đọc như text — mọi định dạng KHÁC (kể cả lạ/hiếm)
+    // đều được thử qua Tika, đúng tinh thần "đọc được càng nhiều định dạng càng tốt".
+    private static final Set<String> BLOCKED_EXTENSIONS = Set.of(
+            // Ảnh
+            ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".tiff", ".tif", ".svg",
+            // Video
+            ".mp4", ".mov", ".avi", ".mkv", ".webm", ".wmv", ".flv", ".m4v",
+            // Audio
+            ".mp3", ".wav", ".ogg", ".flac", ".aac", ".m4a", ".wma",
+            // Nén
+            ".zip", ".rar", ".7z", ".tar", ".gz",
+            // Thực thi / nhị phân
+            ".exe", ".dll", ".so", ".bin"
+    );
 
     private final DocDocumentRepository docDocumentRepository;
     private final DocEmbeddingRepository docEmbeddingRepository;
@@ -81,9 +105,15 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
         }
         DocFile docFile = doc.getFiles().getFirst();
 
-        if (!looksLikePdf(docFile)) {
-            return new IngestResponseDTO(documentId, "SKIPPED_NON_PDF", 0,
-                    "Chỉ hỗ trợ nạp PDF ở giai đoạn này (nhận được: " + docFile.getFileType() + ").");
+        IngestFormat format = resolveIngestFormat(docFile);
+        if (format == IngestFormat.UNSUPPORTED) {
+            // Không phải lỗi — chỉ đơn giản là định dạng này vô nghĩa khi đọc như text (ảnh,
+            // video, audio, file nén, thực thi...). Lưu lại trạng thái để FE biết mà không cần
+            // gọi lại ingest.
+            doc.setIngestStatus(IngestStatus.UNSUPPORTED_FORMAT);
+            docDocumentRepository.save(doc);
+            return new IngestResponseDTO(documentId, "UNSUPPORTED_FORMAT", 0,
+                    "Định dạng không hỗ trợ đọc AI (nhận được: " + docFile.getFileType() + ").");
         }
 
         Resource resource;
@@ -94,11 +124,28 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
             return new IngestResponseDTO(documentId, "FILE_ERROR", 0, "Không đọc được file: " + e.getMessage());
         }
 
-        List<Document> pages = new PagePdfDocumentReader(resource).get();
-        List<Document> chunks = new TokenTextSplitter().apply(pages);
+        // PDF giữ page-aware reader (có trang thật). Mọi định dạng khác (không nằm trong
+        // blocklist) đọc qua Tika — không có khái niệm trang, chunk sẽ có page=null (citation
+        // layer đã hỗ trợ nullable page).
+        boolean hasRealPages = format == IngestFormat.PDF;
+        List<Document> rawDocs = hasRealPages
+                ? new PagePdfDocumentReader(resource).get()
+                : new TikaDocumentReader(resource).get();
+
+        // Content-quality gate: Tika "đọc được" một file không có nghĩa là nội dung hữu ích
+        // (file rỗng, ảnh quét không OCR, định dạng lạ Tika chỉ trích ra vài ký tự rác...).
+        // Chỉ áp dụng cho nhánh Tika — PDF page-aware reader không qua bước này.
+        if (!hasRealPages && nonWhitespaceLength(rawDocs) < MIN_USEFUL_CONTENT_CHARS) {
+            doc.setIngestStatus(IngestStatus.UNSUPPORTED_FORMAT);
+            docDocumentRepository.save(doc);
+            return new IngestResponseDTO(documentId, "UNSUPPORTED_FORMAT", 0,
+                    "Không trích xuất được nội dung hữu ích từ file (rỗng hoặc không phải văn bản thật).");
+        }
+
+        List<Document> chunks = new TokenTextSplitter().apply(rawDocs);
 
         if (chunks.isEmpty()) {
-            return new IngestResponseDTO(documentId, "EMPTY", 0, "Không trích xuất được nội dung nào từ PDF.");
+            return new IngestResponseDTO(documentId, "EMPTY", 0, "Không trích xuất được nội dung nào từ tài liệu.");
         }
 
         // Idempotent re-ingest: xoá dữ liệu ingest cũ của tài liệu này trước khi ghi lại.
@@ -111,7 +158,9 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
         for (int i = 0; i < chunks.size(); i++) {
             Document chunk = chunks.get(i);
             String text = chunk.getText();
-            Integer page = (Integer) chunk.getMetadata().get(PagePdfDocumentReader.METADATA_START_PAGE_NUMBER);
+            Integer page = hasRealPages
+                    ? (Integer) chunk.getMetadata().get(PagePdfDocumentReader.METADATA_START_PAGE_NUMBER)
+                    : null;
 
             float[] vector = embedWithRetry(text, documentId, i);
 
@@ -124,14 +173,58 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
                     .build());
 
             vectorContents.add(new SimpleVectorStoreContent(
-                    vectorId(documentId, i), text, chunkMetadata(documentId, doc.getTitle(), page, i), vector));
+                    vectorId(documentId, i), text,
+                    chunkMetadata(documentId, doc.getTitle(), authorOf(doc), page, i), vector));
         }
 
         docEmbeddingRepository.saveAll(rows);
         vectorStore.hydrate(vectorContents);
 
-        return new IngestResponseDTO(documentId, "INGESTED", chunks.size(),
-                "Đã nạp " + chunks.size() + " đoạn từ " + pages.size() + " trang.");
+        doc.setIngestStatus(IngestStatus.INGESTED);
+        docDocumentRepository.save(doc);
+
+        String message = hasRealPages
+                ? "Đã nạp " + chunks.size() + " đoạn từ " + rawDocs.size() + " trang."
+                : "Đã nạp " + chunks.size() + " đoạn.";
+        return new IngestResponseDTO(documentId, "INGESTED", chunks.size(), message);
+    }
+
+    private enum IngestFormat { PDF, TIKA, UNSUPPORTED }
+
+    // Format policy (blocklist): PDF giữ page-aware reader riêng. Mọi định dạng KHÁC được thử
+    // qua Tika, TRỪ những định dạng vô nghĩa khi đọc như text (ảnh/video/audio/nén/thực thi —
+    // xem BLOCKED_EXTENSIONS). Mục tiêu là đọc được càng nhiều định dạng càng tốt, nên đây là
+    // whitelist ngược (chặn cái biết chắc vô nghĩa) thay vì liệt kê từng định dạng được phép.
+    private IngestFormat resolveIngestFormat(DocFile docFile) {
+        String type = docFile.getFileType() != null ? docFile.getFileType().toLowerCase() : "";
+        String name = docFile.getFileName() != null ? docFile.getFileName().toLowerCase() : "";
+
+        if (type.contains("pdf") || name.endsWith(".pdf")) {
+            return IngestFormat.PDF;
+        }
+
+        // MIME prefix bắt được phần lớn ảnh/video/audio kể cả khi phần mở rộng lạ/thiếu.
+        boolean blockedByMime = type.startsWith("image/") || type.startsWith("video/") || type.startsWith("audio/");
+        // Extension là lưới an toàn cho archive/executable và cho trường hợp MIME bị thiếu
+        // hoặc chung chung (vd. "application/octet-stream").
+        boolean blockedByExtension = BLOCKED_EXTENSIONS.stream().anyMatch(name::endsWith);
+        if (blockedByMime || blockedByExtension) {
+            return IngestFormat.UNSUPPORTED;
+        }
+
+        return IngestFormat.TIKA;
+    }
+
+    private static int nonWhitespaceLength(List<Document> docs) {
+        int count = 0;
+        for (Document d : docs) {
+            String text = d.getText();
+            if (text == null) continue;
+            for (int i = 0; i < text.length(); i++) {
+                if (!Character.isWhitespace(text.charAt(i))) count++;
+            }
+        }
+        return count;
     }
 
     // Retry-with-backoff quanh 1 lệnh gọi Gemini embed. Chỉ retry lỗi tạm thời
@@ -200,7 +293,7 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
                 Long documentId = e.getDocument().getId();
                 contents.add(new SimpleVectorStoreContent(
                         vectorId(documentId, e.getChunkIndex()), e.getChunkText(),
-                        chunkMetadata(documentId, e.getDocument().getTitle(), e.getPage(), e.getChunkIndex()),
+                        chunkMetadata(documentId, e.getDocument().getTitle(), authorOf(e.getDocument()), e.getPage(), e.getChunkIndex()),
                         vector));
             }
             catch (Exception ex) {
@@ -245,13 +338,6 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
                 .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
     }
 
-    private boolean looksLikePdf(DocFile docFile) {
-        String type = docFile.getFileType();
-        String name = docFile.getFileName();
-        return (type != null && type.toLowerCase().contains("pdf"))
-                || (name != null && name.toLowerCase().endsWith(".pdf"));
-    }
-
     // Cùng logic resolve local-disk-vs-Cloudinary với DocumentController.resolveResource
     // (giữ nguyên tách biệt để không đụng vào controller CRUD tài liệu đang chạy tốt).
     private Resource resolveResource(DocFile docFile) throws MalformedURLException {
@@ -267,16 +353,25 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
         return "doc-" + documentId + "-chunk-" + chunkIndex;
     }
 
-    private static Map<String, Object> chunkMetadata(Long documentId, String documentTitle, Integer page, int chunkIndex) {
+    private static Map<String, Object> chunkMetadata(Long documentId, String documentTitle, String author, Integer page, int chunkIndex) {
         Map<String, Object> metadata = new HashMap<>();
         // Integer, not Long — see the comment in retrieveChunks() for why.
         metadata.put("documentId", documentId.intValue());
         metadata.put("documentTitle", documentTitle);
+        metadata.put("author", author);
+        // Chỉ set nếu có trang thật (PDF/PPTX...) — định dạng không trang (TXT/DOCX...) để trống,
+        // AiChatService.pageOf() đọc absent-or-null đều ra null -> CitationDTO.page = null.
         if (page != null) {
             metadata.put("page", page);
         }
         metadata.put("chunkIndex", chunkIndex);
         return metadata;
+    }
+
+    // Author hiện lấy từ chủ sở hữu tài liệu (uploader) — schema chưa có field "author" tách
+    // biệt (vd. tác giả học thuật khác người upload). Null-safe vì fullName có thể chưa set.
+    private static String authorOf(DocDocument doc) {
+        return doc.getUser() != null ? doc.getUser().getFullName() : null;
     }
 
     private String toJson(float[] vector) {

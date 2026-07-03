@@ -1,0 +1,32 @@
+.recommendation-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    min-width: 220px;
+}
+
+.recommendation-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+}
+
+.recommendation-card__title {
+    font-size: var(--body-lg);
+    color: var(--color-text);
+}
+
+.recommendation-card__actions {
+    flex-shrink: 0;
+}
+
+.recommendation-card__storage {
+    align-self: flex-start;
+}
+
+.recommendation-card__subjects,
+.recommendation-card__owner {
+    font-size: var(--body-sm);
+    color: var(--color-text-secondary);
+}

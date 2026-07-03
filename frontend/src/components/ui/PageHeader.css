@@ -1,0 +1,26 @@
+.ui-page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    flex-wrap: wrap;
+}
+
+.ui-page-header__title {
+    font-size: var(--headline-lg);
+    color: var(--color-text);
+}
+
+.ui-page-header__subtitle {
+    font-size: var(--body-sm);
+    color: var(--color-text-secondary);
+    margin-top: var(--spacing-xs);
+}
+
+.ui-page-header__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}

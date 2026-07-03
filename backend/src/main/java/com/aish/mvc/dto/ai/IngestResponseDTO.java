@@ -9,7 +9,7 @@ public class IngestResponseDTO {
 
     private Long documentId;
 
-    // INGESTED | NO_FILE | SKIPPED_NON_PDF | FILE_ERROR | EMPTY
+    // INGESTED | NO_FILE | UNSUPPORTED_FORMAT | FILE_ERROR | EMPTY
     private String status;
 
     private int chunkCount;
