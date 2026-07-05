@@ -1,0 +1,8 @@
+Digital Marketing Funnel và hành trình khách hàng
+
+Phễu marketing số (digital marketing funnel) mô tả hành trình khách hàng từ khi chưa biết đến thương hiệu cho tới khi trở thành khách hàng trung thành, thường gồm các giai đoạn: Awareness (nhận biết), Consideration (cân nhắc), Conversion (chuyển đổi) và Retention/Loyalty (giữ chân, trung thành).
+
+Ở mỗi giai đoạn của phễu, doanh nghiệp cần áp dụng các chiến thuật và chỉ số đo lường khác nhau: giai đoạn Awareness tập trung vào quảng cáo hiển thị, nội dung lan tỏa để tăng độ nhận diện thương hiệu; giai đoạn Conversion tập trung tối ưu tỉ lệ chuyển đổi (Conversion Rate Optimization) trên trang đích (landing page).
+
+Việc theo dõi hành trình khách hàng xuyên suốt phễu thông qua các công cụ phân tích (như Google Analytics) giúp doanh nghiệp xác định điểm nghẽn (drop-off point) - nơi khách hàng tiềm năng rời bỏ nhiều nhất, từ đó tối ưu từng giai đoạn để cải thiện tỉ lệ chuyển đổi tổng thể của toàn bộ phễu marketing.
+

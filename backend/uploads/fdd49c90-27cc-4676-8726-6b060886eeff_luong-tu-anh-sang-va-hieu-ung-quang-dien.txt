@@ -1,0 +1,8 @@
+Lượng tử ánh sáng và hiệu ứng quang điện
+
+Thuyết lượng tử ánh sáng của Einstein cho rằng ánh sáng gồm các hạt gọi là photon, mỗi photon mang năng lượng ε = hf, với h là hằng số Planck và f là tần số ánh sáng. Ánh sáng vừa có tính chất sóng (giao thoa, nhiễu xạ) vừa có tính chất hạt (quang điện), gọi là lưỡng tính sóng - hạt.
+
+Hiện tượng quang điện ngoài xảy ra khi chiếu ánh sáng thích hợp vào bề mặt kim loại làm bật electron ra khỏi bề mặt đó. Hiện tượng chỉ xảy ra khi tần số ánh sáng chiếu tới lớn hơn hoặc bằng một giá trị giới hạn gọi là giới hạn quang điện, đặc trưng cho từng kim loại.
+
+Phương trình Einstein về hiện tượng quang điện: hf = A + Wđmax, trong đó A là công thoát electron ra khỏi kim loại và Wđmax là động năng ban đầu cực đại của electron quang điện. Công thức này giải thích được các đặc điểm thực nghiệm mà thuyết sóng ánh sáng cổ điển không giải thích được.
+
