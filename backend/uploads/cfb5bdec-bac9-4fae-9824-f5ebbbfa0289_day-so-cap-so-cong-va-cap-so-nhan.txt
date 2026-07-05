@@ -1,0 +1,8 @@
+Dãy số, cấp số cộng và cấp số nhân
+
+Cấp số cộng là dãy số trong đó kể từ số hạng thứ hai, mỗi số hạng bằng số hạng đứng trước cộng với một số không đổi d gọi là công sai. Số hạng tổng quát là un = u1 + (n-1)d, và tổng n số hạng đầu Sn = n(u1 + un)/2.
+
+Cấp số nhân là dãy số trong đó kể từ số hạng thứ hai, mỗi số hạng bằng số hạng đứng trước nhân với một số không đổi q gọi là công bội. Số hạng tổng quát là un = u1.q^(n-1), tổng n số hạng đầu Sn = u1(1-q^n)/(1-q) với q ≠ 1.
+
+Hai loại dãy số này xuất hiện nhiều trong bài toán thực tế như tính lãi kép (cấp số nhân), tính tổng tiền tiết kiệm đều đặn (cấp số cộng), hay các bài toán tăng trưởng dân số, khấu hao tài sản — là cầu nối giữa đại số và các bài toán ứng dụng tài chính.
+

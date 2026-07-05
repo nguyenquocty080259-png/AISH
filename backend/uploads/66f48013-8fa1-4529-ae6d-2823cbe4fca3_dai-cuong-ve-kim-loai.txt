@@ -1,0 +1,8 @@
+Đại cương về kim loại
+
+Kim loại có cấu tạo mạng tinh thể với các ion dương kim loại nằm ở nút mạng và các electron hóa trị chuyển động tự do trong toàn khối tinh thể (electron tự do), tạo nên các tính chất vật lý chung như tính dẻo, tính dẫn điện, tính dẫn nhiệt và ánh kim.
+
+Tính chất hóa học đặc trưng của kim loại là tính khử: kim loại dễ nhường electron để tạo thành ion dương. Mức độ hoạt động hóa học của kim loại được sắp xếp theo dãy điện hóa, kim loại đứng trước có tính khử mạnh hơn kim loại đứng sau và có thể đẩy kim loại đứng sau ra khỏi dung dịch muối.
+
+Ăn mòn kim loại là quá trình kim loại bị oxi hóa bởi các chất trong môi trường, gồm ăn mòn hóa học (không phát sinh dòng điện) và ăn mòn điện hóa (phát sinh dòng điện do có hai điện cực khác bản chất tiếp xúc với dung dịch chất điện li). Các biện pháp chống ăn mòn phổ biến gồm sơn phủ bề mặt và bảo vệ điện hóa.
+
