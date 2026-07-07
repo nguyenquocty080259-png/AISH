@@ -3,19 +3,16 @@ package com.aish.mvc.service.doc.impl;
 import com.aish.mvc.dto.ai.ModerationDecision;
 import com.aish.mvc.dto.ai.ModerationResultDTO;
 import com.aish.mvc.dto.doc.AdminDocumentSummaryDTO;
-import com.aish.mvc.dto.doc.CommentDTO;
 import com.aish.mvc.dto.doc.CommunityPageResponseDTO;
 import com.aish.mvc.dto.doc.DocumentResponseDTO;
 import com.aish.mvc.entity.auth.AuthUser;
 import com.aish.mvc.entity.doc.*;
 import com.aish.mvc.entity.enums.DocumentStatus;
 import com.aish.mvc.entity.enums.DocumentVisibility;
-import com.aish.mvc.entity.enums.IngestStatus;
 import com.aish.mvc.entity.enums.ModerationStatus;
 import com.aish.mvc.exception.ForbiddenException;
 import com.aish.mvc.exception.ResourceNotFoundException;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
-import com.aish.mvc.repository.auth.AuthUserRepository;
 import com.aish.mvc.repository.doc.*;
 import com.aish.mvc.service.ai.AiModerationService;
 import com.aish.mvc.service.doc.DocumentService;
@@ -32,7 +29,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -46,11 +42,11 @@ public class DocumentServiceImpl implements DocumentService {
     @Autowired private FavoriteRepository favoriteRepository;
     @Autowired private RatingRepository ratingRepository;
     @Autowired private DownloadRepository downloadRepository;
-    @Autowired private AuthUserRepository authUserRepository;
     @Autowired private AuthAccountRepository authAccountRepository;
     @Autowired private SubjectRepository subjectRepository;
     @Autowired private CloudinaryService cloudinaryService;
     @Autowired private AiModerationService aiModerationService;
+    @Autowired private DocumentMapper documentMapper;
 
     private AuthUser getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -64,7 +60,7 @@ public class DocumentServiceImpl implements DocumentService {
     public List<DocumentResponseDTO> getAllDocuments() {
         Long uid = getCurrentUser().getId();
         return docDocumentRepository.findVisibleDocuments(DocumentVisibility.PUBLIC, uid).stream()
-                .map(this::mapToResponseDTO)
+                .map(documentMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
 
@@ -117,7 +113,7 @@ public class DocumentServiceImpl implements DocumentService {
         savedDoc.addFile(docFile);
         docFileRepository.save(docFile);
 
-        return mapToResponseDTO(savedDoc);
+        return documentMapper.toResponseDTO(savedDoc);
     }
 
     @Override
@@ -139,36 +135,7 @@ public class DocumentServiceImpl implements DocumentService {
         savedDoc.addFile(docFile);
         docFileRepository.save(docFile);
 
-        return mapToResponseDTO(savedDoc);
-    }
-
-    @Override
-    @Transactional
-    public void addComment(Long documentId, String content) {
-        DocDocument doc = docDocumentRepository.findById(documentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
-        Comment comment = Comment.builder()
-                .document(doc)
-                .user(getCurrentUser())
-                .content(content)
-                .build();
-        commentRepository.save(comment);
-    }
-
-    @Override
-    @Transactional
-    public void toggleFavorite(Long documentId) {
-        Long uid = getCurrentUser().getId();
-        if (favoriteRepository.existsByUserIdAndDocumentId(uid, documentId)) {
-            favoriteRepository.deleteByUserIdAndDocumentId(uid, documentId);
-        } else {
-            Favorite favorite = Favorite.builder()
-                    .userId(uid)
-                    .documentId(documentId)
-                    .createdAt(LocalDateTime.now())
-                    .build();
-            favoriteRepository.save(favorite);
-        }
+        return documentMapper.toResponseDTO(savedDoc);
     }
 
     @Override
@@ -178,35 +145,8 @@ public class DocumentServiceImpl implements DocumentService {
         List<Long> favoriteIds = favoriteRepository.findDocumentIdsByUserId(uid);
         if (favoriteIds.isEmpty()) return List.of();
         return docDocumentRepository.findByIdInAndDeletedAtIsNull(favoriteIds).stream()
-                .map(this::mapToResponseDTO)
+                .map(documentMapper::toResponseDTO)
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional
-    public void rateDocument(Long documentId, Integer star) {
-        DocDocument doc = docDocumentRepository.findById(documentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
-        Rating rating = Rating.builder()
-                .userId(getCurrentUser().getId())
-                .document(doc)
-                .rating(star)
-                .createdAt(LocalDateTime.now())
-                .build();
-        ratingRepository.save(rating);
-    }
-
-    @Override
-    @Transactional
-    public void logDownload(Long documentId) {
-        DocDocument doc = docDocumentRepository.findById(documentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
-        Download download = Download.builder()
-                .userId(getCurrentUser().getId())
-                .document(doc)
-                .downloadedAt(LocalDateTime.now())
-                .build();
-        downloadRepository.save(download);
     }
 
     @Override
@@ -227,7 +167,7 @@ public class DocumentServiceImpl implements DocumentService {
         Long uid = getCurrentUser().getId();
         // CHỈ trả về rác của user đang đăng nhập (trước đây bị lỗi trả về rác của TẤT CẢ user)
         return docDocumentRepository.findByDeletedAtIsNotNullAndUser_Id(uid).stream()
-                .map(this::mapToResponseDTO)
+                .map(documentMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
 
@@ -303,7 +243,7 @@ public class DocumentServiceImpl implements DocumentService {
         String kw = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
         List<DocDocument> all = docDocumentRepository.findCommunityDocuments(DocumentVisibility.PUBLIC, kw, subjectId);
 
-        List<DocumentResponseDTO> mapped = all.stream().map(this::mapToResponseDTO).collect(Collectors.toList());
+        List<DocumentResponseDTO> mapped = all.stream().map(documentMapper::toResponseDTO).collect(Collectors.toList());
 
         java.util.Comparator<DocumentResponseDTO> comparator;
         if ("downloads".equalsIgnoreCase(sortBy)) {
@@ -369,60 +309,17 @@ public class DocumentServiceImpl implements DocumentService {
         docDocumentRepository.save(doc);
     }
 
-    // DocFile.resourceType: "local" (upload-server) | "image"/"raw" (Cloudinary) -> chuẩn hóa LOCAL/CLOUD cho FE (DEC-031).
-    private String toStorageType(String resourceType) {
-        return "local".equalsIgnoreCase(resourceType) ? "LOCAL" : "CLOUD";
-    }
-
-    private DocumentResponseDTO mapToResponseDTO(DocDocument doc) {
-        DocumentResponseDTO dto = new DocumentResponseDTO();
-        dto.setId(doc.getId());
-        dto.setTitle(doc.getTitle());
-        dto.setDescription(doc.getDescription());
-        dto.setStatus(doc.getStatus() != null ? doc.getStatus().name() : "COMPLETED");
-        dto.setVisibility(doc.getVisibility() != null ? doc.getVisibility().name() : "PUBLIC");
-        dto.setModerationStatus(doc.getModerationStatus() != null ? doc.getModerationStatus().name() : ModerationStatus.NOT_REQUIRED.name());
-        dto.setModerationReason(doc.getModerationReason());
-        dto.setIngestStatus(doc.getIngestStatus() != null ? doc.getIngestStatus().name() : IngestStatus.NOT_INGESTED.name());
-        dto.setCreatedAt(doc.getCreatedAt());
-        dto.setDeletedAt(doc.getDeletedAt());
-
-        if (doc.getUser() != null) dto.setOwnerName(doc.getUser().getFullName());
-        if (doc.getFiles() != null && !doc.getFiles().isEmpty()) {
-            dto.setFileName(doc.getFiles().getFirst().getFileName());
-            dto.setFileUrl(doc.getFiles().getFirst().getFileUrl());
-            dto.setFileType(doc.getFiles().getFirst().getFileType());
-            dto.setStorageType(toStorageType(doc.getFiles().getFirst().getResourceType()));
-        }
-        if (doc.getSubjects() != null && !doc.getSubjects().isEmpty()) {
-            dto.setSubjectIds(doc.getSubjects().stream().map(Subject::getId).collect(Collectors.toList()));
-            dto.setSubjectNames(doc.getSubjects().stream().map(Subject::getName).collect(Collectors.toList()));
-        }
-
-        dto.setFavoriteCount(favoriteRepository.countByDocumentId(doc.getId()));
-        dto.setDownloadCount(downloadRepository.countByDocumentId(doc.getId()));
-        dto.setAverageRating(ratingRepository.getAverageRatingByDocumentId(doc.getId()));
-        dto.setFavorited(favoriteRepository.existsByUserIdAndDocumentId(getCurrentUser().getId(), doc.getId()));
-
-        List<CommentDTO> commentDTOs = commentRepository.findByDocumentIdOrderByCreatedAtDesc(doc.getId()).stream()
-                .map(c -> new CommentDTO(c.getId(), c.getUser().getFullName(), c.getContent(), c.getCreatedAt()))
-                .collect(Collectors.toList());
-        dto.setComments(commentDTOs);
-
-        return dto;
-    }
-
     @Override
     public DocumentResponseDTO getDocumentById(Long id) {
         DocDocument doc = docDocumentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
-        return mapToResponseDTO(doc);
+        return documentMapper.toResponseDTO(doc);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<AdminDocumentSummaryDTO> getAllDocumentsForAdmin(Pageable pageable) {
-        return docDocumentRepository.findAll(pageable).map(this::toAdminSummaryDTO);
+        return docDocumentRepository.findAll(pageable).map(documentMapper::toAdminSummaryDTO);
     }
 
     @Override
@@ -435,19 +332,5 @@ public class DocumentServiceImpl implements DocumentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
         doc.setDeletedAt(LocalDateTime.now());
         docDocumentRepository.save(doc);
-    }
-
-    private AdminDocumentSummaryDTO toAdminSummaryDTO(DocDocument doc) {
-        String storageType = doc.getFiles() != null && !doc.getFiles().isEmpty()
-                ? toStorageType(doc.getFiles().getFirst().getResourceType())
-                : null;
-        return new AdminDocumentSummaryDTO(
-                doc.getId(),
-                doc.getTitle(),
-                doc.getUser() != null ? doc.getUser().getFullName() : null,
-                doc.getVisibility() != null ? doc.getVisibility().name() : null,
-                doc.getModerationStatus() != null ? doc.getModerationStatus().name() : ModerationStatus.NOT_REQUIRED.name(),
-                storageType,
-                doc.getCreatedAt());
     }
 }

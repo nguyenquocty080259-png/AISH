@@ -24,16 +24,16 @@ public interface DocumentService {
 
     DocumentResponseDTO uploadDocumentToCloud(String title, String description, java.util.List<Long> subjectIds, MultipartFile file);
 
-    void addComment(Long documentId, String content);
 
-    void toggleFavorite(Long documentId);
+
+
 
     // Trang "Yêu thích" của user đang đăng nhập — loại tài liệu đã bị xoá mềm (thùng rác).
     List<DocumentResponseDTO> getFavoriteDocuments();
 
-    void rateDocument(Long documentId, Integer star);
 
-    void logDownload(Long documentId);
+
+
 
     void deleteDocument(Long id);
 
