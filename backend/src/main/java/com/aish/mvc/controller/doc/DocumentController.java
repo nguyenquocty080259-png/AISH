@@ -5,6 +5,7 @@ import com.aish.mvc.dto.doc.DocumentResponseDTO;
 import com.aish.mvc.dto.doc.ModerationAppealResponseDTO;
 import com.aish.mvc.entity.doc.DocFile;
 import com.aish.mvc.service.doc.DocumentService;
+import com.aish.mvc.service.doc.EngagementService;
 import com.aish.mvc.service.doc.ModerationAppealService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
@@ -25,6 +26,7 @@ import java.util.List;
 public class DocumentController {
 
     private final DocumentService documentService;
+    private final EngagementService engagementService;
     private final ModerationAppealService moderationAppealService;
 
     @org.springframework.beans.factory.annotation.Value("${app.upload.dir}")
@@ -35,19 +37,6 @@ public class DocumentController {
         return ResponseEntity.ok(documentService.getAllDocuments());
     }
 
-    // Trang Cộng đồng: chỉ tài liệu công khai (PUBLIC), có tìm kiếm + lọc theo môn + sắp xếp + phân trang
-    // sortBy: "newest" (mặc định) | "downloads" | "rating"
-    @GetMapping("/community")
-    public ResponseEntity<com.aish.mvc.dto.doc.CommunityPageResponseDTO> getCommunity(
-            @RequestParam(value = "keyword", required = false) String keyword,
-            @RequestParam(value = "subjectId", required = false) Long subjectId,
-            @RequestParam(value = "sortBy", required = false, defaultValue = "newest") String sortBy,
-            @RequestParam(value = "page", required = false, defaultValue = "0") int page,
-            @RequestParam(value = "size", required = false, defaultValue = "12") int size) {
-        return ResponseEntity.ok(documentService.getCommunityDocuments(keyword, subjectId, sortBy, page, size));
-    }
-
-    // LUỒNG 1: lên server (ổ đĩa)
     @PostMapping("/upload-server")
     public ResponseEntity<DocumentResponseDTO> uploadServer(
             @RequestParam("title") String title,
@@ -59,7 +48,6 @@ public class DocumentController {
                 HttpStatus.CREATED);
     }
 
-    // LUỒNG 2: lên cloud (Cloudinary)
     @PostMapping("/upload-cloud")
     public ResponseEntity<DocumentResponseDTO> uploadCloud(
             @RequestParam("title") String title,
@@ -73,19 +61,19 @@ public class DocumentController {
 
     @PostMapping("/{id}/favorite")
     public ResponseEntity<Void> toggleFavorite(@PathVariable Long id) {
-        documentService.toggleFavorite(id);
+        engagementService.toggleFavorite(id);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{id}/comment")
     public ResponseEntity<Void> addComment(@PathVariable Long id, @RequestBody String content) {
-        documentService.addComment(id, content);
+        engagementService.addComment(id, content);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{id}/rate")
     public ResponseEntity<Void> rate(@PathVariable Long id, @RequestParam Integer star) {
-        documentService.rateDocument(id, star);
+        engagementService.rateDocument(id, star);
         return ResponseEntity.ok().build();
     }
 
@@ -133,14 +121,16 @@ public class DocumentController {
 
     @GetMapping("/{id}")
     public ResponseEntity<DocumentResponseDTO> getOne(@PathVariable Long id) {
-        return ResponseEntity.ok(documentService.getDocumentById(id));
+        DocumentResponseDTO dto = documentService.getDocumentById(id);
+        engagementService.logView(id);
+        return ResponseEntity.ok(dto);
     }
 
     @GetMapping("/{id}/download")
     public ResponseEntity<Resource> downloadFile(@PathVariable Long id) {
         DocFile docFile = documentService.getFileByDocumentId(id);
         try {
-            documentService.logDownload(id);
+            engagementService.logDownload(id);
             Resource resource = resolveResource(docFile);
             if (resource.exists() || resource.isReadable()) {
                 return ResponseEntity.ok()
@@ -155,9 +145,6 @@ public class DocumentController {
         }
     }
 
-    // Xem trước tài liệu (kiểu Studocu): trả file "inline" để FE nhúng iframe/pdf.js,
-    // KHÔNG tính là lượt tải và không ép tải xuống.
-    // Cho phép nếu: tài liệu PUBLIC, hoặc PRIVATE nhưng người xem là chủ sở hữu.
     @GetMapping("/{id}/preview")
     public ResponseEntity<Resource> previewFile(@PathVariable Long id) {
         try {

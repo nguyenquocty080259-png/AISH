@@ -64,6 +64,14 @@
 			<optional>true</optional>
 		</dependency>
 
+		<!-- Spring Boot 4 chuyển sang Jackson 3 (package tools.jackson). Code hiện dùng
+		     com.fasterxml.jackson.databind.ObjectMapper (Jackson 2) nên cần kéo lại
+		     jackson-databind 2.x. Version do Spring Boot BOM quản lý, không cần khai báo. -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
+
 		<!-- JWT (từ auth team) -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
