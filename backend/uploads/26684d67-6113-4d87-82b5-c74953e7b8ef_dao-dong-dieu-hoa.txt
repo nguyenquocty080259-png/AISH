@@ -1,8 +1,0 @@
-Dao động điều hòa
-
-Dao động điều hòa là dao động trong đó li độ của vật là hàm côsin (hoặc sin) của thời gian: x = A.cos(ωt + φ), với A là biên độ, ω là tần số góc và φ là pha ban đầu. Chu kỳ T = 2π/ω là khoảng thời gian để vật thực hiện một dao động toàn phần.
-
-Con lắc lò xo dao động điều hòa với tần số góc ω = căn(k/m), trong đó k là độ cứng lò xo và m là khối lượng vật nặng; con lắc đơn dao động điều hòa với biên độ góc nhỏ có tần số góc ω = căn(g/l), với l là chiều dài dây treo và g là gia tốc trọng trường.
-
-Trong dao động điều hòa, cơ năng của hệ (tổng động năng và thế năng) được bảo toàn nếu bỏ qua ma sát, và có giá trị không đổi bằng W = ½kA². Khi vật dao động tắt dần do ma sát hoặc lực cản, biên độ giảm dần theo thời gian và cơ năng chuyển hóa dần thành nhiệt năng.
-

@@ -1,8 +1,0 @@
-Mạng nơ-ron nhân tạo và Deep Learning cơ bản
-
-Mạng nơ-ron nhân tạo (Artificial Neural Network) mô phỏng cách hoạt động của nơ-ron sinh học, gồm các lớp (layer) nơ-ron liên kết với nhau: lớp đầu vào (input layer), một hoặc nhiều lớp ẩn (hidden layer) và lớp đầu ra (output layer), mỗi kết nối có một trọng số (weight) được học từ dữ liệu.
-
-Quá trình huấn luyện mạng nơ-ron sử dụng thuật toán lan truyền ngược (backpropagation) kết hợp gradient descent: tính sai số giữa dự đoán và nhãn thực tế, sau đó lan truyền ngược sai số này qua các lớp để cập nhật trọng số theo hướng giảm thiểu hàm mất mát.
-
-Deep Learning là học máy sử dụng mạng nơ-ron có nhiều lớp ẩn (mạng sâu), cho phép tự động học các đặc trưng (feature) phức tạp từ dữ liệu thô mà không cần thiết kế đặc trưng thủ công, đạt hiệu quả vượt trội trong các bài toán thị giác máy tính (CNN) và xử lý ngôn ngữ tự nhiên (Transformer).
-

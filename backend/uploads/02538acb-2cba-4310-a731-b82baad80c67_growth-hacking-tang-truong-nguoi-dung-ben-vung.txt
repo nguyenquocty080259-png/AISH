@@ -1,8 +1,0 @@
-Growth Hacking: tăng trưởng người dùng bền vững
-
-Growth Hacking là phương pháp tiếp cận tăng trưởng tập trung vào thử nghiệm nhanh (rapid experimentation) trên nhiều kênh marketing và phát triển sản phẩm khác nhau, nhằm tìm ra những cách hiệu quả nhất để tăng trưởng người dùng, doanh thu với nguồn lực hạn chế, thường gắn liền với các công ty khởi nghiệp công nghệ.
-
-Khung AARRR (còn gọi là Pirate Metrics), gồm Acquisition (thu hút người dùng mới), Activation (kích hoạt trải nghiệm giá trị đầu tiên), Retention (giữ chân), Referral (giới thiệu) và Revenue (doanh thu), là mô hình phổ biến giúp đội ngũ growth xác định giai đoạn nào trong hành trình người dùng đang có vấn đề cần cải thiện nhất.
-
-Vòng lặp thử nghiệm growth hacking điển hình gồm: đặt giả thuyết dựa trên dữ liệu, thiết kế thử nghiệm A/B với quy mô nhỏ, đo lường kết quả dựa trên chỉ số đã xác định trước, và nhanh chóng nhân rộng nếu hiệu quả hoặc loại bỏ nếu không, cho phép đội ngũ học hỏi và tối ưu liên tục với tốc độ cao hơn marketing truyền thống.
-
