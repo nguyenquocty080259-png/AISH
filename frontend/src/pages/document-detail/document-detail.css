@@ -342,3 +342,53 @@
     font-size: var(--body-sm);
     color: var(--color-text);
 }
+
+/* Preview kiểu Studocu: mờ tài liệu, bấm "Xem đầy đủ" mới rõ */
+.detail-preview {
+  position: relative;
+  margin: 16px 0;
+}
+.detail-preview--locked .detail-preview__content {
+  max-height: 420px;
+  overflow: hidden;
+  filter: blur(6px);
+  pointer-events: none;
+  user-select: none;
+}
+.detail-preview--open .detail-preview__content {
+  filter: none;
+}
+.detail-preview__gate {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.75) 60%,
+    rgba(255, 255, 255, 0.95) 100%
+  );
+  border-radius: 8px;
+}
+.detail-preview__gate-btn {
+  padding: 10px 22px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  background: #f3a712;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+.detail-preview__gate-btn:hover {
+  background: #e09400;
+}
+.detail-preview__gate-hint {
+  font-size: 13px;
+  color: #555;
+}

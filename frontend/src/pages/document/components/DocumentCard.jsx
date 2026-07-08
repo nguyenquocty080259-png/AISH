@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ROUTES, buildRoute } from "../../../constants/routes";
+import DocumentThumb from "../../../components/ui/DocumentThumb";
 
 export default function DocumentCard({ doc, onToggleFavorite }) {
   return (
@@ -17,6 +18,10 @@ export default function DocumentCard({ doc, onToggleFavorite }) {
           {doc.favorited ? "♥" : "♡"}
         </button>
       </div>
+
+      <Link to={buildRoute(ROUTES.DOCUMENT_DETAIL, { id: doc.id })} className="doc-card__thumb-link">
+        <DocumentThumb doc={doc} />
+      </Link>
 
       <Link
         to={buildRoute(ROUTES.DOCUMENT_DETAIL, { id: doc.id })}

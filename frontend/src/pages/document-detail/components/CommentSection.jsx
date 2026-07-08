@@ -1,10 +1,33 @@
+import { useState } from "react";
+
 export default function CommentSection({
   comments,
   commentText,
   onCommentTextChange,
   onSubmit,
   posting,
+  currentUserName,
+  onUpdateComment,
+  onDeleteComment,
 }) {
+  const [editingId, setEditingId] = useState(null);
+  const [editText, setEditText] = useState("");
+
+  const startEdit = (comment) => {
+    setEditingId(comment.id);
+    setEditText(comment.content);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditText("");
+  };
+
+  const submitEdit = async (commentId) => {
+    await onUpdateComment(commentId, editText);
+    cancelEdit();
+  };
+
   return (
     <div className="detail-comments">
       <h3 className="detail-comments__title">Bình luận ({comments?.length ?? 0})</h3>
@@ -25,12 +48,51 @@ export default function CommentSection({
         {comments?.length === 0 && (
           <p className="detail-comments__empty">Chưa có bình luận nào.</p>
         )}
-        {comments?.map((comment) => (
-          <div key={comment.id} className="detail-comment">
-            <p className="detail-comment__owner">{comment.ownerName}</p>
-            <p className="detail-comment__content">{comment.content}</p>
-          </div>
-        ))}
+        {comments?.map((comment) => {
+          // FE chỉ ẩn/hiện nút; quyền thật do backend kiểm theo user đăng nhập.
+          const isMine =
+            currentUserName && comment.ownerName === currentUserName;
+          const isEditing = editingId === comment.id;
+
+          return (
+            <div key={comment.id} className="detail-comment">
+              <p className="detail-comment__owner">{comment.ownerName}</p>
+
+              {isEditing ? (
+                <div className="detail-comment__edit">
+                  <input
+                    type="text"
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                  />
+                  <button type="button" onClick={() => submitEdit(comment.id)}>
+                    Lưu
+                  </button>
+                  <button type="button" onClick={cancelEdit}>
+                    Huỷ
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <p className="detail-comment__content">{comment.content}</p>
+                  {isMine && (
+                    <div className="detail-comment__actions">
+                      <button type="button" onClick={() => startEdit(comment)}>
+                        Sửa
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onDeleteComment(comment.id)}
+                      >
+                        Xoá
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

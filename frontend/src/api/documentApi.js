@@ -19,7 +19,7 @@ export function listFavorites() {
 }
 
 export function getCommunity(params) {
-  // params: { keyword, subjectId, sortBy, page, size }
+  // params: { keyword, subjectId, tagId, minRating, sortBy, page, size }
   return apiClient.get("/documents/community", { params }).then((res) => res.data);
 }
 
@@ -35,12 +35,25 @@ export function upload(formData, onProgress) {
     .then((res) => res.data);
 }
 
+export function updateDocument(id, data) {
+  // data: { title?, description?, subjectIds? }  (field bỏ trống = giữ nguyên)
+  return apiClient.put(`/documents/${id}`, data).then((res) => res.data);
+}
+
 export function toggleFavorite(id) {
   return apiClient.post(`/documents/${id}/favorite`);
 }
 
 export function addComment(id, content) {
   return apiClient.post(`/documents/${id}/comment`, content);
+}
+
+export function updateComment(commentId, content) {
+  return apiClient.put(`/documents/comments/${commentId}`, content);
+}
+
+export function deleteComment(commentId) {
+  return apiClient.delete(`/documents/comments/${commentId}`);
 }
 
 export function rateDocument(id, star) {

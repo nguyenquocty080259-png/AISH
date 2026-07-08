@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import * as documentApi from "../../../api/documentApi";
 import * as aiApi from "../../../api/aiApi";
 import * as collectionApi from "../../../api/collectionApi";
+import * as subjectApi from "../../../api/subjectApi";
 import { useAuth } from "../../../hooks/useAuth";
 import { useToast } from "../../../hooks/useToast";
 import { ROUTES, buildRoute } from "../../../constants/routes";
@@ -41,6 +42,11 @@ export function useDocumentDetailPage() {
   const [relatedDocs, setRelatedDocs] = useState([]);
   const [loadingRelated, setLoadingRelated] = useState(false);
   const [relatedLoaded, setRelatedLoaded] = useState(false);
+
+  // Modal sửa metadata
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [subjects, setSubjects] = useState([]);
 
   const load = async () => {
     setLoading(true);
@@ -97,6 +103,56 @@ export function useDocumentDetailPage() {
       showError(err.message);
     } finally {
       setPosting(false);
+    }
+  };
+
+  const handleUpdateComment = async (commentId, content) => {
+    if (!content.trim()) return;
+    try {
+      await documentApi.updateComment(commentId, content.trim());
+      showSuccess("Đã cập nhật bình luận.");
+      await load();
+    } catch (err) {
+      showError(err.message);
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    try {
+      await documentApi.deleteComment(commentId);
+      showSuccess("Đã xoá bình luận.");
+      await load();
+    } catch (err) {
+      showError(err.message);
+    }
+  };
+
+  // Sửa metadata (title/description/subjects). data: { title?, description?, subjectIds? }
+  const openEditModal = async () => {
+    setEditModalOpen(true);
+    if (subjects.length === 0) {
+      try {
+        const list = await subjectApi.getAll();
+        setSubjects(list);
+      } catch (err) {
+        showError(err.message);
+      }
+    }
+  };
+
+  const closeEditModal = () => setEditModalOpen(false);
+
+  const handleUpdateDocument = async (data) => {
+    setEditSubmitting(true);
+    try {
+      await documentApi.updateDocument(id, data);
+      showSuccess("Đã cập nhật tài liệu.");
+      setEditModalOpen(false);
+      await load();
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setEditSubmitting(false);
     }
   };
 
@@ -244,6 +300,7 @@ export function useDocumentDetailPage() {
     doc,
     loading,
     isLikelyOwner,
+    currentUserName: user?.fullName ?? null,
     highlightPage,
     highlightSnippet,
     commentText,
@@ -255,6 +312,14 @@ export function useDocumentDetailPage() {
     handleToggleFavorite,
     handleRate,
     handleAddComment,
+    handleUpdateComment,
+    handleDeleteComment,
+    handleUpdateDocument,
+    editModalOpen,
+    editSubmitting,
+    subjects,
+    openEditModal,
+    closeEditModal,
     handleDownload,
     handleIngest,
     handleToggleVisibility,

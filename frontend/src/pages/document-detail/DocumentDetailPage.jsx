@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useDocumentDetailPage } from "./hooks/useDocumentDetailPage";
 import RatingStars from "./components/RatingStars";
 import CommentSection from "./components/CommentSection";
+import EditDocumentModal from "./components/EditDocumentModal";
 import PdfViewer from "./components/PdfViewer";
 import TextFileViewer from "./components/TextFileViewer";
 import Modal from "../../components/ui/Modal";
@@ -17,6 +18,7 @@ export default function DocumentDetailPage() {
     doc,
     loading,
     isLikelyOwner,
+    currentUserName,
     highlightPage,
     highlightSnippet,
     commentText,
@@ -28,6 +30,14 @@ export default function DocumentDetailPage() {
     handleToggleFavorite,
     handleRate,
     handleAddComment,
+    handleUpdateComment,
+    handleDeleteComment,
+    handleUpdateDocument,
+    editModalOpen,
+    editSubmitting,
+    subjects,
+    openEditModal,
+    closeEditModal,
     handleDownload,
     handleIngest,
     handleToggleVisibility,
@@ -52,6 +62,7 @@ export default function DocumentDetailPage() {
   } = useDocumentDetailPage();
 
   const [newCollectionName, setNewCollectionName] = useState("");
+  const [previewUnlocked, setPreviewUnlocked] = useState(false);
 
   const submitCreateCollection = (e) => {
     e.preventDefault();
@@ -95,7 +106,10 @@ export default function DocumentDetailPage() {
 
       <p className="detail-desc">{doc.description}</p>
 
-      {doc.fileUrl && (() => {
+      {doc.fileUrl && (
+        <div className={`detail-preview ${previewUnlocked ? "detail-preview--open" : "detail-preview--locked"}`}>
+          <div className="detail-preview__content">
+      {(() => {
         const fileUrl = doc.fileUrl.startsWith("http")
           ? doc.fileUrl
           : `http://localhost:8080/uploads/${doc.fileUrl}`;
@@ -145,6 +159,22 @@ export default function DocumentDetailPage() {
           </div>
         );
       })()}
+          </div>
+
+          {!previewUnlocked && (
+            <div className="detail-preview__gate">
+              <button
+                type="button"
+                className="detail-preview__gate-btn"
+                onClick={() => setPreviewUnlocked(true)}
+              >
+                🔓 Xem đầy đủ
+              </button>
+              <span className="detail-preview__gate-hint">Bấm để xem rõ toàn bộ tài liệu</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {doc.ingestStatus === "UNSUPPORTED_FORMAT" && (
         <p className="detail-ai-notice">
@@ -190,6 +220,9 @@ export default function DocumentDetailPage() {
                 ? "✓ Đã sẵn sàng cho AI"
                 : "🧠 Chuẩn bị cho AI Chat"}
             </button>
+            <button className="detail-btn" onClick={openEditModal}>
+              ✏️ Sửa tài liệu
+            </button>
             <button className="detail-btn" onClick={handleToggleVisibility}>
               Đổi sang {doc.visibility === "PUBLIC" ? "riêng tư" : "công khai"}
             </button>
@@ -226,6 +259,9 @@ export default function DocumentDetailPage() {
           onCommentTextChange={setCommentText}
           onSubmit={handleAddComment}
           posting={posting}
+          currentUserName={currentUserName}
+          onUpdateComment={handleUpdateComment}
+          onDeleteComment={handleDeleteComment}
         />
       )}
 
@@ -305,6 +341,17 @@ export default function DocumentDetailPage() {
           </Button>
         </form>
       </Modal>
+
+      {editModalOpen && (
+        <EditDocumentModal
+          open
+          doc={doc}
+          subjects={subjects}
+          submitting={editSubmitting}
+          onClose={closeEditModal}
+          onSubmit={handleUpdateDocument}
+        />
+      )}
     </div>
   );
 }
