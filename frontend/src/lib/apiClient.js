@@ -1,12 +1,24 @@
 import axios from "axios";
 import { STORAGE_KEYS } from "../constants/storageKeys";
 
+// const apiClient = axios.create({
+//   baseURL: import.meta.env.VITE_API_URL,
+// });
+
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+    baseURL: "http://localhost:8080/api",
 });
 
 console.log("VITE_API_URL =", import.meta.env.VITE_API_URL);
 console.log("apiClient baseURL =", apiClient.defaults.baseURL);
+
+apiClient.interceptors.request.use((config) => {
+  console.log("=== REQUEST ===");
+  console.log("Base URL:", config.baseURL);
+  console.log("URL:", config.url);
+  console.log("Full:", (config.baseURL || "") + config.url);
+  return config;
+});
 
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
