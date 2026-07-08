@@ -70,7 +70,7 @@ export function useAiChatPage() {
         },
       ]);
     } catch (err) {
-      showError(err.message || "AI hiện không phản hồi được, vui lòng thử lại.");
+      showError(err.message || "AI HiveMind hiện không phản hồi được, vui lòng thử lại.");
     } finally {
       setSending(false);
     }

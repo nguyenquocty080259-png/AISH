@@ -34,7 +34,7 @@ export default function OtpPage() {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <p className="auth-card__brand">AISH</p>
+        <p className="auth-card__brand">HiveMind</p>
         <h1 className="auth-card__title">Xác minh email</h1>
         <p className="auth-card__subtitle">
           Mã OTP gồm 6 số đã được gửi tới <strong>{email}</strong>. Mã có hiệu

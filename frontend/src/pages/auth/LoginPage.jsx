@@ -10,10 +10,10 @@ export default function LoginPage() {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <p className="auth-card__brand">AISH</p>
+        <p className="auth-card__brand">HiveMind</p>
         <h1 className="auth-card__title">Đăng nhập</h1>
         <p className="auth-card__subtitle">
-          Tiếp tục học tập và chia sẻ tài liệu cùng AISH.
+          Tiếp tục học tập và chia sẻ tài liệu cùng HiveMind.
         </p>
 
         <form className="auth-form" onSubmit={handleSubmit}>

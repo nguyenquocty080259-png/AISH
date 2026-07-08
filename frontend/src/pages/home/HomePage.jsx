@@ -9,13 +9,13 @@ export default function HomePage() {
   return (
     <div>
       <section className="home-hero">
-        <p className="home-hero__brand">AISH · AI Study Hub</p>
+        <p className="home-hero__brand">HiveMind · AI Study Hub</p>
         <h1 className="home-hero__title">
           Lưu trữ tài liệu học tập, hỏi AI, học cùng nhau.
         </h1>
         <p className="home-hero__subtitle">
-          AISH giúp bạn tải lên, tìm kiếm và đánh giá tài liệu môn học, đồng
-          thời trò chuyện trực tiếp với AI để giải đáp nhanh các thắc mắc.
+          HiveMind giúp bạn tải lên, tìm kiếm và đánh giá tài liệu môn học, đồng
+          thời trò chuyện trực tiếp với AI HiveMind để giải đáp nhanh các thắc mắc.
         </p>
         <div className="home-hero__actions">
           {isAuthenticated ? (
@@ -46,9 +46,9 @@ export default function HomePage() {
         </div>
         <div className="home-feature">
           <p className="home-feature__icon">🤖</p>
-          <h3 className="home-feature__title">Hỏi AI</h3>
+          <h3 className="home-feature__title">Hỏi AI HiveMind</h3>
           <p className="home-feature__desc">
-            Đặt câu hỏi cho AI, có thể hỏi riêng về nội dung của một tài
+            Đặt câu hỏi cho AI HiveMind, có thể hỏi riêng về nội dung của một tài
             liệu cụ thể.
           </p>
         </div>

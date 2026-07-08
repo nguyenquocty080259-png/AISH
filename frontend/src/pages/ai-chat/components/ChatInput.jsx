@@ -5,7 +5,7 @@ export default function ChatInput({ value, onChange, onSubmit, sending }) {
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Nhập câu hỏi cho AI..."
+        placeholder="Nhập câu hỏi cho AI HiveMind..."
         disabled={sending}
       />
       <button type="submit" disabled={sending || !value.trim()}>

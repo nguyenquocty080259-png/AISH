@@ -21,7 +21,7 @@ export default function AiChatPage() {
   return (
     <div className="chat-page">
       <div className="chat-page__header">
-        <h1 className="chat-page__title">AI Chat</h1>
+        <h1 className="chat-page__title">AI HiveMind</h1>
         {documentId && (
           <Link
             to={buildRoute(ROUTES.DOCUMENT_DETAIL, { id: documentId })}
@@ -36,10 +36,10 @@ export default function AiChatPage() {
         {messages.length === 0 && (
           <p className="chat-window__empty">
             {isUnsupportedFormat
-              ? "AI không đọc được nội dung của tài liệu này, nên không thể trả lời câu hỏi về tài liệu."
+              ? "AI HiveMind không đọc được nội dung của tài liệu này, nên không thể trả lời câu hỏi về tài liệu."
               : documentId
-              ? "Đặt câu hỏi liên quan tới tài liệu này để AI hỗ trợ bạn."
-              : "Hỏi AI bất cứ điều gì về AISH hoặc kiến thức học tập."}
+              ? "Đặt câu hỏi liên quan tới tài liệu này để AI HiveMind hỗ trợ bạn."
+              : "Hỏi AI HiveMind bất cứ điều gì về HiveMind hoặc kiến thức học tập."}
           </p>
         )}
         {messages.map((m) => (
@@ -53,14 +53,14 @@ export default function AiChatPage() {
           />
         ))}
         {sending && (
-          <ChatMessage role="ai" text="AI đang soạn câu trả lời..." />
+          <ChatMessage role="ai" text="AI HiveMind đang soạn câu trả lời..." />
         )}
         <div ref={bottomRef} />
       </div>
 
       {isUnsupportedFormat ? (
         <p className="chat-unsupported-notice">
-          ⚠️ AI không đọc được nội dung của tài liệu này (định dạng file không được hỗ
+          ⚠️ AI HiveMind không đọc được nội dung của tài liệu này (định dạng file không được hỗ
           trợ), nên không thể trả lời câu hỏi về tài liệu này. Bạn vẫn có thể xem hoặc
           tải tài liệu như bình thường.
         </p>

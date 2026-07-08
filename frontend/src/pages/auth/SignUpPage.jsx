@@ -18,10 +18,10 @@ export default function SignUpPage() {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <p className="auth-card__brand">AISH</p>
+        <p className="auth-card__brand">HiveMind</p>
         <h1 className="auth-card__title">Tạo tài khoản</h1>
         <p className="auth-card__subtitle">
-          Tham gia AISH để lưu trữ, chia sẻ và trò chuyện với AI về tài liệu học tập.
+          Tham gia HiveMind để lưu trữ, chia sẻ và trò chuyện với AI HiveMind về tài liệu học tập.
         </p>
 
         <form className="auth-form" onSubmit={handleSubmit}>

@@ -13,7 +13,7 @@ const NAV_ITEMS = [
   { to: ROUTES.COMMUNITY, label: "Khám phá", icon: "🧭" },
   { to: ROUTES.SPACES, label: "Spaces", icon: "🗂️" },
   { to: ROUTES.FAVORITES, label: "Yêu thích", icon: "⭐" },
-  { to: ROUTES.AI_CHAT, label: "AI Assistant", icon: "🤖" },
+  { to: ROUTES.AI_CHAT, label: "AI HiveMind", icon: "🤖" },
   { to: ROUTES.TRASH, label: "Thùng rác", icon: "🗑️" },
 ];
 
@@ -78,7 +78,7 @@ export default function AppLayout() {
               🐝 HiveMind
             </Link>
             <nav className="guest-topbar__nav">
-              <Link to={ROUTES.AI_CHAT}>AI Chat</Link>
+              <Link to={ROUTES.AI_CHAT}>AI HiveMind</Link>
               <Link to={ROUTES.LOGIN}>Đăng nhập</Link>
               <Link to={ROUTES.SIGNUP} className="guest-topbar__cta">
                 Đăng ký
