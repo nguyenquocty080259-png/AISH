@@ -1,0 +1,54 @@
+spring.application.name=backend
+spring.datasource.url=jdbc:postgresql://localhost:5432/AISH
+spring.datasource.username=postgres
+spring.datasource.password=YOUR_DB_PASSWORD
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.jdbc.time_zone=UTC
+logging.level.org.springframework.security=TRACE
+
+# Mail
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=YOUR_GMAIL_ADDRESS
+spring.mail.password=YOUR_GMAIL_APP_PASSWORD
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+logging.level.org.springframework.mail=DEBUG
+logging.level.com.sun.mail=DEBUG
+spring.mail.properties.mail.debug=true
+
+# Google
+spring.security.oauth2.client.registration.google.client-id=YOUR_GOOGLE_CLIENT_ID
+spring.security.oauth2.client.registration.google.client-secret=YOUR_GOOGLE_CLIENT_SECRET
+spring.security.oauth2.client.registration.google.scope=email,profile
+# Github
+spring.security.oauth2.client.registration.github.client-id=YOUR_GITHUB_CLIENT_ID
+spring.security.oauth2.client.registration.github.client-secret=YOUR_GITHUB_CLIENT_SECRET
+spring.security.oauth2.client.registration.github.scope=user:email
+# Facebook
+spring.security.oauth2.client.registration.facebook.client-id=YOUR_FACEBOOK_CLIENT_ID
+spring.security.oauth2.client.registration.facebook.client-secret=YOUR_FACEBOOK_CLIENT_SECRET
+spring.security.oauth2.client.registration.facebook.scope=email,public_profile
+
+# AI - Chat (Groq via OpenAI-compatible client)
+spring.ai.openai.api-key=YOUR_GROQ_API_KEY
+spring.ai.openai.base-url=https://api.groq.com/openai
+spring.ai.openai.chat.options.model=llama-3.3-70b-versatile
+
+# AI - Model routing
+spring.ai.model.chat=openai
+spring.ai.model.embedding=google-genai
+spring.ai.model.embedding.text=google-genai
+
+# AI - Embedding (Google Gemini)
+spring.ai.google.genai.embedding.api-key=${GEMINI_API_KEY:}
+spring.ai.google.genai.embedding.text.options.model=gemini-embedding-001
+spring.ai.google.genai.embedding.text.options.dimensions=768
+
+app.upload.dir=uploads
+
+# Cloudinary
+cloudinary.cloud-name=YOUR_CLOUDINARY_CLOUD_NAME
+cloudinary.api-key=YOUR_CLOUDINARY_API_KEY
+cloudinary.api-secret=YOUR_CLOUDINARY_API_SECRET
