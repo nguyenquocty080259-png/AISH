@@ -9,20 +9,26 @@ const styles = {
     overflowY: "auto",
     background: "#fff7ed",
   },
+  loading: {
+    margin: "8px 0",
+    color: "#92400e",
+    fontSize: 13,
+  },
 };
 
-export default function MessageList({ messages, isTyping }) {
+export default function MessageList({ messages, isTyping, isHistoryLoading }) {
   const bottomRef = useRef(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isTyping]);
+  }, [messages, isTyping, isHistoryLoading]);
 
   return (
     <div style={styles.list}>
       {messages.map((message) => (
         <MessageBubble key={message.id} message={message} />
       ))}
+      {isHistoryLoading && <p style={styles.loading}>Đang tải lịch sử chat...</p>}
       {isTyping && <TypingIndicator />}
       <div ref={bottomRef} />
     </div>

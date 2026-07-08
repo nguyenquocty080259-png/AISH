@@ -5,10 +5,11 @@ import com.aish.mvc.dto.ai.AiChatResponse;
 import com.aish.mvc.dto.ai.CitationDTO;
 import com.aish.mvc.dto.ai.RecommendedDocumentDTO;
 import com.aish.mvc.dto.ai.RelatedDocDTO;
+import com.aish.mvc.entity.ai.AiConversation;
+import com.aish.mvc.entity.auth.AuthUser;
 import com.aish.mvc.entity.doc.DocDocument;
 import com.aish.mvc.entity.enums.DocumentVisibility;
 import com.aish.mvc.entity.enums.ModerationStatus;
-import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.repository.doc.DocDocumentRepository;
 import com.aish.mvc.service.ai.AiRecommendationService;
 import com.aish.mvc.service.doc.DocEmbeddingService;
@@ -21,8 +22,6 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.document.Document;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashSet;
@@ -51,8 +50,8 @@ public class AiChatService {
     private final DocEmbeddingService docEmbeddingService;
     private final DocumentAccessPort documentAccessPort;
     private final DocDocumentRepository docDocumentRepository;
-    private final AuthAccountRepository authAccountRepository;
     private final AiRecommendationService aiRecommendationService;
+    private final AiConversationService aiConversationService;
 
     // Thông tin hệ thống — dùng cho GENERAL mode (không tìm thấy đoạn tài liệu liên quan)
     private static final String SYSTEM_PROMPT = """
@@ -91,15 +90,23 @@ public class AiChatService {
     public AiChatResponse chat(AiChatRequest request) {
         String message = request.getMessage();
         Long documentId = request.getDocumentId();
-        Long currentUserId = currentUserIdOrNull();
+        AuthUser currentUser = aiConversationService.currentUserOrNull();
+        Long currentUserId = currentUser != null ? currentUser.getId() : null;
 
+        if (currentUser != null && request.getConversationId() != null) {
+            aiConversationService.requireOwnedConversation(request.getConversationId(), currentUser);
+        }
+
+        AiChatResponse response;
         if (documentId != null) {
             if (!documentAccessPort.isAvailableTo(documentId, currentUserId)) {
                 throw new RuntimeException("Bạn không có quyền hỏi AI về tài liệu này!");
             }
             List<Document> hits = docEmbeddingService.retrieveChunks(message, List.of(documentId), TOP_K, SIMILARITY_THRESHOLD);
             if (!hits.isEmpty()) {
-                return buildRagResponse(message, hits, currentUserId);
+                response = buildRagResponse(message, hits, currentUserId);
+                persistIfAuthenticated(currentUser, request, response);
+                return response;
             }
         }
 
@@ -111,12 +118,28 @@ public class AiChatService {
             if (!ownDocIds.isEmpty()) {
                 List<Document> hits = docEmbeddingService.retrieveChunks(message, ownDocIds, TOP_K, SIMILARITY_THRESHOLD);
                 if (!hits.isEmpty()) {
-                    return buildRagResponse(message, hits, currentUserId);
+                    response = buildRagResponse(message, hits, currentUserId);
+                    persistIfAuthenticated(currentUser, request, response);
+                    return response;
                 }
             }
         }
 
-        return buildGeneralResponse(message, currentUserId);
+        response = buildGeneralResponse(message, currentUserId);
+        persistIfAuthenticated(currentUser, request, response);
+        return response;
+    }
+
+    private void persistIfAuthenticated(AuthUser currentUser, AiChatRequest request, AiChatResponse response) {
+        if (currentUser == null) return;
+
+        AiConversation conversation = aiConversationService.persistExchange(
+                currentUser,
+                request.getConversationId(),
+                request.getDocumentId(),
+                request.getMessage(),
+                response.getAnswer());
+        response.setConversationId(conversation.getId());
     }
 
     private AiChatResponse buildRagResponse(String userMessage, List<Document> hits, Long currentUserId) {
@@ -210,17 +233,6 @@ public class AiChatService {
             log.warn("Không gợi ý được tài liệu PUBLIC cho GENERAL mode: {}", e.getMessage());
             return List.of();
         }
-    }
-
-    // null = guest hoặc chưa đăng nhập — /api/ai/chat vẫn public, chỉ giới hạn tier 2 khi có user.
-    private Long currentUserIdOrNull() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
-            return null;
-        }
-        return authAccountRepository.findByIdentifier(auth.getName())
-                .map(a -> a.getUser().getId())
-                .orElse(null);
     }
 
     private static Integer pageOf(Document d) {

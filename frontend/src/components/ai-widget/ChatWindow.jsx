@@ -21,7 +21,7 @@ const getWindowStyle = (isSmallScreen) => ({
 });
 
 export default function ChatWindow() {
-  const { messages, isTyping, sendMessage } = useAiWidget();
+  const { messages, isTyping, isHistoryLoading, sendMessage } = useAiWidget();
   const [isSmallScreen, setIsSmallScreen] = useState(() => window.innerWidth <= 480);
 
   useEffect(() => {
@@ -33,8 +33,8 @@ export default function ChatWindow() {
   return (
     <section style={getWindowStyle(isSmallScreen)} aria-label="AI HiveMind chat">
       <ChatHeader />
-      <MessageList messages={messages} isTyping={isTyping} />
-      <ChatInput onSend={sendMessage} disabled={isTyping} />
+      <MessageList messages={messages} isTyping={isTyping} isHistoryLoading={isHistoryLoading} />
+      <ChatInput onSend={sendMessage} disabled={isTyping || isHistoryLoading} />
     </section>
   );
 }

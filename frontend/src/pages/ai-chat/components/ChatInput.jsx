@@ -1,4 +1,12 @@
-export default function ChatInput({ value, onChange, onSubmit, sending }) {
+export default function ChatInput({
+  value,
+  onChange,
+  onSubmit,
+  sending,
+  disabled = false,
+}) {
+  const isDisabled = sending || disabled;
+
   return (
     <form className="chat-input" onSubmit={onSubmit}>
       <input
@@ -6,9 +14,9 @@ export default function ChatInput({ value, onChange, onSubmit, sending }) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Nhập câu hỏi cho AI HiveMind..."
-        disabled={sending}
+        disabled={isDisabled}
       />
-      <button type="submit" disabled={sending || !value.trim()}>
+      <button type="submit" disabled={isDisabled || !value.trim()}>
         {sending ? "Đang gửi..." : "Gửi"}
       </button>
     </form>

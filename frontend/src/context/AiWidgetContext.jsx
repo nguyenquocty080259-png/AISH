@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import * as aiChatApi from "../api/aiChatApi";
+import { useAuth } from "../hooks/useAuth";
 
 const AiWidgetContext = createContext(null);
 
@@ -10,10 +11,14 @@ const createGreeting = () => ({
 });
 
 export function AiWidgetProvider({ children }) {
+  const { isAuthenticated } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([createGreeting()]);
   const [isTyping, setIsTyping] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [conversationId, setConversationId] = useState(null);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const isOpenRef = useRef(isOpen);
 
   useEffect(() => {
@@ -29,9 +34,72 @@ export function AiWidgetProvider({ children }) {
     setIsOpen(false);
   };
 
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setHistoryLoaded(false);
+      setIsHistoryLoading(false);
+      setConversationId(null);
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    const shouldLoadHistory =
+      isOpen &&
+      isAuthenticated &&
+      !historyLoaded &&
+      !conversationId &&
+      messages.length === 1 &&
+      messages[0]?.id === "ai-greeting";
+
+    if (!shouldLoadHistory) return;
+
+    let cancelled = false;
+    setIsHistoryLoading(true);
+
+    async function loadLatestConversation() {
+      try {
+        const conversations = await aiChatApi.getConversations();
+        const latest = Array.isArray(conversations) ? conversations[0] : null;
+        if (!latest?.id || cancelled) {
+          setHistoryLoaded(true);
+          return;
+        }
+
+        const history = await aiChatApi.getMessages(latest.id);
+        if (cancelled) return;
+
+        const mappedMessages = Array.isArray(history)
+          ? history.map((message) => ({
+              id: `history-${message.id}`,
+              role: message.role === "USER" ? "user" : "ai",
+              text: message.content,
+            }))
+          : [];
+
+        setConversationId(latest.id);
+        setMessages(mappedMessages.length > 0 ? mappedMessages : [createGreeting()]);
+      } catch (error) {
+        console.error("Failed to load AI HiveMind history", error);
+        setMessages((prev) => prev);
+      } finally {
+        if (!cancelled) {
+          setHistoryLoaded(true);
+          setIsHistoryLoading(false);
+        }
+      }
+    }
+
+    loadLatestConversation();
+
+    return () => {
+      cancelled = true;
+      setIsHistoryLoading(false);
+    };
+  }, [conversationId, historyLoaded, isAuthenticated, isOpen, messages]);
+
   const sendMessage = async (text) => {
     const cleanText = text.trim();
-    if (!cleanText || isTyping) return;
+    if (!cleanText || isTyping || isHistoryLoading) return;
 
     const userMessage = {
       id: `user-${Date.now()}`,
@@ -46,8 +114,12 @@ export function AiWidgetProvider({ children }) {
       const response = await aiChatApi.chat({
         message: cleanText,
         documentId: null,
-        conversationId: null,
+        conversationId,
       });
+
+      if (response.conversationId) {
+        setConversationId(response.conversationId);
+      }
 
       const aiMessage = {
         id: `ai-${Date.now()}`,
@@ -78,12 +150,14 @@ export function AiWidgetProvider({ children }) {
       isOpen,
       messages,
       isTyping,
+      isHistoryLoading,
       unreadCount,
+      conversationId,
       openWidget,
       closeWidget,
       sendMessage,
     }),
-    [isOpen, messages, isTyping, unreadCount]
+    [conversationId, isHistoryLoading, isOpen, messages, isTyping, unreadCount]
   );
 
   return <AiWidgetContext.Provider value={value}>{children}</AiWidgetContext.Provider>;

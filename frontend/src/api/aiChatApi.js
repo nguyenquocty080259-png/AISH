@@ -6,3 +6,11 @@ export function chat({ message, documentId = null, conversationId = null }) {
     .post("/ai/chat", { message, documentId, conversationId })
     .then((res) => res.data);
 }
+
+export function getConversations() {
+  return apiClient.get("/ai/conversations").then((res) => res.data);
+}
+
+export function getMessages(conversationId) {
+  return apiClient.get(`/ai/conversations/${conversationId}/messages`).then((res) => res.data);
+}
