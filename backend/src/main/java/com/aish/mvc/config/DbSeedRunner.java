@@ -66,6 +66,12 @@ public class DbSeedRunner implements CommandLineRunner {
             System.out.println("Email    : admin@aish.com");
             System.out.println("Password : Admin@123");
             System.out.println("=================================");
+        }else if (accountRepository.existsByIdentifier("admin@aish.com")){
+            System.out.println("=================================");
+            System.out.println("ADMIN ACCOUNT already");
+            System.out.println("Email    : admin@aish.com");
+            System.out.println("Password : Admin@123");
+            System.out.println("=================================");
         }
     }
 }
