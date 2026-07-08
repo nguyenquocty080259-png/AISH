@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.aish.mvc.exception.ForbiddenException;
 
 import java.time.LocalDateTime;
 
@@ -113,5 +114,27 @@ public class EngagementServiceImpl implements EngagementService {
                 .downloadedAt(LocalDateTime.now())
                 .build();
         downloadRepository.save(download);
+    }
+    @Override
+    @Transactional
+    public void updateComment(Long commentId, String content) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bình luận không tồn tại!"));
+        if (!comment.getUser().getId().equals(getCurrentUser().getId())) {
+            throw new ForbiddenException("Bạn không có quyền sửa bình luận này!");
+        }
+        comment.setContent(content);
+        commentRepository.save(comment);
+    }
+
+    @Override
+    @Transactional
+    public void deleteComment(Long commentId) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bình luận không tồn tại!"));
+        if (!comment.getUser().getId().equals(getCurrentUser().getId())) {
+            throw new ForbiddenException("Bạn không có quyền xoá bình luận này!");
+        }
+        commentRepository.delete(comment);
     }
 }

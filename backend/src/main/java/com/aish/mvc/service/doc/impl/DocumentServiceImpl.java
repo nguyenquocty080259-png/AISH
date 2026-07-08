@@ -55,11 +55,12 @@ public class DocumentServiceImpl implements DocumentService {
                 .getUser();
     }
 
+    // getAllDocuments (My Documents - chỉ của mình, chưa xóa):
     @Override
     @Transactional(readOnly = true)
     public List<DocumentResponseDTO> getAllDocuments() {
         Long uid = getCurrentUser().getId();
-        return docDocumentRepository.findVisibleDocuments(DocumentVisibility.PUBLIC, uid).stream()
+        return docDocumentRepository.findByDeletedAtIsNullAndUser_Id(uid).stream()
                 .map(documentMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
@@ -136,6 +137,34 @@ public class DocumentServiceImpl implements DocumentService {
         docFileRepository.save(docFile);
 
         return documentMapper.toResponseDTO(savedDoc);
+    }
+
+    @Override
+    @Transactional
+    public DocumentResponseDTO updateDocument(Long id, String title, String description, java.util.List<Long> subjectIds) {
+        DocDocument doc = docDocumentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
+        if (!doc.getUser().getId().equals(getCurrentUser().getId())) {
+            throw new ForbiddenException("Bạn không có quyền sửa tài liệu này!");
+        }
+
+        if (title != null && !title.isBlank()) doc.setTitle(title.trim());
+        if (description != null) doc.setDescription(description);
+
+        // subjectIds == null: giữ nguyên. Nếu gửi thì bắt buộc có >=1 môn hợp lệ (DEC-030).
+        if (subjectIds != null) {
+            Set<Subject> subjects = new HashSet<>();
+            for (Long sid : subjectIds) {
+                if (sid == null) continue;
+                subjectRepository.findById(sid).ifPresent(subjects::add);
+            }
+            if (subjects.isEmpty()) {
+                throw new IllegalArgumentException("Tài liệu phải thuộc ít nhất 1 môn học hợp lệ.");
+            }
+            doc.setSubjects(subjects);
+        }
+
+        return documentMapper.toResponseDTO(docDocumentRepository.save(doc));
     }
 
     @Override
@@ -234,16 +263,22 @@ public class DocumentServiceImpl implements DocumentService {
         return doc.getFiles().getFirst();
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public CommunityPageResponseDTO getCommunityDocuments(String keyword, Long subjectId, String sortBy, int page, int size) {
+    // getCommunityDocuments - đổi đầu method:
+    public CommunityPageResponseDTO getCommunityDocuments(String keyword, Long subjectId, Long tagId, Double minRating, String sortBy, int page, int size) {
         if (page < 0) page = 0;
         if (size <= 0) size = 12;
 
         String kw = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
-        List<DocDocument> all = docDocumentRepository.findCommunityDocuments(DocumentVisibility.PUBLIC, kw, subjectId);
-
+        List<DocDocument> all = docDocumentRepository.findCommunityDocuments(DocumentVisibility.PUBLIC, kw, subjectId, tagId);
+        // ... phần còn lại giữ nguyên (minRating + sort + phân trang)
         List<DocumentResponseDTO> mapped = all.stream().map(documentMapper::toResponseDTO).collect(Collectors.toList());
+
+        // Lọc theo điểm trung bình tối thiểu (tính ở mapper) — làm sau khi map vì avgRating không nằm trong bảng documents.
+        if (minRating != null) {
+            mapped = mapped.stream()
+                    .filter(d -> d.getAverageRating() != null && d.getAverageRating() >= minRating)
+                    .collect(Collectors.toList());
+        }
 
         java.util.Comparator<DocumentResponseDTO> comparator;
         if ("downloads".equalsIgnoreCase(sortBy)) {

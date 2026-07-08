@@ -22,9 +22,11 @@ public class DocumentSearchController {
     public ResponseEntity<CommunityPageResponseDTO> getCommunity(
             @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "subjectId", required = false) Long subjectId,
+            @RequestParam(value = "tagId", required = false) Long tagId,
+            @RequestParam(value = "minRating", required = false) Double minRating,
             @RequestParam(value = "sortBy", required = false, defaultValue = "newest") String sortBy,
             @RequestParam(value = "page", required = false, defaultValue = "0") int page,
             @RequestParam(value = "size", required = false, defaultValue = "12") int size) {
-        return ResponseEntity.ok(documentService.getCommunityDocuments(keyword, subjectId, sortBy, page, size));
+        return ResponseEntity.ok(documentService.getCommunityDocuments(keyword, subjectId, tagId, minRating, sortBy, page, size));
     }
 }

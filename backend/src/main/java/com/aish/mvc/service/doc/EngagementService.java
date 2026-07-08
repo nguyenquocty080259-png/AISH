@@ -6,4 +6,6 @@ public interface EngagementService {
     void rateDocument(Long documentId, Integer star);
     void logDownload(Long documentId);
     void logView(Long documentId);
+    void updateComment(Long commentId, String content);
+    void deleteComment(Long commentId);
 }

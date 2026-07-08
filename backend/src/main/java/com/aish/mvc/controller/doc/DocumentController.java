@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import com.aish.mvc.dto.doc.DocumentUpdateRequestDTO;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -69,6 +70,23 @@ public class DocumentController {
     public ResponseEntity<Void> addComment(@PathVariable Long id, @RequestBody String content) {
         engagementService.addComment(id, content);
         return ResponseEntity.ok().build();
+    }
+    @PutMapping("/comments/{commentId}")
+    public ResponseEntity<Void> updateComment(@PathVariable Long commentId, @RequestBody String content) {
+        engagementService.updateComment(commentId, content);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/comments/{commentId}")
+    public ResponseEntity<Void> deleteComment(@PathVariable Long commentId) {
+        engagementService.deleteComment(commentId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<DocumentResponseDTO> update(@PathVariable Long id, @RequestBody DocumentUpdateRequestDTO request) {
+        return ResponseEntity.ok(
+                documentService.updateDocument(id, request.getTitle(), request.getDescription(), request.getSubjectIds()));
     }
 
     @PostMapping("/{id}/rate")

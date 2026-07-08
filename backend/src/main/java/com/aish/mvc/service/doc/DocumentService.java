@@ -14,8 +14,7 @@ public interface DocumentService {
     List<DocumentResponseDTO> getAllDocuments();
 
     // Trang Cộng đồng: chỉ tài liệu PUBLIC, có tìm kiếm/lọc/sắp xếp/phân trang
-    CommunityPageResponseDTO getCommunityDocuments(String keyword, Long subjectId, String sortBy, int page, int size);
-
+    CommunityPageResponseDTO getCommunityDocuments(String keyword, Long subjectId, Long tagId, Double minRating, String sortBy, int page, int size);
     // Trả về file để XEM TRƯỚC (inline) - cho phép nếu doc PUBLIC, hoặc PRIVATE nhưng là chủ sở hữu.
     // Không ghi log lượt tải như download.
     DocFile getFileForPreview(Long id);
@@ -23,7 +22,7 @@ public interface DocumentService {
     DocumentResponseDTO uploadDocumentToServer(String title, String description, java.util.List<Long> subjectIds, MultipartFile file);
 
     DocumentResponseDTO uploadDocumentToCloud(String title, String description, java.util.List<Long> subjectIds, MultipartFile file);
-
+    DocumentResponseDTO updateDocument(Long id, String title, String description, java.util.List<Long> subjectIds);
 
 
 
