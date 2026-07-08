@@ -3,6 +3,8 @@ import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
 import { ROUTES } from "../constants/routes";
 import { ROLES } from "../constants/roles";
+import AIHiveMindWidget from "../components/ai-widget/AIHiveMindWidget";
+import { AiWidgetProvider } from "../context/AiWidgetContext";
 import "./AppLayout.css";
 
 // Nav chính của sidebar — chỉ hiện khi đã đăng nhập.
@@ -33,64 +35,67 @@ export default function AppLayout() {
   };
 
   return (
-    <div className="app-shell">
-      {isAuthenticated && (
-        <aside className="sidebar">
-          <Link to={ROUTES.HOME} className="sidebar__brand">
-            <span className="sidebar__brand-icon">🐝</span>
-            <span className="sidebar__brand-name">HiveMind</span>
-          </Link>
-
-          <nav className="sidebar__nav">
-            {NAV_ITEMS.map((item) => (
-              <NavLink key={item.to} to={item.to} className={navLinkClassName}>
-                <span className="sidebar__link-icon">{item.icon}</span>
-                <span className="sidebar__link-label">{item.label}</span>
-              </NavLink>
-            ))}
-
-            {role === ROLES.ADMIN && (
-              <NavLink
-                to={ROUTES.ADMIN}
-                className={({ isActive }) =>
-                  `sidebar__link sidebar__link--admin${isActive ? " sidebar__link--active" : ""}`
-                }
-              >
-                <span className="sidebar__link-icon">🛡️</span>
-                <span className="sidebar__link-label">Admin</span>
-              </NavLink>
-            )}
-          </nav>
-
-          <div className="sidebar__footer">
-            <span className="sidebar__user">{user?.fullName}</span>
-            <button className="sidebar__logout" onClick={handleLogout}>
-              Đăng xuất
-            </button>
-          </div>
-        </aside>
-      )}
-
-      <div className="app-shell__body">
-        {!isAuthenticated && (
-          <header className="guest-topbar">
-            <Link to={ROUTES.HOME} className="guest-topbar__brand">
-              🐝 HiveMind
+    <AiWidgetProvider>
+      <div className="app-shell">
+        {isAuthenticated && (
+          <aside className="sidebar">
+            <Link to={ROUTES.HOME} className="sidebar__brand">
+              <span className="sidebar__brand-icon">🐝</span>
+              <span className="sidebar__brand-name">HiveMind</span>
             </Link>
-            <nav className="guest-topbar__nav">
-              <Link to={ROUTES.AI_CHAT}>AI HiveMind</Link>
-              <Link to={ROUTES.LOGIN}>Đăng nhập</Link>
-              <Link to={ROUTES.SIGNUP} className="guest-topbar__cta">
-                Đăng ký
-              </Link>
+
+            <nav className="sidebar__nav">
+              {NAV_ITEMS.map((item) => (
+                <NavLink key={item.to} to={item.to} className={navLinkClassName}>
+                  <span className="sidebar__link-icon">{item.icon}</span>
+                  <span className="sidebar__link-label">{item.label}</span>
+                </NavLink>
+              ))}
+
+              {role === ROLES.ADMIN && (
+                <NavLink
+                  to={ROUTES.ADMIN}
+                  className={({ isActive }) =>
+                    `sidebar__link sidebar__link--admin${isActive ? " sidebar__link--active" : ""}`
+                  }
+                >
+                  <span className="sidebar__link-icon">🛡️</span>
+                  <span className="sidebar__link-label">Admin</span>
+                </NavLink>
+              )}
             </nav>
-          </header>
+
+            <div className="sidebar__footer">
+              <span className="sidebar__user">{user?.fullName}</span>
+              <button className="sidebar__logout" onClick={handleLogout}>
+                Đăng xuất
+              </button>
+            </div>
+          </aside>
         )}
 
-        <main className="app-main">
-          <Outlet />
-        </main>
+        <div className="app-shell__body">
+          {!isAuthenticated && (
+            <header className="guest-topbar">
+              <Link to={ROUTES.HOME} className="guest-topbar__brand">
+                🐝 HiveMind
+              </Link>
+              <nav className="guest-topbar__nav">
+                <Link to={ROUTES.AI_CHAT}>AI HiveMind</Link>
+                <Link to={ROUTES.LOGIN}>Đăng nhập</Link>
+                <Link to={ROUTES.SIGNUP} className="guest-topbar__cta">
+                  Đăng ký
+                </Link>
+              </nav>
+            </header>
+          )}
+
+          <main className="app-main">
+            <Outlet />
+          </main>
+        </div>
       </div>
-    </div>
+      <AIHiveMindWidget />
+    </AiWidgetProvider>
   );
 }
