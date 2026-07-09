@@ -46,7 +46,7 @@ export function AiWidgetProvider({ children }) {
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(false);
   const [docContextEnabled, setDocContextEnabled] = useState(Boolean(routeDocumentId));
-  const [docTitleCache, setDocTitleCache] = useState({});
+  const [docCache, setDocCache] = useState({});
   const isOpenRef = useRef(isOpen);
 
   useEffect(() => {
@@ -57,31 +57,44 @@ export function AiWidgetProvider({ children }) {
     setDocContextEnabled(Boolean(routeDocumentId));
   }, [routeDocumentId]);
 
+  const currentDoc = routeDocumentId ? docCache[routeDocumentId] : null;
+  const currentDocTitle = currentDoc?.title || "tài liệu này";
+  const currentDocReady =
+    Boolean(routeDocumentId) &&
+    currentDoc?.aiSupported !== false &&
+    currentDoc?.ingestStatus === "INGESTED";
+
   useEffect(() => {
-    if (!routeDocumentId || !isOpen || docTitleCache[routeDocumentId]) return;
+    if (routeDocumentId && currentDoc && !currentDocReady) {
+      setDocContextEnabled(false);
+    }
+  }, [currentDoc, currentDocReady, routeDocumentId]);
+
+  useEffect(() => {
+    if (!routeDocumentId || !isOpen || docCache[routeDocumentId]) return;
 
     let cancelled = false;
     documentApi
       .getOne(routeDocumentId)
       .then((doc) => {
         if (cancelled) return;
-        setDocTitleCache((prev) => ({
+        setDocCache((prev) => ({
           ...prev,
-          [routeDocumentId]: doc?.title || "tài liệu này",
+          [routeDocumentId]: doc || { title: "tài liệu này" },
         }));
       })
       .catch(() => {
         if (cancelled) return;
-        setDocTitleCache((prev) => ({
+        setDocCache((prev) => ({
           ...prev,
-          [routeDocumentId]: "tài liệu này",
+          [routeDocumentId]: { title: "tài liệu này", aiSupported: false },
         }));
       });
 
     return () => {
       cancelled = true;
     };
-  }, [docTitleCache, isOpen, routeDocumentId]);
+  }, [docCache, isOpen, routeDocumentId]);
 
   const loadConversations = useCallback(async () => {
     if (!isAuthenticated) return [];
@@ -221,7 +234,9 @@ export function AiWidgetProvider({ children }) {
     };
 
     const documentIdForRequest =
-      routeDocumentId && docContextEnabled ? routeDocumentId : null;
+      routeDocumentId && docContextEnabled && currentDocReady
+        ? routeDocumentId
+        : null;
 
     setMessages((prev) => [...prev, userMessage]);
     setIsTyping(true);
@@ -270,10 +285,6 @@ export function AiWidgetProvider({ children }) {
     }
   };
 
-  const currentDocTitle = routeDocumentId
-    ? docTitleCache[routeDocumentId] || "tài liệu này"
-    : null;
-
   const value = useMemo(
     () => ({
       isOpen,
@@ -287,6 +298,9 @@ export function AiWidgetProvider({ children }) {
       isAuthenticated,
       routeDocumentId,
       currentDocTitle,
+      currentDocReady,
+      currentDocIngestStatus: currentDoc?.ingestStatus || null,
+      currentDocAiSupported: currentDoc?.aiSupported ?? null,
       docContextEnabled,
       openWidget,
       closeWidget,
@@ -300,6 +314,8 @@ export function AiWidgetProvider({ children }) {
       conversationId,
       conversations,
       currentDocTitle,
+      currentDocReady,
+      currentDoc,
       docContextEnabled,
       isAuthenticated,
       isHistoryLoading,

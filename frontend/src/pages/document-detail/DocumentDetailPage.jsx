@@ -6,6 +6,7 @@ import CommentSection from "./components/CommentSection";
 import EditDocumentModal from "./components/EditDocumentModal";
 import PdfViewer from "./components/PdfViewer";
 import TextFileViewer from "./components/TextFileViewer";
+import AiReadinessBadge from "./components/AiReadinessBadge";
 import Modal from "../../components/ui/Modal";
 import Button from "../../components/ui/Button";
 import EmptyState from "../../components/ui/EmptyState";
@@ -78,6 +79,8 @@ export default function DocumentDetailPage() {
   if (!doc) {
     return <div className="detail-page">Không tìm thấy tài liệu.</div>;
   }
+
+  const aiReady = doc.aiSupported !== false && doc.ingestStatus === "INGESTED";
 
   return (
     <div className="detail-page">
@@ -176,14 +179,13 @@ export default function DocumentDetailPage() {
         </div>
       )}
 
-      {doc.ingestStatus === "UNSUPPORTED_FORMAT" && (
-        <p className="detail-ai-notice">
-          ⚠️ AI không đọc được nội dung của tệp này (định dạng không được hỗ trợ), nên
-          không thể trả lời câu hỏi về tài liệu này. Bạn vẫn có thể xem và tải tài liệu
-          như bình thường.
-        </p>
-      )}
-
+      <AiReadinessBadge
+        aiSupported={doc.aiSupported}
+        ingestStatus={doc.ingestStatus}
+        isOwner={isLikelyOwner}
+        ingesting={ingesting}
+        onIngest={handleIngest}
+      />
       <div className="detail-actions">
         <button
           className="detail-btn detail-btn--primary"
@@ -195,9 +197,9 @@ export default function DocumentDetailPage() {
         <button
           className="detail-btn"
           onClick={goAskAi}
-          disabled={doc.ingestStatus === "UNSUPPORTED_FORMAT"}
+          disabled={!aiReady}
         >
-          {doc.ingestStatus === "UNSUPPORTED_FORMAT"
+          {!aiReady
             ? "🤖 AI không đọc được tệp này"
             : "🤖 Hỏi AI về tài liệu này"}
         </button>
@@ -207,6 +209,7 @@ export default function DocumentDetailPage() {
 
         {isLikelyOwner && (
           <>
+            {false && (
             <button
               className="detail-btn"
               onClick={handleIngest}
@@ -220,6 +223,7 @@ export default function DocumentDetailPage() {
                 ? "✓ Đã sẵn sàng cho AI"
                 : "🧠 Chuẩn bị cho AI Chat"}
             </button>
+            )}
             <button className="detail-btn" onClick={openEditModal}>
               ✏️ Sửa tài liệu
             </button>

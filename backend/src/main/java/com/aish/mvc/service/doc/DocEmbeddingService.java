@@ -11,6 +11,8 @@ public interface DocEmbeddingService {
     // Chỉ owner/admin được ingest. Không phải PDF -> skip rõ ràng, không throw.
     IngestResponseDTO ingest(Long documentId);
 
+    boolean isAiSupported(String fileName, String fileType);
+
     // Nạp lại toàn bộ vector đã embed từ doc_embeddings vào SimpleVectorStore lúc khởi động —
     // KHÔNG gọi lại EmbeddingModel (đọc thẳng vector JSON đã lưu).
     void hydrateFromDatabase();

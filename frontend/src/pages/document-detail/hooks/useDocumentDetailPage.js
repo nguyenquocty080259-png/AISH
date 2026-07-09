@@ -192,6 +192,7 @@ export function useDocumentDetailPage() {
       } else {
         showError(res.message || "Không thể chuẩn bị tài liệu này cho AI.");
       }
+      await load();
     } catch (err) {
       showError(err.message || "Không thể chuẩn bị tài liệu cho AI, vui lòng thử lại.");
     } finally {

@@ -36,4 +36,5 @@ public class DocumentResponseDTO {
     private String moderationReason;
 
     private String ingestStatus; // NOT_INGESTED | INGESTED | UNSUPPORTED_FORMAT
+    private Boolean aiSupported;
 }

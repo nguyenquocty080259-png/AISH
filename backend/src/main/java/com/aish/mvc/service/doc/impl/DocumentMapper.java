@@ -4,6 +4,7 @@ import com.aish.mvc.dto.doc.AdminDocumentSummaryDTO;
 import com.aish.mvc.dto.doc.CommentDTO;
 import com.aish.mvc.dto.doc.DocumentResponseDTO;
 import com.aish.mvc.entity.doc.DocDocument;
+import com.aish.mvc.entity.doc.DocFile;
 import com.aish.mvc.entity.doc.Subject;
 import com.aish.mvc.entity.enums.IngestStatus;
 import com.aish.mvc.entity.enums.ModerationStatus;
@@ -13,6 +14,7 @@ import com.aish.mvc.repository.doc.CommentRepository;
 import com.aish.mvc.repository.doc.DownloadRepository;
 import com.aish.mvc.repository.doc.FavoriteRepository;
 import com.aish.mvc.repository.doc.RatingRepository;
+import com.aish.mvc.service.doc.DocEmbeddingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -29,6 +31,7 @@ public class DocumentMapper {
     private final RatingRepository ratingRepository;
     private final CommentRepository commentRepository;
     private final AuthAccountRepository authAccountRepository;
+    private final DocEmbeddingService docEmbeddingService;
 
     private Long currentUserId() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -57,10 +60,14 @@ public class DocumentMapper {
 
         if (doc.getUser() != null) dto.setOwnerName(doc.getUser().getFullName());
         if (doc.getFiles() != null && !doc.getFiles().isEmpty()) {
-            dto.setFileName(doc.getFiles().getFirst().getFileName());
-            dto.setFileUrl(doc.getFiles().getFirst().getFileUrl());
-            dto.setFileType(doc.getFiles().getFirst().getFileType());
-            dto.setStorageType(toStorageType(doc.getFiles().getFirst().getResourceType()));
+            DocFile primaryFile = doc.getFiles().getFirst();
+            dto.setFileName(primaryFile.getFileName());
+            dto.setFileUrl(primaryFile.getFileUrl());
+            dto.setFileType(primaryFile.getFileType());
+            dto.setStorageType(toStorageType(primaryFile.getResourceType()));
+            dto.setAiSupported(docEmbeddingService.isAiSupported(primaryFile.getFileName(), primaryFile.getFileType()));
+        } else {
+            dto.setAiSupported(false);
         }
         if (doc.getSubjects() != null && !doc.getSubjects().isEmpty()) {
             dto.setSubjectIds(doc.getSubjects().stream().map(Subject::getId).collect(Collectors.toList()));

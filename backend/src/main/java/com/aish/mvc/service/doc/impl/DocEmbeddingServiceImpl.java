@@ -135,7 +135,7 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
         // Content-quality gate: Tika "đọc được" một file không có nghĩa là nội dung hữu ích
         // (file rỗng, ảnh quét không OCR, định dạng lạ Tika chỉ trích ra vài ký tự rác...).
         // Chỉ áp dụng cho nhánh Tika — PDF page-aware reader không qua bước này.
-        if (!hasRealPages && nonWhitespaceLength(rawDocs) < MIN_USEFUL_CONTENT_CHARS) {
+        if (nonWhitespaceLength(rawDocs) < MIN_USEFUL_CONTENT_CHARS) {
             doc.setIngestStatus(IngestStatus.UNSUPPORTED_FORMAT);
             docDocumentRepository.save(doc);
             return new IngestResponseDTO(documentId, "UNSUPPORTED_FORMAT", 0,
@@ -145,6 +145,8 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
         List<Document> chunks = new TokenTextSplitter().apply(rawDocs);
 
         if (chunks.isEmpty()) {
+            doc.setIngestStatus(IngestStatus.UNSUPPORTED_FORMAT);
+            docDocumentRepository.save(doc);
             return new IngestResponseDTO(documentId, "EMPTY", 0, "Không trích xuất được nội dung nào từ tài liệu.");
         }
 
@@ -191,6 +193,16 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
 
     private enum IngestFormat { PDF, TIKA, UNSUPPORTED }
 
+    @Override
+    public boolean isAiSupported(String fileName, String fileType) {
+        String type = fileType != null ? fileType.toLowerCase() : "";
+        String name = fileName != null ? fileName.toLowerCase() : "";
+
+        boolean blockedByMime = type.startsWith("image/") || type.startsWith("video/") || type.startsWith("audio/");
+        boolean blockedByExtension = BLOCKED_EXTENSIONS.stream().anyMatch(name::endsWith);
+        return !blockedByMime && !blockedByExtension;
+    }
+
     // Format policy (blocklist): PDF giữ page-aware reader riêng. Mọi định dạng KHÁC được thử
     // qua Tika, TRỪ những định dạng vô nghĩa khi đọc như text (ảnh/video/audio/nén/thực thi —
     // xem BLOCKED_EXTENSIONS). Mục tiêu là đọc được càng nhiều định dạng càng tốt, nên đây là
@@ -204,11 +216,9 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
         }
 
         // MIME prefix bắt được phần lớn ảnh/video/audio kể cả khi phần mở rộng lạ/thiếu.
-        boolean blockedByMime = type.startsWith("image/") || type.startsWith("video/") || type.startsWith("audio/");
         // Extension là lưới an toàn cho archive/executable và cho trường hợp MIME bị thiếu
         // hoặc chung chung (vd. "application/octet-stream").
-        boolean blockedByExtension = BLOCKED_EXTENSIONS.stream().anyMatch(name::endsWith);
-        if (blockedByMime || blockedByExtension) {
+        if (!isAiSupported(docFile.getFileName(), docFile.getFileType())) {
             return IngestFormat.UNSUPPORTED;
         }
 

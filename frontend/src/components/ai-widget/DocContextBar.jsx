@@ -3,8 +3,9 @@ import { useAiWidget } from "../../context/AiWidgetContext";
 const styles = {
   bar: {
     display: "flex",
-    alignItems: "center",
-    gap: 8,
+    flexDirection: "column",
+    alignItems: "stretch",
+    gap: 4,
     padding: "8px 12px",
     borderTop: "1px solid rgba(15, 23, 42, 0.08)",
     background: "#fff7ed",
@@ -12,12 +13,21 @@ const styles = {
     fontSize: 12,
   },
   label: {
-    flex: 1,
     minWidth: 0,
     overflow: "hidden",
     whiteSpace: "nowrap",
     textOverflow: "ellipsis",
     fontWeight: 700,
+  },
+  row: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+  },
+  warning: {
+    color: "#a16207",
+    fontSize: 11,
+    lineHeight: 1.35,
   },
   toggle: {
     display: "inline-flex",
@@ -53,32 +63,49 @@ export default function DocContextBar() {
     routeDocumentId,
     currentDocTitle,
     docContextEnabled,
+    currentDocReady,
     setDocContextEnabled,
   } = useAiWidget();
 
   if (!routeDocumentId) return null;
 
+  const toggleDisabled = !currentDocReady;
+
   return (
     <div style={styles.bar}>
-      <span style={styles.label}>Hỏi về: {currentDocTitle}</span>
-      <button
-        type="button"
-        style={styles.toggle}
-        onClick={() => setDocContextEnabled((enabled) => !enabled)}
-        aria-pressed={docContextEnabled}
-        title={docContextEnabled ? "Tắt hỏi theo tài liệu" : "Bật hỏi theo tài liệu"}
-      >
-        <span
+      <div style={styles.row}>
+        <span style={styles.label}>Hỏi về: {currentDocTitle}</span>
+        <button
+          type="button"
           style={{
-            ...styles.track,
-            justifyContent: docContextEnabled ? "flex-end" : "flex-start",
-            background: docContextEnabled ? "#f97316" : "#d6d3d1",
+            ...styles.toggle,
+            opacity: toggleDisabled ? 0.62 : 1,
+            cursor: toggleDisabled ? "not-allowed" : "pointer",
           }}
+          onClick={() => setDocContextEnabled((enabled) => !enabled)}
+          aria-pressed={docContextEnabled && !toggleDisabled}
+          title={docContextEnabled ? "Tắt hỏi theo tài liệu" : "Bật hỏi theo tài liệu"}
+          disabled={toggleDisabled}
         >
-          <span style={styles.knob} />
+          <span
+            style={{
+              ...styles.track,
+              justifyContent:
+                docContextEnabled && !toggleDisabled ? "flex-end" : "flex-start",
+              background:
+                docContextEnabled && !toggleDisabled ? "#f97316" : "#d6d3d1",
+            }}
+          >
+            <span style={styles.knob} />
+          </span>
+          {docContextEnabled && !toggleDisabled ? "ON" : "OFF"}
+        </button>
+      </div>
+      {toggleDisabled && (
+        <span style={styles.warning}>
+          Tài liệu chưa được nạp cho AI — vào trang chi tiết để nạp
         </span>
-        {docContextEnabled ? "ON" : "OFF"}
-      </button>
+      )}
     </div>
   );
 }
