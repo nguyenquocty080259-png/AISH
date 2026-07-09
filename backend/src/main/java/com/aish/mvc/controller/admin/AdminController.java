@@ -6,6 +6,7 @@ import com.aish.mvc.dto.doc.AdminDocumentSummaryDTO;
 import com.aish.mvc.dto.doc.AdminStatsDTO;
 import com.aish.mvc.dto.doc.AppealDecisionRequestDTO;
 import com.aish.mvc.entity.enums.AppealStatus;
+import com.aish.mvc.entity.enums.DocumentVisibility;
 import com.aish.mvc.service.admin.AdminService;
 import com.aish.mvc.service.doc.DocumentService;
 import lombok.RequiredArgsConstructor;
@@ -52,8 +53,23 @@ public class AdminController {
 
     @GetMapping("/documents")
     public ResponseEntity<Page<AdminDocumentSummaryDTO>> listDocuments(
-            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(documentService.getAllDocumentsForAdmin(pageable));
+
+            @RequestParam(required = false)
+            DocumentVisibility visibility,
+
+            @PageableDefault(
+                    size = 20,
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC)
+            Pageable pageable) {
+
+        return ResponseEntity.ok(
+                documentService.getAllDocumentsForAdmin(
+                        visibility,
+                        pageable
+                )
+        );
+
     }
 
     @DeleteMapping("/documents/{id}")

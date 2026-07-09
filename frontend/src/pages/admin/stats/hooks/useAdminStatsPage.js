@@ -6,7 +6,46 @@ export function useAdminStatsPage() {
     const [loading, setLoading] = useState(true);
     const [users, setUsers] = useState([]);
     const [showUsers, setShowUsers] = useState(false);
+    const [documents, setDocuments] = useState([]);
+    const [showDocuments, setShowDocuments] = useState(false);
+    const [documentTitle, setDocumentTitle] = useState("");
+    //load tổng tài liệu
+    const toggleDocuments = async () => {
 
+        if (!showDocuments && documents.length === 0) {
+
+            const page = await adminApi.listDocuments();
+
+            setDocuments(page.content);
+        }
+
+        setShowDocuments(prev => !prev);
+    };
+    const loadDocuments = async (visibility = null, 
+        title = "Danh sách tài liệu"
+    ) => {
+    try {
+
+        const page = await adminApi.listDocuments(
+        0,
+        20,
+        visibility
+        );
+
+        setDocuments(page.content ?? []);
+
+        setDocumentTitle(title);
+
+        // Đóng bảng user
+        setShowUsers(false);
+
+        // Luôn mở bảng tài liệu
+        setShowDocuments(true);
+
+    } catch (error) {
+        console.error("Lỗi tải tài liệu:", error);
+    }
+    };
     // Load thống kê
     const loadStats = async () => {
         try {
@@ -35,13 +74,26 @@ export function useAdminStatsPage() {
 
     // Click card Tổng người dùng
     const toggleUsers = async () => {
-        // Nếu chưa mở và chưa load thì gọi API
-        if (!showUsers && users.length === 0) {
-            await loadUsers();
-        }
 
-        setShowUsers(prev => !prev);
+    if (!showUsers && users.length === 0) {
+        await loadUsers();
+    }
+
+    // Đóng bảng tài liệu
+    setShowDocuments(false);
+
+    // Mở/đóng bảng user
+    setShowUsers((prev) => !prev);
     };
 
-    return {stats, loading, users, showUsers, toggleUsers};
+    return {
+        stats, 
+        loading, 
+        users, 
+        showUsers, 
+        toggleUsers,
+        documents,
+        showDocuments,
+        documentTitle, 
+        loadDocuments};
 }

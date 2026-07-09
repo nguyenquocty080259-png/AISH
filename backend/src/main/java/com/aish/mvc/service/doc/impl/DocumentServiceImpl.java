@@ -353,8 +353,38 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<AdminDocumentSummaryDTO> getAllDocumentsForAdmin(Pageable pageable) {
-        return docDocumentRepository.findAll(pageable).map(documentMapper::toAdminSummaryDTO);
+    public Page<AdminDocumentSummaryDTO> getAllDocumentsForAdmin(
+            DocumentVisibility visibility,
+            Pageable pageable) {
+
+        Page<DocDocument> page;
+
+        if (visibility == null) {
+
+            page = docDocumentRepository.findAll(pageable);
+
+        } else {
+
+            page = docDocumentRepository
+                    .findByVisibility(visibility, pageable);
+
+        }
+        return page.map(document -> {
+
+            String storageType = document.getFiles().isEmpty()
+                    ? "-"
+                    : document.getFiles().get(0).getResourceType();
+
+            return new AdminDocumentSummaryDTO(
+                    document.getId(),
+                    document.getTitle(),
+                    document.getUser().getFullName(),
+                    document.getVisibility().name(),
+                    document.getModerationStatus().name(),
+                    storageType,
+                    document.getCreatedAt()
+            );
+        });
     }
 
     @Override

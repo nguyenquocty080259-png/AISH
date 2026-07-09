@@ -4,6 +4,7 @@ import com.aish.mvc.entity.doc.DocDocument;
 import com.aish.mvc.entity.enums.DocumentVisibility;
 import com.aish.mvc.entity.enums.IngestStatus;
 import com.aish.mvc.entity.enums.ModerationStatus;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -44,6 +45,10 @@ public interface DocDocumentRepository extends JpaRepository<DocDocument, Long> 
     // lúc đó sẽ vi phạm FK. Không cần phân biệt "còn 1 subject" hay nhiều: attach = chặn, luôn an toàn.
     boolean existsBySubjects_Id(Long subjectId);
 
+    Page<DocDocument> findByVisibility(
+            DocumentVisibility visibility,
+            Pageable pageable
+    );
     @Query("SELECT DISTINCT d FROM DocDocument d LEFT JOIN FETCH d.subjects WHERE d.deletedAt IS NULL " +
             "AND (d.visibility = :pub OR d.user.id = :userId)")
     List<DocDocument> findVisibleDocuments(@Param("pub") DocumentVisibility pub, @Param("userId") Long userId);

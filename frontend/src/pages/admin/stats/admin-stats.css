@@ -194,3 +194,35 @@
 .offline {
     color: #9ca3af;
 }
+
+.visibility-public{
+
+    background:#dcfce7;
+
+    color:#15803d;
+
+    padding:6px 14px;
+
+    border-radius:20px;
+
+    font-size:13px;
+
+    font-weight:600;
+
+}
+
+.visibility-private{
+
+    background:#fee2e2;
+
+    color:#dc2626;
+
+    padding:6px 14px;
+
+    border-radius:20px;
+
+    font-size:13px;
+
+    font-weight:600;
+
+}

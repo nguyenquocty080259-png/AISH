@@ -28,8 +28,15 @@ export function rejectAppeal(appealId, note) {
 
 // Returns a Spring Data Page: { content, totalPages, totalElements, number, size, ... }.
 // page is 0-indexed (matches Spring Pageable). Backend default: size=20, sort=createdAt DESC.
-export function listDocuments(page = 0, size = 20) {
-  return apiClient.get("/admin/documents", { params: { page, size } }).then((res) => res.data);
+export function listDocuments(page = 0, size = 20, visibility = null) {
+  const params = { page, size };
+  if (visibility) {
+    params.visibility = visibility;
+  }
+
+  return apiClient
+    .get("/admin/documents", { params })
+    .then((res) => res.data);
 }
 
 // Takedown — no request body/reason supported by the backend (DELETE only takes the id).
@@ -40,3 +47,4 @@ export function removeDocument(id) {
 export function getAllUsers() {
   return apiClient.get("/admin/users").then((res) => res.data);
 }
+

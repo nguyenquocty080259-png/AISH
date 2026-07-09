@@ -18,136 +18,222 @@ export default function AdminStatsPage() {
   const {
     stats,
     loading,
+
     users,
     showUsers,
     toggleUsers,
+
+    documents,
+    showDocuments,
+    documentTitle,
+    loadDocuments,
   } = useAdminStatsPage();
+
+  if (loading) {
+    return (
+      <div className="admin-stats-page">
+        <PageHeader title="Bảng điều khiển Admin" />
+        <p className="admin-stats-page__loading">
+          Đang tải thống kê...
+        </p>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <div className="admin-stats-page">
+        <PageHeader title="Bảng điều khiển Admin" />
+        <p className="admin-stats-page__loading">
+          Không tải được thống kê.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-stats-page">
       <PageHeader title="Bảng điều khiển Admin" />
 
-      {loading ? (
-        <p className="admin-stats-page__loading">
-          Đang tải thống kê...
-        </p>
-      ) : !stats ? (
-        <p className="admin-stats-page__loading">
-          Không tải được thống kê.
-        </p>
-      ) : (
-        <>
-          <div className="admin-stats-grid">
-            {STAT_TILES.map((tile) => (
-              <Card
-                key={tile.key}
-                clickable
-                className="admin-stat-card"
-                onClick={
-                  tile.key === "totalUsers"
-                    ? toggleUsers
-                    : undefined
-                }
-              >
-                <p className="admin-stat-card__value">
-                  {stats[tile.key]}
-                </p>
+      <div className="admin-stats-grid">
+        {STAT_TILES.map((tile) => (
+          <Card
+            key={tile.key}
+            clickable
+            className="admin-stat-card"
+            onClick={() => {
+              if (tile.key === "totalUsers") {
+                toggleUsers();
+                return;
+              }
 
-                <p className="admin-stat-card__label">
-                  {tile.label}
-                </p>
-              </Card>
-            ))}
+              if (tile.key === "totalDocuments") {
+                loadDocuments(null, "Danh sách tất cả tài liệu");
+                return;
+              }
 
-            <Link
-              to={ROUTES.ADMIN_APPEALS}
-              className="admin-stat-card__link"
-            >
-              <Card
-                clickable
-                className="admin-stat-card admin-stat-card--highlight"
-              >
-                <p className="admin-stat-card__value">
-                  {stats.pendingAppeals}
-                </p>
+              if (tile.key === "publicDocuments") {
+                loadDocuments("PUBLIC", "Danh sách tài liệu công khai");
+                return;
+              }
 
-                <p className="admin-stat-card__label">
-                  Kháng nghị đang chờ{" "}
-                  {stats.pendingAppeals > 0 && (
-                    <Badge intent="warning">
-                      Cần xử lý
-                    </Badge>
-                  )}
-                </p>
-              </Card>
-            </Link>
-          </div>
+              if (tile.key === "privateDocuments") {
+                loadDocuments("PRIVATE", "Danh sách tài liệu riêng tư");
+                return;
+              }
+            }}
+          >
+            <p className="admin-stat-card__value">
+              {stats[tile.key]}
+            </p>
 
-          {showUsers && (
-            <Card className="admin-users-card">
-              <h3>Danh sách người dùng hệ thống</h3>
+            <p className="admin-stat-card__label">
+              {tile.label}
+            </p>
+          </Card>
+        ))}
 
-              <table className="admin-users-table">
-                <thead>
-                  <tr>
-                      <th style={{width:"50%"}}>Người dùng</th>
-                      <th style={{width:"15%"}}>Vai trò</th>
-                      <th style={{width:"15%"}}>Trạng thái</th>
-                      <th style={{width:"20%"}}>Online</th>
-                  </tr>
-              </thead>
+        <Link
+          to={ROUTES.ADMIN_APPEALS}
+          className="admin-stat-card__link"
+        >
+          <Card
+            clickable
+            className="admin-stat-card admin-stat-card--highlight"
+          >
+            <p className="admin-stat-card__value">
+              {stats.pendingAppeals}
+            </p>
 
-                <tbody>
-                    {users.map((user) => (
-                      <tr key={user.id}>
-                        <td>
-                            <div className="user-cell">
-                                <img
-                                    src={user.avatarUrl || "/default-avatar.png"}
-                                    alt={user.fullName}
-                                    className="admin-user-avatar"
-                                />
+            <p className="admin-stat-card__label">
+              Kháng nghị đang chờ{" "}
+              {stats.pendingAppeals > 0 && (
+                <Badge intent="warning">
+                  Cần xử lý
+                </Badge>
+              )}
+            </p>
+          </Card>
+        </Link>
+      </div>
 
-                                <div className="user-info">
+      {/* ================= USER ================= */}
 
-                                    <div className="user-name">
+      {showUsers && (
+        <Card className="admin-users-card">
+          <h3>Danh sách người dùng hệ thống</h3>
 
-                                        {user.fullName}
+          <table className="admin-users-table">
+            <thead>
+              <tr>
+                <th style={{ width: "50%" }}>Người dùng</th>
+                <th style={{ width: "15%" }}>Vai trò</th>
+                <th style={{ width: "15%" }}>Trạng thái</th>
+                <th style={{ width: "20%" }}>Online</th>
+              </tr>
+            </thead>
 
-                                    </div>
+            <tbody>
+              {users.map((user) => (
+                <tr key={user.id}>
+                  <td>
+                    <div className="user-cell">
+                      <img
+                        src={
+                          user.avatarUrl ||
+                          "/default-avatar.png"
+                        }
+                        alt={user.fullName}
+                        className="admin-user-avatar"
+                      />
 
-                                    <div className="user-email">
+                      <div className="user-info">
+                        <div className="user-name">
+                          {user.fullName}
+                        </div>
 
-                                        {user.email}
+                        <div className="user-email">
+                          {user.email}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
 
-                                    </div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <span className={`role-badge ${user.role.toLowerCase()}`}>
-                                {user.role}
-                            </span>
-                        </td>
+                  <td>
+                    <span
+                      className={`role-badge ${user.role.toLowerCase()}`}
+                    >
+                      {user.role}
+                    </span>
+                  </td>
 
-                        <td>
-                            <span className="status-badge">
-                                {user.status}
-                            </span>
-                        </td>
+                  <td>
+                    <span className="status-badge">
+                      {user.status}
+                    </span>
+                  </td>
 
-                        <td>
-                            <span className={user.online ? "online" : "offline"}>
-                                {user.online ? "🟢 Online" : "⚪ Offline"}
-                            </span>
-                        </td>
-                    </tr>
-                    ))}
-                  </tbody>
-              </table>
-            </Card>
-          )}
-        </>
+                  <td>
+                    <span
+                      className={
+                        user.online
+                          ? "online"
+                          : "offline"
+                      }
+                    >
+                      {user.online
+                        ? "🟢 Online"
+                        : "⚪ Offline"}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      )}
+
+      {/* ================= DOCUMENT ================= */}
+
+      {showDocuments && (
+        <Card className="admin-users-card">
+          <h3>{documentTitle}</h3>
+
+          <table className="admin-users-table">
+            <thead>
+              <tr>
+                <th>Tiêu đề</th>
+                <th>Người đăng</th>
+                <th>Quyền</th>
+                <th>Kiểm duyệt</th>
+                <th>Lưu trữ</th>
+                <th>Ngày tạo</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {documents.map((doc) => (
+                <tr key={doc.id}>
+                  <td>{doc.title}</td>
+
+                  <td>{doc.ownerName}</td>
+
+                  <td>{doc.visibility}</td>
+
+                  <td>{doc.moderationStatus}</td>
+
+                  <td>{doc.storageType}</td>
+
+                  <td>
+                    {new Date(
+                      doc.createdAt
+                    ).toLocaleDateString("vi-VN")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
       )}
     </div>
   );
