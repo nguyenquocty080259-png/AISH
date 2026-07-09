@@ -36,3 +36,7 @@ export function listDocuments(page = 0, size = 20) {
 export function removeDocument(id) {
   return apiClient.delete(`/admin/documents/${id}`);
 }
+
+export function getAllUsers() {
+  return apiClient.get("/admin/users").then((res) => res.data);
+}

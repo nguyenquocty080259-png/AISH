@@ -26,7 +26,6 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@Valid@RequestBody SignupRequest request) {
-        System.out.println("SIGNUP API CALLED");
         authService.signup(request);
         return ResponseEntity.ok("Register success");
     }
@@ -35,7 +34,6 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(
             @Valid
             @RequestBody LoginRequest request) {
-        System.out.println("========== LOGIN CONTROLLER ==========");
         return ResponseEntity.ok(authService.login(request));
     }
 

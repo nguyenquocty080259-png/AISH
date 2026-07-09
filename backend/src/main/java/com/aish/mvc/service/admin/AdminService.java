@@ -1,7 +1,9 @@
 package com.aish.mvc.service.admin;
 
+import com.aish.mvc.dto.auth.admin.AdminUserResponseDTO;
 import com.aish.mvc.dto.doc.AdminAppealResponseDTO;
 import com.aish.mvc.dto.doc.AdminStatsDTO;
+import com.aish.mvc.entity.auth.AuthAccount;
 import com.aish.mvc.entity.enums.AppealStatus;
 
 import java.util.List;
@@ -19,4 +21,8 @@ public interface AdminService {
     AdminAppealResponseDTO rejectAppeal(Long appealId, String adminNote);
 
     AdminStatsDTO getStats();
+
+    List<AdminUserResponseDTO> getAllUsers();
+
+    //List<AdminAppealResponseDTO> getAppeals(AppealStatus status);
 }

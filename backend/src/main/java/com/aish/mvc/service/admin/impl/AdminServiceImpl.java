@@ -1,14 +1,18 @@
 package com.aish.mvc.service.admin.impl;
 
+import com.aish.mvc.dto.auth.admin.AdminUserResponseDTO;
 import com.aish.mvc.dto.doc.AdminAppealResponseDTO;
 import com.aish.mvc.dto.doc.AdminStatsDTO;
 import com.aish.mvc.dto.doc.DocumentSummaryDTO;
+import com.aish.mvc.entity.auth.AuthAccount;
+import com.aish.mvc.entity.auth.AuthUser;
 import com.aish.mvc.entity.doc.DocDocument;
 import com.aish.mvc.entity.doc.ModerationAppeal;
 import com.aish.mvc.entity.enums.AppealStatus;
 import com.aish.mvc.entity.enums.DocumentVisibility;
 import com.aish.mvc.entity.enums.ModerationStatus;
 import com.aish.mvc.exception.ResourceNotFoundException;
+import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.repository.auth.AuthUserRepository;
 import com.aish.mvc.repository.doc.DocDocumentRepository;
 import com.aish.mvc.repository.doc.ModerationAppealRepository;
@@ -29,6 +33,7 @@ public class AdminServiceImpl implements AdminService {
     private final DocDocumentRepository docDocumentRepository;
     private final AuthUserRepository authUserRepository;
     private final SubjectRepository subjectRepository;
+    private final AuthAccountRepository authAccountRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -78,8 +83,33 @@ public class AdminServiceImpl implements AdminService {
         long privateDocuments = docDocumentRepository.countByVisibilityAndDeletedAtIsNull(DocumentVisibility.PRIVATE);
         long pendingAppeals = moderationAppealRepository.countByStatus(AppealStatus.APPEAL_PENDING);
         long totalSubjects = subjectRepository.count();
-
         return new AdminStatsDTO(totalUsers, totalDocuments, publicDocuments, privateDocuments, pendingAppeals, totalSubjects);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AdminUserResponseDTO> getAllUsers() {
+
+        List<AuthAccount> accounts = authAccountRepository.findAll();
+
+        return accounts.stream()
+                .map(account -> {
+
+                    AuthUser user = account.getUser();
+
+                    return AdminUserResponseDTO.builder()
+                            .id(user.getId())
+                            .fullName(user.getFullName())
+                            .email(account.getIdentifier())
+                            .avatarUrl(user.getAvatarUrl())
+                            .role(user.getRole().getRoleName())
+                            .status(user.getStatus().name())
+                            .lastLoginAt(account.getLastLoginAt())
+                            .online(false) // sẽ xử lý sau
+                            .build();
+
+                })
+                .toList();
     }
 
     private ModerationAppeal requirePendingAppeal(Long appealId) {

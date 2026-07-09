@@ -1,32 +1,47 @@
 import { useEffect, useState } from "react";
 import * as adminApi from "../../../../api/adminApi";
-import { useToast } from "../../../../hooks/useToast";
 
 export function useAdminStatsPage() {
-  const { showError } = useToast();
+    const [stats, setStats] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [users, setUsers] = useState([]);
+    const [showUsers, setShowUsers] = useState(false);
 
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+    // Load thống kê
+    const loadStats = async () => {
+        try {
+            const data = await adminApi.getStats();
+            setStats(data);
+        } catch (error) {
+            console.error("Lỗi tải thống kê:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  const load = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await adminApi.getStats();
-      setStats(data);
-    } catch (err) {
-      setError(err.message);
-      showError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    useEffect(() => {
+        loadStats();
+    }, []);
 
-  useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // Load danh sách user
+    const loadUsers = async () => {
+        try {
+            const data = await adminApi.getAllUsers();
+            setUsers(data);
+        } catch (error) {
+            console.error("Lỗi tải danh sách người dùng:", error);
+        }
+    };
 
-  return { stats, loading, error };
+    // Click card Tổng người dùng
+    const toggleUsers = async () => {
+        // Nếu chưa mở và chưa load thì gọi API
+        if (!showUsers && users.length === 0) {
+            await loadUsers();
+        }
+
+        setShowUsers(prev => !prev);
+    };
+
+    return {stats, loading, users, showUsers, toggleUsers};
 }
