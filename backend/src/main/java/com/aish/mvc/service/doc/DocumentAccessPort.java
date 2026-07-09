@@ -14,6 +14,8 @@ public interface DocumentAccessPort {
     // DTO document đầy đủ (tái dùng của GET /api/documents/{id}) — chỉ trả khi khả dụng.
     Optional<DocumentResponseDTO> getDocumentDto(Long documentId, Long currentUserId);
 
+    Optional<String> getDocumentTitle(Long documentId, Long currentUserId);
+
     // Có được phép ADD tài liệu này vào collection lúc này không.
     boolean canAddToCollection(Long documentId, Long currentUserId);
 }

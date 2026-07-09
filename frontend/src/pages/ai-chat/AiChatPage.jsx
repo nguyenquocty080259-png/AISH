@@ -8,8 +8,9 @@ import "./ai-chat.css";
 
 export default function AiChatPage() {
   const {
-    documentId,
     contextDoc,
+    activeDocumentId,
+    activeDocumentTitle,
     messages,
     input,
     setInput,
@@ -38,7 +39,7 @@ export default function AiChatPage() {
       return "AI HiveMind không đọc được nội dung của tài liệu này, nên không thể trả lời câu hỏi về tài liệu.";
     }
 
-    if (documentId) {
+    if (activeDocumentId) {
       return "Đặt câu hỏi liên quan tới tài liệu này để AI HiveMind hỗ trợ bạn.";
     }
 
@@ -82,12 +83,17 @@ export default function AiChatPage() {
           </button>
           <div>
             <h1 className="chat-page__title">AI HiveMind</h1>
-            {documentId && (
+            {activeDocumentId && (
               <Link
-                to={buildRoute(ROUTES.DOCUMENT_DETAIL, { id: documentId })}
+                to={buildRoute(ROUTES.DOCUMENT_DETAIL, {
+                  id: activeDocumentId,
+                })}
                 className="chat-page__context"
               >
-                Đang hỏi về: {contextDoc?.title || `tài liệu #${documentId}`}
+                Đang hỏi về:{" "}
+                {activeDocumentTitle ||
+                  contextDoc?.title ||
+                  `tài liệu #${activeDocumentId}`}
               </Link>
             )}
           </div>

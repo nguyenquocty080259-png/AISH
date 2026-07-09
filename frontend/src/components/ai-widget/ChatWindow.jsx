@@ -3,6 +3,8 @@ import { useAiWidget } from "../../context/AiWidgetContext";
 import ChatHeader from "./ChatHeader";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
+import HistoryPanel from "./HistoryPanel";
+import DocContextBar from "./DocContextBar";
 
 const getWindowStyle = (isSmallScreen) => ({
   position: "fixed",
@@ -20,8 +22,24 @@ const getWindowStyle = (isSmallScreen) => ({
   flexDirection: "column",
 });
 
+const styles = {
+  body: {
+    position: "relative",
+    flex: 1,
+    minHeight: 0,
+    display: "flex",
+    flexDirection: "column",
+  },
+};
+
 export default function ChatWindow() {
-  const { messages, isTyping, isHistoryLoading, sendMessage } = useAiWidget();
+  const {
+    messages,
+    isTyping,
+    isHistoryLoading,
+    isHistoryPanelOpen,
+    sendMessage,
+  } = useAiWidget();
   const [isSmallScreen, setIsSmallScreen] = useState(() => window.innerWidth <= 480);
 
   useEffect(() => {
@@ -33,7 +51,15 @@ export default function ChatWindow() {
   return (
     <section style={getWindowStyle(isSmallScreen)} aria-label="AI HiveMind chat">
       <ChatHeader />
-      <MessageList messages={messages} isTyping={isTyping} isHistoryLoading={isHistoryLoading} />
+      <div style={styles.body}>
+        <MessageList
+          messages={messages}
+          isTyping={isTyping}
+          isHistoryLoading={isHistoryLoading}
+        />
+        {isHistoryPanelOpen && <HistoryPanel />}
+      </div>
+      <DocContextBar />
       <ChatInput onSend={sendMessage} disabled={isTyping || isHistoryLoading} />
     </section>
   );

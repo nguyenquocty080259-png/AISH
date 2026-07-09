@@ -9,7 +9,8 @@ import com.aish.mvc.entity.doc.DocDocument;
 import com.aish.mvc.repository.ai.AiConversationRepository;
 import com.aish.mvc.repository.ai.AiMessageRepository;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
-import com.aish.mvc.repository.doc.DocDocumentRepository;
+import com.aish.mvc.service.doc.DocumentAccessPort;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -28,7 +29,8 @@ public class AiConversationService {
     private final AiConversationRepository aiConversationRepository;
     private final AiMessageRepository aiMessageRepository;
     private final AuthAccountRepository authAccountRepository;
-    private final DocDocumentRepository docDocumentRepository;
+    private final DocumentAccessPort documentAccessPort;
+    private final EntityManager entityManager;
 
     @Transactional(readOnly = true)
     public List<AiConversationSummaryDTO> getMyConversations() {
@@ -93,7 +95,7 @@ public class AiConversationService {
     private AiConversation createConversation(AuthUser user, Long documentId, String firstMessage) {
         DocDocument document = documentId == null
                 ? null
-                : docDocumentRepository.findById(documentId).orElse(null);
+                : entityManager.getReference(DocDocument.class, documentId);
 
         AiConversation conversation = AiConversation.builder()
                 .user(user)
@@ -112,11 +114,20 @@ public class AiConversationService {
     }
 
     private AiConversationSummaryDTO toSummaryDTO(AiConversation conversation) {
+        Long documentId = conversation.getDocument() != null
+                ? conversation.getDocument().getId()
+                : null;
+        String documentTitle = documentId == null
+                ? null
+                : documentAccessPort.getDocumentTitle(documentId, conversation.getUser().getId()).orElse(null);
+
         return new AiConversationSummaryDTO(
                 conversation.getId(),
                 conversation.getTitle(),
                 conversation.getCreatedAt(),
-                conversation.getUpdatedAt());
+                conversation.getUpdatedAt(),
+                documentId,
+                documentTitle);
     }
 
     private AiMessageDTO toMessageDTO(AiMessage message) {

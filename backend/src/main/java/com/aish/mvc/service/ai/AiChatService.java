@@ -3,7 +3,6 @@ package com.aish.mvc.service.ai;
 import com.aish.mvc.dto.ai.AiChatRequest;
 import com.aish.mvc.dto.ai.AiChatResponse;
 import com.aish.mvc.dto.ai.CitationDTO;
-import com.aish.mvc.dto.ai.RecommendedDocumentDTO;
 import com.aish.mvc.dto.ai.RelatedDocDTO;
 import com.aish.mvc.entity.ai.AiConversation;
 import com.aish.mvc.entity.auth.AuthUser;
@@ -11,7 +10,6 @@ import com.aish.mvc.entity.doc.DocDocument;
 import com.aish.mvc.entity.enums.DocumentVisibility;
 import com.aish.mvc.entity.enums.ModerationStatus;
 import com.aish.mvc.repository.doc.DocDocumentRepository;
-import com.aish.mvc.service.ai.AiRecommendationService;
 import com.aish.mvc.service.doc.DocEmbeddingService;
 import com.aish.mvc.service.doc.DocumentAccessPort;
 import lombok.RequiredArgsConstructor;
@@ -37,13 +35,8 @@ public class AiChatService {
     private static final Logger log = LoggerFactory.getLogger(AiChatService.class);
 
     private static final int TOP_K = 4;
-    // Đo thực tế với gemini-embedding-001 (768d): câu hỏi liên quan trực tiếp tới 1 trang
-    // ra ~0.69 cosine similarity; câu hỏi hoàn toàn không liên quan vẫn ra ~0.41-0.45 (không
-    // phải 0 — Gemini's embedding space có "sàn" khá cao). 0.55 nằm giữa 2 vùng này. Đây là
-    // hiệu chỉnh trên 1 tài liệu demo nhỏ — cần tinh chỉnh lại khi có dữ liệu thật đa dạng hơn.
     private static final double SIMILARITY_THRESHOLD = 0.55;
     private static final int SNIPPET_LENGTH = 240;
-    // relatedDocs là side-channel gợi ý (DEC-027) — cố tình nhỏ, không phải kết quả chính.
     private static final int RELATED_LIMIT = 3;
 
     private final ChatClient chatClient;
@@ -53,9 +46,8 @@ public class AiChatService {
     private final AiRecommendationService aiRecommendationService;
     private final AiConversationService aiConversationService;
 
-    // Thông tin hệ thống — dùng cho GENERAL mode (không tìm thấy đoạn tài liệu liên quan)
     private static final String SYSTEM_PROMPT = """
-            Bạn là AI HiveMind — trợ lý AI của nền tảng HiveMind dành cho sinh viên.
+            Bạn là AI HiveMind - trợ lý AI của nền tảng HiveMind dành cho sinh viên.
 
             Thông tin hệ thống HiveMind:
             - HiveMind là nền tảng hỗ trợ học tập bằng AI
@@ -65,13 +57,13 @@ public class AiChatService {
             - Được xây dựng bởi nhóm 6 SWP391 SE1901 SU26
 
             Nguyên tắc trả lời:
-            - Nếu câu hỏi liên quan đến HiveMind → trả lời dựa trên thông tin hệ thống trên
-            - Nếu không liên quan → trả lời như AI thông thường
+            - Nếu câu hỏi liên quan đến HiveMind, trả lời dựa trên thông tin hệ thống trên
+            - Nếu không liên quan, trả lời như AI thông thường
             - Luôn trả lời thân thiện, ngắn gọn, bằng tiếng Việt
             """;
 
     private static final String RAG_PROMPT_TEMPLATE = """
-            Bạn là AI HiveMind — trợ lý AI của nền tảng HiveMind. Dưới đây là các đoạn trích từ (các) tài liệu người dùng đang hỏi.
+            Bạn là AI HiveMind - trợ lý AI của nền tảng HiveMind. Dưới đây là các đoạn trích từ tài liệu người dùng đang hỏi.
             Chỉ trả lời dựa trên nội dung trích dẫn bên dưới. Nếu trích dẫn không đủ để trả lời,
             hãy nói rõ là tài liệu không có thông tin đó, đừng bịa thêm.
             Luôn trả lời ngắn gọn, chính xác, bằng tiếng Việt.
@@ -80,29 +72,25 @@ public class AiChatService {
             %s
             """;
 
-    /**
-     * Early-stop hybrid (DEC-027): thử từng tier theo thứ tự ưu tiên, dừng ngay ở tier
-     * đầu tiên có kết quả đủ tốt (non-empty sau ngưỡng similarity).
-     * Tier 1: tài liệu đang mở (documentId trong request), nếu có — DEC-011 kiểm tra quyền xem trước.
-     * Tier 2: các tài liệu khác của chính user đang đăng nhập (không đụng private của người khác).
-     * Tier 3: GENERAL — không tìm thấy đoạn liên quan, trả lời bằng kiến thức chung (DEC-028).
-     */
     public AiChatResponse chat(AiChatRequest request) {
         String message = request.getMessage();
-        Long documentId = request.getDocumentId();
         AuthUser currentUser = aiConversationService.currentUserOrNull();
         Long currentUserId = currentUser != null ? currentUser.getId() : null;
+        AiConversation conversation = null;
 
         if (currentUser != null && request.getConversationId() != null) {
-            aiConversationService.requireOwnedConversation(request.getConversationId(), currentUser);
+            conversation = aiConversationService.requireOwnedConversation(request.getConversationId(), currentUser);
         }
 
+        DocumentResolution resolution = resolveDocument(request, conversation, currentUserId);
+
         AiChatResponse response;
-        if (documentId != null) {
-            if (!documentAccessPort.isAvailableTo(documentId, currentUserId)) {
-                throw new RuntimeException("Bạn không có quyền hỏi AI về tài liệu này!");
-            }
-            List<Document> hits = docEmbeddingService.retrieveChunks(message, List.of(documentId), TOP_K, SIMILARITY_THRESHOLD);
+        if (resolution.documentId() != null) {
+            List<Document> hits = docEmbeddingService.retrieveChunks(
+                    message,
+                    List.of(resolution.documentId()),
+                    TOP_K,
+                    SIMILARITY_THRESHOLD);
             if (!hits.isEmpty()) {
                 response = buildRagResponse(message, hits, currentUserId);
                 persistIfAuthenticated(currentUser, request, response);
@@ -110,25 +98,36 @@ public class AiChatService {
             }
         }
 
-        if (currentUserId != null) {
-            List<Long> ownDocIds = docDocumentRepository.findByDeletedAtIsNullAndUser_Id(currentUserId).stream()
-                    .map(DocDocument::getId)
-                    .filter(id -> !id.equals(documentId))
-                    .collect(Collectors.toList());
-            if (!ownDocIds.isEmpty()) {
-                List<Document> hits = docEmbeddingService.retrieveChunks(message, ownDocIds, TOP_K, SIMILARITY_THRESHOLD);
-                if (!hits.isEmpty()) {
-                    response = buildRagResponse(message, hits, currentUserId);
-                    persistIfAuthenticated(currentUser, request, response);
-                    return response;
-                }
-            }
-        }
-
-        response = buildGeneralResponse(message, currentUserId);
+        response = resolution.documentUnavailable()
+                ? buildUnavailableDocumentGeneralResponse(message, currentUserId)
+                : buildGeneralResponse(message, currentUserId);
         persistIfAuthenticated(currentUser, request, response);
         return response;
     }
+
+    private DocumentResolution resolveDocument(
+            AiChatRequest request,
+            AiConversation conversation,
+            Long currentUserId) {
+        if (request.getDocumentId() != null) {
+            if (!documentAccessPort.isAvailableTo(request.getDocumentId(), currentUserId)) {
+                throw new RuntimeException("Bạn không có quyền hỏi AI về tài liệu này!");
+            }
+            return new DocumentResolution(request.getDocumentId(), false);
+        }
+
+        if (conversation != null && conversation.getDocument() != null) {
+            Long conversationDocumentId = conversation.getDocument().getId();
+            if (documentAccessPort.isAvailableTo(conversationDocumentId, currentUserId)) {
+                return new DocumentResolution(conversationDocumentId, false);
+            }
+            return new DocumentResolution(null, true);
+        }
+
+        return new DocumentResolution(null, false);
+    }
+
+    private record DocumentResolution(Long documentId, boolean documentUnavailable) {}
 
     private void persistIfAuthenticated(AuthUser currentUser, AiChatRequest request, AiChatResponse response) {
         if (currentUser == null) return;
@@ -163,8 +162,6 @@ public class AiChatService {
                         snippet(d.getText())))
                 .collect(Collectors.toList());
 
-        // Side-channel gợi ý (DEC-027), KHÔNG ảnh hưởng câu trả lời chính — dựa trên tài liệu
-        // đang được hỏi (chunk có điểm cao nhất) làm seed cho AiRecommendationService.
         List<RelatedDocDTO> relatedDocs = relatedToTopHit(hits, currentUserId);
 
         return new AiChatResponse(answer, "RAG", citations, relatedDocs);
@@ -177,12 +174,16 @@ public class AiChatService {
         ));
         String answer = chatClient.prompt(prompt).call().content();
 
-        // DEC-041: user hỏi về chủ đề mà họ KHÔNG có tài liệu nào (mới rơi vào GENERAL) ->
-        // thử gợi ý tài liệu PUBLIC liên quan tới CHÍNH câu hỏi bằng embedding similarity.
-        // Không tốn thêm lượt gọi LLM (chỉ 1 vector search), giữ đúng tinh thần "lightweight".
         List<RelatedDocDTO> relatedDocs = suggestPublicDocsForTopic(userMessage, currentUserId);
 
         return new AiChatResponse(answer, "GENERAL", List.of(), relatedDocs);
+    }
+
+    private AiChatResponse buildUnavailableDocumentGeneralResponse(String userMessage, Long currentUserId) {
+        AiChatResponse response = buildGeneralResponse(userMessage, currentUserId);
+        String answer = "Tài liệu gắn với cuộc trò chuyện này không còn khả dụng, nên mình sẽ trả lời ở chế độ GENERAL.\n\n"
+                + response.getAnswer();
+        return new AiChatResponse(answer, "GENERAL", response.getCitations(), response.getRelatedDocs());
     }
 
     private List<RelatedDocDTO> relatedToTopHit(List<Document> hits, Long currentUserId) {
@@ -194,7 +195,6 @@ public class AiChatService {
                     .collect(Collectors.toList());
         }
         catch (Exception e) {
-            // relatedDocs là gợi ý phụ — lỗi ở đây không được làm hỏng câu trả lời chính.
             log.warn("Không lấy được relatedDocs cho seedDoc={}: {}", seedDocId, e.getMessage());
             return List.of();
         }

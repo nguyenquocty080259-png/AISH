@@ -55,7 +55,7 @@ const styles = {
 };
 
 export default function ChatHeader() {
-  const { closeWidget } = useAiWidget();
+  const { closeWidget, isAuthenticated, toggleHistoryPanel } = useAiWidget();
 
   return (
     <header style={styles.header}>
@@ -65,6 +65,16 @@ export default function ChatHeader() {
         <p style={styles.status}>Online</p>
       </div>
       <div style={styles.actions}>
+        {isAuthenticated && (
+          <button
+            type="button"
+            style={styles.action}
+            onClick={toggleHistoryPanel}
+            title="Lịch sử trò chuyện"
+          >
+            ≡
+          </button>
+        )}
         <button type="button" style={styles.action} onClick={closeWidget} title="Thu nhỏ">
           -
         </button>

@@ -5,6 +5,7 @@ import TypingIndicator from "./TypingIndicator";
 const styles = {
   list: {
     flex: 1,
+    minHeight: 0,
     padding: "14px 12px",
     overflowY: "auto",
     background: "#fff7ed",

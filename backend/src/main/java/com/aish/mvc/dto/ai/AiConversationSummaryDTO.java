@@ -12,4 +12,6 @@ public class AiConversationSummaryDTO {
     private String title;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Long documentId;
+    private String documentTitle;
 }

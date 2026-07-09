@@ -57,6 +57,13 @@ public class DocumentAccessPortImpl implements DocumentAccessPort {
 
     @Override
     @Transactional(readOnly = true)
+    public Optional<String> getDocumentTitle(Long documentId, Long currentUserId) {
+        if (!isAvailableTo(documentId, currentUserId)) return Optional.empty();
+        return docDocumentRepository.findById(documentId).map(DocDocument::getTitle);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public boolean canAddToCollection(Long documentId, Long currentUserId) {
         // Chỉ cho add doc user ĐANG có quyền xem lúc add (của mình / PUBLIC / SHARED-cho-mình).
         // Trùng khớp với luật availability -> tái dùng.

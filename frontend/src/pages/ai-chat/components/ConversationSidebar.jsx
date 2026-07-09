@@ -55,27 +55,47 @@ export default function ConversationSidebar({
         </div>
       ) : (
         <div className="chat-sidebar__list" aria-label="Lịch sử trò chuyện">
-          {conversations.map((conversation) => (
-            <button
-              key={conversation.id}
-              type="button"
-              className={`chat-sidebar__item${
-                conversation.id === activeConversationId
-                  ? " chat-sidebar__item--active"
-                  : ""
-              }`}
-              onClick={() => onSelectConversation(conversation.id)}
-            >
-              <span className="chat-sidebar__item-title">
-                {conversation.title || "Cuộc trò chuyện mới"}
-              </span>
-              <span className="chat-sidebar__item-time">
-                {formatConversationTime(
-                  conversation.updatedAt || conversation.createdAt
+          {conversations.map((conversation) => {
+            const hasDocument = Boolean(conversation.documentId);
+
+            return (
+              <button
+                key={conversation.id}
+                type="button"
+                className={`chat-sidebar__item${
+                  conversation.id === activeConversationId
+                    ? " chat-sidebar__item--active"
+                    : ""
+                }`}
+                onClick={() => onSelectConversation(conversation.id)}
+              >
+                <span className="chat-sidebar__item-title">
+                  {hasDocument && (
+                    <span
+                      className="chat-sidebar__doc-marker"
+                      aria-label="Cuộc trò chuyện theo tài liệu"
+                    >
+                      TL
+                    </span>
+                  )}
+                  <span className="chat-sidebar__item-title-text">
+                    {conversation.title || "Cuộc trò chuyện mới"}
+                  </span>
+                </span>
+                {hasDocument && (
+                  <span className="chat-sidebar__doc-title">
+                    {conversation.documentTitle ||
+                      `Tài liệu #${conversation.documentId}`}
+                  </span>
                 )}
-              </span>
-            </button>
-          ))}
+                <span className="chat-sidebar__item-time">
+                  {formatConversationTime(
+                    conversation.updatedAt || conversation.createdAt
+                  )}
+                </span>
+              </button>
+            );
+          })}
         </div>
       )}
     </aside>

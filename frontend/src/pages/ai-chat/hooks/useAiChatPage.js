@@ -26,12 +26,15 @@ export function useAiChatPage() {
   const [sending, setSending] = useState(false);
   const [conversations, setConversations] = useState([]);
   const [activeConversationId, setActiveConversationId] = useState(null);
+  const [useDocumentContext, setUseDocumentContext] = useState(Boolean(documentId));
   const [loadingConversations, setLoadingConversations] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const bottomRef = useRef(null);
 
   useEffect(() => {
+    setUseDocumentContext(Boolean(documentId));
+
     if (!documentId) {
       setContextDoc(null);
       return;
@@ -44,8 +47,24 @@ export function useAiChatPage() {
   }, [documentId]);
 
   const isUnsupportedFormat = Boolean(
-    documentId && contextDoc?.ingestStatus === "UNSUPPORTED_FORMAT"
+    documentId && useDocumentContext && contextDoc?.ingestStatus === "UNSUPPORTED_FORMAT"
   );
+
+  const activeConversation = conversations.find(
+    (conversation) => conversation.id === activeConversationId
+  );
+
+  const activeDocumentId =
+    activeConversation?.documentId ||
+    (!activeConversationId && useDocumentContext && documentId
+      ? Number(documentId)
+      : null);
+
+  const activeDocumentTitle =
+    activeConversation?.documentTitle ||
+    (!activeConversationId && useDocumentContext && documentId
+      ? contextDoc?.title || `tài liệu #${documentId}`
+      : null);
 
   const loadMessages = useCallback(
     async (conversationId) => {
@@ -123,12 +142,14 @@ export function useAiChatPage() {
       return;
     }
 
+    setUseDocumentContext(false);
     await loadMessages(conversationId);
     closeMobileSidebar();
   };
 
   const handleNewChat = () => {
     setActiveConversationId(null);
+    setUseDocumentContext(false);
     setMessages([]);
     setInput("");
     closeMobileSidebar();
@@ -146,6 +167,10 @@ export function useAiChatPage() {
     const conversationIdForRequest = isAuthenticated
       ? activeConversationId
       : null;
+    const documentIdForRequest =
+      !activeConversationId && useDocumentContext && documentId
+        ? Number(documentId)
+        : null;
 
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
@@ -154,7 +179,7 @@ export function useAiChatPage() {
     try {
       const res = await aiChatApi.chat({
         message: text,
-        documentId: documentId ? Number(documentId) : null,
+        documentId: documentIdForRequest,
         conversationId: conversationIdForRequest,
       });
 
@@ -191,6 +216,8 @@ export function useAiChatPage() {
   return {
     documentId,
     contextDoc,
+    activeDocumentId,
+    activeDocumentTitle,
     messages,
     input,
     setInput,
