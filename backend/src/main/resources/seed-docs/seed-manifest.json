@@ -1,0 +1,501 @@
+[ {
+  "storedFileName" : "a7b4e298-262a-458b-af80-faa15b10d239_dao-ham-va-y-nghia-hinh-hoc.pdf",
+  "originalFileName" : "dao-ham-va-y-nghia-hinh-hoc.pdf",
+  "fileType" : "application/pdf",
+  "format" : "PDF",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Toán",
+  "title" : "Đạo hàm và ý nghĩa hình học",
+  "fileSizeBytes" : 47510
+}, {
+  "storedFileName" : "b5d132d8-65ed-4ff2-b133-3be38b2f7380_khao-sat-va-ve-do-thi-ham-so.docx",
+  "originalFileName" : "khao-sat-va-ve-do-thi-ham-so.docx",
+  "fileType" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "format" : "DOCX",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Toán",
+  "title" : "Khảo sát và vẽ đồ thị hàm số",
+  "fileSizeBytes" : 3765
+}, {
+  "storedFileName" : "362fc292-0d7a-40a6-998e-7ed22ff8c91d_nguyen-ham-va-tich-phan-co-ban.pptx",
+  "originalFileName" : "nguyen-ham-va-tich-phan-co-ban.pptx",
+  "fileType" : "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "format" : "PPTX",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Toán",
+  "title" : "Nguyên hàm và tích phân cơ bản",
+  "fileSizeBytes" : 32902
+}, {
+  "storedFileName" : "7618b8e9-46db-4781-81d2-bda4765749ce_phuong-trinh-luong-giac-co-ban.txt",
+  "originalFileName" : "phuong-trinh-luong-giac-co-ban.txt",
+  "fileType" : "text/plain",
+  "format" : "TXT",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Toán",
+  "title" : "Phương trình lượng giác cơ bản",
+  "fileSizeBytes" : 3098
+}, {
+  "storedFileName" : "faa02a31-b97c-472f-b6fe-197fa4e3a1be_to-hop-va-xac-suat.pdf",
+  "originalFileName" : "to-hop-va-xac-suat.pdf",
+  "fileType" : "application/pdf",
+  "format" : "PDF",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Toán",
+  "title" : "Tổ hợp và xác suất",
+  "fileSizeBytes" : 48828
+}, {
+  "storedFileName" : "030c0a5f-7f81-4923-a1dc-47b9ab7debe2_phan-tich-bai-tho-tay-tien-cua-quang-dung.pdf",
+  "originalFileName" : "phan-tich-bai-tho-tay-tien-cua-quang-dung.pdf",
+  "fileType" : "application/pdf",
+  "format" : "PDF",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Ngữ văn",
+  "title" : "Phân tích bài thơ Tây Tiến của Quang Dũng",
+  "fileSizeBytes" : 49311
+}, {
+  "storedFileName" : "ee7b842a-e152-4b95-8e69-e40f30d4016c_gia-tri-nhan-dao-trong-truyen-ngan-vo-nhat.docx",
+  "originalFileName" : "gia-tri-nhan-dao-trong-truyen-ngan-vo-nhat.docx",
+  "fileType" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "format" : "DOCX",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Ngữ văn",
+  "title" : "Giá trị nhân đạo trong truyện ngắn Vợ nhặt",
+  "fileSizeBytes" : 3860
+}, {
+  "storedFileName" : "e8eb3589-445d-417b-aef1-0dafe2674f78_phong-cach-nghe-thuat-cua-nguyen-tuan-qua-nguoi-lai-do-song-da.pptx",
+  "originalFileName" : "phong-cach-nghe-thuat-cua-nguyen-tuan-qua-nguoi-lai-do-song-da.pptx",
+  "fileType" : "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "format" : "PPTX",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Ngữ văn",
+  "title" : "Phong cách nghệ thuật của Nguyễn Tuân qua Người lái đò Sông Đà",
+  "fileSizeBytes" : 33009
+}, {
+  "storedFileName" : "4fb17ae3-207d-4cea-bb07-bc0658801b26_nghi-luan-xa-hoi-ly-tuong-song-cua-thanh-nien.txt",
+  "originalFileName" : "nghi-luan-xa-hoi-ly-tuong-song-cua-thanh-nien.txt",
+  "fileType" : "text/plain",
+  "format" : "TXT",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Ngữ văn",
+  "title" : "Nghị luận xã hội: Lý tưởng sống của thanh niên",
+  "fileSizeBytes" : 3189
+}, {
+  "storedFileName" : "1f8ddc9c-2161-4dce-8090-c34c1360d1ee_dac-trung-the-loai-ki-qua-ai-da-dat-ten-cho-dong-song.pdf",
+  "originalFileName" : "dac-trung-the-loai-ki-qua-ai-da-dat-ten-cho-dong-song.pdf",
+  "fileType" : "application/pdf",
+  "format" : "PDF",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Ngữ văn",
+  "title" : "Đặc trưng thể loại kí qua Ai đã đặt tên cho dòng sông?",
+  "fileSizeBytes" : 49719
+}, {
+  "storedFileName" : "e5bf6a36-d1e3-4589-894b-43b03742cd1c_present-perfect-vs-past-simple.pdf",
+  "originalFileName" : "present-perfect-vs-past-simple.pdf",
+  "fileType" : "application/pdf",
+  "format" : "PDF",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Tiếng Anh",
+  "title" : "Present Perfect vs Past Simple",
+  "fileSizeBytes" : 49217
+}, {
+  "storedFileName" : "ab8ee588-b9eb-49ba-993b-b5d5e92fb62f_conditional-sentences-types-1-3.docx",
+  "originalFileName" : "conditional-sentences-types-1-3.docx",
+  "fileType" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "format" : "DOCX",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Tiếng Anh",
+  "title" : "Conditional Sentences (Types 1-3)",
+  "fileSizeBytes" : 3722
+}, {
+  "storedFileName" : "e66c781a-37ef-4b95-beff-e3ae8542be14_passive-voice-in-academic-writing.pptx",
+  "originalFileName" : "passive-voice-in-academic-writing.pptx",
+  "fileType" : "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "format" : "PPTX",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Tiếng Anh",
+  "title" : "Passive Voice in Academic Writing",
+  "fileSizeBytes" : 32658
+}, {
+  "storedFileName" : "05c867ec-a4b0-44d3-8ccf-51863e9e89e0_reported-speech.txt",
+  "originalFileName" : "reported-speech.txt",
+  "fileType" : "text/plain",
+  "format" : "TXT",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Tiếng Anh",
+  "title" : "Reported Speech",
+  "fileSizeBytes" : 2814
+}, {
+  "storedFileName" : "83015449-77d4-4f71-9bc4-ec25a386603e_relative-clauses.pdf",
+  "originalFileName" : "relative-clauses.pdf",
+  "fileType" : "application/pdf",
+  "format" : "PDF",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Tiếng Anh",
+  "title" : "Relative Clauses",
+  "fileSizeBytes" : 47601
+}, {
+  "storedFileName" : "3b51a2ce-a277-4d57-8b77-6704c17e4a35_dinh-luat-bao-toan-dong-luong.pdf",
+  "originalFileName" : "dinh-luat-bao-toan-dong-luong.pdf",
+  "fileType" : "application/pdf",
+  "format" : "PDF",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Vật lý",
+  "title" : "Định luật bảo toàn động lượng",
+  "fileSizeBytes" : 48257
+}, {
+  "storedFileName" : "c90b6098-bb04-4115-bf6c-64aa3dc8df8c_dao-dong-dieu-hoa.docx",
+  "originalFileName" : "dao-dong-dieu-hoa.docx",
+  "fileType" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "format" : "DOCX",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Vật lý",
+  "title" : "Dao động điều hòa",
+  "fileSizeBytes" : 3735
+}, {
+  "storedFileName" : "63f8cde8-816f-4cc0-b9ee-dfbae654dbd7_song-co-va-giao-thoa-song.pptx",
+  "originalFileName" : "song-co-va-giao-thoa-song.pptx",
+  "fileType" : "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "format" : "PPTX",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Vật lý",
+  "title" : "Sóng cơ và giao thoa sóng",
+  "fileSizeBytes" : 32804
+}, {
+  "storedFileName" : "abe49127-97d0-48b1-8bd4-6e26ee378a9a_dong-dien-xoay-chieu.txt",
+  "originalFileName" : "dong-dien-xoay-chieu.txt",
+  "fileType" : "text/plain",
+  "format" : "TXT",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Vật lý",
+  "title" : "Dòng điện xoay chiều",
+  "fileSizeBytes" : 3042
+}, {
+  "storedFileName" : "987dc9f2-844d-4351-8bbc-3095def005c6_thuyet-tuong-doi-hep-cua-einstein-gioi-thieu.pdf",
+  "originalFileName" : "thuyet-tuong-doi-hep-cua-einstein-gioi-thieu.pdf",
+  "fileType" : "application/pdf",
+  "format" : "PDF",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Vật lý",
+  "title" : "Thuyết tương đối hẹp của Einstein (giới thiệu)",
+  "fileSizeBytes" : 49815
+}, {
+  "storedFileName" : "1656c325-bdc2-4d72-8e44-b02fb8d3fc87_phan-ung-oxi-hoa-khu.pdf",
+  "originalFileName" : "phan-ung-oxi-hoa-khu.pdf",
+  "fileType" : "application/pdf",
+  "format" : "PDF",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Hóa học",
+  "title" : "Phản ứng oxi hóa - khử",
+  "fileSizeBytes" : 45887
+}, {
+  "storedFileName" : "98b99e79-0425-4d43-a545-eca81b2c33b6_cau-tao-nguyen-tu-va-bang-tuan-hoan.docx",
+  "originalFileName" : "cau-tao-nguyen-tu-va-bang-tuan-hoan.docx",
+  "fileType" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "format" : "DOCX",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Hóa học",
+  "title" : "Cấu tạo nguyên tử và bảng tuần hoàn",
+  "fileSizeBytes" : 3709
+}, {
+  "storedFileName" : "236c5aec-264a-4723-92d8-aeeaef0a7c95_lien-ket-hoa-hoc.pptx",
+  "originalFileName" : "lien-ket-hoa-hoc.pptx",
+  "fileType" : "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "format" : "PPTX",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Hóa học",
+  "title" : "Liên kết hóa học",
+  "fileSizeBytes" : 32832
+}, {
+  "storedFileName" : "0ea1e23d-fe3d-4023-9e36-10248b745729_este-va-lipit.txt",
+  "originalFileName" : "este-va-lipit.txt",
+  "fileType" : "text/plain",
+  "format" : "TXT",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Hóa học",
+  "title" : "Este và lipit",
+  "fileSizeBytes" : 2988
+}, {
+  "storedFileName" : "417f9f9a-e7f3-45f0-8628-02fc7e0e2068_dai-cuong-ve-kim-loai.pdf",
+  "originalFileName" : "dai-cuong-ve-kim-loai.pdf",
+  "fileType" : "application/pdf",
+  "format" : "PDF",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Hóa học",
+  "title" : "Đại cương về kim loại",
+  "fileSizeBytes" : 47171
+}, {
+  "storedFileName" : "c5cbcda4-7a25-40e2-aa4e-ef104caa836f_co-che-di-truyen-va-bien-di.pdf",
+  "originalFileName" : "co-che-di-truyen-va-bien-di.pdf",
+  "fileType" : "application/pdf",
+  "format" : "PDF",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Sinh học",
+  "title" : "Cơ chế di truyền và biến dị",
+  "fileSizeBytes" : 47222
+}, {
+  "storedFileName" : "61ca9672-3a6f-4d4a-93c7-5bdbbf784280_quy-luat-di-truyen-mendel.docx",
+  "originalFileName" : "quy-luat-di-truyen-mendel.docx",
+  "fileType" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "format" : "DOCX",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Sinh học",
+  "title" : "Quy luật di truyền Mendel",
+  "fileSizeBytes" : 3680
+}, {
+  "storedFileName" : "405702cf-ff18-412d-9f00-1fb4bd0dd524_quang-hop-o-thuc-vat.pptx",
+  "originalFileName" : "quang-hop-o-thuc-vat.pptx",
+  "fileType" : "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "format" : "PPTX",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Sinh học",
+  "title" : "Quang hợp ở thực vật",
+  "fileSizeBytes" : 32854
+}, {
+  "storedFileName" : "2191e6fd-0149-4862-9388-cf0ce6b2261d_ho-hap-te-bao.txt",
+  "originalFileName" : "ho-hap-te-bao.txt",
+  "fileType" : "text/plain",
+  "format" : "TXT",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Sinh học",
+  "title" : "Hô hấp tế bào",
+  "fileSizeBytes" : 2886
+}, {
+  "storedFileName" : "9d58818f-2c1e-482d-9765-4873bd650e3c_hoc-thuyet-tien-hoa-darwin.pdf",
+  "originalFileName" : "hoc-thuyet-tien-hoa-darwin.pdf",
+  "fileType" : "application/pdf",
+  "format" : "PDF",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Sinh học",
+  "title" : "Học thuyết tiến hóa Darwin",
+  "fileSizeBytes" : 48234
+}, {
+  "storedFileName" : "54ca34e8-7510-4556-8c56-df9220ea72b2_cach-mang-thang-tam-nam-1945.pdf",
+  "originalFileName" : "cach-mang-thang-tam-nam-1945.pdf",
+  "fileType" : "application/pdf",
+  "format" : "PDF",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Lịch sử",
+  "title" : "Cách mạng tháng Tám năm 1945",
+  "fileSizeBytes" : 48299
+}, {
+  "storedFileName" : "adac8486-b018-4647-bffb-ae3dab9d920b_chien-dich-dien-bien-phu-1954.docx",
+  "originalFileName" : "chien-dich-dien-bien-phu-1954.docx",
+  "fileType" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "format" : "DOCX",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Lịch sử",
+  "title" : "Chiến dịch Điện Biên Phủ 1954",
+  "fileSizeBytes" : 3810
+}, {
+  "storedFileName" : "2fd31a83-b5c8-4099-9340-818db4f4b9e9_phong-trao-can-vuong-cuoi-the-ky-xix.pptx",
+  "originalFileName" : "phong-trao-can-vuong-cuoi-the-ky-xix.pptx",
+  "fileType" : "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "format" : "PPTX",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Lịch sử",
+  "title" : "Phong trào Cần Vương cuối thế kỷ XIX",
+  "fileSizeBytes" : 32919
+}, {
+  "storedFileName" : "c538c57d-aa9e-4369-814f-3f52931c6e7c_trat-tu-the-gioi-hai-cuc-ianta.txt",
+  "originalFileName" : "trat-tu-the-gioi-hai-cuc-ianta.txt",
+  "fileType" : "text/plain",
+  "format" : "TXT",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Lịch sử",
+  "title" : "Trật tự thế giới hai cực Ianta",
+  "fileSizeBytes" : 3091
+}, {
+  "storedFileName" : "fe89fe67-62dc-4802-bde8-d32ffb8ddbf5_cuoc-khang-chien-chong-my-cuu-nuoc-1954-1975.pdf",
+  "originalFileName" : "cuoc-khang-chien-chong-my-cuu-nuoc-1954-1975.pdf",
+  "fileType" : "application/pdf",
+  "format" : "PDF",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Lịch sử",
+  "title" : "Cuộc kháng chiến chống Mỹ cứu nước 1954-1975",
+  "fileSizeBytes" : 52038
+}, {
+  "storedFileName" : "4bd8ff71-abc1-4840-bf58-4d2e77cb991b_dac-diem-dia-hinh-viet-nam.pdf",
+  "originalFileName" : "dac-diem-dia-hinh-viet-nam.pdf",
+  "fileType" : "application/pdf",
+  "format" : "PDF",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Địa lý",
+  "title" : "Đặc điểm địa hình Việt Nam",
+  "fileSizeBytes" : 47741
+}, {
+  "storedFileName" : "7f024470-f222-4c2d-a673-2ad64cba8107_khi-hau-nhiet-doi-am-gio-mua.docx",
+  "originalFileName" : "khi-hau-nhiet-doi-am-gio-mua.docx",
+  "fileType" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "format" : "DOCX",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Địa lý",
+  "title" : "Khí hậu nhiệt đới ẩm gió mùa",
+  "fileSizeBytes" : 3769
+}, {
+  "storedFileName" : "d496774a-cb06-40db-a306-3b3b9457c55d_dan-so-va-phan-bo-dan-cu-viet-nam.pptx",
+  "originalFileName" : "dan-so-va-phan-bo-dan-cu-viet-nam.pptx",
+  "fileType" : "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "format" : "PPTX",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Địa lý",
+  "title" : "Dân số và phân bố dân cư Việt Nam",
+  "fileSizeBytes" : 32896
+}, {
+  "storedFileName" : "468f148f-a18d-484d-95ab-b2641c0b5c43_co-cau-nganh-cong-nghiep-viet-nam.txt",
+  "originalFileName" : "co-cau-nganh-cong-nghiep-viet-nam.txt",
+  "fileType" : "text/plain",
+  "format" : "TXT",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Địa lý",
+  "title" : "Cơ cấu ngành công nghiệp Việt Nam",
+  "fileSizeBytes" : 3102
+}, {
+  "storedFileName" : "3c5ff68e-0d21-40eb-ad16-3087b7394f43_vung-kinh-te-trong-diem-phia-nam.pdf",
+  "originalFileName" : "vung-kinh-te-trong-diem-phia-nam.pdf",
+  "fileType" : "application/pdf",
+  "format" : "PDF",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Địa lý",
+  "title" : "Vùng kinh tế trọng điểm phía Nam",
+  "fileSizeBytes" : 48173
+}, {
+  "storedFileName" : "bde6d42f-9e7e-4991-bf6b-614040301aed_thuat-toan-va-mo-ta-thuat-toan.pdf",
+  "originalFileName" : "thuat-toan-va-mo-ta-thuat-toan.pdf",
+  "fileType" : "application/pdf",
+  "format" : "PDF",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Tin học",
+  "title" : "Thuật toán và mô tả thuật toán",
+  "fileSizeBytes" : 45009
+}, {
+  "storedFileName" : "aa8c6159-f169-4e71-b630-8c5e6969e17f_lap-trinh-python-voi-cau-truc-dieu-khien.docx",
+  "originalFileName" : "lap-trinh-python-voi-cau-truc-dieu-khien.docx",
+  "fileType" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "format" : "DOCX",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Tin học",
+  "title" : "Lập trình Python với cấu trúc điều khiển",
+  "fileSizeBytes" : 3665
+}, {
+  "storedFileName" : "466afa1d-5f4e-4424-98cf-efb56dba8135_du-lieu-va-co-so-du-lieu-quan-he.pptx",
+  "originalFileName" : "du-lieu-va-co-so-du-lieu-quan-he.pptx",
+  "fileType" : "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "format" : "PPTX",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Tin học",
+  "title" : "Dữ liệu và cơ sở dữ liệu quan hệ",
+  "fileSizeBytes" : 32745
+}, {
+  "storedFileName" : "2732ce24-f434-444c-a971-3d42ef2718f3_mang-may-tinh-va-internet-an-toan.txt",
+  "originalFileName" : "mang-may-tinh-va-internet-an-toan.txt",
+  "fileType" : "text/plain",
+  "format" : "TXT",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Tin học",
+  "title" : "Mạng máy tính và Internet an toàn",
+  "fileSizeBytes" : 2733
+}, {
+  "storedFileName" : "f8aefc36-b153-4ec6-88c3-156391b29640_dao-duc-phap-luat-va-van-hoa-so.pdf",
+  "originalFileName" : "dao-duc-phap-luat-va-van-hoa-so.pdf",
+  "fileType" : "application/pdf",
+  "format" : "PDF",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "Tin học",
+  "title" : "Đạo đức, pháp luật và văn hóa số",
+  "fileSizeBytes" : 47310
+}, {
+  "storedFileName" : "a2bbd642-8596-4734-8a21-bc56e753727c_quyen-va-nghia-vu-co-ban-cua-cong-dan.pdf",
+  "originalFileName" : "quyen-va-nghia-vu-co-ban-cua-cong-dan.pdf",
+  "fileType" : "application/pdf",
+  "format" : "PDF",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "GDCD",
+  "title" : "Quyền và nghĩa vụ cơ bản của công dân",
+  "fileSizeBytes" : 47802
+}, {
+  "storedFileName" : "a5f6db77-bf7b-4e80-832c-684d8ec2f53e_phap-luat-va-doi-song.docx",
+  "originalFileName" : "phap-luat-va-doi-song.docx",
+  "fileType" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "format" : "DOCX",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "GDCD",
+  "title" : "Pháp luật và đời sống",
+  "fileSizeBytes" : 3713
+}, {
+  "storedFileName" : "d2471d84-bae3-4e20-9b32-9698d99c1f6a_quyen-binh-dang-giua-cac-dan-toc-ton-giao.pptx",
+  "originalFileName" : "quyen-binh-dang-giua-cac-dan-toc-ton-giao.pptx",
+  "fileType" : "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "format" : "PPTX",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "GDCD",
+  "title" : "Quyền bình đẳng giữa các dân tộc, tôn giáo",
+  "fileSizeBytes" : 32879
+}, {
+  "storedFileName" : "0db59020-527d-4b13-99d3-4634755cfe71_trach-nhiem-phap-ly-cua-cong-dan.txt",
+  "originalFileName" : "trach-nhiem-phap-ly-cua-cong-dan.txt",
+  "fileType" : "text/plain",
+  "format" : "TXT",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "GDCD",
+  "title" : "Trách nhiệm pháp lý của công dân",
+  "fileSizeBytes" : 2970
+}, {
+  "storedFileName" : "49612c98-b40b-4ae8-a309-dee158eceeab_canh-tranh-trong-nen-kinh-te-thi-truong.pdf",
+  "originalFileName" : "canh-tranh-trong-nen-kinh-te-thi-truong.pdf",
+  "fileType" : "application/pdf",
+  "format" : "PDF",
+  "level" : "THPT",
+  "track" : null,
+  "subjectOrDomain" : "GDCD",
+  "title" : "Cạnh tranh trong nền kinh tế thị trường",
+  "fileSizeBytes" : 46796
+} ]

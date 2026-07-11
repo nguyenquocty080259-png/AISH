@@ -9,4 +9,7 @@ import java.util.List;
 public interface DocFileRepository extends JpaRepository<DocFile, Long> {
     // Hàm tìm tất cả các file của một tài liệu cụ thể
     List<DocFile> findByDocumentId(Long documentId);
+
+    // Idempotency key cho classpath document seeder: fileUrl local chính là stored filename.
+    boolean existsByFileUrl(String fileUrl);
 }

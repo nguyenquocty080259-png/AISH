@@ -2,16 +2,23 @@ package com.aish.mvc.tools.seed;
 
 import java.util.List;
 
-// Ngân hàng nội dung THPT — 9 môn x 7 chủ đề = 63 bài học thật (không phải lorem ipsum),
-// bám sát chương trình phổ thông Việt Nam. Muốn thêm bài: chỉ cần thêm 1 dòng t(...) vào
-// danh sách môn tương ứng — SeedFileGenerator tự động nhặt hết, không cần sửa gì khác.
+// Ngân hàng nội dung THPT bám sát chương trình phổ thông Việt Nam. SeedFileGenerator chọn đúng
+// 5 chủ đề cho mỗi môn canonical; các chủ đề dư vẫn được giữ làm nguồn mở rộng về sau.
 final class ThptContentBank {
 
     private ThptContentBank() {
     }
 
     private static Topic t(String subject, String title, String p1, String p2, String p3) {
-        return new Topic("THPT", null, subject, title, List.of(p1, p2, p3));
+        return new Topic("THPT", null, subject, title, List.of(
+                "I. KIẾN THỨC TRỌNG TÂM — " + p1,
+                "II. PHÂN TÍCH VÀ MỞ RỘNG — " + p2,
+                "III. VẬN DỤNG — " + p3,
+                "IV. VÍ DỤ CÓ HƯỚNG DẪN — Xét một tình huống tiêu biểu của bài “" + title
+                        + "”. Trước hết xác định dữ kiện, khái niệm hoặc quy tắc liên quan; tiếp theo lựa chọn phương pháp, trình bày từng bước và kiểm tra điều kiện áp dụng. Sau khi có kết quả, đối chiếu lại với yêu cầu, giải thích ý nghĩa và chỉ ra lỗi sai thường gặp. Cách làm này giúp học sinh không chỉ ghi nhớ đáp án mà còn hình thành quy trình giải quyết vấn đề có thể dùng cho các câu hỏi tương tự.",
+                "V. BÀI TẬP LUYỆN TẬP — Bài 1: trình bày lại nội dung cốt lõi bằng sơ đồ hoặc bảng so sánh. Bài 2: giải một trường hợp cơ bản và giải thích từng bước. Bài 3: thay đổi một dữ kiện của ví dụ để dự đoán kết quả mới. Bài 4: tìm và sửa một lời giải hoặc nhận định sai. Bài 5: liên hệ kiến thức với một hiện tượng trong học tập hoặc đời sống. Học sinh nên làm độc lập trước, sau đó trao đổi cách giải và tự chấm theo tiêu chí đúng kiến thức, đủ lập luận, rõ trình bày.",
+                "VI. TỔNG KẾT VÀ TỰ HỌC — Sau bài học, học sinh cần tự trả lời được ba câu hỏi: kiến thức nào là nền tảng, dấu hiệu nào cho biết nên áp dụng kiến thức đó, và làm thế nào kiểm tra kết quả. Hãy lập một trang ghi chú gồm từ khóa, công thức hoặc luận điểm chính, một ví dụ mẫu và một lỗi dễ mắc. Ôn lại sau một ngày và một tuần, đồng thời tự tạo thêm câu hỏi vận dụng để củng cố khả năng nhớ lâu và sử dụng kiến thức linh hoạt."
+        ));
     }
 
     static List<Topic> all() {
@@ -24,8 +31,34 @@ final class ThptContentBank {
         topics.addAll(su());
         topics.addAll(dia());
         topics.addAll(sinh());
+        topics.addAll(tinHoc());
         topics.addAll(gdcd());
         return topics;
+    }
+
+    private static List<Topic> tinHoc() {
+        String subject = "Tin học";
+        return List.of(
+                t(subject, "Thuật toán và mô tả thuật toán",
+                        "Thuật toán là một dãy hữu hạn các thao tác xác định, được sắp xếp theo trình tự để biến dữ liệu đầu vào thành kết quả đầu ra và giải quyết một lớp bài toán. Một thuật toán tốt cần đúng đắn, hữu hạn, rõ ràng và có khả năng thực hiện được.",
+                        "Có thể mô tả thuật toán bằng ngôn ngữ tự nhiên, sơ đồ khối hoặc mã giả. Khi thiết kế cần xác định input, output, chia bài toán thành bước nhỏ, xét các trường hợp biên rồi mới đánh giá độ phức tạp thời gian và bộ nhớ.",
+                        "Ví dụ tìm số lớn nhất trong một dãy: khởi tạo giá trị lớn nhất bằng phần tử đầu, lần lượt so sánh với từng phần tử còn lại và cập nhật khi gặp giá trị lớn hơn. Thuật toán duyệt đúng một lần nên có độ phức tạp tuyến tính."),
+                t(subject, "Lập trình Python với cấu trúc điều khiển",
+                        "Chương trình Python được xây dựng từ biến, kiểu dữ liệu, biểu thức và câu lệnh. Cấu trúc rẽ nhánh if-elif-else giúp lựa chọn hành động theo điều kiện, còn vòng lặp for và while dùng để lặp lại một nhóm thao tác.",
+                        "Điều kiện cần cho kết quả Boolean; các nhánh và thân vòng lặp được xác định bằng thụt lề. Khi dùng while phải bảo đảm biến điều khiển thay đổi để vòng lặp kết thúc, đồng thời nên kiểm thử các giá trị ở biên.",
+                        "Một chương trình tính tổng các số chẵn từ 1 đến n có thể duyệt từng số, kiểm tra phần dư khi chia cho 2 rồi cộng vào biến tổng. Có thể cải tiến bằng range bắt đầu từ 2 với bước nhảy 2."),
+                t(subject, "Dữ liệu và cơ sở dữ liệu quan hệ",
+                        "Cơ sở dữ liệu là tập hợp dữ liệu có tổ chức phục vụ lưu trữ, tìm kiếm và cập nhật. Trong mô hình quan hệ, dữ liệu được biểu diễn bằng bảng gồm hàng và cột; mỗi bảng mô tả một loại đối tượng.",
+                        "Khóa chính định danh duy nhất một bản ghi, khóa ngoại tạo liên kết giữa các bảng. Thiết kế hợp lý giúp giảm lặp dữ liệu, tránh mâu thuẫn khi cập nhật và hỗ trợ truy vấn chính xác.",
+                        "Với hệ thống thư viện, bảng Sách có mã sách làm khóa chính, bảng BạnĐọc có mã bạn đọc, còn bảng MượnSách chứa các khóa ngoại tương ứng cùng ngày mượn và ngày trả. Truy vấn có thể kết hợp các bảng để tìm người đang giữ một cuốn sách."),
+                t(subject, "Mạng máy tính và Internet an toàn",
+                        "Mạng máy tính kết nối các thiết bị để trao đổi dữ liệu và dùng chung tài nguyên. Internet là mạng liên kết toàn cầu hoạt động dựa trên bộ giao thức TCP/IP; tên miền được DNS chuyển thành địa chỉ IP.",
+                        "Dữ liệu truyền qua mạng theo các gói và đi qua nhiều thiết bị trung gian. Những dịch vụ phổ biến gồm web, thư điện tử, lưu trữ đám mây; HTTPS bổ sung mã hóa và xác thực cho giao tiếp web.",
+                        "Để sử dụng Internet an toàn cần dùng mật khẩu dài và riêng biệt, bật xác thực nhiều lớp, cập nhật phần mềm, kiểm tra tên miền trước khi đăng nhập và không mở tệp hoặc liên kết đáng ngờ."),
+                t(subject, "Đạo đức, pháp luật và văn hóa số",
+                        "Công dân số cần tôn trọng quyền riêng tư, bản quyền, danh dự của người khác và chịu trách nhiệm về nội dung mình đăng tải. Thông tin trên môi trường mạng có thể được sao chép, tìm kiếm và tồn tại lâu dài.",
+                        "Trước khi chia sẻ cần kiểm tra nguồn, tác giả, ngày công bố và đối chiếu với nguồn độc lập. Việc sử dụng tác phẩm phải tuân thủ giấy phép, trích dẫn phù hợp và không biến nội dung của người khác thành của mình.",
+                        "Khi gặp tin giả hoặc bắt nạt trực tuyến, không tiếp tục phát tán; nên lưu bằng chứng, sử dụng công cụ báo cáo, chặn tài khoản vi phạm và tìm hỗ trợ từ giáo viên, gia đình hoặc cơ quan có trách nhiệm."));
     }
 
     private static List<Topic> toan() {

@@ -30,6 +30,8 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -39,7 +41,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 @Service
@@ -79,18 +85,45 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
     private final AuthAccountRepository authAccountRepository;
     private final EmbeddingModel embeddingModel;
     private final HydratableSimpleVectorStore vectorStore;
+    private final PlatformTransactionManager transactionManager;
 
     // Instance riêng, không lấy bean của Spring — Boot 4 autoconfigure ở đây là
     // tools.jackson.databind.json.JsonMapper (Jackson 3), không phải ObjectMapper cổ điển.
     // Dùng để (de)serialize float[] <-> JSON, không cần chia sẻ config với tầng web.
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    // Một lock cho mỗi document đang ingest. users đếm cả thread đang giữ lẫn đang chờ để chỉ
+    // xóa entry khi không còn caller nào, tránh race tạo hai lock khác nhau cho cùng document.
+    private final ConcurrentHashMap<Long, IngestLock> ingestLocks = new ConcurrentHashMap<>();
+
     @Value("${app.upload.dir}")
     private String uploadDir;
 
     @Override
-    @Transactional
     public IngestResponseDTO ingest(Long documentId) {
+        IngestLock ingestLock = ingestLocks.compute(documentId, (id, existing) -> {
+            IngestLock value = existing != null ? existing : new IngestLock();
+            value.users.incrementAndGet();
+            return value;
+        });
+
+        ingestLock.lock.lock();
+        try {
+            // Transaction phải commit trước khi nhả lock; nếu dùng @Transactional trên method này,
+            // proxy Spring chỉ commit sau khi method return và caller kế tiếp có thể đọc status cũ.
+            return Objects.requireNonNull(new TransactionTemplate(transactionManager)
+                    .execute(status -> ingestWithLock(documentId)));
+        }
+        finally {
+            ingestLock.lock.unlock();
+            ingestLocks.computeIfPresent(documentId, (id, current) -> {
+                if (current != ingestLock) return current;
+                return current.users.decrementAndGet() == 0 ? null : current;
+            });
+        }
+    }
+
+    private IngestResponseDTO ingestWithLock(Long documentId) {
         DocDocument doc = docDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
 
@@ -98,6 +131,12 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
         boolean isOwner = doc.getUser().getId().equals(currentUserId);
         if (!isOwner && !isAdmin()) {
             throw new RuntimeException("Bạn không có quyền nạp (ingest) tài liệu này!");
+        }
+
+        // Caller thứ hai đã chờ lock phải đọc lại trạng thái từ DB sau khi caller trước hoàn tất.
+        if (doc.getIngestStatus() == IngestStatus.INGESTED) {
+            return new IngestResponseDTO(documentId, "INGESTED", 0,
+                    "Tài liệu đã được nạp cho AI trước đó; không thực hiện lại.");
         }
 
         if (doc.getFiles() == null || doc.getFiles().isEmpty()) {
@@ -121,7 +160,17 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
             resource = resolveResource(docFile);
         }
         catch (MalformedURLException e) {
+            log.warn("Bỏ qua ingest document={}: URL/path file không hợp lệ ({})",
+                    documentId, docFile.getFileUrl());
             return new IngestResponseDTO(documentId, "FILE_ERROR", 0, "Không đọc được file: " + e.getMessage());
+        }
+
+        // FILE_ERROR giữ nguyên NOT_INGESTED để có thể retry sau khi file local/remote hoạt động lại.
+        if (!resource.exists() || !resource.isReadable()) {
+            log.warn("Bỏ qua ingest document={}: file không tồn tại hoặc không đọc được ({})",
+                    documentId, docFile.getFileUrl());
+            return new IngestResponseDTO(documentId, "FILE_ERROR", 0,
+                    "File tài liệu không tồn tại hoặc không thể đọc; có thể thử lại sau.");
         }
 
         // PDF giữ page-aware reader (có trang thật). Mọi định dạng khác (không nằm trong
@@ -189,6 +238,11 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
                 ? "Đã nạp " + chunks.size() + " đoạn từ " + rawDocs.size() + " trang."
                 : "Đã nạp " + chunks.size() + " đoạn.";
         return new IngestResponseDTO(documentId, "INGESTED", chunks.size(), message);
+    }
+
+    private static final class IngestLock {
+        private final ReentrantLock lock = new ReentrantLock();
+        private final AtomicInteger users = new AtomicInteger();
     }
 
     private enum IngestFormat { PDF, TIKA, UNSUPPORTED }

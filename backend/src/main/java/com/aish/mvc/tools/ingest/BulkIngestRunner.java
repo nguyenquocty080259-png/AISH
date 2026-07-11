@@ -1,158 +1,160 @@
 package com.aish.mvc.tools.ingest;
 
 import com.aish.mvc.dto.ai.IngestResponseDTO;
+import com.aish.mvc.entity.auth.AuthAccount;
 import com.aish.mvc.entity.doc.DocDocument;
-import com.aish.mvc.entity.doc.DocFile;
 import com.aish.mvc.entity.enums.IngestStatus;
+import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.repository.doc.DocDocumentRepository;
 import com.aish.mvc.service.doc.DocEmbeddingService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Bulk ingest utility (bước 3, sau DbSeedRunner): quét doc_documents có ingestStatus=NOT_INGESTED
- * và gọi THẲNG DocEmbeddingService.ingest() có sẵn (KHÔNG tự chunk/embed lại) cho từng tài liệu.
- *
- * Vì sao cần runner riêng thay vì gọi API /api/ai/ingest/{id} thủ công 120 lần: Gemini free tier
- * rate-limit rất chặt, cần batch nhỏ + throttle + resumable qua nhiều lần chạy — CommandLineRunner
- * có cờ chặn (giống DbSeedRunner) là chỗ tự nhiên để làm việc này.
- *
- * CÁCH CHẠY (từ thư mục backend/, cần Postgres + doc đã seed từ DbSeedRunner):
- *   mvn spring-boot:run -Dspring-boot.run.jvmArguments="-Dapp.ingest.seed.enabled=true -Dapp.ingest.seed.max-docs=5 -Dapp.ingest.seed.delay-ms=4000"
- *
- * RESUMABLE: chỉ lấy tài liệu NOT_INGESTED (ORDER BY id ASC) giới hạn app.ingest.seed.max-docs —
- * ingest() tự set INGESTED khi thành công nên lần chạy sau tự động bỏ qua tài liệu đã xong, KHÔNG
- * cộng dồn/KHÔNG embed lại. Nếu bị rate-limit dừng giữa batch, chạy lại lệnh trên là tiếp tục đúng chỗ.
- *
- * THROTTLE: retry-with-backoff cho lỗi 429/5xx TỪNG CHUNK đã có sẵn trong DocEmbeddingServiceImpl
- * (không đụng vào, không viết lại RAG) — runner này CHỈ thêm delay CẤU HÌNH ĐƯỢC giữa các LƯỢT
- * ingest từng TÀI LIỆU (ranh giới tự nhiên không phải sửa service có sẵn) để dàn đều tải lên Gemini.
- *
- * LỖI TỪNG TÀI LIỆU: bắt riêng lẻ mỗi lần gọi ingest() — 1 tài liệu lỗi vĩnh viễn (hết retry) chỉ
- * được log + giữ nguyên NOT_INGESTED, KHÔNG dừng cả batch.
+ * Polling worker cho tài liệu NOT_INGESTED. Mỗi cycle xử lý tuần tự một batch nhỏ và nghỉ giữa
+ * hai tài liệu để bảo vệ quota Gemini. Bean chỉ tồn tại khi app.ingest.auto.enabled=true.
  */
 @Component
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "app.ingest.seed.enabled", havingValue = "true")
-public class BulkIngestRunner implements CommandLineRunner {
+@ConditionalOnProperty(name = "app.ingest.auto.enabled", havingValue = "true")
+public class BulkIngestRunner {
 
     private static final Logger log = LoggerFactory.getLogger(BulkIngestRunner.class);
-
-    // Impersonate đúng admin do DbSeedRunner tạo — ingest() yêu cầu owner-hoặc-ADMIN, mà tài liệu
-    // seed thuộc về nhiều owner khác nhau nên ADMIN là cách duy nhất để 1 batch job xử lý hết.
-    private static final String SEED_ADMIN_EMAIL = "admin@seed.aish.local";
+    private static final String SYSTEM_ADMIN_EMAIL = "admin@aish.com";
+    private static final int BATCH_SIZE = 5;
+    private static final int QUERY_PAGE_SIZE = 50;
+    private static final int MAX_FAILURES = 3;
+    private static final long BETWEEN_DOCUMENT_DELAY_MS = 4_000L;
 
     private final DocDocumentRepository docDocumentRepository;
     private final DocEmbeddingService docEmbeddingService;
+    private final AuthAccountRepository authAccountRepository;
 
-    @Value("${app.ingest.seed.max-docs:5}")
-    private int maxDocs;
+    // Chỉ sống trong process hiện tại: restart app cho phép thử lại các document đã chạm ngưỡng.
+    private final Map<Long, Integer> failureCounts = new ConcurrentHashMap<>();
 
-    // Delay giữa 2 tài liệu liên tiếp — KHÔNG phải giữa từng chunk (xem javadoc lớp).
-    @Value("${app.ingest.seed.delay-ms:4000}")
-    private long delayMs;
-
-    @Override
-    public void run(String... args) {
-        List<DocDocument> targets = docDocumentRepository.findNotIngestedBatch(
-                IngestStatus.NOT_INGESTED, PageRequest.of(0, maxDocs));
-
-        if (targets.isEmpty()) {
-            System.out.println("Không còn tài liệu NOT_INGESTED nào — bulk ingest không có gì để làm.");
+    @Scheduled(fixedDelay = 60_000L, initialDelay = 30_000L)
+    public void pollNotIngestedDocuments() {
+        if (Thread.currentThread().isInterrupted()) {
             return;
         }
 
-        System.out.println("Bulk ingest: xử lý " + targets.size() + " tài liệu (giới hạn "
-                + maxDocs + "/lần chạy, delay " + delayMs + "ms/tài liệu)...");
+        AuthAccount adminAccount = authAccountRepository.findByIdentifier(SYSTEM_ADMIN_EMAIL)
+                .orElse(null);
+        if (adminAccount == null || adminAccount.getUser() == null
+                || adminAccount.getUser().getRole() == null
+                || !"ADMIN".equals(adminAccount.getUser().getRole().getRoleName())) {
+            log.error("Auto-ingest bỏ qua cycle: không tìm thấy SYSTEM admin hợp lệ {}.", SYSTEM_ADMIN_EMAIL);
+            return;
+        }
 
-        impersonateAdmin();
-        List<String> lines = new ArrayList<>(targets.size());
-        int success = 0, failed = 0, totalChunks = 0;
+        List<DocDocument> targets = selectTargets();
+        if (targets.isEmpty()) {
+            return;
+        }
+
+        SecurityContext previousContext = SecurityContextHolder.getContext();
+        SecurityContext workerContext = SecurityContextHolder.createEmptyContext();
+        workerContext.setAuthentication(new UsernamePasswordAuthenticationToken(
+                SYSTEM_ADMIN_EMAIL, null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))));
+        SecurityContextHolder.setContext(workerContext);
 
         try {
-            for (int i = 0; i < targets.size(); i++) {
-                DocDocument doc = targets.get(i);
-                String format = formatOf(doc);
-
-                try {
-                    IngestResponseDTO result = docEmbeddingService.ingest(doc.getId());
-                    if ("INGESTED".equals(result.getStatus())) {
-                        success++;
-                        totalChunks += result.getChunkCount();
-                        lines.add(String.format("[OK]   doc=%d format=%s chunks=%d — %s",
-                                doc.getId(), format, result.getChunkCount(), result.getMessage()));
-                    }
-                    else {
-                        // NO_FILE / UNSUPPORTED_FORMAT / FILE_ERROR / EMPTY — không phải lỗi
-                        // tạm thời, ingest() đã tự xử lý trạng thái, không cần retry ở đây.
-                        failed++;
-                        lines.add(String.format("[SKIP] doc=%d format=%s status=%s — %s",
-                                doc.getId(), format, result.getStatus(), result.getMessage()));
-                    }
-                }
-                catch (RuntimeException ex) {
-                    // Hết retry (429/5xx) hoặc lỗi vĩnh viễn khác — giữ nguyên NOT_INGESTED,
-                    // log lại và tiếp tục tài liệu kế tiếp, KHÔNG dừng cả batch.
-                    failed++;
-                    log.error("Bulk ingest: tài liệu {} thất bại vĩnh viễn: {}", doc.getId(), ex.getMessage());
-                    lines.add(String.format("[FAIL] doc=%d format=%s — %s", doc.getId(), format, ex.getMessage()));
+            log.info("Auto-ingest bắt đầu cycle tuần tự với {} document.", targets.size());
+            for (int index = 0; index < targets.size(); index++) {
+                if (Thread.currentThread().isInterrupted()) {
+                    log.info("Auto-ingest dừng cycle do ứng dụng đang shutdown.");
+                    break;
                 }
 
-                if (i < targets.size() - 1) {
-                    sleep(delayMs);
+                DocDocument document = targets.get(index);
+                processOne(document.getId());
+
+                if (index < targets.size() - 1 && !sleepBetweenDocuments()) {
+                    break;
                 }
             }
         }
         finally {
-            SecurityContextHolder.clearContext();
+            SecurityContextHolder.setContext(previousContext);
         }
-
-        System.out.println();
-        System.out.println("=== TỔNG KẾT BULK INGEST ===");
-        lines.forEach(System.out::println);
-        System.out.println("Thành công: " + success + "/" + targets.size());
-        System.out.println("Thất bại/skip: " + failed + "/" + targets.size());
-        System.out.println("Tổng số chunk đã tạo: " + totalChunks);
     }
 
-    private void impersonateAdmin() {
-        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
-        var auth = new UsernamePasswordAuthenticationToken(SEED_ADMIN_EMAIL, null, authorities);
-        SecurityContextHolder.getContext().setAuthentication(auth);
+    private List<DocDocument> selectTargets() {
+        List<DocDocument> selected = new ArrayList<>(BATCH_SIZE);
+        for (int page = 0; selected.size() < BATCH_SIZE; page++) {
+            List<DocDocument> candidates = docDocumentRepository.findNotIngestedBatch(
+                    IngestStatus.NOT_INGESTED, PageRequest.of(page, QUERY_PAGE_SIZE));
+            for (DocDocument candidate : candidates) {
+                if (failureCounts.getOrDefault(candidate.getId(), 0) < MAX_FAILURES) {
+                    selected.add(candidate);
+                    if (selected.size() == BATCH_SIZE) break;
+                }
+            }
+            if (candidates.size() < QUERY_PAGE_SIZE) break;
+        }
+        return selected;
     }
 
-    private static String formatOf(DocDocument doc) {
-        if (doc.getFiles() == null || doc.getFiles().isEmpty()) return "NONE";
-        DocFile file = doc.getFiles().getFirst();
-        String type = file.getFileType();
-        String name = file.getFileName() != null ? file.getFileName().toLowerCase() : "";
-        if (type != null && type.contains("pdf") || name.endsWith(".pdf")) return "PDF";
-        if (name.endsWith(".docx")) return "DOCX";
-        if (name.endsWith(".pptx")) return "PPTX";
-        if (name.endsWith(".txt")) return "TXT";
-        return type != null ? type : "UNKNOWN";
-    }
-
-    private void sleep(long millis) {
+    private void processOne(Long documentId) {
         try {
-            Thread.sleep(millis);
+            // Không fast-skip format ở worker: ingest() là nguồn sự thật duy nhất và tự persist
+            // UNSUPPORTED_FORMAT mà không gọi Gemini.
+            IngestResponseDTO result = docEmbeddingService.ingest(documentId);
+            if ("INGESTED".equals(result.getStatus()) || "UNSUPPORTED_FORMAT".equals(result.getStatus())
+                    || "EMPTY".equals(result.getStatus())) {
+                failureCounts.remove(documentId);
+                log.info("Auto-ingest document={} status={} chunks={}.",
+                        documentId, result.getStatus(), result.getChunkCount());
+                return;
+            }
+
+            // FILE_ERROR/NO_FILE vẫn NOT_INGESTED nên phải giới hạn retry để không chiếm batch mãi.
+            recordFailure(documentId, "status=" + result.getStatus() + ", " + result.getMessage(), null);
         }
-        catch (InterruptedException ie) {
+        catch (RuntimeException ex) {
+            recordFailure(documentId, ex.getMessage(), ex);
+        }
+    }
+
+    private void recordFailure(Long documentId, String reason, RuntimeException exception) {
+        int attempts = failureCounts.merge(documentId, 1, Integer::sum);
+        if (exception == null) {
+            log.warn("Auto-ingest document={} thất bại lần {}/{}: {}",
+                    documentId, attempts, MAX_FAILURES, reason);
+        }
+        else {
+            log.error("Auto-ingest document={} thất bại lần {}/{}: {}",
+                    documentId, attempts, MAX_FAILURES, reason, exception);
+        }
+        if (attempts >= MAX_FAILURES) {
+            log.error("Auto-ingest tạm ngừng retry document={} cho tới khi ứng dụng restart.", documentId);
+        }
+    }
+
+    private boolean sleepBetweenDocuments() {
+        try {
+            Thread.sleep(BETWEEN_DOCUMENT_DELAY_MS);
+            return true;
+        }
+        catch (InterruptedException interrupted) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException("Bulk ingest bị gián đoạn trong lúc chờ throttle delay", ie);
+            log.info("Auto-ingest bị ngắt trong throttle delay; kết thúc cycle để shutdown.");
+            return false;
         }
     }
 }
