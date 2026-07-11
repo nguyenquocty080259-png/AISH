@@ -18,7 +18,9 @@ export default function ForgotPasswordPage() {
 
     try {
 
-      await authApi.forgotPassword(email);
+      await authApi.forgotPassword({
+        email,
+      });
 
       navigate(
         ROUTES.VERIFY_OTP,

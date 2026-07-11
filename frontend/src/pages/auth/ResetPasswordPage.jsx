@@ -12,7 +12,7 @@ export default function ResetPasswordPage() {
 
   const { state } = useLocation();
 
-  const email = state?.email ?? "";
+  const resetToken = state?.resetToken ?? "";
 
   const [password, setPassword] = useState("");
 
@@ -28,15 +28,14 @@ export default function ResetPasswordPage() {
 
     setError("");
 
-    if (!email) {
+    if (!resetToken) {
 
       setError(
-        "Không tìm thấy thông tin email."
+        "Phiên đặt lại mật khẩu đã hết hạn. Vui lòng thực hiện lại."
       );
 
       return;
     }
-
     if (password.length < 8) {
 
       setError(
@@ -60,10 +59,9 @@ export default function ResetPasswordPage() {
       setSubmitting(true);
 
       await authApi.resetPassword({
-        email,
+        resetToken,
         password
       });
-
       alert(
         "Đổi mật khẩu thành công."
       );

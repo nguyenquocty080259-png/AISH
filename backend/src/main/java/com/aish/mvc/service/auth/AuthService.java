@@ -1,9 +1,6 @@
 package com.aish.mvc.service.auth;
 
-import com.aish.mvc.dto.auth.AuthResponse;
-import com.aish.mvc.dto.auth.LoginRequest;
-import com.aish.mvc.dto.auth.SignupRequest;
-import com.aish.mvc.dto.auth.VerifyOtpRequest;
+import com.aish.mvc.dto.auth.*;
 
 public interface  AuthService {
 
@@ -19,12 +16,10 @@ public interface  AuthService {
 
     void forgotPassword(String email);
 
-    void verifyForgotPasswordOtp(
-            VerifyOtpRequest request
-    );
+    ResetTokenResponse verifyForgotPasswordOtp(VerifyOtpRequest request);
 
     void resetPassword(
-            String email,
+            String resetToken,
             String password
     );
 }

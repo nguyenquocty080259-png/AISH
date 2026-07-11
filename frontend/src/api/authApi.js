@@ -29,7 +29,7 @@ export function logout() {
   return apiClient.post("/auth/logout");
 }
 
-export function forgotPassword(email) {
+export function forgotPassword({ email }) {
   return apiClient.post(
     "/auth/forgot-password",
     { email }
@@ -46,12 +46,12 @@ export function verifyForgotPassword(
 }
 
 export function resetPassword(
-  { email, password }
+  { resetToken, password }
 ) {
   return apiClient.post(
     "/auth/reset-password",
     {
-      email,
+      resetToken,
       password
     }
   );

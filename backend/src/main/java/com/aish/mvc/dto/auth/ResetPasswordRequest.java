@@ -10,9 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ResetPasswordRequest {
-    @NotBlank(message = "Email không được để trống")
-    @Email(message = "Email không đúng định dạng")
-    private String email;
+    private String resetToken;
 
     @NotBlank(message = "Mật khẩu không được để trống")
     @Size(min = 8, message = "Mật khẩu phải có ít nhất 8 ký tự")

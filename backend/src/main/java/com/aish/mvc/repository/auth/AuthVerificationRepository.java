@@ -8,10 +8,12 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface AuthEmailVerificationRepository extends JpaRepository<AuthEmailVerification, Long> {
+public interface AuthVerificationRepository extends JpaRepository<AuthEmailVerification, Long> {
 
     Optional<AuthEmailVerification>
     findTopByAuthAccountOrderByCreatedAtDesc(
             AuthAccount authAccount
     );
+
+    Optional<AuthEmailVerification> findByResetToken(String resetToken);
 }

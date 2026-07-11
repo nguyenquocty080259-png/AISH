@@ -39,7 +39,7 @@ export function useOtpPage() {
     setSubmitting(true);
     try {
       if (mode === "forgot-password") {
-        await authApi.verifyForgotPassword({
+        const response = await authApi.verifyForgotPassword({
           email,
           otp,
         });
@@ -49,7 +49,10 @@ export function useOtpPage() {
         navigate(
           ROUTES.RESET_PASSWORD,
           {
-            state: { email }
+            state: {
+              resetToken:
+                response.data.resetToken,
+            },
           }
         );
         return;
@@ -80,9 +83,9 @@ export function useOtpPage() {
         mode ===
         "forgot-password"
       ) {
-        await authApi.forgotPassword(
-          email
-        );
+        await authApi.forgotPassword({
+          email,
+        });
       } else {
         await authApi.resendOtp({
           email

@@ -9,9 +9,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.bind.annotation.*;
+import com.aish.mvc.dto.auth.ResetTokenResponse;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -65,21 +64,15 @@ public class AuthController {
         );
     }
 
-    @PostMapping(
-            "/verify-forgot-password"
-    )
-    public ResponseEntity<?> verifyForgotPassword(
-            @RequestBody
-            VerifyOtpRequest request
+    @PostMapping("/verify-forgot-password")
+    public ResponseEntity<ResetTokenResponse> verifyForgotPassword(
+            @RequestBody VerifyOtpRequest request
     ) {
 
-        authService.verifyForgotPasswordOtp(
-                request
-        );
+        ResetTokenResponse response =
+                authService.verifyForgotPasswordOtp(request);
 
-        return ResponseEntity.ok(
-                "OTP verified"
-        );
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/reset-password")
@@ -90,7 +83,7 @@ public class AuthController {
     ) {
 
         authService.resetPassword(
-                request.getEmail(),
+                request.getResetToken(),
                 request.getPassword()
         );
 
