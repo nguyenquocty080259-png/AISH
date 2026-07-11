@@ -4,6 +4,7 @@ import Card from "../../../components/ui/Card";
 import Badge from "../../../components/ui/Badge";
 import { ROUTES } from "../../../constants/routes";
 import { useAdminStatsPage } from "./hooks/useAdminStatsPage";
+import IngestStatusBadge from "../documents/components/IngestStatusBadge";
 import "./admin-stats.css";
 
 const STAT_TILES = [
@@ -27,6 +28,10 @@ export default function AdminStatsPage() {
     showDocuments,
     documentTitle,
     loadDocuments,
+    documentPage,
+    setDocumentPage,
+    documentTotalPages,
+    documentTotalElements,
   } = useAdminStatsPage();
 
   if (loading) {
@@ -115,6 +120,13 @@ export default function AdminStatsPage() {
             </p>
           </Card>
         </Link>
+
+        <Card className="admin-stat-card">
+          <p className="admin-stat-card__value">{stats.docsIngested}</p>
+          <p className="admin-stat-card__label">
+            AI đã nạp: {stats.docsIngested} / Chưa nạp: {stats.docsNotIngested} / Không hỗ trợ: {stats.docsUnsupported}
+          </p>
+        </Card>
       </div>
 
       {/* ================= USER ================= */}
@@ -202,11 +214,13 @@ export default function AdminStatsPage() {
           <table className="admin-users-table">
             <thead>
               <tr>
+                <th>#</th>
                 <th>Tiêu đề</th>
                 <th>Người đăng</th>
                 <th>Quyền</th>
                 <th>Kiểm duyệt</th>
                 <th>Lưu trữ</th>
+                <th>AI</th>
                 <th>Ngày tạo</th>
               </tr>
             </thead>
@@ -214,6 +228,7 @@ export default function AdminStatsPage() {
             <tbody>
               {documents.map((doc) => (
                 <tr key={doc.id}>
+                  <td>{doc.id}</td>
                   <td>{doc.title}</td>
 
                   <td>{doc.ownerName}</td>
@@ -224,6 +239,8 @@ export default function AdminStatsPage() {
 
                   <td>{doc.storageType}</td>
 
+                  <td><IngestStatusBadge status={doc.ingestStatus} /></td>
+
                   <td>
                     {new Date(
                       doc.createdAt
@@ -233,6 +250,27 @@ export default function AdminStatsPage() {
               ))}
             </tbody>
           </table>
+
+          <div className="admin-stats-doc-pagination">
+            <span>Tổng: {documentTotalElements} tài liệu</span>
+            <div className="admin-stats-doc-pagination__controls">
+              <button
+                type="button"
+                disabled={documentPage <= 0}
+                onClick={() => setDocumentPage((page) => page - 1)}
+              >
+                ← Trước
+              </button>
+              <span>Trang {documentPage + 1} / {documentTotalPages}</span>
+              <button
+                type="button"
+                disabled={documentPage >= documentTotalPages - 1}
+                onClick={() => setDocumentPage((page) => page + 1)}
+              >
+                Sau →
+              </button>
+            </div>
+          </div>
         </Card>
       )}
     </div>

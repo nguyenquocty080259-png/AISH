@@ -39,6 +39,8 @@ public interface DocDocumentRepository extends JpaRepository<DocDocument, Long> 
     // Cho GET /api/admin/stats — đếm rẻ, không load entity.
     long countByDeletedAtIsNull();
     long countByVisibilityAndDeletedAtIsNull(DocumentVisibility visibility);
+    long countByIngestStatusAndDeletedAtIsNull(IngestStatus ingestStatus);
+    long countByIngestStatusIsNullAndDeletedAtIsNull();
 
     // DEC-030: chặn xóa subject nếu còn BẤT KỲ document nào tham chiếu (kể cả đã ở thùng rác) —
     // không lọc deletedAt vì document_subjects vẫn còn row cho tới khi xóa vĩnh viễn, xóa subject

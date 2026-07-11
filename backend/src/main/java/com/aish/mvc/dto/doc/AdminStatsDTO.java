@@ -12,4 +12,7 @@ public class AdminStatsDTO {
     private long privateDocuments;
     private long pendingAppeals;
     private long totalSubjects;
+    private long docsIngested;
+    private long docsNotIngested;
+    private long docsUnsupported;
 }

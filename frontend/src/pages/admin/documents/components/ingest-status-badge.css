@@ -1,0 +1,23 @@
+.ingest-status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: var(--body-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ingest-status-badge--ingested {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.ingest-status-badge--pending {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.ingest-status-badge--unsupported {
+  background: #ffedd5;
+  color: #c2410c;
+}

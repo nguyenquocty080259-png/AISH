@@ -5,6 +5,7 @@ import Modal from "../../../components/ui/Modal";
 import EmptyState from "../../../components/ui/EmptyState";
 import Table from "../../../components/ui/Table";
 import { useAdminDocumentsPage } from "./hooks/useAdminDocumentsPage";
+import IngestStatusBadge from "./components/IngestStatusBadge";
 import "./admin-documents.css";
 
 const VISIBILITY_BADGE = {
@@ -59,6 +60,7 @@ export default function AdminDocumentsPage() {
                 <Table.HeaderCell>Hiển thị</Table.HeaderCell>
                 <Table.HeaderCell>Kiểm duyệt</Table.HeaderCell>
                 <Table.HeaderCell>Lưu trữ</Table.HeaderCell>
+                <Table.HeaderCell>AI</Table.HeaderCell>
                 <Table.HeaderCell>Ngày tạo</Table.HeaderCell>
                 <Table.HeaderCell />
               </Table.Row>
@@ -81,6 +83,7 @@ export default function AdminDocumentsPage() {
                     <Table.Cell>
                       {doc.storageType && <Badge intent="info">{doc.storageType}</Badge>}
                     </Table.Cell>
+                    <Table.Cell><IngestStatusBadge status={doc.ingestStatus} /></Table.Cell>
                     <Table.Cell>{formatDate(doc.createdAt)}</Table.Cell>
                     <Table.Cell>
                       <Button variant="danger" onClick={() => openRemoveModal(doc)}>

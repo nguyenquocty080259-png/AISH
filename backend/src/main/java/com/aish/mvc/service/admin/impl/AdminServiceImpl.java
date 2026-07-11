@@ -10,6 +10,7 @@ import com.aish.mvc.entity.doc.DocDocument;
 import com.aish.mvc.entity.doc.ModerationAppeal;
 import com.aish.mvc.entity.enums.AppealStatus;
 import com.aish.mvc.entity.enums.DocumentVisibility;
+import com.aish.mvc.entity.enums.IngestStatus;
 import com.aish.mvc.entity.enums.ModerationStatus;
 import com.aish.mvc.exception.ResourceNotFoundException;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
@@ -83,7 +84,12 @@ public class AdminServiceImpl implements AdminService {
         long privateDocuments = docDocumentRepository.countByVisibilityAndDeletedAtIsNull(DocumentVisibility.PRIVATE);
         long pendingAppeals = moderationAppealRepository.countByStatus(AppealStatus.APPEAL_PENDING);
         long totalSubjects = subjectRepository.count();
-        return new AdminStatsDTO(totalUsers, totalDocuments, publicDocuments, privateDocuments, pendingAppeals, totalSubjects);
+        long docsIngested = docDocumentRepository.countByIngestStatusAndDeletedAtIsNull(IngestStatus.INGESTED);
+        long docsNotIngested = docDocumentRepository.countByIngestStatusAndDeletedAtIsNull(IngestStatus.NOT_INGESTED)
+                + docDocumentRepository.countByIngestStatusIsNullAndDeletedAtIsNull();
+        long docsUnsupported = docDocumentRepository.countByIngestStatusAndDeletedAtIsNull(IngestStatus.UNSUPPORTED_FORMAT);
+        return new AdminStatsDTO(totalUsers, totalDocuments, publicDocuments, privateDocuments, pendingAppeals,
+                totalSubjects, docsIngested, docsNotIngested, docsUnsupported);
     }
 
     @Override

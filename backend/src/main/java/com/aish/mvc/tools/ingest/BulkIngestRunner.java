@@ -53,7 +53,7 @@ public class BulkIngestRunner {
             return;
         }
 
-        AuthAccount adminAccount = authAccountRepository.findByIdentifier(SYSTEM_ADMIN_EMAIL)
+        AuthAccount adminAccount = authAccountRepository.findByIdentifierWithUserAndRole(SYSTEM_ADMIN_EMAIL)
                 .orElse(null);
         if (adminAccount == null || adminAccount.getUser() == null
                 || adminAccount.getUser().getRole() == null

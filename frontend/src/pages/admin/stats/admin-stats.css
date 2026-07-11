@@ -115,6 +115,36 @@
     background: #fafafa;
 }
 
+.admin-stats-doc-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+    color: var(--color-text-secondary);
+    font-size: var(--body-sm);
+}
+
+.admin-stats-doc-pagination__controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.admin-stats-doc-pagination button {
+    padding: var(--spacing-xs) var(--spacing-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    background: var(--color-surface);
+    color: var(--color-text);
+    cursor: pointer;
+}
+
+.admin-stats-doc-pagination button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 /* User */
 
 .user-cell {

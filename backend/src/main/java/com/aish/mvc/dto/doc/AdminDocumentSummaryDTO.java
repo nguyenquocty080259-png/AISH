@@ -21,4 +21,10 @@ public class AdminDocumentSummaryDTO {
     private String moderationStatus;
     private String storageType; // LOCAL | CLOUD — chuẩn hóa từ DocFile.resourceType (DEC-031)
     private LocalDateTime createdAt;
+    private String ingestStatus;
+
+    public AdminDocumentSummaryDTO(Long id, String title, String ownerName, String visibility,
+                                   String moderationStatus, String storageType, LocalDateTime createdAt) {
+        this(id, title, ownerName, visibility, moderationStatus, storageType, createdAt, null);
+    }
 }

@@ -9,43 +9,43 @@ export function useAdminStatsPage() {
     const [documents, setDocuments] = useState([]);
     const [showDocuments, setShowDocuments] = useState(false);
     const [documentTitle, setDocumentTitle] = useState("");
-    //load tổng tài liệu
-    const toggleDocuments = async () => {
+    const [documentPage, setDocumentPage] = useState(0);
+    const [documentTotalPages, setDocumentTotalPages] = useState(1);
+    const [documentTotalElements, setDocumentTotalElements] = useState(0);
+    const [documentVisibility, setDocumentVisibility] = useState(null);
 
-        if (!showDocuments && documents.length === 0) {
-
-            const page = await adminApi.listDocuments();
-
-            setDocuments(page.content);
-        }
-
-        setShowDocuments(prev => !prev);
-    };
-    const loadDocuments = async (visibility = null, 
+    const loadDocuments = (visibility = null,
         title = "Danh sách tài liệu"
     ) => {
-    try {
-
-        const page = await adminApi.listDocuments(
-        0,
-        20,
-        visibility
-        );
-
-        setDocuments(page.content ?? []);
-
+        setDocumentPage(0);
+        setDocumentVisibility(visibility);
         setDocumentTitle(title);
-
-        // Đóng bảng user
         setShowUsers(false);
-
-        // Luôn mở bảng tài liệu
         setShowDocuments(true);
-
-    } catch (error) {
-        console.error("Lỗi tải tài liệu:", error);
-    }
     };
+
+    useEffect(() => {
+        if (!showDocuments) return undefined;
+
+        let active = true;
+        const fetchDocuments = async () => {
+            try {
+                const page = await adminApi.listDocuments(documentPage, 10, documentVisibility);
+                if (!active) return;
+                setDocuments(page.content ?? []);
+                setDocumentTotalPages(Math.max(page.totalPages ?? 0, 1));
+                setDocumentTotalElements(page.totalElements ?? 0);
+                setDocumentPage(page.number ?? documentPage);
+            } catch (error) {
+                if (active) console.error("Lỗi tải tài liệu:", error);
+            }
+        };
+
+        fetchDocuments();
+        return () => {
+            active = false;
+        };
+    }, [showDocuments, documentPage, documentVisibility]);
     // Load thống kê
     const loadStats = async () => {
         try {
@@ -95,5 +95,9 @@ export function useAdminStatsPage() {
         documents,
         showDocuments,
         documentTitle, 
-        loadDocuments};
+        loadDocuments,
+        documentPage,
+        setDocumentPage,
+        documentTotalPages,
+        documentTotalElements};
 }

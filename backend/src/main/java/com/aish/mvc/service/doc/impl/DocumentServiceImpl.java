@@ -411,7 +411,8 @@ public class DocumentServiceImpl implements DocumentService {
                     document.getVisibility().name(),
                     document.getModerationStatus().name(),
                     storageType,
-                    document.getCreatedAt()
+                    document.getCreatedAt(),
+                    document.getIngestStatus() != null ? document.getIngestStatus().name() : null
             );
         });
     }
