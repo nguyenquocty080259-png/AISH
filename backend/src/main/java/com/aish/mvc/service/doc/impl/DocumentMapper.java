@@ -59,12 +59,28 @@ public class DocumentMapper {
         dto.setDeletedAt(doc.getDeletedAt());
 
         if (doc.getUser() != null) dto.setOwnerName(doc.getUser().getFullName());
+        if (doc.getUser() != null) dto.setOwnerName(doc.getUser().getFullName());
         if (doc.getFiles() != null && !doc.getFiles().isEmpty()) {
-            DocFile primaryFile = doc.getFiles().getFirst();
+            // Ưu tiên bản local (đọc nhanh, không phụ thuộc Cloudinary) — mode "CẢ HAI" lưu 2 bản.
+            DocFile primaryFile = doc.getFiles().stream()
+                    .filter(f -> "local".equalsIgnoreCase(f.getResourceType()))
+                    .findFirst()
+                    .orElse(doc.getFiles().getFirst());
             dto.setFileName(primaryFile.getFileName());
             dto.setFileUrl(primaryFile.getFileUrl());
             dto.setFileType(primaryFile.getFileType());
-            dto.setStorageType(toStorageType(primaryFile.getResourceType()));
+
+            boolean hasLocal = doc.getFiles().stream().anyMatch(f -> "local".equalsIgnoreCase(f.getResourceType()));
+            boolean hasCloud = doc.getFiles().stream().anyMatch(f -> !"local".equalsIgnoreCase(f.getResourceType()));
+            dto.setStorageType(hasLocal && hasCloud ? "BOTH" : (hasLocal ? "LOCAL" : "CLOUD"));
+
+            // Thumbnail: lấy bản đầu tiên có (2 bản của cùng 1 file thì thumbnail giống nhau).
+            dto.setThumbnailUrl(doc.getFiles().stream()
+                    .map(DocFile::getThumbnailUrl)
+                    .filter(t -> t != null && !t.isBlank())
+                    .findFirst()
+                    .orElse(null));
+
             dto.setAiSupported(docEmbeddingService.isAiSupported(primaryFile.getFileName(), primaryFile.getFileType()));
         } else {
             dto.setAiSupported(false);

@@ -308,3 +308,90 @@
 .doc-card__thumb-link:hover .doc-thumb__inner {
   filter: blur(1px);
 }
+/* ============ TOOLBAR TÌM KIẾM / LỌC (trang Cộng đồng) ============ */
+.doc-page__toolbar {
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Style chung cho ô tìm kiếm + các dropdown + nút, để cao đều nhau */
+.doc-page__toolbar input,
+.doc-page__toolbar select,
+.doc-page__toolbar button {
+  height: 44px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background-color: var(--color-surface);
+  font-size: var(--body-sm);
+  font-family: var(--font-family);
+  color: var(--color-text);
+  padding: 0 var(--spacing-md);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+}
+
+.doc-page__toolbar input {
+  cursor: text;
+}
+
+/* Ô tìm kiếm: có icon kính lúp bằng background, chiếm phần lớn chiều ngang */
+.doc-page__toolbar input[type="text"] {
+  flex: 1 1 240px;
+  min-width: 200px;
+  padding-left: 42px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23544435' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 14px center;
+}
+
+/* Dropdown: bỏ mũi tên mặc định, vẽ mũi tên tùy chỉnh */
+.doc-page__toolbar select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 38px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23E08307' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+}
+
+/* Focus: viền cam + glow nhẹ */
+.doc-page__toolbar input:focus,
+.doc-page__toolbar select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(224, 131, 7, 0.15);
+}
+
+.doc-page__toolbar select:hover {
+  border-color: var(--color-primary);
+}
+
+/* Nút "Xoá lọc": nổi bật màu cam */
+.doc-page__toolbar button {
+  font-weight: 600;
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  background-color: var(--color-surface-soft);
+  white-space: nowrap;
+}
+
+.doc-page__toolbar button:hover {
+  background-color: var(--color-primary);
+  color: #fff;
+}
+
+/* Màn hình nhỏ: toolbar bỏ bo tròn viên thuốc cho gọn */
+@media (max-width: 640px) {
+  .doc-page__toolbar {
+    border-radius: var(--radius-card);
+  }
+  .doc-page__toolbar input[type="text"] {
+    flex-basis: 100%;
+  }
+}

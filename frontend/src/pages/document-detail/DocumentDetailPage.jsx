@@ -63,7 +63,7 @@ export default function DocumentDetailPage() {
   } = useDocumentDetailPage();
 
   const [newCollectionName, setNewCollectionName] = useState("");
-  const [previewUnlocked, setPreviewUnlocked] = useState(false);
+ const [previewUnlocked, setPreviewUnlocked] = useState(true);
 
   const submitCreateCollection = (e) => {
     e.preventDefault();

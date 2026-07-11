@@ -1,12 +1,15 @@
-// Mini preview mờ cho card. Ảnh -> <img>, PDF -> iframe trang 1, loại khác -> icon.
-// Không cần BE render thumbnail; dùng thẳng file đã có.
+// Mini preview cho card.
+// Ưu tiên thumbnail do BE sinh sẵn (thumbnailUrl) — nhanh, không tải cả file PDF/ảnh gốc.
+// Nếu chưa có thumbnail: ảnh -> <img> file gốc, PDF -> iframe trang 1, còn lại -> icon.
+import { useState } from "react";
+import { uploadUrl, thumbnailUrl } from "../../lib/fileUrl";
+
 export default function DocumentThumb({ doc }) {
-  const raw = doc?.fileUrl;
-  const fileUrl = !raw
-    ? null
-    : raw.startsWith("http")
-    ? raw
-    : `http://localhost:8080/uploads/${raw}`;
+  console.log("THUMB DEBUG:", { title: doc?.title, thumbnailUrl: doc?.thumbnailUrl, fileUrl: doc?.fileUrl, fileType: doc?.fileType });
+  const [thumbFailed, setThumbFailed] = useState(false);
+
+  const thumb = thumbnailUrl(doc);
+  const fileUrl = uploadUrl(doc?.fileUrl);
 
   const type = (doc?.fileType || "").toLowerCase();
   const name = (doc?.fileName || "").toLowerCase();
@@ -19,10 +22,21 @@ export default function DocumentThumb({ doc }) {
   else if (name.endsWith(".xls") || name.endsWith(".xlsx")) icon = "📈";
   else if (name.endsWith(".txt")) icon = "📃";
 
+  // Có thumbnail sẵn và chưa lỗi -> dùng luôn (ưu tiên cao nhất).
+  const useThumb = thumb && !thumbFailed;
+
   return (
     <div className="doc-thumb">
       <div className="doc-thumb__inner">
-        {fileUrl && isImage ? (
+        {useThumb ? (
+          <img
+            className="doc-thumb__img"
+            src={thumb}
+            alt=""
+            loading="lazy"
+            onError={() => setThumbFailed(true)}
+          />
+        ) : fileUrl && isImage ? (
           <img className="doc-thumb__img" src={fileUrl} alt="" loading="lazy" />
         ) : fileUrl && isPdf ? (
           <iframe

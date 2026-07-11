@@ -202,13 +202,26 @@ export function useDocumentDetailPage() {
 
   const handleToggleVisibility = async () => {
     try {
-      await documentApi.toggleVisibility(id);
+      // BE trả về document sau khi đổi kèm kết quả kiểm duyệt AI.
+      const updated = await documentApi.toggleVisibility(id);
+      if (updated && typeof updated === "object" && "visibility" in updated) {
+        if (updated.visibility === "PUBLIC") {
+          showSuccess("Đã công khai tài liệu. AI kiểm duyệt: đạt.");
+        } else if (updated.moderationStatus === "REJECTED") {
+          showError(
+            "AI chưa cho công khai: " +
+              (updated.moderationReason || "nội dung cần Admin xem xét.") +
+              " Bạn có thể gửi kháng cáo."
+          );
+        } else {
+          showSuccess("Đã chuyển tài liệu về riêng tư.");
+        }
+      }
       await load();
     } catch (err) {
       showError(err.message);
     }
   };
-
   const handleDelete = async () => {
     try {
       await documentApi.deleteDocument(id);

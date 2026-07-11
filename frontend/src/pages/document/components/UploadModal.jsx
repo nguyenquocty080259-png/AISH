@@ -7,6 +7,14 @@ export default function UploadModal({ open, subjects, submitting, onClose, onSub
   const [subjectSearch, setSubjectSearch] = useState("");
   const [subjectError, setSubjectError] = useState(false);
   const [file, setFile] = useState(null);
+  // Nơi lưu file: LOCAL (máy chủ) | CLOUD (Cloudinary) | BOTH (lưu cả 2)
+  const [storage, setStorage] = useState("LOCAL");
+
+  const STORAGE_OPTIONS = [
+    { value: "LOCAL", label: "Máy chủ", hint: "Lưu trên server (nhanh, mặc định)" },
+    { value: "CLOUD", label: "Cloud", hint: "Lưu trên Cloudinary" },
+    { value: "BOTH", label: "Cả hai", hint: "Lưu cả server lẫn Cloudinary" },
+  ];
 
   if (!open) return null;
 
@@ -30,7 +38,7 @@ export default function UploadModal({ open, subjects, submitting, onClose, onSub
       setSubjectError(true);
       return;
     }
-    onSubmit({ title, description, subjectIds, file });
+   onSubmit({ title, description, subjectIds, file, storage });
   };
 
   return (
@@ -150,6 +158,36 @@ export default function UploadModal({ open, subjects, submitting, onClose, onSub
               }}
             />
           </label>
+          <label style={{ fontWeight: 600 }}>Nơi lưu trữ</label>
+          <div style={{ display: "flex", gap: 8 }}>
+            {STORAGE_OPTIONS.map((opt) => {
+              const active = storage === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setStorage(opt.value)}
+                  title={opt.hint}
+                  style={{
+                    flex: 1,
+                    padding: "8px 10px",
+                    borderRadius: 10,
+                    cursor: "pointer",
+                    fontSize: 14,
+                    fontWeight: active ? 700 : 400,
+                    border: active ? "2px solid #f3a712" : "1px solid #e2e2e2",
+                    background: active ? "#fff7e6" : "#fff",
+                    color: active ? "#b97b00" : "#444",
+                  }}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+          <p style={{ color: "#888", fontSize: 12, margin: "2px 0 0" }}>
+            {STORAGE_OPTIONS.find((o) => o.value === storage)?.hint}
+          </p>
 
           <div className="doc-modal__actions">
             <button type="button" onClick={onClose} className="doc-modal__cancel">Hủy</button>

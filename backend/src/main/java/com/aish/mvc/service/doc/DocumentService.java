@@ -23,9 +23,13 @@ public interface DocumentService {
     DocumentResponseDTO uploadDocumentToServer(String title, String description, java.util.List<Long> subjectIds, MultipartFile file);
 
     DocumentResponseDTO uploadDocumentToCloud(String title, String description, java.util.List<Long> subjectIds, MultipartFile file);
+
+    // Upload hợp nhất: storage = "LOCAL" | "CLOUD" | "BOTH" (BOTH lưu cả 2 nơi, ưu tiên local khi đọc).
+    // Upload hợp nhất: storage = "LOCAL" | "CLOUD" | "BOTH" (BOTH lưu cả 2 nơi, ưu tiên local khi đọc).
+    DocumentResponseDTO uploadDocument(String title, String description, java.util.List<Long> subjectIds, MultipartFile file, String storage);
+
+    // Sửa metadata tài liệu (title/description/subjectIds). subjectIds == null -> giữ nguyên.
     DocumentResponseDTO updateDocument(Long id, String title, String description, java.util.List<Long> subjectIds);
-
-
 
 
     // Trang "Yêu thích" của user đang đăng nhập — loại tài liệu đã bị xoá mềm (thùng rác).
@@ -45,7 +49,8 @@ public interface DocumentService {
 
     DocFile getFileByDocumentId(Long documentId);
 
-    void toggleVisibility(Long documentId);
+    // Trả về document sau khi đổi để FE biết kết quả kiểm duyệt AI (visibility, moderationStatus, moderationReason).
+    DocumentResponseDTO toggleVisibility(Long documentId);
 
     DocumentResponseDTO getDocumentById(Long id);
 

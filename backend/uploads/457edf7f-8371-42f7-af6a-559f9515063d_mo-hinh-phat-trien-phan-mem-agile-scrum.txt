@@ -1,0 +1,8 @@
+Mô hình phát triển phần mềm Agile/Scrum
+
+Agile là một tập hợp các giá trị và nguyên tắc phát triển phần mềm được công bố trong Tuyên ngôn Agile năm 2001, đề cao việc tương tác giữa các cá nhân hơn quy trình và công cụ, phần mềm chạy được hơn tài liệu đầy đủ, hợp tác với khách hàng hơn đàm phán hợp đồng, và phản hồi trước thay đổi hơn bám theo kế hoạch cứng nhắc.
+
+Scrum là một framework cụ thể hóa Agile phổ biến nhất hiện nay, tổ chức công việc thành các Sprint có thời hạn cố định (thường 1-4 tuần), với các vai trò chính gồm Product Owner (quản lý Product Backlog), Scrum Master (hỗ trợ nhóm tuân thủ quy trình) và Development Team (thực hiện công việc).
+
+Các sự kiện cốt lõi của Scrum gồm Sprint Planning (lập kế hoạch cho Sprint), Daily Scrum (họp đứng hàng ngày 15 phút), Sprint Review (demo sản phẩm cho stakeholder) và Sprint Retrospective (nhìn lại và cải tiến quy trình làm việc của nhóm), tạo thành một chu trình lặp liên tục giúp đội ngũ thích nghi nhanh với thay đổi yêu cầu.
+

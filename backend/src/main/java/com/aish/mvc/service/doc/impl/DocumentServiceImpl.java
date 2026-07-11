@@ -45,6 +45,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Autowired private AuthAccountRepository authAccountRepository;
     @Autowired private SubjectRepository subjectRepository;
     @Autowired private CloudinaryService cloudinaryService;
+    @Autowired private com.aish.mvc.service.stor.ThumbnailService thumbnailService;
     @Autowired private AiModerationService aiModerationService;
     @Autowired private DocumentMapper documentMapper;
 
@@ -53,6 +54,15 @@ public class DocumentServiceImpl implements DocumentService {
         return authAccountRepository.findByIdentifier(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy user đang đăng nhập"))
                 .getUser();
+    }
+
+    // Mode "CẢ HAI" có 2 bản (local + cloud) — luôn ưu tiên bản local vì đọc nhanh
+    // và không dính hạn chế deliver của Cloudinary (PDF trên account free bị 401).
+    private static DocFile pickPrimaryFile(DocDocument doc) {
+        return doc.getFiles().stream()
+                .filter(f -> "local".equalsIgnoreCase(f.getResourceType()))
+                .findFirst()
+                .orElse(doc.getFiles().getFirst());
     }
 
     // getAllDocuments (My Documents - chỉ của mình, chưa xóa):
@@ -99,42 +109,61 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     @Transactional
     public DocumentResponseDTO uploadDocumentToServer(String title, String description, java.util.List<Long> subjectIds, MultipartFile file) {
-        DocDocument savedDoc = buildDocument(title, description, subjectIds);
-
-        String storedFileName = fileStorageService.storeFile(file);
-
-        DocFile docFile = DocFile.builder()
-                .fileName(file.getOriginalFilename())
-                .fileUrl(storedFileName)
-                .resourceType("local")
-                .fileType(file.getContentType())
-                .fileSize(file.getSize())
-                .document(savedDoc)
-                .build();
-        savedDoc.addFile(docFile);
-        docFileRepository.save(docFile);
-
-        return documentMapper.toResponseDTO(savedDoc);
+        return uploadDocument(title, description, subjectIds, file, "LOCAL");
     }
 
     @Override
     @Transactional
     public DocumentResponseDTO uploadDocumentToCloud(String title, String description, java.util.List<Long> subjectIds, MultipartFile file) {
+        return uploadDocument(title, description, subjectIds, file, "CLOUD");
+    }
+
+    // Upload hợp nhất: storage = "LOCAL" | "CLOUD" | "BOTH".
+    // BOTH: lưu cả local lẫn Cloudinary — file local được add TRƯỚC để mọi nơi đọc
+    // (preview/download/ingest AI) ưu tiên bản local, không phụ thuộc Cloudinary.
+    @Override
+    @Transactional
+    public DocumentResponseDTO uploadDocument(String title, String description, java.util.List<Long> subjectIds, MultipartFile file, String storage) {
+        String target = storage == null ? "LOCAL" : storage.trim().toUpperCase();
+        if (!Set.of("LOCAL", "CLOUD", "BOTH").contains(target)) {
+            throw new IllegalArgumentException("storage phải là LOCAL, CLOUD hoặc BOTH (nhận được: " + storage + ")");
+        }
+
         DocDocument savedDoc = buildDocument(title, description, subjectIds);
 
-        com.aish.mvc.service.stor.CloudUploadResult uploaded = cloudinaryService.upload(file);
+        // Thumbnail sinh 1 lần cho cả 2 bản (best-effort, null nếu định dạng không hỗ trợ).
+        String thumbnailUrl = thumbnailService.createThumbnail(file);
 
-        DocFile docFile = DocFile.builder()
-                .fileName(file.getOriginalFilename())
-                .fileUrl(uploaded.url())
-                .publicId(uploaded.publicId())
-                .resourceType(uploaded.resourceType())
-                .fileType(file.getContentType())
-                .fileSize(file.getSize())
-                .document(savedDoc)
-                .build();
-        savedDoc.addFile(docFile);
-        docFileRepository.save(docFile);
+        if ("LOCAL".equals(target) || "BOTH".equals(target)) {
+            String storedFileName = fileStorageService.storeFile(file);
+            DocFile localFile = DocFile.builder()
+                    .fileName(file.getOriginalFilename())
+                    .fileUrl(storedFileName)
+                    .resourceType("local")
+                    .fileType(file.getContentType())
+                    .fileSize(file.getSize())
+                    .thumbnailUrl(thumbnailUrl)
+                    .document(savedDoc)
+                    .build();
+            savedDoc.addFile(localFile);
+            docFileRepository.save(localFile);
+        }
+
+        if ("CLOUD".equals(target) || "BOTH".equals(target)) {
+            com.aish.mvc.service.stor.CloudUploadResult uploaded = cloudinaryService.upload(file);
+            DocFile cloudFile = DocFile.builder()
+                    .fileName(file.getOriginalFilename())
+                    .fileUrl(uploaded.url())
+                    .publicId(uploaded.publicId())
+                    .resourceType(uploaded.resourceType())
+                    .fileType(file.getContentType())
+                    .fileSize(file.getSize())
+                    .thumbnailUrl(thumbnailUrl)
+                    .document(savedDoc)
+                    .build();
+            savedDoc.addFile(cloudFile);
+            docFileRepository.save(cloudFile);
+        }
 
         return documentMapper.toResponseDTO(savedDoc);
     }
@@ -229,6 +258,7 @@ public class DocumentServiceImpl implements DocumentService {
                     try { cloudinaryService.delete(f.getPublicId(), f.getResourceType()); }
                     catch (Exception ignored) {}
                 }
+                thumbnailService.deleteThumbnail(f.getThumbnailUrl());
             }
         }
 
@@ -244,7 +274,7 @@ public class DocumentServiceImpl implements DocumentService {
     public DocFile getFileByDocumentId(Long documentId) {
         DocDocument doc = docDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài liệu"));
-        return doc.getFiles().getFirst();
+        return pickPrimaryFile(doc);
     }
 
     @Override
@@ -260,7 +290,7 @@ public class DocumentServiceImpl implements DocumentService {
         if (doc.getFiles() == null || doc.getFiles().isEmpty()) {
             throw new ResourceNotFoundException("Tài liệu chưa có file!");
         }
-        return doc.getFiles().getFirst();
+        return pickPrimaryFile(doc);
     }
 
     // getCommunityDocuments - đổi đầu method:
@@ -309,7 +339,7 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     @Transactional
-    public void toggleVisibility(Long documentId) {
+    public DocumentResponseDTO toggleVisibility(Long documentId) {
         DocDocument doc = docDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
         if (!doc.getUser().getId().equals(getCurrentUser().getId())) {
@@ -321,8 +351,7 @@ public class DocumentServiceImpl implements DocumentService {
         if (!goingPublic) {
             // PUBLIC -> PRIVATE: không cần kiểm duyệt, luôn an toàn khi ẩn bớt.
             doc.setVisibility(DocumentVisibility.PRIVATE);
-            docDocumentRepository.save(doc);
-            return;
+            return documentMapper.toResponseDTO(docDocumentRepository.save(doc));
         }
 
         // -> PUBLIC: bắt buộc AI pre-screen trước (DEC-035).
@@ -341,7 +370,7 @@ public class DocumentServiceImpl implements DocumentService {
             doc.setModerationStatus(ModerationStatus.REJECTED);
         }
 
-        docDocumentRepository.save(doc);
+        return documentMapper.toResponseDTO(docDocumentRepository.save(doc));
     }
 
     @Override

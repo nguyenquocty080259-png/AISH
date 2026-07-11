@@ -9,7 +9,6 @@ import com.aish.mvc.service.doc.EngagementService;
 import com.aish.mvc.service.doc.ModerationAppealService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,8 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import com.aish.mvc.dto.doc.DocumentUpdateRequestDTO;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 @RestController
@@ -29,13 +26,25 @@ public class DocumentController {
     private final DocumentService documentService;
     private final EngagementService engagementService;
     private final ModerationAppealService moderationAppealService;
-
-    @org.springframework.beans.factory.annotation.Value("${app.upload.dir}")
-    private String uploadDir;
+    private final com.aish.mvc.service.stor.FileResourceResolver fileResourceResolver;
 
     @GetMapping
     public ResponseEntity<List<DocumentResponseDTO>> getAll() {
         return ResponseEntity.ok(documentService.getAllDocuments());
+    }
+
+    // Endpoint hợp nhất: storage = LOCAL | CLOUD | BOTH (BOTH lưu cả 2 nơi).
+    // Giữ 2 endpoint cũ bên dưới để không phá client cũ.
+    @PostMapping("/upload")
+    public ResponseEntity<DocumentResponseDTO> upload(
+            @RequestParam("title") String title,
+            @RequestParam("description") String description,
+            @RequestParam(value = "subjectIds", required = false) java.util.List<Long> subjectIds,
+            @RequestParam(value = "storage", defaultValue = "LOCAL") String storage,
+            @RequestParam("file") MultipartFile file) {
+        return new ResponseEntity<>(
+                documentService.uploadDocument(title, description, subjectIds, file, storage),
+                HttpStatus.CREATED);
     }
 
     @PostMapping("/upload-server")
@@ -71,6 +80,7 @@ public class DocumentController {
         engagementService.addComment(id, content);
         return ResponseEntity.ok().build();
     }
+
     @PutMapping("/comments/{commentId}")
     public ResponseEntity<Void> updateComment(@PathVariable Long commentId, @RequestBody String content) {
         engagementService.updateComment(commentId, content);
@@ -123,10 +133,11 @@ public class DocumentController {
         return ResponseEntity.noContent().build();
     }
 
+    // Trả về document sau khi đổi để FE hiển thị kết quả kiểm duyệt AI
+    // (visibility mới, moderationStatus, moderationReason).
     @PutMapping("/{id}/toggle-visibility")
-    public ResponseEntity<Void> toggleVisibility(@PathVariable Long id) {
-        documentService.toggleVisibility(id);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<DocumentResponseDTO> toggleVisibility(@PathVariable Long id) {
+        return ResponseEntity.ok(documentService.toggleVisibility(id));
     }
 
     // Kháng cáo thủ công sau khi tài liệu bị AI REJECTED — chỉ chủ tài liệu, KHÔNG gọi AI.
@@ -185,12 +196,9 @@ public class DocumentController {
         }
     }
 
-    private Resource resolveResource(DocFile docFile) throws java.net.MalformedURLException {
-        String fileUrl = docFile.getFileUrl();
-        if (fileUrl != null && fileUrl.startsWith("http")) {
-            return new UrlResource(new java.net.URL(fileUrl));
-        }
-        Path filePath = Paths.get(uploadDir).resolve(fileUrl).normalize();
-        return new UrlResource(filePath.toUri());
+    // Dùng resolver chung (service/stor/FileResourceResolver) — có fallback signed URL
+    // cho file Cloudinary bị chặn deliver public (PDF trên account free).
+    private Resource resolveResource(DocFile docFile) {
+        return fileResourceResolver.resolve(docFile);
     }
 }

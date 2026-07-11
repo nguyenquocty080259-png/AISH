@@ -53,14 +53,7 @@ export default function CommunityPage() {
           ))}
         </select>
 
-        <select value={tagId} onChange={(e) => setTagId(e.target.value)}>
-          <option value="">Tất cả tag</option>
-          {tags.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
-            </option>
-          ))}
-        </select>
+    
 
         <select value={minRating} onChange={(e) => setMinRating(e.target.value)}>
           <option value="">Mọi đánh giá</option>

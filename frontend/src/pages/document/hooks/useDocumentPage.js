@@ -82,17 +82,21 @@ export function useDocumentPage() {
     }
   };
 
-  const handleUpload = async ({ title, description, subjectIds, file }) => {
+  const handleUpload = async ({ title, description, subjectIds, file, storage }) => {
     setUploading(true);
     try {
       const formData = new FormData();
       formData.append("title", title);
       formData.append("description", description);
       (subjectIds || []).forEach((id) => formData.append("subjectIds", id));
+      formData.append("storage", storage || "LOCAL");
       formData.append("file", file);
 
       await documentApi.upload(formData);
-      showSuccess("Tải lên tài liệu thành công.");
+      const label =
+        storage === "BOTH" ? " (lưu cả server và cloud)" :
+        storage === "CLOUD" ? " (lưu trên cloud)" : "";
+      showSuccess("Tải lên tài liệu thành công." + label);
       setIsUploadOpen(false);
       await loadAll();
     } catch (err) {

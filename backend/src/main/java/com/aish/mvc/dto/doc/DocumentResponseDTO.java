@@ -29,7 +29,8 @@ public class DocumentResponseDTO {
     private java.util.List<String> subjectNames;
     private String fileUrl;
     private String fileType;
-    private String storageType; // LOCAL | CLOUD — chuẩn hóa từ DocFile.resourceType
+    private String storageType; // LOCAL | CLOUD | BOTH — chuẩn hóa từ danh sách DocFile
+    private String thumbnailUrl; // tương đối trong /uploads (vd. "thumbnails/x.png") | null -> FE dùng icon // LOCAL | CLOUD — chuẩn hóa từ DocFile.resourceType
 
     // DEC-035: kết quả kiểm duyệt AI cho lần chuyển PUBLIC gần nhất.
     private String moderationStatus; // NOT_REQUIRED | PENDING | APPROVED | REJECTED

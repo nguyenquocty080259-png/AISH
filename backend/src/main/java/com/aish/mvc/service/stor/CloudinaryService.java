@@ -8,19 +8,14 @@ import org.springframework.web.multipart.MultipartFile;
  */
 public interface CloudinaryService {
 
-    /**
-     * Upload 1 file lên Cloudinary.
-     *
-     * @param file file người dùng gửi lên
-     * @return thông tin file sau khi upload (url, publicId, resourceType)
-     */
     CloudUploadResult upload(MultipartFile file);
 
-    /**
-     * Xóa file trên Cloudinary theo publicId.
-     *
-     * @param publicId     định danh public của file trên Cloudinary
-     * @param resourceType loại tài nguyên ("image" hoặc "raw")
-     */
     void delete(String publicId, String resourceType);
+
+    /**
+     * Sinh signed URL kèm cờ fl_attachment để backend tự đọc file (ingest AI,
+     * download/preview) kể cả khi Cloudinary chặn deliver public (vd. PDF trên
+     * account free bị 401).
+     */
+    String signedDownloadUrl(String publicId, String resourceType);
 }

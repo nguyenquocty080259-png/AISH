@@ -48,6 +48,19 @@ public class CloudinaryServiceImpl implements CloudinaryService {
         }
     }
 
+    // ===== METHOD MỚI =====
+    @Override
+    public String signedDownloadUrl(String publicId, String resourceType) {
+        // fl_attachment: Cloudinary CHO PHÉP deliver PDF trên account free nếu tải dạng
+        // attachment; signed(true) để URL hợp lệ cả với asset cấu hình authenticated.
+        return cloudinary.url()
+                .resourceType(resourceType == null ? "raw" : resourceType)
+                .secure(true)
+                .signed(true)
+                .transformation(new com.cloudinary.Transformation().flags("attachment"))
+                .generate(publicId);
+    }
+
     @Override
     public void delete(String publicId, String resourceType) {
         try {

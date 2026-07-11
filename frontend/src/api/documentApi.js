@@ -29,9 +29,11 @@ export function previewFile(id) {
     .then((res) => res.data);
 }
 
+// Endpoint hợp nhất — formData nên kèm field "storage": LOCAL | CLOUD | BOTH
+// (không gửi thì BE mặc định LOCAL, tương thích ngược).
 export function upload(formData, onProgress) {
   return apiClient
-    .post("/documents/upload-server", formData, { onUploadProgress: onProgress })
+    .post("/documents/upload", formData, { onUploadProgress: onProgress })
     .then((res) => res.data);
 }
 
@@ -43,15 +45,17 @@ export function updateDocument(id, data) {
 export function toggleFavorite(id) {
   return apiClient.post(`/documents/${id}/favorite`);
 }
-
 export function addComment(id, content) {
-  return apiClient.post(`/documents/${id}/comment`, content);
+  return apiClient.post(`/documents/${id}/comment`, content, {
+    headers: { "Content-Type": "text/plain; charset=UTF-8" },
+  });
 }
 
 export function updateComment(commentId, content) {
-  return apiClient.put(`/documents/comments/${commentId}`, content);
+  return apiClient.put(`/documents/comments/${commentId}`, content, {
+    headers: { "Content-Type": "text/plain; charset=UTF-8" },
+  });
 }
-
 export function deleteComment(commentId) {
   return apiClient.delete(`/documents/comments/${commentId}`);
 }
@@ -72,8 +76,12 @@ export function restoreDocument(id) {
   return apiClient.put(`/documents/${id}/restore`);
 }
 
+// BE giờ trả về document sau khi đổi (visibility mới + moderationStatus + moderationReason)
+// để FE hiển thị kết quả kiểm duyệt AI thay vì im lặng.
 export function toggleVisibility(id) {
-  return apiClient.put(`/documents/${id}/toggle-visibility`);
+  return apiClient
+    .put(`/documents/${id}/toggle-visibility`)
+    .then((res) => res.data);
 }
 
 export function downloadFile(id) {

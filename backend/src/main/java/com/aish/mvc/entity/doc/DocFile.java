@@ -40,4 +40,8 @@ public class DocFile {
     @CreationTimestamp
     @Column(name = "uploaded_at", updatable = false)
     private LocalDateTime uploadedAt;
+    // ===== THÊM MỚI =====
+    // Đường dẫn thumbnail TƯƠNG ĐỐI trong thư mục uploads (vd. "thumbnails/xxx.png").
+    // Null nếu định dạng không render được (docx, txt...) — FE fallback về icon.
+    private String thumbnailUrl;
 }
