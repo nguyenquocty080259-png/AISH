@@ -1,8 +1,0 @@
-Phương trình lượng giác cơ bản
-
-Phương trình lượng giác cơ bản gồm bốn dạng: sin x = m, cos x = m, tan x = m và cot x = m. Với sin x = m và cos x = m, phương trình chỉ có nghiệm khi -1 ≤ m ≤ 1; nghiệm được biểu diễn theo họ nghiệm tổng quát cộng thêm k2π hoặc kπ tùy dạng, với k là số nguyên.
-
-Để giải các phương trình phức tạp hơn, học sinh cần đưa về một trong bốn dạng cơ bản thông qua các công thức biến đổi: công thức cộng, công thức nhân đôi, công thức hạ bậc, hoặc công thức biến đổi tổng thành tích và tích thành tổng. Việc chọn phương pháp phù hợp giúp rút gọn phương trình về dạng chứa một hàm lượng giác duy nhất.
-
-Một số phương trình đặc biệt như phương trình bậc hai đối với một hàm lượng giác (đặt t = sin x hoặc t = cos x), hay phương trình đẳng cấp bậc hai đối với sin x và cos x, đòi hỏi kỹ thuật đặt ẩn phụ và kiểm tra điều kiện của ẩn phụ trước khi kết luận nghiệm.
-

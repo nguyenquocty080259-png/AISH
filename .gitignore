@@ -22,6 +22,12 @@ out/
 .env.local
 .env.*.local
 *.pem
+backend/src/main/resources/application.properties
+
+# === Runtime uploads ===
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/uploadsv/
 
 # === Logs ===
 *.log

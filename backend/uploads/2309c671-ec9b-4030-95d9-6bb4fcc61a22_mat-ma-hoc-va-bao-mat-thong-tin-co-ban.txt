@@ -1,8 +1,0 @@
-Mật mã học và bảo mật thông tin cơ bản
-
-Mật mã học (cryptography) là ngành khoa học nghiên cứu các kỹ thuật bảo đảm an toàn thông tin, gồm hai nhóm thuật toán chính: mã hóa đối xứng (symmetric encryption) dùng chung một khóa cho cả mã hóa và giải mã (ví dụ AES), và mã hóa bất đối xứng (asymmetric encryption) dùng cặp khóa công khai - riêng tư (ví dụ RSA).
-
-Hàm băm mật mã (cryptographic hash function) như SHA-256 chuyển đổi dữ liệu đầu vào có độ dài bất kỳ thành một chuỗi đầu ra có độ dài cố định, có tính chất một chiều (không thể suy ngược lại đầu vào) và nhạy với thay đổi nhỏ, được dùng để kiểm tra tính toàn vẹn dữ liệu và lưu trữ mật khẩu an toàn.
-
-Ba nguyên tắc cốt lõi của an toàn thông tin, gọi là tam giác CIA, gồm Confidentiality (tính bảo mật - chỉ người được ủy quyền mới truy cập được thông tin), Integrity (tính toàn vẹn - thông tin không bị sửa đổi trái phép) và Availability (tính sẵn sàng - hệ thống luôn sẵn sàng phục vụ khi cần), là kim chỉ nam cho mọi giải pháp bảo mật.
-

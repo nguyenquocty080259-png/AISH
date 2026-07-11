@@ -1,8 +1,0 @@
-Lập trình vi điều khiển và hệ thống nhúng cơ bản
-
-Hệ thống nhúng (embedded system) là hệ thống máy tính chuyên dụng được thiết kế để thực hiện một hoặc một số chức năng cụ thể trong một hệ thống lớn hơn, khác với máy tính đa năng, thường có ràng buộc chặt chẽ về tài nguyên bộ nhớ, năng lượng tiêu thụ và thời gian đáp ứng thực (real-time).
-
-Vi điều khiển (microcontroller) là bộ não trung tâm của hầu hết hệ thống nhúng, tích hợp CPU, bộ nhớ (RAM, Flash) và các ngoại vi (GPIO, UART, ADC, PWM) trên cùng một chip, cho phép lập trình để đọc tín hiệu từ cảm biến và điều khiển các thiết bị chấp hành (actuator) như động cơ, đèn LED.
-
-Lập trình hệ thống nhúng thường sử dụng ngôn ngữ C/C++ do khả năng thao tác trực tiếp với phần cứng và hiệu năng cao, đồng thời phải quan tâm đến hệ điều hành thời gian thực (RTOS) khi hệ thống cần xử lý nhiều tác vụ đồng thời với yêu cầu nghiêm ngặt về thời gian đáp ứng.
-
