@@ -1,6 +1,7 @@
 package com.aish.mvc.service.admin.impl;
 
 import com.aish.mvc.dto.auth.admin.AdminCreateUserRequestDTO;
+import com.aish.mvc.dto.auth.admin.AdminResetPasswordRequestDTO;
 import com.aish.mvc.dto.auth.admin.AdminUpdateUserRequestDTO;
 import com.aish.mvc.dto.auth.admin.AdminUpdateUserStatusRequestDTO;
 import com.aish.mvc.dto.auth.admin.AdminUserResponseDTO;
@@ -27,6 +28,8 @@ import com.aish.mvc.repository.doc.ModerationAppealRepository;
 import com.aish.mvc.repository.doc.SubjectRepository;
 import com.aish.mvc.service.admin.AdminService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -42,6 +45,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class AdminServiceImpl implements AdminService {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminServiceImpl.class);
 
     private final ModerationAppealRepository moderationAppealRepository;
     private final DocDocumentRepository docDocumentRepository;
@@ -275,6 +280,24 @@ public class AdminServiceImpl implements AdminService {
                 .lastLoginAt(account.getLastLoginAt())
                 .deletedAt(user.getDeletedAt())
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public void resetUserPassword(Long userId, AdminResetPasswordRequestDTO request) {
+        AuthUser user = authUserRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại."));
+        AuthAccount account = authAccountRepository.findByUserAndProvider(user, AuthProviders.LOCAL)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Người dùng không có tài khoản đăng nhập LOCAL."));
+
+        account.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        authAccountRepository.save(account);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String adminIdentifier = authentication != null ? authentication.getName() : "unknown";
+        log.info("Admin {} reset password for user id={} identifier={}",
+                adminIdentifier, userId, account.getIdentifier());
     }
 
     private ModerationAppeal requirePendingAppeal(Long appealId) {

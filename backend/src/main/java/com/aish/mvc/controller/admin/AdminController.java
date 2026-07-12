@@ -1,6 +1,7 @@
 package com.aish.mvc.controller.admin;
 
 import com.aish.mvc.dto.auth.admin.AdminCreateUserRequestDTO;
+import com.aish.mvc.dto.auth.admin.AdminResetPasswordRequestDTO;
 import com.aish.mvc.dto.auth.admin.AdminUpdateUserRequestDTO;
 import com.aish.mvc.dto.auth.admin.AdminUpdateUserStatusRequestDTO;
 import com.aish.mvc.dto.auth.admin.AdminUserResponseDTO;
@@ -115,5 +116,14 @@ public class AdminController {
             @PathVariable Long id,
             @Valid @RequestBody AdminUpdateUserStatusRequestDTO request) {
         return ResponseEntity.ok(adminService.updateUserStatus(id, request));
+    }
+
+    @PatchMapping("/users/{id}/password")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> resetUserPassword(
+            @PathVariable Long id,
+            @Valid @RequestBody AdminResetPasswordRequestDTO request) {
+        adminService.resetUserPassword(id, request);
+        return ResponseEntity.noContent().build();
     }
 }

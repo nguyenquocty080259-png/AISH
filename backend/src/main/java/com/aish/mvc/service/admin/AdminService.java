@@ -1,6 +1,7 @@
 package com.aish.mvc.service.admin;
 
 import com.aish.mvc.dto.auth.admin.AdminCreateUserRequestDTO;
+import com.aish.mvc.dto.auth.admin.AdminResetPasswordRequestDTO;
 import com.aish.mvc.dto.auth.admin.AdminUpdateUserRequestDTO;
 import com.aish.mvc.dto.auth.admin.AdminUpdateUserStatusRequestDTO;
 import com.aish.mvc.dto.auth.admin.AdminUserResponseDTO;
@@ -31,4 +32,6 @@ public interface AdminService {
     AdminUserResponseDTO updateUser(Long userId, AdminUpdateUserRequestDTO request);
 
     AdminUserResponseDTO updateUserStatus(Long userId, AdminUpdateUserStatusRequestDTO request);
+
+    void resetUserPassword(Long userId, AdminResetPasswordRequestDTO request);
 }
