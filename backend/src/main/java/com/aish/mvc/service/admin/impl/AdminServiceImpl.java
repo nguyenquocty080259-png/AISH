@@ -2,6 +2,7 @@ package com.aish.mvc.service.admin.impl;
 
 import com.aish.mvc.dto.auth.admin.AdminCreateUserRequestDTO;
 import com.aish.mvc.dto.auth.admin.AdminUpdateUserRequestDTO;
+import com.aish.mvc.dto.auth.admin.AdminUpdateUserStatusRequestDTO;
 import com.aish.mvc.dto.auth.admin.AdminUserResponseDTO;
 import com.aish.mvc.dto.doc.AdminAppealResponseDTO;
 import com.aish.mvc.dto.doc.AdminStatsDTO;
@@ -29,6 +30,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -202,6 +205,71 @@ public class AdminServiceImpl implements AdminService {
                 .email(account.getIdentifier())
                 .avatarUrl(user.getAvatarUrl())
                 .role(role.getRoleName())
+                .status(user.getStatus().name())
+                .online(false)
+                .lastLoginAt(account.getLastLoginAt())
+                .deletedAt(user.getDeletedAt())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public AdminUserResponseDTO updateUserStatus(
+            Long userId, AdminUpdateUserStatusRequestDTO request) {
+        UserStatus requestedStatus;
+        try {
+            requestedStatus = UserStatus.valueOf(request.getStatus().trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Trạng thái chỉ được là ACTIVE hoặc BANNED.");
+        }
+        if (requestedStatus != UserStatus.ACTIVE && requestedStatus != UserStatus.BANNED) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Trạng thái chỉ được là ACTIVE hoặc BANNED.");
+        }
+
+        AuthUser user = authUserRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại."));
+
+        if (requestedStatus == UserStatus.BANNED) {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String identifier = authentication != null ? authentication.getName() : null;
+            AuthAccount currentAdminAccount = authAccountRepository
+                    .findByIdentifierWithUserAndRole(identifier)
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.UNAUTHORIZED, "Không xác định được admin đang thao tác."));
+
+            if (currentAdminAccount.getUser().getId().equals(userId)) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "Admin không thể tự khóa tài khoản của chính mình.");
+            }
+
+            boolean targetIsActiveAdmin = user.getStatus() == UserStatus.ACTIVE
+                    && "ADMIN".equalsIgnoreCase(user.getRole().getRoleName());
+            if (targetIsActiveAdmin
+                    && authUserRepository.countByRole_RoleNameAndStatus(
+                            "ADMIN", UserStatus.ACTIVE) <= 1) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT, "Không thể khóa admin ACTIVE cuối cùng trong hệ thống.");
+            }
+        }
+
+        user.setStatus(requestedStatus);
+        authUserRepository.save(user);
+
+        AuthAccount account = authAccountRepository.findAll().stream()
+                .filter(candidate -> candidate.getUser().getId().equals(userId))
+                .filter(candidate -> Boolean.TRUE.equals(candidate.getIsPrimary()))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Không tìm thấy tài khoản chính của người dùng."));
+
+        return AdminUserResponseDTO.builder()
+                .id(user.getId())
+                .fullName(user.getFullName())
+                .email(account.getIdentifier())
+                .avatarUrl(user.getAvatarUrl())
+                .role(user.getRole().getRoleName())
                 .status(user.getStatus().name())
                 .online(false)
                 .lastLoginAt(account.getLastLoginAt())

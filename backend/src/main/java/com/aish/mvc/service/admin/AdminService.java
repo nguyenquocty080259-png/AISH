@@ -2,6 +2,7 @@ package com.aish.mvc.service.admin;
 
 import com.aish.mvc.dto.auth.admin.AdminCreateUserRequestDTO;
 import com.aish.mvc.dto.auth.admin.AdminUpdateUserRequestDTO;
+import com.aish.mvc.dto.auth.admin.AdminUpdateUserStatusRequestDTO;
 import com.aish.mvc.dto.auth.admin.AdminUserResponseDTO;
 import com.aish.mvc.dto.doc.AdminAppealResponseDTO;
 import com.aish.mvc.dto.doc.AdminStatsDTO;
@@ -28,4 +29,6 @@ public interface AdminService {
     AdminUserResponseDTO createUser(AdminCreateUserRequestDTO request);
 
     AdminUserResponseDTO updateUser(Long userId, AdminUpdateUserRequestDTO request);
+
+    AdminUserResponseDTO updateUserStatus(Long userId, AdminUpdateUserStatusRequestDTO request);
 }
