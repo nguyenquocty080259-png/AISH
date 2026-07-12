@@ -29,8 +29,43 @@ export default function ConversationSidebar({
   loading,
   onNewChat,
   onSelectConversation,
+  onRenameConversation,
+  onDeleteConversation,
 }) {
+  const [renameTarget, setRenameTarget] = useState(null);
+  const [renameTitle, setRenameTitle] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    setRenameTitle(renameTarget?.title ?? "");
+  }, [renameTarget]);
+
+  const submitRename = async (event) => {
+    event.preventDefault();
+    if (!renameTarget || !renameTitle.trim()) return;
+    setSubmitting(true);
+    try {
+      const succeeded = await onRenameConversation(renameTarget.id, renameTitle.trim());
+      if (succeeded) setRenameTarget(null);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setSubmitting(true);
+    try {
+      const succeeded = await onDeleteConversation(deleteTarget.id);
+      if (succeeded) setDeleteTarget(null);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
+    <>
     <aside className={`chat-sidebar${isOpen ? " chat-sidebar--open" : ""}`}>
       <div className="chat-sidebar__top">
         <button
@@ -59,15 +94,19 @@ export default function ConversationSidebar({
             const hasDocument = Boolean(conversation.documentId);
 
             return (
-              <button
+              <div
                 key={conversation.id}
-                type="button"
+                role="button"
+                tabIndex={0}
                 className={`chat-sidebar__item${
                   conversation.id === activeConversationId
                     ? " chat-sidebar__item--active"
                     : ""
                 }`}
                 onClick={() => onSelectConversation(conversation.id)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") onSelectConversation(conversation.id);
+                }}
               >
                 <span className="chat-sidebar__item-title">
                   {hasDocument && (
@@ -93,11 +132,47 @@ export default function ConversationSidebar({
                     conversation.updatedAt || conversation.createdAt
                   )}
                 </span>
-              </button>
+                <span style={{ display: "flex", gap: 4, marginTop: 4 }}>
+                  <button type="button" aria-label="Đổi tên cuộc trò chuyện"
+                    style={{ padding: 2, border: 0, background: "transparent", cursor: "pointer" }}
+                    onClick={(event) => { event.stopPropagation(); setRenameTarget(conversation); }}>
+                    ✏️
+                  </button>
+                  <button type="button" aria-label="Xóa cuộc trò chuyện"
+                    style={{ padding: 2, border: 0, background: "transparent", cursor: "pointer" }}
+                    onClick={(event) => { event.stopPropagation(); setDeleteTarget(conversation); }}>
+                    🗑️
+                  </button>
+                </span>
+              </div>
             );
           })}
         </div>
       )}
     </aside>
+
+    <Modal open={!!renameTarget} onClose={() => !submitting && setRenameTarget(null)} title="Đổi tên cuộc trò chuyện">
+      <form onSubmit={submitRename}>
+        <label style={{ display: "grid", gap: 8 }}>Tên cuộc trò chuyện
+          <input autoFocus type="text" value={renameTitle} onChange={(event) => setRenameTitle(event.target.value)} />
+        </label>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 20 }}>
+          <Button variant="secondary" onClick={() => setRenameTarget(null)} disabled={submitting}>Hủy</Button>
+          <Button type="submit" disabled={submitting || !renameTitle.trim()}>{submitting ? "Đang lưu..." : "Lưu"}</Button>
+        </div>
+      </form>
+    </Modal>
+
+    <Modal open={!!deleteTarget} onClose={() => !submitting && setDeleteTarget(null)} title="Xóa cuộc trò chuyện">
+      <p>Bạn có chắc muốn xóa “{deleteTarget?.title}”? Toàn bộ tin nhắn trong cuộc trò chuyện sẽ bị xóa.</p>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 20 }}>
+        <Button variant="secondary" onClick={() => setDeleteTarget(null)} disabled={submitting}>Hủy</Button>
+        <Button variant="danger" onClick={confirmDelete} disabled={submitting}>{submitting ? "Đang xóa..." : "Xóa"}</Button>
+      </div>
+    </Modal>
+    </>
   );
 }
+import { useEffect, useState } from "react";
+import Button from "../../../components/ui/Button";
+import Modal from "../../../components/ui/Modal";

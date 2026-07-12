@@ -14,3 +14,11 @@ export function getConversations() {
 export function getMessages(conversationId) {
   return apiClient.get(`/ai/conversations/${conversationId}/messages`).then((res) => res.data);
 }
+
+export function deleteConversation(id) {
+  return apiClient.delete(`/ai/conversations/${id}`);
+}
+
+export function renameConversation(id, title) {
+  return apiClient.put(`/ai/conversations/${id}`, { title }).then((res) => res.data);
+}
