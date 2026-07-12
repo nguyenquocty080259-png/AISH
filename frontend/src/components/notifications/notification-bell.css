@@ -1,0 +1,89 @@
+.notification-bell {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.notification-bell__trigger {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: var(--color-surface);
+  cursor: pointer;
+  font-size: 17px;
+}
+
+.notification-bell__trigger:hover { background: var(--color-surface-soft); }
+
+.notification-bell__badge {
+  position: absolute;
+  top: -5px;
+  right: -7px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 2px solid var(--color-surface);
+  border-radius: 10px;
+  background: var(--color-error);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 14px;
+}
+
+.notification-bell__dropdown {
+  position: absolute;
+  z-index: 100;
+  bottom: calc(100% + 10px);
+  left: 0;
+  width: min(220px, calc(100vw - 32px));
+  max-height: 420px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-input);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.22);
+}
+
+.notification-bell__header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.notification-bell__header button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.notification-bell__header button:disabled { opacity: 0.5; cursor: default; }
+.notification-bell__list { max-height: 330px; overflow-y: auto; }
+
+.notification-bell__item {
+  display: grid;
+  width: 100%;
+  gap: 5px;
+  padding: 11px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.notification-bell__item--unread { background: var(--color-surface-soft); font-weight: 700; }
+.notification-bell__item:hover { filter: brightness(0.98); }
+.notification-bell__item time { color: var(--color-text-secondary); font-size: 10px; font-weight: 400; }
+.notification-bell__empty { margin: 0; padding: 18px 12px; color: var(--color-text-secondary); font-size: 12px; }
