@@ -26,6 +26,16 @@ export function rejectAppeal(appealId, note) {
     .then((res) => res.data);
 }
 
+export function listReports(status) {
+  return apiClient
+    .get("/admin/reports", { params: status ? { status } : {} })
+    .then((res) => res.data);
+}
+
+export function resolveReport(id, payload) {
+  return apiClient.put(`/admin/reports/${id}/resolve`, payload).then((res) => res.data);
+}
+
 // Returns a Spring Data Page: { content, totalPages, totalElements, number, size, ... }.
 // page is 0-indexed (matches Spring Pageable). Backend default: size=20, sort=createdAt DESC.
 export function listDocuments(page = 0, size = 20, visibility = null) {

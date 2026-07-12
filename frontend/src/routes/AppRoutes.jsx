@@ -23,9 +23,11 @@ import DocumentDetailPage from "../pages/document-detail/DocumentDetailPage";
 import FavoritesPage from "../pages/favorites/FavoritesPage";
 import ProfilePage from "../pages/profile/ProfilePage";
 import AiChatPage from "../pages/ai-chat/AiChatPage";
+import MyReportsPage from "../pages/my-reports/MyReportsPage";
 import AdminLayout from "../pages/admin/AdminLayout";
 import AdminStatsPage from "../pages/admin/stats/AdminStatsPage";
 import AdminAppealsPage from "../pages/admin/appeals/AdminAppealsPage";
+import AdminReportsPage from "../pages/admin/reports/AdminReportsPage";
 import AdminDocumentsPage from "../pages/admin/documents/AdminDocumentsPage";
 import AdminSubjectsPage from "../pages/admin/subjects/AdminSubjectsPage";
 import AdminUsersPage from "../pages/admin/users/AdminUsersPage";
@@ -57,6 +59,7 @@ export default function AppRoutes() {
           <Route path={ROUTES.DOCUMENT_DETAIL} element={<DocumentDetailPage />} />
           <Route path={ROUTES.FAVORITES} element={<FavoritesPage />} />
           <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
+          <Route path={ROUTES.MY_REPORTS} element={<MyReportsPage />} />
           {/* TEMPORARY — internal ui/ primitives preview, not linked in nav. Remove before shipping. */}
           <Route path="/_ui-preview" element={<UiPreviewPage />} />
         </Route>
@@ -68,6 +71,7 @@ export default function AppRoutes() {
           <Route index element={<Navigate to={ROUTES.ADMIN_STATS} replace />} />
           <Route path="stats" element={<AdminStatsPage />} />
           <Route path="appeals" element={<AdminAppealsPage />} />
+          <Route path="reports" element={<AdminReportsPage />} />
           <Route path="documents" element={<AdminDocumentsPage />} />
           <Route path="subjects" element={<AdminSubjectsPage />} />
           <Route path="users" element={<AdminUsersPage />} />

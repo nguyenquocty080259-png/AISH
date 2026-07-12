@@ -5,6 +5,7 @@ import { useToast } from "../../hooks/useToast";
 import "./admin-layout.css";
 
 const ADMIN_NAV_ITEMS = [
+  { to: ROUTES.ADMIN_REPORTS, label: "Báo cáo", icon: "⚑" },
   { to: ROUTES.ADMIN_STATS, label: "Bảng điều khiển", icon: "▦" },
   { to: ROUTES.ADMIN_APPEALS, label: "Kháng nghị", icon: "⚑" },
   { to: ROUTES.ADMIN_DOCUMENTS, label: "Tài liệu", icon: "▤" },

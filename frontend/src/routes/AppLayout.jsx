@@ -10,6 +10,7 @@ import "./AppLayout.css";
 // Nav chính của sidebar — chỉ hiện khi đã đăng nhập.
 // "Shared" đã bị bỏ hẳn khỏi nav: backend isSharedTo() luôn trả false (V2, chưa có dữ liệu share thật).
 const NAV_ITEMS = [
+  { to: ROUTES.MY_REPORTS, label: "Báo cáo của tôi", icon: "⚑" },
   { to: ROUTES.DASHBOARD, label: "Trang chủ", icon: "🏠" },
   { to: ROUTES.DOCUMENTS, label: "My Hive", icon: "📚" },
   { to: ROUTES.COMMUNITY, label: "Khám phá", icon: "🧭" },
