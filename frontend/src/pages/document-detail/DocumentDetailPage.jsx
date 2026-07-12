@@ -11,6 +11,7 @@ import Modal from "../../components/ui/Modal";
 import Button from "../../components/ui/Button";
 import EmptyState from "../../components/ui/EmptyState";
 import RecommendationCard from "../../components/recommendations/RecommendationCard";
+import ReportMenu from "../../components/report/ReportMenu";
 import { ROUTES } from "../../constants/routes";
 import "./document-detail.css";
 
@@ -187,6 +188,7 @@ export default function DocumentDetailPage() {
         onIngest={handleIngest}
       />
       <div className="detail-actions">
+        <ReportMenu targetType="DOCUMENT" targetId={doc.id} />
         <button
           className="detail-btn detail-btn--primary"
           onClick={handleDownload}

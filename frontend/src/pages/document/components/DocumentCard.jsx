@@ -1,11 +1,13 @@
 import { Link } from "react-router-dom";
 import { ROUTES, buildRoute } from "../../../constants/routes";
 import DocumentThumb from "../../../components/ui/DocumentThumb";
+import ReportMenu from "../../../components/report/ReportMenu";
 
 export default function DocumentCard({ doc, onToggleFavorite }) {
   return (
     <div className="doc-card">
       <div className="doc-card__top">
+        <ReportMenu targetType="DOCUMENT" targetId={doc.id} />
         {doc.subjectNames?.length > 0 && (
           <span className="doc-card__subject">{doc.subjectNames.join(", ")}</span>
         )}

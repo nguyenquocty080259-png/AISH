@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ReportMenu from "../../../components/report/ReportMenu";
 
 export default function CommentSection({
   comments,
@@ -75,6 +76,7 @@ export default function CommentSection({
               ) : (
                 <>
                   <p className="detail-comment__content">{comment.content}</p>
+                  {!isMine && <ReportMenu targetType="COMMENT" targetId={comment.id} />}
                   {isMine && (
                     <div className="detail-comment__actions">
                       <button type="button" onClick={() => startEdit(comment)}>
