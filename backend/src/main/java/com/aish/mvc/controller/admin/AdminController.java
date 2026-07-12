@@ -11,10 +11,14 @@ import com.aish.mvc.dto.doc.AdminStatsDTO;
 import com.aish.mvc.dto.doc.AppealDecisionRequestDTO;
 import com.aish.mvc.dto.doc.DocumentResponseDTO;
 import com.aish.mvc.dto.doc.DocumentUpdateRequestDTO;
+import com.aish.mvc.dto.report.AdminReportResponseDTO;
+import com.aish.mvc.dto.report.ResolveReportRequestDTO;
 import com.aish.mvc.entity.enums.AppealStatus;
 import com.aish.mvc.entity.enums.DocumentVisibility;
+import com.aish.mvc.entity.enums.ReportStatus;
 import com.aish.mvc.service.admin.AdminService;
 import com.aish.mvc.service.doc.DocumentService;
+import com.aish.mvc.service.report.ReportService;
 import lombok.RequiredArgsConstructor;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -36,6 +40,21 @@ public class AdminController {
 
     private final AdminService adminService;
     private final DocumentService documentService;
+    private final ReportService reportService;
+
+    @GetMapping("/reports")
+    public ResponseEntity<List<AdminReportResponseDTO>> listReports(
+            @RequestParam(value = "status", required = false) ReportStatus status) {
+        return ResponseEntity.ok(reportService.listReports(status));
+    }
+
+    @PutMapping("/reports/{id}/resolve")
+    public ResponseEntity<AdminReportResponseDTO> resolveReport(
+            @PathVariable Long id,
+            @RequestBody ResolveReportRequestDTO request) {
+        return ResponseEntity.ok(reportService.resolveReport(
+                id, request.getActionTaken(), request.getAdminResponse()));
+    }
 
     @GetMapping("/appeals")
     public ResponseEntity<List<AdminAppealResponseDTO>> listAppeals(
