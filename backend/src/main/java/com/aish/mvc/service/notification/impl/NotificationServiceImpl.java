@@ -1,0 +1,97 @@
+package com.aish.mvc.service.notification.impl;
+
+import com.aish.mvc.dto.notification.NotificationResponseDTO;
+import com.aish.mvc.entity.auth.AuthUser;
+import com.aish.mvc.entity.enums.NotificationType;
+import com.aish.mvc.entity.notification.Notification;
+import com.aish.mvc.exception.ForbiddenException;
+import com.aish.mvc.exception.ResourceNotFoundException;
+import com.aish.mvc.repository.auth.AuthAccountRepository;
+import com.aish.mvc.repository.notification.NotificationRepository;
+import com.aish.mvc.service.notification.NotificationService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class NotificationServiceImpl implements NotificationService {
+
+    private final NotificationRepository notificationRepository;
+    private final AuthAccountRepository authAccountRepository;
+
+    private AuthUser getCurrentUser() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return authAccountRepository.findByIdentifier(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy user đang đăng nhập"))
+                .getUser();
+    }
+
+    @Override
+    @Transactional
+    public void createNotification(
+            Long recipientUserId, NotificationType type, String message, Long relatedReportId) {
+        Notification notification = Notification.builder()
+                .recipientUserId(recipientUserId)
+                .type(type)
+                .message(message)
+                .relatedReportId(relatedReportId)
+                .isRead(false)
+                .build();
+        notificationRepository.save(notification);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<NotificationResponseDTO> getMyNotifications() {
+        Long userId = getCurrentUser().getId();
+        return notificationRepository.findByRecipientUserIdOrderByCreatedAtDesc(userId).stream()
+                .map(this::toResponseDTO)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long getUnreadCount() {
+        return notificationRepository.countByRecipientUserIdAndIsReadFalse(getCurrentUser().getId());
+    }
+
+    @Override
+    @Transactional
+    public NotificationResponseDTO markAsRead(Long notificationId) {
+        AuthUser currentUser = getCurrentUser();
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Thông báo không tồn tại."));
+        if (!notification.getRecipientUserId().equals(currentUser.getId())) {
+            throw new ForbiddenException("Bạn không có quyền đánh dấu thông báo của người khác là đã đọc.");
+        }
+        notification.setIsRead(true);
+        return toResponseDTO(notificationRepository.save(notification));
+    }
+
+    @Override
+    @Transactional
+    public void markAllAsRead() {
+        Long userId = getCurrentUser().getId();
+        List<Notification> unreadNotifications = notificationRepository
+                .findByRecipientUserIdOrderByCreatedAtDesc(userId).stream()
+                .filter(notification -> !Boolean.TRUE.equals(notification.getIsRead()))
+                .toList();
+        unreadNotifications.forEach(notification -> notification.setIsRead(true));
+        notificationRepository.saveAll(unreadNotifications);
+    }
+
+    private NotificationResponseDTO toResponseDTO(Notification notification) {
+        return NotificationResponseDTO.builder()
+                .id(notification.getId())
+                .type(notification.getType())
+                .message(notification.getMessage())
+                .relatedReportId(notification.getRelatedReportId())
+                .isRead(notification.getIsRead())
+                .createdAt(notification.getCreatedAt())
+                .build();
+    }
+}

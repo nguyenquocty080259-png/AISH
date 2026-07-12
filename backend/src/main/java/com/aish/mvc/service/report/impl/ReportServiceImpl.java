@@ -11,6 +11,8 @@ import com.aish.mvc.entity.enums.ReportAction;
 import com.aish.mvc.entity.enums.ReportSource;
 import com.aish.mvc.entity.enums.ReportStatus;
 import com.aish.mvc.entity.enums.ReportTargetType;
+import com.aish.mvc.entity.enums.NotificationType;
+import com.aish.mvc.entity.enums.UserStatus;
 import com.aish.mvc.entity.report.Report;
 import com.aish.mvc.exception.ResourceNotFoundException;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
@@ -22,6 +24,7 @@ import com.aish.mvc.repository.report.ReportRepository;
 import com.aish.mvc.service.admin.AdminService;
 import com.aish.mvc.service.doc.DocumentService;
 import com.aish.mvc.service.doc.EngagementService;
+import com.aish.mvc.service.notification.NotificationService;
 import com.aish.mvc.service.report.ReportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -46,6 +49,7 @@ public class ReportServiceImpl implements ReportService {
     private final DocumentService documentService;
     private final EngagementService engagementService;
     private final AdminService adminService;
+    private final NotificationService notificationService;
 
     private AuthUser getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -70,7 +74,14 @@ public class ReportServiceImpl implements ReportService {
                 .status(ReportStatus.PENDING)
                 .build();
 
-        return toResponseDTO(reportRepository.save(report));
+        Report savedReport = reportRepository.save(report);
+        authUserRepository.findByRole_RoleNameAndStatus("ADMIN", UserStatus.ACTIVE)
+                .forEach(admin -> notificationService.createNotification(
+                        admin.getId(),
+                        NotificationType.REPORT_CREATED,
+                        "Có báo cáo mới cần xử lý (#" + savedReport.getId() + ")",
+                        savedReport.getId()));
+        return toResponseDTO(savedReport);
     }
 
     @Override
@@ -108,7 +119,15 @@ public class ReportServiceImpl implements ReportService {
         report.setDecidedByAdminId(getCurrentUser().getId());
         report.setDecidedAt(LocalDateTime.now());
 
-        return toAdminResponseDTO(reportRepository.save(report));
+        Report savedReport = reportRepository.save(report);
+        if (savedReport.getReporterUserId() != null) {
+            notificationService.createNotification(
+                    savedReport.getReporterUserId(),
+                    NotificationType.REPORT_RESOLVED,
+                    "Báo cáo của bạn đã được xử lý: " + savedReport.getActionTaken(),
+                    savedReport.getId());
+        }
+        return toAdminResponseDTO(savedReport);
     }
 
     private Report requirePendingReport(Long reportId) {

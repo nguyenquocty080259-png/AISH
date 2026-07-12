@@ -13,6 +13,8 @@ import java.util.List;
 public interface AuthUserRepository extends JpaRepository<AuthUser, Long> {
     long countByRole_RoleNameAndStatus(String roleName, UserStatus status);
 
+    List<AuthUser> findByRole_RoleNameAndStatus(String roleName, UserStatus status);
+
     @Query("""
     SELECT u
     FROM AuthUser u
