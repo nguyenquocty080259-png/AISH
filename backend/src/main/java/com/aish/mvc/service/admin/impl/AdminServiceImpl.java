@@ -121,25 +121,7 @@ public class AdminServiceImpl implements AdminService {
         List<AuthAccount> accounts = authAccountRepository.findAll();
 
         return accounts.stream()
-                .map(account -> {
-
-                    AuthUser user = account.getUser();
-
-                    return AdminUserResponseDTO.builder()
-                            .id(user.getId())
-                            .fullName(user.getFullName())
-                            .email(account.getIdentifier())
-                            .avatarUrl(user.getAvatarUrl())
-                            .role(user.getRole().getRoleName())
-                            .status(user.getStatus().name())
-                            .lastLoginAt(account.getLastLoginAt())
-                            .online(false) // sẽ xử lý sau
-                            .seedPassword(seedCredentialRegistry
-                                    .getPassword(account.getIdentifier())
-                                    .orElse(null))
-                            .build();
-
-                })
+                .map(this::toAdminUserResponseDTO)
                 .toList();
     }
 
@@ -173,17 +155,7 @@ public class AdminServiceImpl implements AdminService {
         account.setIsPrimary(true);
         authAccountRepository.save(account);
 
-        return AdminUserResponseDTO.builder()
-                .id(user.getId())
-                .fullName(user.getFullName())
-                .email(account.getIdentifier())
-                .avatarUrl(user.getAvatarUrl())
-                .role(role.getRoleName())
-                .status(user.getStatus().name())
-                .online(false)
-                .lastLoginAt(account.getLastLoginAt())
-                .deletedAt(user.getDeletedAt())
-                .build();
+        return toAdminUserResponseDTO(account);
     }
 
     @Override
@@ -209,17 +181,7 @@ public class AdminServiceImpl implements AdminService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Không tìm thấy tài khoản chính của người dùng."));
 
-        return AdminUserResponseDTO.builder()
-                .id(user.getId())
-                .fullName(user.getFullName())
-                .email(account.getIdentifier())
-                .avatarUrl(user.getAvatarUrl())
-                .role(role.getRoleName())
-                .status(user.getStatus().name())
-                .online(false)
-                .lastLoginAt(account.getLastLoginAt())
-                .deletedAt(user.getDeletedAt())
-                .build();
+        return toAdminUserResponseDTO(account);
     }
 
     @Override
@@ -274,17 +236,7 @@ public class AdminServiceImpl implements AdminService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Không tìm thấy tài khoản chính của người dùng."));
 
-        return AdminUserResponseDTO.builder()
-                .id(user.getId())
-                .fullName(user.getFullName())
-                .email(account.getIdentifier())
-                .avatarUrl(user.getAvatarUrl())
-                .role(user.getRole().getRoleName())
-                .status(user.getStatus().name())
-                .online(false)
-                .lastLoginAt(account.getLastLoginAt())
-                .deletedAt(user.getDeletedAt())
-                .build();
+        return toAdminUserResponseDTO(account);
     }
 
     @Override
@@ -303,6 +255,24 @@ public class AdminServiceImpl implements AdminService {
         String adminIdentifier = authentication != null ? authentication.getName() : "unknown";
         log.info("Admin {} reset password for user id={} identifier={}",
                 adminIdentifier, userId, account.getIdentifier());
+    }
+
+    private AdminUserResponseDTO toAdminUserResponseDTO(AuthAccount account) {
+        AuthUser user = account.getUser();
+        return AdminUserResponseDTO.builder()
+                .id(user.getId())
+                .fullName(user.getFullName())
+                .email(account.getIdentifier())
+                .avatarUrl(user.getAvatarUrl())
+                .role(user.getRole().getRoleName())
+                .status(user.getStatus().name())
+                .online(false)
+                .lastLoginAt(account.getLastLoginAt())
+                .deletedAt(user.getDeletedAt())
+                .seedPassword(seedCredentialRegistry
+                        .getPassword(account.getIdentifier())
+                        .orElse(null))
+                .build();
     }
 
     private ModerationAppeal requirePendingAppeal(Long appealId) {
