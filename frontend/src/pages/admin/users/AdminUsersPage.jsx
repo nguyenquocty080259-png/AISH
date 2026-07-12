@@ -18,21 +18,12 @@ export default function AdminUsersPage() {
   const pageState = useAdminUsersPage();
   const { showSuccess, showError } = useToast();
   const [createForm, setCreateForm] = useState({ fullName: "", email: "", password: "", role: "USER" });
-  const [editForm, setEditForm] = useState({ fullName: "", avatarUrl: "", role: "USER" });
-  const [newPassword, setNewPassword] = useState("");
+  const [role, setRole] = useState("USER");
 
   useEffect(() => {
     if (!pageState.editTarget) return;
-    setEditForm({
-      fullName: pageState.editTarget.fullName ?? "",
-      avatarUrl: pageState.editTarget.avatarUrl ?? "",
-      role: pageState.editTarget.role ?? "USER",
-    });
+    setRole(pageState.editTarget.role ?? "USER");
   }, [pageState.editTarget]);
-
-  useEffect(() => {
-    if (pageState.resetTarget) setNewPassword("");
-  }, [pageState.resetTarget]);
 
   const submitCreate = async (event) => {
     event.preventDefault();
@@ -44,18 +35,9 @@ export default function AdminUsersPage() {
     if (created) setCreateForm({ fullName: "", email: "", password: "", role: "USER" });
   };
 
-  const submitEdit = (event) => {
+  const submitRoleChange = (event) => {
     event.preventDefault();
-    pageState.updateUser({
-      fullName: editForm.fullName.trim(),
-      avatarUrl: editForm.avatarUrl.trim() || null,
-      role: editForm.role,
-    });
-  };
-
-  const submitReset = (event) => {
-    event.preventDefault();
-    pageState.resetPassword(newPassword);
+    pageState.updateUserRole(role);
   };
 
   const copySeedPassword = async (password) => {
@@ -71,7 +53,7 @@ export default function AdminUsersPage() {
     <div className="admin-users-page">
       <PageHeader
         title="Quản lý người dùng"
-        subtitle="Tạo tài khoản, phân quyền, khóa hoặc đặt lại mật khẩu người dùng."
+        subtitle="Tạo tài khoản, đổi vai trò, khóa hoặc mở khóa người dùng."
         actions={<Button onClick={pageState.openCreateModal}>+ Tạo tài khoản</Button>}
       />
 
@@ -140,12 +122,7 @@ export default function AdminUsersPage() {
                     <Table.Cell>{formatDate(user.lastLoginAt)}</Table.Cell>
                     <Table.Cell>
                       <div className="admin-users-actions">
-                        <Button variant="secondary" onClick={() => pageState.openEditModal(user)}>Sửa</Button>
-                        {!user.seedPassword && (
-                          <Button variant="secondary" onClick={() => pageState.openResetModal(user)}>
-                            Đặt lại mật khẩu
-                          </Button>
-                        )}
+                        <Button variant="secondary" onClick={() => pageState.openEditModal(user)}>Đổi vai trò</Button>
                         <Button
                           variant={user.status === "BANNED" ? "secondary" : "danger"}
                           disabled={pageState.statusUpdatingId === user.id}
@@ -179,20 +156,13 @@ export default function AdminUsersPage() {
         </form>
       </Modal>
 
-      <Modal open={!!pageState.editTarget} onClose={pageState.closeEditModal} title="Sửa tài khoản">
-        <form className="admin-users-form" onSubmit={submitEdit}>
-          <label>Họ tên<input required autoFocus value={editForm.fullName} onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })} /></label>
-          <label>Avatar URL<input type="url" value={editForm.avatarUrl} onChange={(e) => setEditForm({ ...editForm, avatarUrl: e.target.value })} /></label>
-          <label>Vai trò<select value={editForm.role} onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}><option value="USER">USER</option><option value="ADMIN">ADMIN</option></select></label>
+      <Modal open={!!pageState.editTarget} onClose={pageState.closeEditModal} title="Đổi vai trò">
+        <form className="admin-users-form" onSubmit={submitRoleChange}>
+          <p className="admin-users-form__hint">
+            Đổi vai trò cho {pageState.editTarget?.fullName} ({pageState.editTarget?.email}).
+          </p>
+          <label>Vai trò<select autoFocus value={role} onChange={(e) => setRole(e.target.value)}><option value="USER">USER</option><option value="ADMIN">ADMIN</option></select></label>
           <div className="admin-users-form__actions"><Button variant="secondary" onClick={pageState.closeEditModal} disabled={pageState.updating}>Hủy</Button><Button type="submit" disabled={pageState.updating}>{pageState.updating ? "Đang lưu..." : "Lưu"}</Button></div>
-        </form>
-      </Modal>
-
-      <Modal open={!!pageState.resetTarget} onClose={pageState.closeResetModal} title="Đặt lại mật khẩu">
-        <form className="admin-users-form" onSubmit={submitReset}>
-          <p className="admin-users-form__hint">Đặt mật khẩu mới cho {pageState.resetTarget?.fullName} ({pageState.resetTarget?.email}).</p>
-          <label>Mật khẩu mới<input required autoFocus type="password" minLength={6} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} /></label>
-          <div className="admin-users-form__actions"><Button variant="secondary" onClick={pageState.closeResetModal} disabled={pageState.resetting}>Hủy</Button><Button type="submit" disabled={pageState.resetting}>{pageState.resetting ? "Đang đặt lại..." : "Đặt lại"}</Button></div>
         </form>
       </Modal>
     </div>

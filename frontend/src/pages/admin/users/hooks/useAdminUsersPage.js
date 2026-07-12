@@ -15,8 +15,6 @@ export function useAdminUsersPage() {
   const [creating, setCreating] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [updating, setUpdating] = useState(false);
-  const [resetTarget, setResetTarget] = useState(null);
-  const [resetting, setResetting] = useState(false);
   const [statusUpdatingId, setStatusUpdatingId] = useState(null);
 
   useEffect(() => {
@@ -73,14 +71,21 @@ export function useAdminUsersPage() {
     }
   };
 
-  const updateUser = async (payload) => {
+  // Chỉ đổi role — nhưng vẫn gửi kèm fullName/avatarUrl HIỆN TẠI của user (từ editTarget,
+  // không đổi) vì không chắc BE có bỏ qua field null hay ghi đè thành null khi thiếu field.
+  const updateUserRole = async (role) => {
     if (!editTarget) return false;
     setUpdating(true);
     try {
+      const payload = {
+        fullName: editTarget.fullName,
+        avatarUrl: editTarget.avatarUrl ?? null,
+        role,
+      };
       const updated = await adminApi.updateUser(editTarget.id, payload);
       setUsers((current) => current.map((user) => (user.id === updated.id ? updated : user)));
       setEditTarget(null);
-      showSuccess("Đã cập nhật tài khoản.");
+      showSuccess("Đã đổi vai trò.");
       return true;
     } catch (err) {
       showError(err.message);
@@ -104,22 +109,6 @@ export function useAdminUsersPage() {
     }
   };
 
-  const resetPassword = async (newPassword) => {
-    if (!resetTarget) return false;
-    setResetting(true);
-    try {
-      await adminApi.resetUserPassword(resetTarget.id, newPassword);
-      setResetTarget(null);
-      showSuccess("Đã đặt lại mật khẩu.");
-      return true;
-    } catch (err) {
-      showError(err.message);
-      return false;
-    } finally {
-      setResetting(false);
-    }
-  };
-
   return {
     loading,
     search,
@@ -138,12 +127,7 @@ export function useAdminUsersPage() {
     updating,
     openEditModal: setEditTarget,
     closeEditModal: () => setEditTarget(null),
-    updateUser,
-    resetTarget,
-    resetting,
-    openResetModal: setResetTarget,
-    closeResetModal: () => setResetTarget(null),
-    resetPassword,
+    updateUserRole,
     statusUpdatingId,
     toggleUserStatus,
   };

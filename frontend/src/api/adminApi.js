@@ -71,7 +71,3 @@ export function updateUserStatus(id, status) {
     .then((res) => res.data);
 }
 
-export function resetUserPassword(id, newPassword) {
-  return apiClient.patch(`/admin/users/${id}/password`, { newPassword });
-}
-
