@@ -168,15 +168,9 @@ public class DocumentServiceImpl implements DocumentService {
         return documentMapper.toResponseDTO(savedDoc);
     }
 
-    @Override
-    @Transactional
-    public DocumentResponseDTO updateDocument(Long id, String title, String description, java.util.List<Long> subjectIds) {
-        DocDocument doc = docDocumentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
-        if (!doc.getUser().getId().equals(getCurrentUser().getId())) {
-            throw new ForbiddenException("Bạn không có quyền sửa tài liệu này!");
-        }
-
+    // Áp title/description/subjectIds vào doc — dùng chung cho updateDocument (owner) và
+    // adminUpdateDocument (admin), chỉ khác nhau ở check ownership phía trên.
+    private void applyDocumentUpdate(DocDocument doc, String title, String description, java.util.List<Long> subjectIds) {
         if (title != null && !title.isBlank()) doc.setTitle(title.trim());
         if (description != null) doc.setDescription(description);
 
@@ -192,6 +186,18 @@ public class DocumentServiceImpl implements DocumentService {
             }
             doc.setSubjects(subjects);
         }
+    }
+
+    @Override
+    @Transactional
+    public DocumentResponseDTO updateDocument(Long id, String title, String description, java.util.List<Long> subjectIds) {
+        DocDocument doc = docDocumentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
+        if (!doc.getUser().getId().equals(getCurrentUser().getId())) {
+            throw new ForbiddenException("Bạn không có quyền sửa tài liệu này!");
+        }
+
+        applyDocumentUpdate(doc, title, description, subjectIds);
 
         return documentMapper.toResponseDTO(docDocumentRepository.save(doc));
     }
@@ -412,7 +418,8 @@ public class DocumentServiceImpl implements DocumentService {
                     document.getModerationStatus().name(),
                     storageType,
                     document.getCreatedAt(),
-                    document.getIngestStatus() != null ? document.getIngestStatus().name() : null
+                    document.getIngestStatus() != null ? document.getIngestStatus().name() : null,
+                    document.getDeletedAt()
             );
         });
     }
@@ -426,6 +433,30 @@ public class DocumentServiceImpl implements DocumentService {
         DocDocument doc = docDocumentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
         doc.setDeletedAt(LocalDateTime.now());
+        docDocumentRepository.save(doc);
+    }
+
+    @Override
+    @Transactional
+    public DocumentResponseDTO adminUpdateDocument(Long id, String title, String description, java.util.List<Long> subjectIds) {
+        // DEC-009: admin sửa metadata tài liệu nhưng KHÔNG trở thành owner — document.user
+        // không bị đổi. Không kiểm tra ownership ở đây vì quyền admin đã được xác thực
+        // ở tầng route (/api/admin/** -> hasRole("ADMIN")).
+        DocDocument doc = docDocumentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
+        applyDocumentUpdate(doc, title, description, subjectIds);
+        return documentMapper.toResponseDTO(docDocumentRepository.save(doc));
+    }
+
+    @Override
+    @Transactional
+    public void adminRestoreDocument(Long id) {
+        // DEC-009: admin khôi phục tài liệu đã gỡ nhưng KHÔNG trở thành owner — document.user
+        // không bị đổi. Không kiểm tra ownership ở đây vì quyền admin đã được xác thực
+        // ở tầng route (/api/admin/** -> hasRole("ADMIN")).
+        DocDocument doc = docDocumentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
+        doc.setDeletedAt(null);
         docDocumentRepository.save(doc);
     }
 }

@@ -9,6 +9,8 @@ import com.aish.mvc.dto.doc.AdminAppealResponseDTO;
 import com.aish.mvc.dto.doc.AdminDocumentSummaryDTO;
 import com.aish.mvc.dto.doc.AdminStatsDTO;
 import com.aish.mvc.dto.doc.AppealDecisionRequestDTO;
+import com.aish.mvc.dto.doc.DocumentResponseDTO;
+import com.aish.mvc.dto.doc.DocumentUpdateRequestDTO;
 import com.aish.mvc.entity.enums.AppealStatus;
 import com.aish.mvc.entity.enums.DocumentVisibility;
 import com.aish.mvc.service.admin.AdminService;
@@ -82,6 +84,20 @@ public class AdminController {
     public ResponseEntity<Void> deleteDocument(@PathVariable Long id) {
         documentService.adminDeleteDocument(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/documents/{id}")
+    public ResponseEntity<DocumentResponseDTO> updateDocument(
+            @PathVariable Long id,
+            @RequestBody DocumentUpdateRequestDTO request) {
+        return ResponseEntity.ok(
+                documentService.adminUpdateDocument(id, request.getTitle(), request.getDescription(), request.getSubjectIds()));
+    }
+
+    @PutMapping("/documents/{id}/restore")
+    public ResponseEntity<Void> restoreDocument(@PathVariable Long id) {
+        documentService.adminRestoreDocument(id);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/stats")
