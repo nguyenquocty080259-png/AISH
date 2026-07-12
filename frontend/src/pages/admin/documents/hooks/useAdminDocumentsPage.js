@@ -23,6 +23,9 @@ export function useAdminDocumentsPage() {
 
   const [restoringId, setRestoringId] = useState(null);
 
+  const [detailTarget, setDetailTarget] = useState(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+
   const load = async (targetPage) => {
     setLoading(true);
     setError(null);
@@ -112,6 +115,24 @@ export function useAdminDocumentsPage() {
     }
   };
 
+  // Chi tiết read-only — AdminDocumentSummaryDTO (dòng bảng) thiếu nhiều field (description,
+  // subjectNames, moderationReason, fileName, favoriteCount...) nên gọi GET /documents/{id}
+  // (đã có sẵn, không kiểm tra ownership) để lấy DocumentResponseDTO đầy đủ.
+  const openDetailModal = async (doc) => {
+    setDetailTarget(doc);
+    setLoadingDetail(true);
+    try {
+      const full = await documentApi.getOne(doc.id);
+      setDetailTarget(full);
+    } catch (err) {
+      showError(err.message);
+      setDetailTarget(null);
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
+  const closeDetailModal = () => setDetailTarget(null);
+
   return {
     documents,
     loading,
@@ -133,5 +154,9 @@ export function useAdminDocumentsPage() {
     submitEdit,
     restoringId,
     restoreDocument,
+    detailTarget,
+    loadingDetail,
+    openDetailModal,
+    closeDetailModal,
   };
 }

@@ -7,6 +7,7 @@ import Table from "../../../components/ui/Table";
 import { useAdminDocumentsPage } from "./hooks/useAdminDocumentsPage";
 import IngestStatusBadge from "./components/IngestStatusBadge";
 import EditDocumentModal from "./components/EditDocumentModal";
+import DocumentDetailModal from "./components/DocumentDetailModal";
 import AdminPagination from "../components/AdminPagination";
 import "./admin-documents.css";
 
@@ -53,6 +54,10 @@ export default function AdminDocumentsPage() {
     submitEdit,
     restoringId,
     restoreDocument,
+    detailTarget,
+    loadingDetail,
+    openDetailModal,
+    closeDetailModal,
   } = useAdminDocumentsPage();
 
   return (
@@ -109,6 +114,9 @@ export default function AdminDocumentsPage() {
                     <Table.Cell>{formatDate(doc.createdAt)}</Table.Cell>
                     <Table.Cell>
                       <div className="ui-table__actions">
+                        <Button variant="secondary" onClick={() => openDetailModal(doc)}>
+                          Chi tiết
+                        </Button>
                         <Button variant="secondary" onClick={() => openEditModal(doc)}>
                           Sửa
                         </Button>
@@ -166,6 +174,13 @@ export default function AdminDocumentsPage() {
         loading={loadingEditTarget}
         onClose={closeEditModal}
         onSubmit={submitEdit}
+      />
+
+      <DocumentDetailModal
+        open={!!detailTarget}
+        doc={detailTarget}
+        loading={loadingDetail}
+        onClose={closeDetailModal}
       />
     </div>
   );
