@@ -1,5 +1,6 @@
 package com.aish.mvc.service.admin;
 
+import com.aish.mvc.dto.auth.admin.AdminCreateUserRequestDTO;
 import com.aish.mvc.dto.auth.admin.AdminUserResponseDTO;
 import com.aish.mvc.dto.doc.AdminAppealResponseDTO;
 import com.aish.mvc.dto.doc.AdminStatsDTO;
@@ -22,4 +23,6 @@ public interface AdminService {
     AdminStatsDTO getStats();
 
     List<AdminUserResponseDTO> getAllUsers();
+
+    AdminUserResponseDTO createUser(AdminCreateUserRequestDTO request);
 }

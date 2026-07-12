@@ -1,19 +1,24 @@
 package com.aish.mvc.service.admin.impl;
 
+import com.aish.mvc.dto.auth.admin.AdminCreateUserRequestDTO;
 import com.aish.mvc.dto.auth.admin.AdminUserResponseDTO;
 import com.aish.mvc.dto.doc.AdminAppealResponseDTO;
 import com.aish.mvc.dto.doc.AdminStatsDTO;
 import com.aish.mvc.dto.doc.DocumentSummaryDTO;
 import com.aish.mvc.entity.auth.AuthAccount;
+import com.aish.mvc.entity.auth.AuthRole;
 import com.aish.mvc.entity.auth.AuthUser;
 import com.aish.mvc.entity.doc.DocDocument;
 import com.aish.mvc.entity.doc.ModerationAppeal;
 import com.aish.mvc.entity.enums.AppealStatus;
+import com.aish.mvc.entity.enums.AuthProviders;
 import com.aish.mvc.entity.enums.DocumentVisibility;
 import com.aish.mvc.entity.enums.IngestStatus;
 import com.aish.mvc.entity.enums.ModerationStatus;
+import com.aish.mvc.entity.enums.UserStatus;
 import com.aish.mvc.exception.ResourceNotFoundException;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
+import com.aish.mvc.repository.auth.AuthRoleRepository;
 import com.aish.mvc.repository.auth.AuthUserRepository;
 import com.aish.mvc.repository.doc.DocDocumentRepository;
 import com.aish.mvc.repository.doc.ModerationAppealRepository;
@@ -21,9 +26,13 @@ import com.aish.mvc.repository.doc.SubjectRepository;
 import com.aish.mvc.service.admin.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,6 +44,8 @@ public class AdminServiceImpl implements AdminService {
     private final AuthUserRepository authUserRepository;
     private final SubjectRepository subjectRepository;
     private final AuthAccountRepository authAccountRepository;
+    private final AuthRoleRepository authRoleRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional(readOnly = true)
@@ -116,6 +127,49 @@ public class AdminServiceImpl implements AdminService {
 
                 })
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public AdminUserResponseDTO createUser(AdminCreateUserRequestDTO request) {
+        String email = request.getEmail().trim().toLowerCase(Locale.ROOT);
+        if (authAccountRepository.existsByIdentifier(email)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email đã tồn tại.");
+        }
+
+        String roleName = request.getRole() == null || request.getRole().isBlank()
+                ? "USER"
+                : request.getRole().trim().toUpperCase(Locale.ROOT);
+        AuthRole role = authRoleRepository.findByRoleName(roleName)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Vai trò " + roleName + " không tồn tại."));
+
+        AuthUser user = new AuthUser();
+        user.setFullName(request.getFullName().trim());
+        user.setRole(role);
+        user.setStatus(UserStatus.ACTIVE);
+        authUserRepository.save(user);
+
+        AuthAccount account = new AuthAccount();
+        account.setUser(user);
+        account.setProvider(AuthProviders.LOCAL);
+        account.setIdentifier(email);
+        account.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        account.setIsVerified(true);
+        account.setIsPrimary(true);
+        authAccountRepository.save(account);
+
+        return AdminUserResponseDTO.builder()
+                .id(user.getId())
+                .fullName(user.getFullName())
+                .email(account.getIdentifier())
+                .avatarUrl(user.getAvatarUrl())
+                .role(role.getRoleName())
+                .status(user.getStatus().name())
+                .online(false)
+                .lastLoginAt(account.getLastLoginAt())
+                .deletedAt(user.getDeletedAt())
+                .build();
     }
 
     private ModerationAppeal requirePendingAppeal(Long appealId) {

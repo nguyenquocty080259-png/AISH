@@ -1,5 +1,6 @@
 package com.aish.mvc.controller.admin;
 
+import com.aish.mvc.dto.auth.admin.AdminCreateUserRequestDTO;
 import com.aish.mvc.dto.auth.admin.AdminUserResponseDTO;
 import com.aish.mvc.dto.doc.AdminAppealResponseDTO;
 import com.aish.mvc.dto.doc.AdminDocumentSummaryDTO;
@@ -10,11 +11,13 @@ import com.aish.mvc.entity.enums.DocumentVisibility;
 import com.aish.mvc.service.admin.AdminService;
 import com.aish.mvc.service.doc.DocumentService;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -87,5 +90,12 @@ public class AdminController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<AdminUserResponseDTO>> getAllUsers() {
         return ResponseEntity.ok(adminService.getAllUsers());
+    }
+
+    @PostMapping("/users")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AdminUserResponseDTO> createUser(
+            @Valid @RequestBody AdminCreateUserRequestDTO request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(adminService.createUser(request));
     }
 }
