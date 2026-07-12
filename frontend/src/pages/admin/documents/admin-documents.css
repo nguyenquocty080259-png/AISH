@@ -14,3 +14,30 @@
     justify-content: flex-end;
     gap: var(--spacing-sm);
 }
+
+.admin-documents-page__subject-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
+    padding: var(--spacing-sm);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.admin-documents-page__subject-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: var(--body-sm);
+    font-weight: 400;
+    color: var(--color-text);
+    cursor: pointer;
+}
+
+.admin-documents-page__subject-error {
+    color: var(--color-error, #e11);
+    font-size: var(--body-sm);
+    margin: var(--spacing-xs) 0 0;
+}

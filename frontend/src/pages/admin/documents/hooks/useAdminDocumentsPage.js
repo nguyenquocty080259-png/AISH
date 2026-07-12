@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import * as adminApi from "../../../../api/adminApi";
+import * as documentApi from "../../../../api/documentApi";
+import * as subjectApi from "../../../../api/subjectApi";
 import { useToast } from "../../../../hooks/useToast";
 
 export function useAdminDocumentsPage() {
@@ -13,6 +15,13 @@ export function useAdminDocumentsPage() {
 
   const [removeTarget, setRemoveTarget] = useState(null);
   const [removing, setRemoving] = useState(false);
+
+  const [editTarget, setEditTarget] = useState(null);
+  const [editing, setEditing] = useState(false);
+  const [loadingEditTarget, setLoadingEditTarget] = useState(false);
+  const [subjects, setSubjects] = useState([]);
+
+  const [restoringId, setRestoringId] = useState(null);
 
   const load = async (targetPage) => {
     setLoading(true);
@@ -54,6 +63,55 @@ export function useAdminDocumentsPage() {
     }
   };
 
+  // AdminDocumentSummaryDTO (dòng bảng) không có subjectIds -> gọi GET /documents/{id}
+  // (không kiểm tra ownership) để lấy đủ metadata cho form sửa.
+  const openEditModal = async (doc) => {
+    setEditTarget(doc);
+    setLoadingEditTarget(true);
+    try {
+      const [full] = await Promise.all([
+        documentApi.getOne(doc.id),
+        subjects.length === 0 ? subjectApi.getAll().then(setSubjects) : Promise.resolve(),
+      ]);
+      setEditTarget(full);
+    } catch (err) {
+      showError(err.message);
+      setEditTarget(null);
+    } finally {
+      setLoadingEditTarget(false);
+    }
+  };
+  const closeEditModal = () => setEditTarget(null);
+
+  const submitEdit = async (data) => {
+    if (!editTarget) return;
+    setEditing(true);
+    try {
+      await adminApi.updateDocument(editTarget.id, data);
+      showSuccess("Đã cập nhật tài liệu.");
+      setEditTarget(null);
+      await load(page);
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setEditing(false);
+    }
+  };
+
+  // Khôi phục là hành động an toàn/đảo ngược được (ngược lại của gỡ vi phạm) — không cần modal xác nhận.
+  const restoreDocument = async (doc) => {
+    setRestoringId(doc.id);
+    try {
+      await adminApi.restoreDocument(doc.id);
+      showSuccess("Đã khôi phục tài liệu.");
+      await load(page);
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setRestoringId(null);
+    }
+  };
+
   return {
     documents,
     loading,
@@ -66,5 +124,14 @@ export function useAdminDocumentsPage() {
     openRemoveModal,
     closeRemoveModal,
     confirmRemove,
+    editTarget,
+    editing,
+    loadingEditTarget,
+    subjects,
+    openEditModal,
+    closeEditModal,
+    submitEdit,
+    restoringId,
+    restoreDocument,
   };
 }
