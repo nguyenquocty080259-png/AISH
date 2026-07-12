@@ -1,6 +1,7 @@
 package com.aish.mvc.controller.admin;
 
 import com.aish.mvc.dto.auth.admin.AdminCreateUserRequestDTO;
+import com.aish.mvc.dto.auth.admin.AdminUpdateUserRequestDTO;
 import com.aish.mvc.dto.auth.admin.AdminUserResponseDTO;
 import com.aish.mvc.dto.doc.AdminAppealResponseDTO;
 import com.aish.mvc.dto.doc.AdminDocumentSummaryDTO;
@@ -97,5 +98,13 @@ public class AdminController {
     public ResponseEntity<AdminUserResponseDTO> createUser(
             @Valid @RequestBody AdminCreateUserRequestDTO request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(adminService.createUser(request));
+    }
+
+    @PutMapping("/users/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AdminUserResponseDTO> updateUser(
+            @PathVariable Long id,
+            @Valid @RequestBody AdminUpdateUserRequestDTO request) {
+        return ResponseEntity.ok(adminService.updateUser(id, request));
     }
 }

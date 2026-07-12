@@ -1,6 +1,7 @@
 package com.aish.mvc.service.admin.impl;
 
 import com.aish.mvc.dto.auth.admin.AdminCreateUserRequestDTO;
+import com.aish.mvc.dto.auth.admin.AdminUpdateUserRequestDTO;
 import com.aish.mvc.dto.auth.admin.AdminUserResponseDTO;
 import com.aish.mvc.dto.doc.AdminAppealResponseDTO;
 import com.aish.mvc.dto.doc.AdminStatsDTO;
@@ -158,6 +159,42 @@ public class AdminServiceImpl implements AdminService {
         account.setIsVerified(true);
         account.setIsPrimary(true);
         authAccountRepository.save(account);
+
+        return AdminUserResponseDTO.builder()
+                .id(user.getId())
+                .fullName(user.getFullName())
+                .email(account.getIdentifier())
+                .avatarUrl(user.getAvatarUrl())
+                .role(role.getRoleName())
+                .status(user.getStatus().name())
+                .online(false)
+                .lastLoginAt(account.getLastLoginAt())
+                .deletedAt(user.getDeletedAt())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public AdminUserResponseDTO updateUser(Long userId, AdminUpdateUserRequestDTO request) {
+        AuthUser user = authUserRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại."));
+
+        String roleName = request.getRole().trim().toUpperCase(Locale.ROOT);
+        AuthRole role = authRoleRepository.findByRoleName(roleName)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Vai trò " + roleName + " không tồn tại."));
+
+        user.setFullName(request.getFullName().trim());
+        user.setAvatarUrl(request.getAvatarUrl());
+        user.setRole(role);
+        authUserRepository.save(user);
+
+        AuthAccount account = authAccountRepository.findAll().stream()
+                .filter(candidate -> candidate.getUser().getId().equals(userId))
+                .filter(candidate -> Boolean.TRUE.equals(candidate.getIsPrimary()))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Không tìm thấy tài khoản chính của người dùng."));
 
         return AdminUserResponseDTO.builder()
                 .id(user.getId())
