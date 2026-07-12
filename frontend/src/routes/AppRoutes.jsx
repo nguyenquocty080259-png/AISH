@@ -28,6 +28,7 @@ import AdminStatsPage from "../pages/admin/stats/AdminStatsPage";
 import AdminAppealsPage from "../pages/admin/appeals/AdminAppealsPage";
 import AdminDocumentsPage from "../pages/admin/documents/AdminDocumentsPage";
 import AdminSubjectsPage from "../pages/admin/subjects/AdminSubjectsPage";
+import AdminUsersPage from "../pages/admin/users/AdminUsersPage";
 import NotFoundPage from "../pages/error/NotFoundPage";
 import UiPreviewPage from "../pages/ui-preview/UiPreviewPage";
 
@@ -60,14 +61,16 @@ export default function AppRoutes() {
           <Route path="/_ui-preview" element={<UiPreviewPage />} />
         </Route>
 
-        <Route element={<AdminRoute />}>
-          <Route path={ROUTES.ADMIN} element={<AdminLayout />}>
-            <Route index element={<Navigate to={ROUTES.ADMIN_STATS} replace />} />
-            <Route path="stats" element={<AdminStatsPage />} />
-            <Route path="appeals" element={<AdminAppealsPage />} />
-            <Route path="documents" element={<AdminDocumentsPage />} />
-            <Route path="subjects" element={<AdminSubjectsPage />} />
-          </Route>
+      </Route>
+
+      <Route element={<AdminRoute />}>
+        <Route path={ROUTES.ADMIN} element={<AdminLayout />}>
+          <Route index element={<Navigate to={ROUTES.ADMIN_STATS} replace />} />
+          <Route path="stats" element={<AdminStatsPage />} />
+          <Route path="appeals" element={<AdminAppealsPage />} />
+          <Route path="documents" element={<AdminDocumentsPage />} />
+          <Route path="subjects" element={<AdminSubjectsPage />} />
+          <Route path="users" element={<AdminUsersPage />} />
         </Route>
       </Route>
 

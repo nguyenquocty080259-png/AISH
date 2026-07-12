@@ -44,7 +44,30 @@ export function removeDocument(id) {
   return apiClient.delete(`/admin/documents/${id}`);
 }
 
+// payload: { title?, description?, subjectIds? } — same shape as the owner-scoped endpoint.
+export function updateDocument(id, payload) {
+  return apiClient.put(`/admin/documents/${id}`, payload).then((res) => res.data);
+}
+
+export function restoreDocument(id) {
+  return apiClient.put(`/admin/documents/${id}/restore`);
+}
+
 export function getAllUsers() {
   return apiClient.get("/admin/users").then((res) => res.data);
+}
+
+export function createUser(payload) {
+  return apiClient.post("/admin/users", payload).then((res) => res.data);
+}
+
+export function updateUser(id, payload) {
+  return apiClient.put(`/admin/users/${id}`, payload).then((res) => res.data);
+}
+
+export function updateUserStatus(id, status) {
+  return apiClient
+    .patch(`/admin/users/${id}/status`, { status })
+    .then((res) => res.data);
 }
 

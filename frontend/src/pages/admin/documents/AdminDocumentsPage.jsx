@@ -6,11 +6,19 @@ import EmptyState from "../../../components/ui/EmptyState";
 import Table from "../../../components/ui/Table";
 import { useAdminDocumentsPage } from "./hooks/useAdminDocumentsPage";
 import IngestStatusBadge from "./components/IngestStatusBadge";
+import EditDocumentModal from "./components/EditDocumentModal";
+import DocumentDetailModal from "./components/DocumentDetailModal";
+import AdminPagination from "../components/AdminPagination";
 import "./admin-documents.css";
 
 const VISIBILITY_BADGE = {
   PUBLIC: { intent: "info", label: "Công khai" },
   PRIVATE: { intent: "neutral", label: "Riêng tư" },
+};
+
+const STATUS_BADGE = {
+  ACTIVE: { intent: "success", label: "Đang hoạt động" },
+  REMOVED: { intent: "error", label: "Đã gỡ" },
 };
 
 const MODERATION_BADGE = {
@@ -37,6 +45,19 @@ export default function AdminDocumentsPage() {
     openRemoveModal,
     closeRemoveModal,
     confirmRemove,
+    editTarget,
+    editing,
+    loadingEditTarget,
+    subjects,
+    openEditModal,
+    closeEditModal,
+    submitEdit,
+    restoringId,
+    restoreDocument,
+    detailTarget,
+    loadingDetail,
+    openDetailModal,
+    closeDetailModal,
   } = useAdminDocumentsPage();
 
   return (
@@ -61,6 +82,7 @@ export default function AdminDocumentsPage() {
                 <Table.HeaderCell>Kiểm duyệt</Table.HeaderCell>
                 <Table.HeaderCell>Lưu trữ</Table.HeaderCell>
                 <Table.HeaderCell>AI</Table.HeaderCell>
+                <Table.HeaderCell>Trạng thái</Table.HeaderCell>
                 <Table.HeaderCell>Ngày tạo</Table.HeaderCell>
                 <Table.HeaderCell />
               </Table.Row>
@@ -70,6 +92,8 @@ export default function AdminDocumentsPage() {
                 const visibilityBadge = VISIBILITY_BADGE[doc.visibility] ?? VISIBILITY_BADGE.PRIVATE;
                 const moderationBadge =
                   MODERATION_BADGE[doc.moderationStatus] ?? MODERATION_BADGE.NOT_REQUIRED;
+                const isRemoved = !!doc.deletedAt;
+                const statusBadge = isRemoved ? STATUS_BADGE.REMOVED : STATUS_BADGE.ACTIVE;
                 return (
                   <Table.Row key={doc.id}>
                     <Table.Cell className="ui-table__truncate">{doc.title}</Table.Cell>
@@ -84,11 +108,32 @@ export default function AdminDocumentsPage() {
                       {doc.storageType && <Badge intent="info">{doc.storageType}</Badge>}
                     </Table.Cell>
                     <Table.Cell><IngestStatusBadge status={doc.ingestStatus} /></Table.Cell>
+                    <Table.Cell>
+                      <Badge intent={statusBadge.intent}>{statusBadge.label}</Badge>
+                    </Table.Cell>
                     <Table.Cell>{formatDate(doc.createdAt)}</Table.Cell>
                     <Table.Cell>
-                      <Button variant="danger" onClick={() => openRemoveModal(doc)}>
-                        Gỡ vi phạm
-                      </Button>
+                      <div className="ui-table__actions">
+                        <Button variant="secondary" onClick={() => openDetailModal(doc)}>
+                          Chi tiết
+                        </Button>
+                        <Button variant="secondary" onClick={() => openEditModal(doc)}>
+                          Sửa
+                        </Button>
+                        {isRemoved ? (
+                          <Button
+                            variant="primary"
+                            onClick={() => restoreDocument(doc)}
+                            disabled={restoringId === doc.id}
+                          >
+                            {restoringId === doc.id ? "Đang khôi phục..." : "Khôi phục"}
+                          </Button>
+                        ) : (
+                          <Button variant="danger" onClick={() => openRemoveModal(doc)}>
+                            Gỡ vi phạm
+                          </Button>
+                        )}
+                      </div>
                     </Table.Cell>
                   </Table.Row>
                 );
@@ -96,23 +141,12 @@ export default function AdminDocumentsPage() {
             </Table.Body>
           </Table>
 
-          {totalPages > 1 && (
-            <div className="admin-documents-page__pagination">
-              <Button variant="secondary" disabled={page <= 0} onClick={() => setPage((p) => p - 1)}>
-                ‹ Trước
-              </Button>
-              <span>
-                Trang {page + 1} / {totalPages}
-              </span>
-              <Button
-                variant="secondary"
-                disabled={page >= totalPages - 1}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Sau ›
-              </Button>
-            </div>
-          )}
+          <AdminPagination
+            page={page}
+            totalPages={totalPages}
+            onPrev={() => setPage((currentPage) => currentPage - 1)}
+            onNext={() => setPage((currentPage) => currentPage + 1)}
+          />
         </>
       )}
 
@@ -131,6 +165,23 @@ export default function AdminDocumentsPage() {
           </Button>
         </div>
       </Modal>
+
+      <EditDocumentModal
+        open={!!editTarget}
+        doc={editTarget}
+        subjects={subjects}
+        submitting={editing}
+        loading={loadingEditTarget}
+        onClose={closeEditModal}
+        onSubmit={submitEdit}
+      />
+
+      <DocumentDetailModal
+        open={!!detailTarget}
+        doc={detailTarget}
+        loading={loadingDetail}
+        onClose={closeDetailModal}
+      />
     </div>
   );
 }

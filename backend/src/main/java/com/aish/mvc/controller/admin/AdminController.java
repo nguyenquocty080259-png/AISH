@@ -1,20 +1,28 @@
 package com.aish.mvc.controller.admin;
 
+import com.aish.mvc.dto.auth.admin.AdminCreateUserRequestDTO;
+import com.aish.mvc.dto.auth.admin.AdminResetPasswordRequestDTO;
+import com.aish.mvc.dto.auth.admin.AdminUpdateUserRequestDTO;
+import com.aish.mvc.dto.auth.admin.AdminUpdateUserStatusRequestDTO;
 import com.aish.mvc.dto.auth.admin.AdminUserResponseDTO;
 import com.aish.mvc.dto.doc.AdminAppealResponseDTO;
 import com.aish.mvc.dto.doc.AdminDocumentSummaryDTO;
 import com.aish.mvc.dto.doc.AdminStatsDTO;
 import com.aish.mvc.dto.doc.AppealDecisionRequestDTO;
+import com.aish.mvc.dto.doc.DocumentResponseDTO;
+import com.aish.mvc.dto.doc.DocumentUpdateRequestDTO;
 import com.aish.mvc.entity.enums.AppealStatus;
 import com.aish.mvc.entity.enums.DocumentVisibility;
 import com.aish.mvc.service.admin.AdminService;
 import com.aish.mvc.service.doc.DocumentService;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -78,6 +86,20 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
 
+    @PutMapping("/documents/{id}")
+    public ResponseEntity<DocumentResponseDTO> updateDocument(
+            @PathVariable Long id,
+            @RequestBody DocumentUpdateRequestDTO request) {
+        return ResponseEntity.ok(
+                documentService.adminUpdateDocument(id, request.getTitle(), request.getDescription(), request.getSubjectIds()));
+    }
+
+    @PutMapping("/documents/{id}/restore")
+    public ResponseEntity<Void> restoreDocument(@PathVariable Long id) {
+        documentService.adminRestoreDocument(id);
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/stats")
     public ResponseEntity<AdminStatsDTO> getStats() {
         return ResponseEntity.ok(adminService.getStats());
@@ -87,5 +109,37 @@ public class AdminController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<AdminUserResponseDTO>> getAllUsers() {
         return ResponseEntity.ok(adminService.getAllUsers());
+    }
+
+    @PostMapping("/users")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AdminUserResponseDTO> createUser(
+            @Valid @RequestBody AdminCreateUserRequestDTO request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(adminService.createUser(request));
+    }
+
+    @PutMapping("/users/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AdminUserResponseDTO> updateUser(
+            @PathVariable Long id,
+            @Valid @RequestBody AdminUpdateUserRequestDTO request) {
+        return ResponseEntity.ok(adminService.updateUser(id, request));
+    }
+
+    @PatchMapping("/users/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AdminUserResponseDTO> updateUserStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody AdminUpdateUserStatusRequestDTO request) {
+        return ResponseEntity.ok(adminService.updateUserStatus(id, request));
+    }
+
+    @PatchMapping("/users/{id}/password")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> resetUserPassword(
+            @PathVariable Long id,
+            @Valid @RequestBody AdminResetPasswordRequestDTO request) {
+        adminService.resetUserPassword(id, request);
+        return ResponseEntity.noContent().build();
     }
 }

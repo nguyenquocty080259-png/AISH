@@ -27,4 +27,6 @@ public class AdminUserResponseDTO {
     private Instant lastLoginAt;
 
     private Instant deletedAt;
+
+    private String seedPassword;
 }

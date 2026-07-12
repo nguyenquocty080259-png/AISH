@@ -64,4 +64,12 @@ public interface DocumentService {
 
     // Admin takedown (soft-delete) — không kiểm tra ownership, chỉ cần role ADMIN (gate ở route).
     void adminDeleteDocument(Long id);
+
+    // Admin sửa metadata (title/description/subjectIds) — logic giống updateDocument() nhưng
+    // không kiểm tra ownership, chỉ cần role ADMIN (gate ở route).
+    DocumentResponseDTO adminUpdateDocument(Long id, String title, String description, java.util.List<Long> subjectIds);
+
+    // Admin khôi phục tài liệu đã gỡ — logic giống restoreDocument() nhưng không kiểm tra
+    // ownership, chỉ cần role ADMIN (gate ở route).
+    void adminRestoreDocument(Long id);
 }

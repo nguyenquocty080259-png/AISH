@@ -5,6 +5,7 @@ import Badge from "../../../components/ui/Badge";
 import { ROUTES } from "../../../constants/routes";
 import { useAdminStatsPage } from "./hooks/useAdminStatsPage";
 import IngestStatusBadge from "../documents/components/IngestStatusBadge";
+import AdminPagination from "../components/AdminPagination";
 import "./admin-stats.css";
 
 const STAT_TILES = [
@@ -251,26 +252,15 @@ export default function AdminStatsPage() {
             </tbody>
           </table>
 
-          <div className="admin-stats-doc-pagination">
+          <div className="admin-stats-doc-summary">
             <span>Tổng: {documentTotalElements} tài liệu</span>
-            <div className="admin-stats-doc-pagination__controls">
-              <button
-                type="button"
-                disabled={documentPage <= 0}
-                onClick={() => setDocumentPage((page) => page - 1)}
-              >
-                ← Trước
-              </button>
-              <span>Trang {documentPage + 1} / {documentTotalPages}</span>
-              <button
-                type="button"
-                disabled={documentPage >= documentTotalPages - 1}
-                onClick={() => setDocumentPage((page) => page + 1)}
-              >
-                Sau →
-              </button>
-            </div>
           </div>
+          <AdminPagination
+            page={documentPage}
+            totalPages={documentTotalPages}
+            onPrev={() => setDocumentPage((currentPage) => currentPage - 1)}
+            onNext={() => setDocumentPage((currentPage) => currentPage + 1)}
+          />
         </Card>
       )}
     </div>

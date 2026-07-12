@@ -1,37 +1,73 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { ROUTES } from "../../constants/routes";
+import { useAuth } from "../../hooks/useAuth";
+import { useToast } from "../../hooks/useToast";
 import "./admin-layout.css";
 
-// Nested-routes shell for the Admin panel. Sub-nav tabs are plain NavLinks so each sub-page
-// keeps its own bookmarkable URL (/admin/stats, /admin/appeals, ...), matching how the rest
-// of the app already nests routes under AppLayout's <Outlet/>.
-// NOTE: Comment moderation was NOT added — no admin comment-moderation endpoint exists on
-// the backend (only POST /api/documents/{id}/comment to create). See Step 3 report.
 const ADMIN_NAV_ITEMS = [
-  { to: ROUTES.ADMIN_STATS, label: "Bảng điều khiển" },
-  { to: ROUTES.ADMIN_APPEALS, label: "Kháng nghị" },
-  { to: ROUTES.ADMIN_DOCUMENTS, label: "Tài liệu" },
-  { to: ROUTES.ADMIN_SUBJECTS, label: "Môn học" },
+  { to: ROUTES.ADMIN_STATS, label: "Bảng điều khiển", icon: "▦" },
+  { to: ROUTES.ADMIN_APPEALS, label: "Kháng nghị", icon: "⚑" },
+  { to: ROUTES.ADMIN_DOCUMENTS, label: "Tài liệu", icon: "▤" },
+  { to: ROUTES.ADMIN_SUBJECTS, label: "Môn học", icon: "◫" },
+  { to: ROUTES.ADMIN_USERS, label: "Người dùng", icon: "♙" },
 ];
 
-function tabClassName({ isActive }) {
-  return `admin-tabs__link${isActive ? " admin-tabs__link--active" : ""}`;
+function adminNavClassName({ isActive }) {
+  return `admin-sidebar__link${isActive ? " admin-sidebar__link--active" : ""}`;
 }
 
 export default function AdminLayout() {
+  const { user, logout } = useAuth();
+  const { showSuccess } = useToast();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    showSuccess("Đã đăng xuất.");
+    navigate(ROUTES.HOME);
+  };
+
   return (
     <div className="admin-layout">
-      <nav className="admin-tabs">
-        {ADMIN_NAV_ITEMS.map((item) => (
-          <NavLink key={item.to} to={item.to} className={tabClassName}>
-            {item.label}
-          </NavLink>
-        ))}
-      </nav>
+      <aside className="admin-sidebar">
+        <Link to={ROUTES.ADMIN} className="admin-sidebar__brand">
+          <span className="admin-sidebar__brand-icon">🛡️</span>
+          <span>HiveMind Admin</span>
+        </Link>
 
-      <div className="admin-layout__content">
+        <nav className="admin-sidebar__nav" aria-label="Điều hướng quản trị">
+          {ADMIN_NAV_ITEMS.map((item) => (
+            <NavLink key={item.to} to={item.to} className={adminNavClassName}>
+              <span className="admin-sidebar__link-icon" aria-hidden="true">
+                {item.icon}
+              </span>
+              <span>{item.label}</span>
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="admin-sidebar__footer">
+          <span className="admin-sidebar__user">{user?.fullName}</span>
+          <button
+            type="button"
+            className="admin-sidebar__user-view"
+            onClick={() => navigate(ROUTES.DASHBOARD)}
+          >
+            Xem như User
+          </button>
+          <button
+            type="button"
+            className="admin-sidebar__logout"
+            onClick={handleLogout}
+          >
+            Đăng xuất
+          </button>
+        </div>
+      </aside>
+
+      <main className="admin-layout__content">
         <Outlet />
-      </div>
+      </main>
     </div>
   );
 }

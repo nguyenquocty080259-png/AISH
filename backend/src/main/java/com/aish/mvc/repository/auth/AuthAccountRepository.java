@@ -1,6 +1,7 @@
 package com.aish.mvc.repository.auth;
 
 import com.aish.mvc.entity.auth.AuthAccount;
+import com.aish.mvc.entity.auth.AuthUser;
 import com.aish.mvc.entity.enums.AuthProviders;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -27,6 +28,8 @@ public interface AuthAccountRepository extends JpaRepository<AuthAccount, Long> 
     boolean existsByIdentifier(String identifier);
 
     Optional<AuthAccount> findByProviderAndIdentifier(AuthProviders provider, String identifier);
+
+    Optional<AuthAccount> findByUserAndProvider(AuthUser user, AuthProviders provider);
 
     boolean existsByProviderAndIdentifier(AuthProviders provider, String identifier);
 

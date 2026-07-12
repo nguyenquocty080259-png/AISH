@@ -1,0 +1,153 @@
+.admin-users-page__loading,
+.admin-users-count {
+    color: var(--color-text-secondary);
+    font-size: var(--body-sm);
+}
+
+.admin-users-toolbar {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.admin-users-search,
+.admin-users-form label {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    color: var(--color-text-secondary);
+    font-size: var(--body-sm);
+    font-weight: 600;
+}
+
+.admin-users-search {
+    width: min(420px, 100%);
+}
+
+.admin-users-search input,
+.admin-users-form input,
+.admin-users-form select {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+    font-weight: 400;
+}
+
+.admin-users-search input:focus,
+.admin-users-form input:focus,
+.admin-users-form select:focus {
+    outline: 2px solid var(--color-accent);
+    border-color: var(--color-primary);
+}
+
+.admin-users-table-wrap {
+    overflow-x: auto;
+}
+
+.admin-users-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    min-width: 310px;
+}
+
+.admin-users-actions .ui-btn {
+    padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+.admin-users-seed-password {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    white-space: nowrap;
+}
+
+.admin-users-seed-password code {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-input);
+    background: var(--color-surface-soft);
+    color: var(--color-primary-dark);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.admin-users-copy {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border: 1px solid var(--color-primary);
+    border-radius: var(--radius-pill);
+    background: var(--color-surface);
+    color: var(--color-primary-dark);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.admin-users-copy:hover {
+    background: var(--color-primary);
+    color: var(--color-surface);
+}
+
+.admin-users-badge,
+.admin-users-status {
+    display: inline-flex;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-pill);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.admin-users-badge--admin {
+    background: #DBEAFE;
+    color: #1D4ED8;
+}
+
+.admin-users-badge--user {
+    background: #F1F5F9;
+    color: #475569;
+}
+
+.admin-users-status--active {
+    background: #DCFCE7;
+    color: #15803D;
+}
+
+.admin-users-status--banned {
+    background: #FEE2E2;
+    color: #B91C1C;
+}
+
+.admin-users-status--pending,
+.admin-users-status--inactive {
+    background: #FEF3C7;
+    color: #B45309;
+}
+
+.admin-users-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.admin-users-form__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+}
+
+.admin-users-form__hint {
+    color: var(--color-text-secondary);
+    font-size: var(--body-sm);
+}
+
+@media (max-width: 640px) {
+    .admin-users-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+}

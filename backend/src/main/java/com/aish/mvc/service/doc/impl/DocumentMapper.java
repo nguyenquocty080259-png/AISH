@@ -114,6 +114,8 @@ public class DocumentMapper {
                 doc.getVisibility() != null ? doc.getVisibility().name() : null,
                 doc.getModerationStatus() != null ? doc.getModerationStatus().name() : ModerationStatus.NOT_REQUIRED.name(),
                 storageType,
-                doc.getCreatedAt());
+                doc.getCreatedAt(),
+                null,
+                doc.getDeletedAt());
     }
 }
