@@ -49,6 +49,27 @@ public class AiConversationService {
                 .toList();
     }
 
+    @Transactional
+    public void deleteConversation(Long conversationId) {
+        AuthUser user = requireCurrentUser();
+        AiConversation conversation = requireOwnedConversation(conversationId, user);
+        aiMessageRepository.deleteByConversation_Id(conversationId);
+        aiConversationRepository.delete(conversation);
+    }
+
+    @Transactional
+    public AiConversationSummaryDTO renameConversation(Long conversationId, String newTitle) {
+        if (newTitle == null || newTitle.trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Conversation title must not be blank");
+        }
+
+        AuthUser user = requireCurrentUser();
+        AiConversation conversation = requireOwnedConversation(conversationId, user);
+        conversation.setTitle(newTitle.trim());
+        conversation.setUpdatedAt(LocalDateTime.now());
+        return toSummaryDTO(aiConversationRepository.save(conversation));
+    }
+
     @Transactional(readOnly = true)
     public AiConversation requireOwnedConversation(Long conversationId, AuthUser user) {
         return aiConversationRepository.findByIdAndUser_Id(conversationId, user.getId())
