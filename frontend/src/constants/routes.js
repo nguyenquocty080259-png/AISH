@@ -21,6 +21,7 @@ export const ROUTES = {
   ADMIN_APPEALS: "/admin/appeals",
   ADMIN_DOCUMENTS: "/admin/documents",
   ADMIN_SUBJECTS: "/admin/subjects",
+  ADMIN_USERS: "/admin/users",
   NOT_FOUND: "/404",
 };
 

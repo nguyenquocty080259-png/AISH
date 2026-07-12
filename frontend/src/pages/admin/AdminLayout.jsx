@@ -9,6 +9,7 @@ const ADMIN_NAV_ITEMS = [
   { to: ROUTES.ADMIN_APPEALS, label: "Kháng nghị", icon: "⚑" },
   { to: ROUTES.ADMIN_DOCUMENTS, label: "Tài liệu", icon: "▤" },
   { to: ROUTES.ADMIN_SUBJECTS, label: "Môn học", icon: "◫" },
+  { to: ROUTES.ADMIN_USERS, label: "Người dùng", icon: "♙" },
 ];
 
 function adminNavClassName({ isActive }) {
