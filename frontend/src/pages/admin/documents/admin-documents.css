@@ -3,16 +3,6 @@
     font-size: var(--body-sm);
 }
 
-.admin-documents-page__pagination {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--spacing-md);
-    margin-top: var(--spacing-lg);
-    font-size: var(--body-sm);
-    color: var(--color-text-secondary);
-}
-
 .admin-documents-page__confirm-text {
     font-size: var(--body-sm);
     color: var(--color-text);

@@ -6,6 +6,7 @@ import EmptyState from "../../../components/ui/EmptyState";
 import Table from "../../../components/ui/Table";
 import { useAdminDocumentsPage } from "./hooks/useAdminDocumentsPage";
 import IngestStatusBadge from "./components/IngestStatusBadge";
+import AdminPagination from "../components/AdminPagination";
 import "./admin-documents.css";
 
 const VISIBILITY_BADGE = {
@@ -96,23 +97,12 @@ export default function AdminDocumentsPage() {
             </Table.Body>
           </Table>
 
-          {totalPages > 1 && (
-            <div className="admin-documents-page__pagination">
-              <Button variant="secondary" disabled={page <= 0} onClick={() => setPage((p) => p - 1)}>
-                ‹ Trước
-              </Button>
-              <span>
-                Trang {page + 1} / {totalPages}
-              </span>
-              <Button
-                variant="secondary"
-                disabled={page >= totalPages - 1}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Sau ›
-              </Button>
-            </div>
-          )}
+          <AdminPagination
+            page={page}
+            totalPages={totalPages}
+            onPrev={() => setPage((currentPage) => currentPage - 1)}
+            onNext={() => setPage((currentPage) => currentPage + 1)}
+          />
         </>
       )}
 
