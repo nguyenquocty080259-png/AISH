@@ -27,6 +27,7 @@ import com.aish.mvc.repository.doc.DocDocumentRepository;
 import com.aish.mvc.repository.doc.ModerationAppealRepository;
 import com.aish.mvc.repository.doc.SubjectRepository;
 import com.aish.mvc.service.admin.AdminService;
+import com.aish.mvc.tools.seed.SeedCredentialRegistry;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +56,7 @@ public class AdminServiceImpl implements AdminService {
     private final AuthAccountRepository authAccountRepository;
     private final AuthRoleRepository authRoleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SeedCredentialRegistry seedCredentialRegistry;
 
     @Override
     @Transactional(readOnly = true)
@@ -132,6 +134,9 @@ public class AdminServiceImpl implements AdminService {
                             .status(user.getStatus().name())
                             .lastLoginAt(account.getLastLoginAt())
                             .online(false) // sẽ xử lý sau
+                            .seedPassword(seedCredentialRegistry
+                                    .getPassword(account.getIdentifier())
+                                    .orElse(null))
                             .build();
 
                 })

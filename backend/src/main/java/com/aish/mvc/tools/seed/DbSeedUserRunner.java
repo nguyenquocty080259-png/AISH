@@ -29,6 +29,7 @@ public class DbSeedUserRunner implements CommandLineRunner {
     private final AuthUserRepository userRepository;
     private final AuthAccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SeedCredentialRegistry seedCredentialRegistry;
 
     @Override
     @Transactional
@@ -42,6 +43,8 @@ public class DbSeedUserRunner implements CommandLineRunner {
             String email = VietnameseNameBank.emailFor(index, fullName, SEED_DOMAIN);
             String password = "User" + (index + 1) + "@123";
             boolean created = false;
+
+            seedCredentialRegistry.register(email, password);
 
             if (!accountRepository.existsByIdentifier(email)) {
                 AuthUser user = new AuthUser();
