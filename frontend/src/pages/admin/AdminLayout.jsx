@@ -2,6 +2,7 @@ import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { ROUTES } from "../../constants/routes";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
+import NotificationBell from "../../components/notifications/NotificationBell";
 import "./admin-layout.css";
 
 const ADMIN_NAV_ITEMS = [
@@ -48,7 +49,10 @@ export default function AdminLayout() {
         </nav>
 
         <div className="admin-sidebar__footer">
-          <span className="admin-sidebar__user">{user?.fullName}</span>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+            <span className="admin-sidebar__user">{user?.fullName}</span>
+            <NotificationBell />
+          </div>
           <button
             type="button"
             className="admin-sidebar__user-view"

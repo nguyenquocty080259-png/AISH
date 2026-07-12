@@ -27,6 +27,8 @@ export default function AiChatPage() {
     setSidebarOpen,
     handleSelectConversation,
     handleNewChat,
+    handleDeleteConversation,
+    handleRenameConversation,
     isInputDisabled,
   } = useAiChatPage();
 
@@ -60,6 +62,8 @@ export default function AiChatPage() {
         loading={loadingConversations}
         onNewChat={handleNewChat}
         onSelectConversation={handleSelectConversation}
+        onDeleteConversation={handleDeleteConversation}
+        onRenameConversation={handleRenameConversation}
       />
 
       {sidebarOpen && (

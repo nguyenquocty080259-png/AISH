@@ -32,4 +32,5 @@ public class AdminReportResponseDTO {
     private LocalDateTime createdAt;
     private LocalDateTime decidedAt;
     private Long decidedByAdminId;
+    private String flaggedMessageContent;
 }

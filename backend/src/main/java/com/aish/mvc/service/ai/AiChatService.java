@@ -5,6 +5,7 @@ import com.aish.mvc.dto.ai.AiChatResponse;
 import com.aish.mvc.dto.ai.CitationDTO;
 import com.aish.mvc.dto.ai.RelatedDocDTO;
 import com.aish.mvc.entity.ai.AiConversation;
+import com.aish.mvc.entity.ai.AiMessage;
 import com.aish.mvc.entity.auth.AuthUser;
 import com.aish.mvc.entity.doc.DocDocument;
 import com.aish.mvc.entity.enums.DocumentVisibility;
@@ -16,12 +17,15 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.document.Document;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +39,7 @@ public class AiChatService {
     private static final Logger log = LoggerFactory.getLogger(AiChatService.class);
 
     private static final int TOP_K = 4;
+    private static final int RECENT_MESSAGE_LIMIT = 10;
     private static final double SIMILARITY_THRESHOLD = 0.55;
     private static final int SNIPPET_LENGTH = 240;
     private static final int RELATED_LIMIT = 3;
@@ -83,6 +88,9 @@ public class AiChatService {
         }
 
         DocumentResolution resolution = resolveDocument(request, conversation, currentUserId);
+        List<AiMessage> recentMessages = conversation == null
+                ? List.of()
+                : aiConversationService.getRecentMessages(conversation.getId(), RECENT_MESSAGE_LIMIT);
 
         AiChatResponse response;
         if (resolution.documentId() != null) {
@@ -92,15 +100,15 @@ public class AiChatService {
                     TOP_K,
                     SIMILARITY_THRESHOLD);
             if (!hits.isEmpty()) {
-                response = buildRagResponse(message, hits, currentUserId);
+                response = buildRagResponse(message, hits, currentUserId, recentMessages);
                 persistIfAuthenticated(currentUser, request, response);
                 return response;
             }
         }
 
         response = resolution.documentUnavailable()
-                ? buildUnavailableDocumentGeneralResponse(message, currentUserId)
-                : buildGeneralResponse(message, currentUserId);
+                ? buildUnavailableDocumentGeneralResponse(message, currentUserId, recentMessages)
+                : buildGeneralResponse(message, currentUserId, recentMessages);
         persistIfAuthenticated(currentUser, request, response);
         return response;
     }
@@ -141,15 +149,20 @@ public class AiChatService {
         response.setConversationId(conversation.getId());
     }
 
-    private AiChatResponse buildRagResponse(String userMessage, List<Document> hits, Long currentUserId) {
+    private AiChatResponse buildRagResponse(
+            String userMessage,
+            List<Document> hits,
+            Long currentUserId,
+            List<AiMessage> recentMessages) {
         String context = hits.stream()
                 .map(d -> "[Trang " + pageOf(d) + "] " + d.getText())
                 .collect(Collectors.joining("\n\n---\n\n"));
 
-        Prompt prompt = new Prompt(List.of(
-                new SystemMessage(String.format(RAG_PROMPT_TEMPLATE, context)),
-                new UserMessage(userMessage)
-        ));
+        List<Message> promptMessages = new ArrayList<>();
+        promptMessages.add(new SystemMessage(String.format(RAG_PROMPT_TEMPLATE, context)));
+        promptMessages.addAll(toChatMessages(recentMessages));
+        promptMessages.add(new UserMessage(userMessage));
+        Prompt prompt = new Prompt(promptMessages);
 
         String answer = chatClient.prompt(prompt).call().content();
 
@@ -167,11 +180,25 @@ public class AiChatService {
         return new AiChatResponse(answer, "RAG", citations, relatedDocs);
     }
 
-    private AiChatResponse buildGeneralResponse(String userMessage, Long currentUserId) {
-        Prompt prompt = new Prompt(List.of(
-                new SystemMessage(SYSTEM_PROMPT),
-                new UserMessage(userMessage)
-        ));
+    private List<Message> toChatMessages(List<AiMessage> messages) {
+        return messages.stream()
+                .map(message -> switch (message.getRole()) {
+                    case USER -> new UserMessage(message.getContent());
+                    case ASSISTANT -> new AssistantMessage(message.getContent());
+                })
+                .map(Message.class::cast)
+                .toList();
+    }
+
+    private AiChatResponse buildGeneralResponse(
+            String userMessage,
+            Long currentUserId,
+            List<AiMessage> recentMessages) {
+        List<Message> promptMessages = new ArrayList<>();
+        promptMessages.add(new SystemMessage(SYSTEM_PROMPT));
+        promptMessages.addAll(toChatMessages(recentMessages));
+        promptMessages.add(new UserMessage(userMessage));
+        Prompt prompt = new Prompt(promptMessages);
         String answer = chatClient.prompt(prompt).call().content();
 
         List<RelatedDocDTO> relatedDocs = suggestPublicDocsForTopic(userMessage, currentUserId);
@@ -179,8 +206,11 @@ public class AiChatService {
         return new AiChatResponse(answer, "GENERAL", List.of(), relatedDocs);
     }
 
-    private AiChatResponse buildUnavailableDocumentGeneralResponse(String userMessage, Long currentUserId) {
-        AiChatResponse response = buildGeneralResponse(userMessage, currentUserId);
+    private AiChatResponse buildUnavailableDocumentGeneralResponse(
+            String userMessage,
+            Long currentUserId,
+            List<AiMessage> recentMessages) {
+        AiChatResponse response = buildGeneralResponse(userMessage, currentUserId, recentMessages);
         String answer = "Tài liệu gắn với cuộc trò chuyện này không còn khả dụng, nên mình sẽ trả lời ở chế độ GENERAL.\n\n"
                 + response.getAnswer();
         return new AiChatResponse(answer, "GENERAL", response.getCitations(), response.getRelatedDocs());

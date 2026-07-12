@@ -18,7 +18,7 @@ export function useAiChatPage() {
   const [searchParams] = useSearchParams();
   const documentId = searchParams.get("documentId") || null;
   const { isAuthenticated, loading: authLoading } = useAuth();
-  const { showError } = useToast();
+  const { showError, showSuccess } = useToast();
 
   const [contextDoc, setContextDoc] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -155,6 +155,39 @@ export function useAiChatPage() {
     closeMobileSidebar();
   };
 
+  const handleDeleteConversation = async (id) => {
+    try {
+      await aiChatApi.deleteConversation(id);
+      const deletingActiveConversation = id === activeConversationId;
+      if (deletingActiveConversation) {
+        handleNewChat();
+        await loadConversations();
+      } else {
+        setConversations((current) => current.filter((conversation) => conversation.id !== id));
+        await loadConversations({ keepActiveId: activeConversationId });
+      }
+      showSuccess("Đã xóa cuộc trò chuyện.");
+      return true;
+    } catch (error) {
+      showError(error.message);
+      return false;
+    }
+  };
+
+  const handleRenameConversation = async (id, newTitle) => {
+    try {
+      const updated = await aiChatApi.renameConversation(id, newTitle);
+      setConversations((current) => current.map((conversation) =>
+        conversation.id === id ? { ...conversation, ...updated } : conversation));
+      await loadConversations({ keepActiveId: activeConversationId });
+      showSuccess("Đã đổi tên cuộc trò chuyện.");
+      return true;
+    } catch (error) {
+      showError(error.message);
+      return false;
+    }
+  };
+
   const isInputDisabled =
     sending || loadingMessages || loadingConversations || authLoading;
 
@@ -234,6 +267,8 @@ export function useAiChatPage() {
     setSidebarOpen,
     handleSelectConversation,
     handleNewChat,
+    handleDeleteConversation,
+    handleRenameConversation,
     isInputDisabled,
   };
 }

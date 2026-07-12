@@ -4,6 +4,7 @@ import { useToast } from "../hooks/useToast";
 import { ROUTES } from "../constants/routes";
 import { ROLES } from "../constants/roles";
 import AIHiveMindWidget from "../components/ai-widget/AIHiveMindWidget";
+import NotificationBell from "../components/notifications/NotificationBell";
 import { AiWidgetProvider } from "../context/AiWidgetContext";
 import "./AppLayout.css";
 
@@ -57,6 +58,7 @@ export default function AppLayout() {
             <div className="sidebar__footer">
               <div className="sidebar__identity">
                 <span className="sidebar__user">{user?.fullName}</span>
+                <NotificationBell />
                 {role === ROLES.ADMIN && (
                   <Link to={ROUTES.ADMIN} className="sidebar__admin-return">
                     Về chế độ Admin

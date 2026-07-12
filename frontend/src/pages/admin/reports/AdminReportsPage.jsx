@@ -35,7 +35,12 @@ export default function AdminReportsPage() {
         <Table.Body>{page.reports.map((report) => {
           const badge = STATUS_BADGE[report.status] ?? STATUS_BADGE.PENDING;
           return <Table.Row key={report.id}><Table.Cell>{report.reporterEmail || "Hệ thống"}</Table.Cell>
-            <Table.Cell>{report.targetType}</Table.Cell><Table.Cell>#{report.targetId}</Table.Cell>
+            <Table.Cell>
+              <span>{report.targetType}</span>
+              {report.flaggedMessageContent && <em style={{ display: "block", marginTop: 4 }}>
+                Nội dung bị gắn cờ: “{report.flaggedMessageContent}”
+              </em>}
+            </Table.Cell><Table.Cell>#{report.targetId}</Table.Cell>
             <Table.Cell className="ui-table__truncate">{report.reason || "—"}</Table.Cell>
             <Table.Cell><Badge intent={badge.intent}>{badge.label}</Badge></Table.Cell>
             <Table.Cell>{formatDate(report.createdAt)}</Table.Cell><Table.Cell>
@@ -45,6 +50,9 @@ export default function AdminReportsPage() {
       </Table>}
     <Modal open={!!page.resolveTarget} onClose={page.closeResolveModal} title="Xử lý báo cáo">
       <p>{page.resolveTarget?.targetType} #{page.resolveTarget?.targetId}</p>
+      {page.resolveTarget?.flaggedMessageContent && <p><em>
+        Nội dung bị gắn cờ: “{page.resolveTarget.flaggedMessageContent}”
+      </em></p>}
       <label style={{ display: "grid", gap: 6, marginBottom: 16 }}>Hành động
         <select value={page.actionTaken} onChange={(e) => page.setActionTaken(e.target.value)}>
           <option value="">Chọn hành động...</option>
