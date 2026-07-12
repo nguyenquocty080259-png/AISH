@@ -1,6 +1,5 @@
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
-import { AdminViewProvider } from "./context/AdminViewContext";
 import AppRoutes from "./routes/AppRoutes";
 import { useToastListener } from "./hooks/useToast";
 
@@ -25,10 +24,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AdminViewProvider>
-          <AppRoutes />
-          <ToastStack />
-        </AdminViewProvider>
+        <AppRoutes />
+        <ToastStack />
       </AuthProvider>
     </BrowserRouter>
   );

@@ -5,7 +5,6 @@ import { ROUTES } from "../constants/routes";
 import { ROLES } from "../constants/roles";
 import AIHiveMindWidget from "../components/ai-widget/AIHiveMindWidget";
 import { AiWidgetProvider } from "../context/AiWidgetContext";
-import { useAdminView } from "../context/AdminViewContext";
 import "./AppLayout.css";
 
 // Nav chính của sidebar — chỉ hiện khi đã đăng nhập.
@@ -26,7 +25,6 @@ function navLinkClassName({ isActive }) {
 
 export default function AppLayout() {
   const { isAuthenticated, user, role, logout } = useAuth();
-  const { viewAsUser, toggleViewAsUser } = useAdminView();
   const { showSuccess } = useToast();
   const navigate = useNavigate();
 
@@ -53,31 +51,15 @@ export default function AppLayout() {
                   <span className="sidebar__link-label">{item.label}</span>
                 </NavLink>
               ))}
-
-              {role === ROLES.ADMIN && !viewAsUser && (
-                <NavLink
-                  to={ROUTES.ADMIN}
-                  className={({ isActive }) =>
-                    `sidebar__link sidebar__link--admin${isActive ? " sidebar__link--active" : ""}`
-                  }
-                >
-                  <span className="sidebar__link-icon">🛡️</span>
-                  <span className="sidebar__link-label">Admin</span>
-                </NavLink>
-              )}
             </nav>
 
             <div className="sidebar__footer">
               <div className="sidebar__identity">
                 <span className="sidebar__user">{user?.fullName}</span>
                 {role === ROLES.ADMIN && (
-                  <button
-                    type="button"
-                    className="sidebar__view-toggle"
-                    onClick={toggleViewAsUser}
-                  >
-                    {viewAsUser ? "Về chế độ Admin" : "Xem như User"}
-                  </button>
+                  <Link to={ROUTES.ADMIN} className="sidebar__admin-return">
+                    Về chế độ Admin
+                  </Link>
                 )}
               </div>
               <button className="sidebar__logout" onClick={handleLogout}>
