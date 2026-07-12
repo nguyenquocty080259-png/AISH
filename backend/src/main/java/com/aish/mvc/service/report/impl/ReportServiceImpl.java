@@ -85,6 +85,20 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
+    @Transactional
+    public void createSystemReport(ReportTargetType targetType, Long targetId, String reason) {
+        Report report = Report.builder()
+                .reporterUserId(null)
+                .source(ReportSource.SYSTEM)
+                .targetType(targetType)
+                .targetId(targetId)
+                .reason(reason)
+                .status(ReportStatus.PENDING)
+                .build();
+        reportRepository.save(report);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<ReportResponseDTO> getMyReports() {
         Long userId = getCurrentUser().getId();
@@ -273,7 +287,17 @@ public class ReportServiceImpl implements ReportService {
                 .createdAt(report.getCreatedAt())
                 .decidedAt(report.getDecidedAt())
                 .decidedByAdminId(report.getDecidedByAdminId())
+                .flaggedMessageContent(findFlaggedMessageContent(report))
                 .build();
+    }
+
+    private String findFlaggedMessageContent(Report report) {
+        if (report.getTargetType() != ReportTargetType.AI_MESSAGE) {
+            return null;
+        }
+        return aiMessageRepository.findById(report.getTargetId())
+                .map(AiMessage::getContent)
+                .orElse(null);
     }
 
     private String findReporterEmail(Report report) {

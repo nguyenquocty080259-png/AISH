@@ -2,16 +2,22 @@ package com.aish.mvc.service.ai;
 
 import com.aish.mvc.dto.ai.AiConversationSummaryDTO;
 import com.aish.mvc.dto.ai.AiMessageDTO;
+import com.aish.mvc.dto.ai.ModerationDecision;
+import com.aish.mvc.dto.ai.ModerationResultDTO;
 import com.aish.mvc.entity.ai.AiConversation;
 import com.aish.mvc.entity.ai.AiMessage;
 import com.aish.mvc.entity.auth.AuthUser;
 import com.aish.mvc.entity.doc.DocDocument;
+import com.aish.mvc.entity.enums.ReportTargetType;
 import com.aish.mvc.repository.ai.AiConversationRepository;
 import com.aish.mvc.repository.ai.AiMessageRepository;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.service.doc.DocumentAccessPort;
+import com.aish.mvc.service.report.ReportService;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,11 +32,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AiConversationService {
 
+    private static final Logger log = LoggerFactory.getLogger(AiConversationService.class);
+
     private final AiConversationRepository aiConversationRepository;
     private final AiMessageRepository aiMessageRepository;
     private final AuthAccountRepository authAccountRepository;
     private final DocumentAccessPort documentAccessPort;
     private final EntityManager entityManager;
+    private final ToxicKeywordFilter toxicKeywordFilter;
+    private final AiModerationService aiModerationService;
+    private final ReportService reportService;
 
     @Transactional(readOnly = true)
     public List<AiConversationSummaryDTO> getMyConversations() {
@@ -90,6 +101,21 @@ public class AiConversationService {
                 .orderIndex(nextOrder)
                 .build();
         aiMessageRepository.save(userMessage);
+
+        try {
+            if (toxicKeywordFilter.containsSuspiciousKeyword(userText)) {
+                ModerationResultDTO moderationResult = aiModerationService.screenText(userText);
+                if (moderationResult.getDecision() == ModerationDecision.FLAG) {
+                    reportService.createSystemReport(
+                            ReportTargetType.AI_MESSAGE,
+                            userMessage.getId(),
+                            moderationResult.getReason());
+                }
+            }
+        } catch (Exception exception) {
+            log.warn("Không thể kiểm duyệt/tạo report hệ thống cho AI message {}; chat vẫn tiếp tục: {}",
+                    userMessage.getId(), exception.getMessage(), exception);
+        }
 
         AiMessage assistantMessage = AiMessage.builder()
                 .conversation(conversation)
