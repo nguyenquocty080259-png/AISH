@@ -6,6 +6,7 @@ import EmptyState from "../../../components/ui/EmptyState";
 import Table from "../../../components/ui/Table";
 import AdminPagination from "../components/AdminPagination";
 import { useAdminUsersPage } from "./hooks/useAdminUsersPage";
+import { useToast } from "../../../hooks/useToast";
 import "./admin-users.css";
 
 function formatDate(iso) {
@@ -15,6 +16,7 @@ function formatDate(iso) {
 
 export default function AdminUsersPage() {
   const pageState = useAdminUsersPage();
+  const { showSuccess, showError } = useToast();
   const [createForm, setCreateForm] = useState({ fullName: "", email: "", password: "", role: "USER" });
   const [editForm, setEditForm] = useState({ fullName: "", avatarUrl: "", role: "USER" });
   const [newPassword, setNewPassword] = useState("");
@@ -56,6 +58,15 @@ export default function AdminUsersPage() {
     pageState.resetPassword(newPassword);
   };
 
+  const copySeedPassword = async (password) => {
+    try {
+      await navigator.clipboard.writeText(password);
+      showSuccess("Đã sao chép mật khẩu seed.");
+    } catch {
+      showError("Không thể sao chép mật khẩu. Vui lòng copy thủ công.");
+    }
+  };
+
   return (
     <div className="admin-users-page">
       <PageHeader
@@ -91,6 +102,7 @@ export default function AdminUsersPage() {
                   <Table.HeaderCell>Email</Table.HeaderCell>
                   <Table.HeaderCell>Vai trò</Table.HeaderCell>
                   <Table.HeaderCell>Trạng thái</Table.HeaderCell>
+                  <Table.HeaderCell>Mật khẩu (seed)</Table.HeaderCell>
                   <Table.HeaderCell>Đăng nhập gần nhất</Table.HeaderCell>
                   <Table.HeaderCell />
                 </Table.Row>
@@ -110,11 +122,30 @@ export default function AdminUsersPage() {
                         {user.status}
                       </span>
                     </Table.Cell>
+                    <Table.Cell>
+                      {user.seedPassword ? (
+                        <div className="admin-users-seed-password">
+                          <code>{user.seedPassword}</code>
+                          <button
+                            type="button"
+                            className="admin-users-copy"
+                            onClick={() => copySeedPassword(user.seedPassword)}
+                            aria-label={`Sao chép mật khẩu của ${user.email}`}
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      ) : "—"}
+                    </Table.Cell>
                     <Table.Cell>{formatDate(user.lastLoginAt)}</Table.Cell>
                     <Table.Cell>
                       <div className="admin-users-actions">
                         <Button variant="secondary" onClick={() => pageState.openEditModal(user)}>Sửa</Button>
-                        <Button variant="secondary" onClick={() => pageState.openResetModal(user)}>Đặt lại mật khẩu</Button>
+                        {!user.seedPassword && (
+                          <Button variant="secondary" onClick={() => pageState.openResetModal(user)}>
+                            Đặt lại mật khẩu
+                          </Button>
+                        )}
                         <Button
                           variant={user.status === "BANNED" ? "secondary" : "danger"}
                           disabled={pageState.statusUpdatingId === user.id}
