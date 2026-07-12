@@ -31,8 +31,8 @@
 }
 
 .admin-stat-card:hover {
-    background: #f59e0b;
-    color: #fff;
+    background: var(--color-primary);
+    color: var(--color-surface);
     cursor: pointer;
     transform: translateY(-4px);
     box-shadow: 0 10px 15px rgba(0,0,0,.12);
@@ -40,7 +40,7 @@
 
 .admin-stat-card:hover .admin-stat-card__value,
 .admin-stat-card:hover .admin-stat-card__label {
-    color: #fff;
+    color: var(--color-surface);
 }
 
 .admin-stat-card__value {

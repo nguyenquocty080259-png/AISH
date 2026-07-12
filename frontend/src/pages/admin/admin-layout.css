@@ -1,4 +1,9 @@
 .admin-layout {
+    --color-primary: #2563EB;
+    --color-primary-dark: #1D4ED8;
+    --color-accent: #60A5FA;
+    --color-surface-soft: #EFF6FF;
+
     max-width: var(--container-width);
     margin: 0 auto;
     padding: var(--spacing-xl);
