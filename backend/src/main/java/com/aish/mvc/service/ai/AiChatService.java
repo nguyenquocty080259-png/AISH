@@ -107,8 +107,8 @@ public class AiChatService {
         }
 
         response = resolution.documentUnavailable()
-                ? buildUnavailableDocumentGeneralResponse(message, currentUserId)
-                : buildGeneralResponse(message, currentUserId);
+                ? buildUnavailableDocumentGeneralResponse(message, currentUserId, recentMessages)
+                : buildGeneralResponse(message, currentUserId, recentMessages);
         persistIfAuthenticated(currentUser, request, response);
         return response;
     }
@@ -190,11 +190,15 @@ public class AiChatService {
                 .toList();
     }
 
-    private AiChatResponse buildGeneralResponse(String userMessage, Long currentUserId) {
-        Prompt prompt = new Prompt(List.of(
-                new SystemMessage(SYSTEM_PROMPT),
-                new UserMessage(userMessage)
-        ));
+    private AiChatResponse buildGeneralResponse(
+            String userMessage,
+            Long currentUserId,
+            List<AiMessage> recentMessages) {
+        List<Message> promptMessages = new ArrayList<>();
+        promptMessages.add(new SystemMessage(SYSTEM_PROMPT));
+        promptMessages.addAll(toChatMessages(recentMessages));
+        promptMessages.add(new UserMessage(userMessage));
+        Prompt prompt = new Prompt(promptMessages);
         String answer = chatClient.prompt(prompt).call().content();
 
         List<RelatedDocDTO> relatedDocs = suggestPublicDocsForTopic(userMessage, currentUserId);
@@ -202,8 +206,11 @@ public class AiChatService {
         return new AiChatResponse(answer, "GENERAL", List.of(), relatedDocs);
     }
 
-    private AiChatResponse buildUnavailableDocumentGeneralResponse(String userMessage, Long currentUserId) {
-        AiChatResponse response = buildGeneralResponse(userMessage, currentUserId);
+    private AiChatResponse buildUnavailableDocumentGeneralResponse(
+            String userMessage,
+            Long currentUserId,
+            List<AiMessage> recentMessages) {
+        AiChatResponse response = buildGeneralResponse(userMessage, currentUserId, recentMessages);
         String answer = "Tài liệu gắn với cuộc trò chuyện này không còn khả dụng, nên mình sẽ trả lời ở chế độ GENERAL.\n\n"
                 + response.getAnswer();
         return new AiChatResponse(answer, "GENERAL", response.getCitations(), response.getRelatedDocs());
