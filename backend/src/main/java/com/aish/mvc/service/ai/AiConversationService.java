@@ -60,6 +60,16 @@ public class AiConversationService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<AiMessage> getRecentMessages(Long conversationId, int limit) {
+        if (limit <= 0) return List.of();
+
+        List<AiMessage> messages = aiMessageRepository
+                .findByConversation_IdOrderByOrderIndexAsc(conversationId);
+        int fromIndex = Math.max(0, messages.size() - limit);
+        return List.copyOf(messages.subList(fromIndex, messages.size()));
+    }
+
     @Transactional
     public void deleteConversation(Long conversationId) {
         AuthUser user = requireCurrentUser();
