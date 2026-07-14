@@ -12,6 +12,7 @@ import com.aish.mvc.entity.enums.DocumentVisibility;
 import com.aish.mvc.entity.enums.ModerationStatus;
 import com.aish.mvc.exception.ForbiddenException;
 import com.aish.mvc.exception.ResourceNotFoundException;
+import com.aish.mvc.repository.ai.AiConversationRepository;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.repository.doc.*;
 import com.aish.mvc.service.ai.AiModerationService;
@@ -46,6 +47,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Autowired private DocEmbeddingRepository docEmbeddingRepository;
     @Autowired private ModerationAppealRepository moderationAppealRepository;
     @Autowired private ViewHistoryRepository viewHistoryRepository;
+    @Autowired private AiConversationRepository aiConversationRepository;
     @Autowired private AuthAccountRepository authAccountRepository;
     @Autowired private SubjectRepository subjectRepository;
     @Autowired private CloudinaryService cloudinaryService;
@@ -280,6 +282,7 @@ public class DocumentServiceImpl implements DocumentService {
         docEmbeddingRepository.deleteByDocument_Id(id);
         moderationAppealRepository.deleteByDocumentId(id);
         viewHistoryRepository.deleteByDocumentId(id);
+        aiConversationRepository.clearDocumentReference(id);
 
         docDocumentRepository.delete(doc);
     }
