@@ -42,6 +42,10 @@ public class DocumentServiceImpl implements DocumentService {
     @Autowired private FavoriteRepository favoriteRepository;
     @Autowired private RatingRepository ratingRepository;
     @Autowired private DownloadRepository downloadRepository;
+    @Autowired private CollectionItemRepository collectionItemRepository;
+    @Autowired private DocEmbeddingRepository docEmbeddingRepository;
+    @Autowired private ModerationAppealRepository moderationAppealRepository;
+    @Autowired private ViewHistoryRepository viewHistoryRepository;
     @Autowired private AuthAccountRepository authAccountRepository;
     @Autowired private SubjectRepository subjectRepository;
     @Autowired private CloudinaryService cloudinaryService;
@@ -272,6 +276,10 @@ public class DocumentServiceImpl implements DocumentService {
         ratingRepository.deleteByDocumentId(id);
         favoriteRepository.deleteByDocumentId(id);
         downloadRepository.deleteByDocumentId(id);
+        collectionItemRepository.deleteByDocumentId(id);
+        docEmbeddingRepository.deleteByDocument_Id(id);
+        moderationAppealRepository.deleteByDocumentId(id);
+        viewHistoryRepository.deleteByDocumentId(id);
 
         docDocumentRepository.delete(doc);
     }
