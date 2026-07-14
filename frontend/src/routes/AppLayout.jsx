@@ -93,7 +93,7 @@ export default function AppLayout() {
           </main>
         </div>
       </div>
-      <AIHiveMindWidget />
+      {isAuthenticated && <AIHiveMindWidget />}
     </AiWidgetProvider>
   );
 }
