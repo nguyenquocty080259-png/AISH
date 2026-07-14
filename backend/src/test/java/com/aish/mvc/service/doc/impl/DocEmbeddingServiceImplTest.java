@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
 class DocEmbeddingServiceImplTest {
 
     private DocEmbeddingServiceImpl newService(EmbeddingModel embeddingModel) {
-        return new DocEmbeddingServiceImpl(null, null, null, embeddingModel, null);
+        return new DocEmbeddingServiceImpl(null, null, null, embeddingModel, null, null);
     }
 
     @Test
