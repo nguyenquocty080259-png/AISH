@@ -86,6 +86,13 @@
     border-top: 1px solid rgba(191, 219, 254, 0.24);
 }
 
+.admin-sidebar .notification-bell__dropdown {
+    position: fixed;
+    left: 284px;
+    bottom: 24px;
+    top: auto;
+}
+
 .admin-sidebar__user {
     margin-bottom: var(--spacing-xs);
     color: var(--color-surface);
@@ -136,6 +143,10 @@
     .admin-sidebar {
         width: 88px;
         padding: var(--spacing-lg) var(--spacing-sm);
+    }
+
+    .admin-sidebar .notification-bell__dropdown {
+        left: 100px;
     }
 
     .admin-sidebar__brand span:last-child,
