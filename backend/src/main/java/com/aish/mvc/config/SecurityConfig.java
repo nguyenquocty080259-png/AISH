@@ -47,9 +47,6 @@ public class SecurityConfig {
                                 "/login/oauth2/**"
                         )
                         .permitAll()
-                        .requestMatchers("/api/ai/chat").permitAll()
-                        // Temporary: task 2A embedding verification hook, see EmbeddingVerificationController
-                        .requestMatchers("/api/ai/debug/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
 
                         .requestMatchers("/api/admin/**")
