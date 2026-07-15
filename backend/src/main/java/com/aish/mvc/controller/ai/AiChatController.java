@@ -15,7 +15,7 @@ public class AiChatController {
     private final AiChatService aiChatService;
 
     /**
-     * Public endpoint — guest không cần login
+     * Authenticated endpoint — login required
      * POST /api/ai/chat
      * Body: { "message": "Website này là gì?" }
      */
