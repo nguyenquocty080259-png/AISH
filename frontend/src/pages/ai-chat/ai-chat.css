@@ -361,6 +361,143 @@
     font-size: var(--body-sm);
 }
 
+.guest-ai-promo {
+    min-height: calc(100vh - 64px);
+    display: grid;
+    place-items: center;
+    padding: clamp(var(--spacing-lg), 5vw, 64px);
+    background:
+        radial-gradient(circle at 15% 15%, rgba(245, 124, 0, 0.12), transparent 34%),
+        var(--color-background);
+}
+
+.guest-ai-promo__card {
+    width: min(1080px, 100%);
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: clamp(var(--spacing-xl), 5vw, 64px);
+    align-items: center;
+    padding: clamp(var(--spacing-lg), 4vw, 48px);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background-color: var(--color-surface);
+    box-shadow: 0 24px 60px rgba(73, 45, 18, 0.1);
+}
+
+.guest-ai-promo__media {
+    min-height: 340px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    border: 1px dashed rgba(245, 124, 0, 0.45);
+    border-radius: var(--radius-card);
+    background: linear-gradient(145deg, #f2f2f2, #dedede);
+    color: var(--color-text-secondary);
+    text-align: center;
+}
+
+.guest-ai-promo__media p {
+    margin: 0;
+    font-size: var(--body-sm);
+    font-weight: 600;
+}
+
+.guest-ai-promo__play {
+    width: 68px;
+    height: 68px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background-color: var(--color-primary);
+    box-shadow: 0 12px 30px rgba(245, 124, 0, 0.28);
+}
+
+.guest-ai-promo__play::after {
+    content: "";
+    margin-left: 5px;
+    border-top: 11px solid transparent;
+    border-bottom: 11px solid transparent;
+    border-left: 17px solid var(--color-surface);
+}
+
+.guest-ai-promo__eyebrow {
+    display: inline-block;
+    margin-bottom: var(--spacing-sm);
+    color: var(--color-primary);
+    font-size: var(--body-sm);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.guest-ai-promo__content h1 {
+    margin: 0;
+    color: var(--color-text);
+    font-size: clamp(30px, 4vw, 46px);
+    line-height: 1.12;
+}
+
+.guest-ai-promo__intro {
+    margin: var(--spacing-md) 0;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+}
+
+.guest-ai-promo__features {
+    display: grid;
+    gap: var(--spacing-sm);
+    margin: 0 0 var(--spacing-xl);
+    padding: 0;
+    list-style: none;
+}
+
+.guest-ai-promo__features li {
+    position: relative;
+    padding-left: 28px;
+    color: var(--color-text);
+    line-height: 1.5;
+}
+
+.guest-ai-promo__features li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: var(--color-primary);
+    font-weight: 700;
+}
+
+.guest-ai-promo__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+}
+
+.guest-ai-promo__button {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border: 1px solid var(--color-primary);
+    border-radius: var(--radius-pill);
+    font-weight: 700;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.guest-ai-promo__button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(245, 124, 0, 0.2);
+}
+
+.guest-ai-promo__button--primary {
+    background-color: var(--color-primary);
+    color: var(--color-surface);
+}
+
+.guest-ai-promo__button--secondary {
+    background-color: transparent;
+    color: var(--color-primary);
+}
+
 @media (max-width: 768px) {
     .chat-page {
         grid-template-columns: minmax(0, 1fr);
@@ -405,6 +542,20 @@
     .chat-message {
         max-width: 92%;
     }
+
+    .guest-ai-promo {
+        place-items: start center;
+        padding: var(--spacing-md);
+    }
+
+    .guest-ai-promo__card {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-xl);
+    }
+
+    .guest-ai-promo__media {
+        min-height: 240px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -414,5 +565,14 @@
 
     .chat-input button {
         padding-inline: var(--spacing-md);
+    }
+
+    .guest-ai-promo__actions,
+    .guest-ai-promo__button {
+        width: 100%;
+    }
+
+    .guest-ai-promo__button {
+        text-align: center;
     }
 }

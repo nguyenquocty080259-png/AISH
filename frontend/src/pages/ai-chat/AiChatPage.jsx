@@ -3,6 +3,7 @@ import { useAiChatPage } from "./hooks/useAiChatPage";
 import ChatMessage from "./components/ChatMessage";
 import ChatInput from "./components/ChatInput";
 import ConversationSidebar from "./components/ConversationSidebar";
+import GuestAiPromo from "./components/GuestAiPromo";
 import { ROUTES, buildRoute } from "../../constants/routes";
 import "./ai-chat.css";
 
@@ -31,6 +32,8 @@ export default function AiChatPage() {
     handleRenameConversation,
     isInputDisabled,
   } = useAiChatPage();
+
+  if (!isAuthenticated) return <GuestAiPromo />;
 
   const renderEmptyState = () => {
     if (loadingMessages) {
