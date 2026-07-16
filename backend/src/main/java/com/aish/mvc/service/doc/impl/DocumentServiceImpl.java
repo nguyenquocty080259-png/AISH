@@ -405,6 +405,11 @@ public class DocumentServiceImpl implements DocumentService {
         // Không trúng keyword: tiếp tục AI pre-screen hiện có (DEC-035).
         ModerationResultDTO result = aiModerationService.screen(documentId);
         doc.setModerationReason(result.getReason());
+        if (result.isMetadataMismatch()) {
+            doc.setModerationReason((result.getReason() == null ? "" : result.getReason())
+                    + " | Lưu ý metadata: " + result.getMetadataMismatchReason());
+            notifyMetadataMismatch(doc, result.getMetadataMismatchReason());
+        }
 
         if (result.getDecision() == ModerationDecision.PASS) {
             doc.setVisibility(DocumentVisibility.PUBLIC);
@@ -437,6 +442,18 @@ public class DocumentServiceImpl implements DocumentService {
         } catch (Exception exception) {
             log.error("Không thể gửi thông báo kiểm duyệt tài liệu id={} cho Admin; publish vẫn tiếp tục.",
                     document.getId(), exception);
+        }
+    }
+
+    private void notifyMetadataMismatch(DocDocument document, String reason) {
+        try {
+            notificationService.createDocumentNotification(document.getUser().getId(), NotificationType.METADATA_MISMATCH,
+                    "Tiêu đề/môn học của '" + document.getTitle() + "' có vẻ chưa khớp nội dung — bạn nên chỉnh lại.", document.getId());
+            authUserRepository.findByRole_RoleNameAndStatus("ADMIN", UserStatus.ACTIVE).forEach(admin ->
+                    notificationService.createDocumentNotification(admin.getId(), NotificationType.METADATA_MISMATCH,
+                            "Metadata tài liệu '" + document.getTitle() + "' có dấu hiệu chưa khớp nội dung: " + reason, document.getId()));
+        } catch (Exception exception) {
+            log.warn("Không thể gửi thông báo metadata mismatch cho document {}; publish vẫn tiếp tục.", document.getId(), exception);
         }
     }
 

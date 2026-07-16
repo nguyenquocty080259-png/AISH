@@ -60,7 +60,7 @@ export default function NotificationBell() {
         setNotifications((current) => current.map((item) => item.id === updated.id ? updated : item));
         setUnreadCount((count) => Math.max(0, count - 1));
       }
-      if (notification.type === "DOCUMENT_SCREENED" && notification.relatedDocumentId) {
+      if ((notification.type === "DOCUMENT_SCREENED" || notification.type === "METADATA_MISMATCH") && notification.relatedDocumentId) {
         navigate(`${ROUTES.ADMIN_DOCUMENTS}?needsReview=true`);
       } else if (notification.relatedCommentId) {
         if (role === "ADMIN" || location.pathname.startsWith("/admin")) {
