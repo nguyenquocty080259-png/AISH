@@ -20,6 +20,7 @@ public class NotificationResponseDTO {
     private NotificationType type;
     private String message;
     private Long relatedReportId;
+    private Long relatedDocumentId;
     private Boolean isRead;
     private LocalDateTime createdAt;
 }

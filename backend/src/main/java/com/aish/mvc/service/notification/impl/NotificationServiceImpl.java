@@ -12,6 +12,7 @@ import com.aish.mvc.service.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -39,6 +40,20 @@ public class NotificationServiceImpl implements NotificationService {
                 .type(type)
                 .message(message)
                 .relatedReportId(relatedReportId)
+                .isRead(false)
+                .build();
+        notificationRepository.save(notification);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void createDocumentNotification(
+            Long recipientUserId, NotificationType type, String message, Long relatedDocumentId) {
+        Notification notification = Notification.builder()
+                .recipientUserId(recipientUserId)
+                .type(type)
+                .message(message)
+                .relatedDocumentId(relatedDocumentId)
                 .isRead(false)
                 .build();
         notificationRepository.save(notification);
@@ -90,6 +105,7 @@ public class NotificationServiceImpl implements NotificationService {
                 .type(notification.getType())
                 .message(notification.getMessage())
                 .relatedReportId(notification.getRelatedReportId())
+                .relatedDocumentId(notification.getRelatedDocumentId())
                 .isRead(notification.getIsRead())
                 .createdAt(notification.getCreatedAt())
                 .build();
