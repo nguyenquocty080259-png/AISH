@@ -27,4 +27,17 @@ class AiModerationMetadataParseTest {
         assertTrue(result.isMetadataMismatch());
         assertEquals("Tên không liên quan", result.getMetadataMismatchReason());
     }
+
+    @Test
+    void acceptsVietnameseDiacriticsAndMarkdownAroundToken() {
+        var result = service.parseResponse(1L, "PASS\nỔn\n**LỆCH**\nTên không liên quan");
+        assertTrue(result.isMetadataMismatch());
+    }
+
+    @Test
+    void acceptsMergedMetadataReasonAfterLechToken() {
+        var result = service.parseResponse(1L, "PASS\nỔn\nLỆCH - tiêu đề không liên quan");
+        assertTrue(result.isMetadataMismatch());
+        assertEquals("tiêu đề không liên quan", result.getMetadataMismatchReason());
+    }
 }

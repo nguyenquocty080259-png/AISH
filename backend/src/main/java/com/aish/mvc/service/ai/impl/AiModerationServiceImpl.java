@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.text.Normalizer;
 
 @Service
 @RequiredArgsConstructor
@@ -52,7 +53,8 @@ public class AiModerationServiceImpl implements AiModerationService {
             String subjects = doc.getSubjects() == null ? "" : doc.getSubjects().stream().map(s -> s.getName()).toList().toString();
             Prompt prompt = new Prompt(List.of(new SystemMessage(MODERATION_SYSTEM_PROMPT),
                     new UserMessage(content + "\n\n[DATA METADATA]\nTITLE: " + doc.getTitle() + "\nSUBJECTS: " + subjects)));
-            return parseResponse(documentId, chatClient.prompt(prompt).call().content());
+            String raw = chatClient.prompt(prompt).call().content();
+            return parseResponse(documentId, raw);
         } catch (Exception e) {
             log.warn("Kiểm duyệt AI lỗi cho document {}: {}", documentId, e.getMessage());
             return failSafe(documentId, "Lỗi khi gọi AI kiểm duyệt — cần Admin xem xét thủ công.");
@@ -79,8 +81,16 @@ public class AiModerationServiceImpl implements AiModerationService {
         String[] lines = raw.strip().split("\\R");
         String decision = normalize(lines[0]);
         String reason = lines.length > 1 ? lines[1].strip() : "";
-        boolean mismatch = lines.length >= 4 && "LECH".equals(normalize(lines[2]));
-        String mismatchReason = mismatch && !lines[3].isBlank() ? lines[3].strip() : "-";
+        String metadataLine = lines.length > 2 ? lines[2] : "";
+        String normalizedMetadata = normalize(metadataLine);
+        boolean mismatch = normalizedMetadata.contains("LECH");
+        String mismatchReason = "-";
+        if (mismatch) {
+            if (lines.length > 3 && !lines[3].isBlank()) mismatchReason = lines[3].strip();
+            else mismatchReason = metadataLine.replaceFirst("(?i).*?(?:LECH|LỆCH)", "")
+                    .replaceAll("^[\\s:–—-]+", "").strip();
+            if (mismatchReason.isBlank()) mismatchReason = "-";
+        }
         if ("PASS".equals(decision)) return new ModerationResultDTO(documentId, ModerationDecision.PASS, reason, mismatch, mismatchReason);
         if ("FLAG".equals(decision)) return new ModerationResultDTO(documentId, ModerationDecision.FLAG, reason, mismatch, mismatchReason);
         return failSafe(documentId, "Không phân tích được phản hồi kiểm duyệt.");
@@ -95,7 +105,12 @@ public class AiModerationServiceImpl implements AiModerationService {
         return textPass(reason);
     }
 
-    private static String normalize(String line) { return line == null ? "" : line.strip().replaceAll("[^A-Za-z]", "").toUpperCase(); }
+    private static String normalize(String line) {
+        if (line == null) return "";
+        String ascii = Normalizer.normalize(line, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "");
+        return ascii.strip().replaceAll("[^A-Za-z]", "").toUpperCase();
+    }
     private static ModerationResultDTO failSafe(Long id, String reason) { return new ModerationResultDTO(id, ModerationDecision.FLAG, reason); }
     private static ModerationResultDTO textPass(String reason) { return new ModerationResultDTO(null, ModerationDecision.PASS, reason); }
 }
