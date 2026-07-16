@@ -1,9 +1,11 @@
 package com.aish.mvc.controller.doc;
 
 import com.aish.mvc.dto.doc.AppealRequestDTO;
+import com.aish.mvc.dto.doc.CommentBlockedResponseDTO;
 import com.aish.mvc.dto.doc.DocumentResponseDTO;
 import com.aish.mvc.dto.doc.ModerationAppealResponseDTO;
 import com.aish.mvc.entity.doc.DocFile;
+import com.aish.mvc.exception.CommentBlockedException;
 import com.aish.mvc.service.doc.DocumentService;
 import com.aish.mvc.service.doc.EngagementService;
 import com.aish.mvc.service.doc.ModerationAppealService;
@@ -76,15 +78,33 @@ public class DocumentController {
     }
 
     @PostMapping("/{id}/comment")
-    public ResponseEntity<Void> addComment(@PathVariable Long id, @RequestBody String content) {
-        engagementService.addComment(id, content);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> addComment(
+            @PathVariable Long id,
+            @RequestBody String content,
+            @RequestParam(defaultValue = "false") boolean dispute,
+            @RequestParam(required = false) String disputeNote) {
+        try {
+            engagementService.addComment(id, content, dispute, disputeNote);
+            return ResponseEntity.ok().build();
+        } catch (CommentBlockedException exception) {
+            return ResponseEntity.unprocessableEntity()
+                    .body(new CommentBlockedResponseDTO(true, exception.getReason()));
+        }
     }
 
     @PutMapping("/comments/{commentId}")
-    public ResponseEntity<Void> updateComment(@PathVariable Long commentId, @RequestBody String content) {
-        engagementService.updateComment(commentId, content);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> updateComment(
+            @PathVariable Long commentId,
+            @RequestBody String content,
+            @RequestParam(defaultValue = "false") boolean dispute,
+            @RequestParam(required = false) String disputeNote) {
+        try {
+            engagementService.updateComment(commentId, content, dispute, disputeNote);
+            return ResponseEntity.ok().build();
+        } catch (CommentBlockedException exception) {
+            return ResponseEntity.unprocessableEntity()
+                    .body(new CommentBlockedResponseDTO(true, exception.getReason()));
+        }
     }
 
     @DeleteMapping("/comments/{commentId}")

@@ -7,6 +7,9 @@ import com.aish.mvc.entity.doc.Download;
 import com.aish.mvc.entity.doc.Favorite;
 import com.aish.mvc.entity.doc.Rating;
 import com.aish.mvc.entity.doc.ViewHistory;
+import com.aish.mvc.entity.enums.CommentStatus;
+import com.aish.mvc.entity.enums.ModerationKeywordType;
+import com.aish.mvc.exception.CommentBlockedException;
 import com.aish.mvc.exception.ResourceNotFoundException;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.repository.doc.CommentRepository;
@@ -16,8 +19,13 @@ import com.aish.mvc.repository.doc.FavoriteRepository;
 import com.aish.mvc.repository.doc.RatingRepository;
 import com.aish.mvc.repository.doc.ViewHistoryRepository;
 import com.aish.mvc.service.doc.EngagementService;
+import com.aish.mvc.service.doc.CommentModerationRequestedEvent;
+import com.aish.mvc.service.ai.ToxicKeywordFilter;
+import com.aish.mvc.service.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.aish.mvc.exception.ForbiddenException;
@@ -26,7 +34,11 @@ import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EngagementServiceImpl implements EngagementService {
+
+    private static final String KEYWORD_REASON =
+            "Bình luận chứa từ khóa không phù hợp theo quy tắc kiểm duyệt.";
 
     private final DocDocumentRepository docDocumentRepository;
     private final CommentRepository commentRepository;
@@ -35,6 +47,9 @@ public class EngagementServiceImpl implements EngagementService {
     private final DownloadRepository downloadRepository;
     private final ViewHistoryRepository viewHistoryRepository;
     private final AuthAccountRepository authAccountRepository;
+    private final ToxicKeywordFilter toxicKeywordFilter;
+    private final NotificationService notificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     private AuthUser getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -50,14 +65,27 @@ public class EngagementServiceImpl implements EngagementService {
 
     @Override
     @Transactional
-    public void addComment(Long documentId, String content) {
+    public void addComment(Long documentId, String content, boolean dispute, String disputeNote) {
         DocDocument doc = requireDocument(documentId);
+        String cleaned = validateContent(content);
+        boolean keywordHit = toxicKeywordFilter.matches(cleaned, ModerationKeywordType.COMMENT);
+        if (keywordHit && !dispute) {
+            throw new CommentBlockedException(KEYWORD_REASON);
+        }
         Comment comment = Comment.builder()
                 .document(doc)
                 .user(getCurrentUser())
-                .content(content)
+                .content(cleaned)
+                .status(keywordHit ? CommentStatus.PENDING_REVIEW : CommentStatus.VISIBLE)
+                .moderationReason(keywordHit ? KEYWORD_REASON : null)
+                .disputeNote(keywordHit ? validateDisputeNote(disputeNote) : null)
                 .build();
-        commentRepository.save(comment);
+        Comment saved = commentRepository.save(comment);
+        if (keywordHit) {
+            notifyUnderReview(saved);
+        } else {
+            eventPublisher.publishEvent(new CommentModerationRequestedEvent(saved.getId()));
+        }
     }
 
     @Override
@@ -117,14 +145,30 @@ public class EngagementServiceImpl implements EngagementService {
     }
     @Override
     @Transactional
-    public void updateComment(Long commentId, String content) {
+    public void updateComment(Long commentId, String content, boolean dispute, String disputeNote) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bình luận không tồn tại!"));
         if (!comment.getUser().getId().equals(getCurrentUser().getId())) {
             throw new ForbiddenException("Bạn không có quyền sửa bình luận này!");
         }
-        comment.setContent(content);
-        commentRepository.save(comment);
+        String cleaned = validateContent(content);
+        boolean keywordHit = toxicKeywordFilter.matches(cleaned, ModerationKeywordType.COMMENT);
+        if (keywordHit && !dispute) {
+            throw new CommentBlockedException(KEYWORD_REASON);
+        }
+
+        comment.setContent(cleaned);
+        comment.setStatus(keywordHit ? CommentStatus.PENDING_REVIEW : CommentStatus.VISIBLE);
+        comment.setModerationReason(keywordHit ? KEYWORD_REASON : null);
+        comment.setDisputeNote(keywordHit ? validateDisputeNote(disputeNote) : null);
+        comment.setReviewedBy(null);
+        comment.setReviewedAt(null);
+        Comment saved = commentRepository.save(comment);
+        if (keywordHit) {
+            notifyUnderReview(saved);
+        } else {
+            eventPublisher.publishEvent(new CommentModerationRequestedEvent(saved.getId()));
+        }
     }
 
     @Override
@@ -136,5 +180,31 @@ public class EngagementServiceImpl implements EngagementService {
             throw new ForbiddenException("Bạn không có quyền xoá bình luận này!");
         }
         commentRepository.delete(comment);
+    }
+
+    private String validateContent(String content) {
+        String cleaned = content == null ? "" : content.trim();
+        if (cleaned.isBlank()) {
+            throw new IllegalArgumentException("Nội dung bình luận không được để trống.");
+        }
+        return cleaned;
+    }
+
+    private String validateDisputeNote(String disputeNote) {
+        String cleaned = disputeNote == null ? "" : disputeNote.trim();
+        if (cleaned.isBlank()) {
+            throw new IllegalArgumentException("Vui lòng nhập lý do khiếu nại.");
+        }
+        return cleaned;
+    }
+
+    private void notifyUnderReview(Comment comment) {
+        try {
+            notificationService.notifyCommentUnderReview(
+                    comment.getUser().getId(), comment.getId(), comment.getDocument().getId());
+        } catch (Exception exception) {
+            log.warn("Không thể gửi thông báo cho bình luận {} đang chờ duyệt; luồng bình luận vẫn tiếp tục.",
+                    comment.getId(), exception);
+        }
     }
 }

@@ -25,6 +25,7 @@ export function useDocumentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [commentText, setCommentText] = useState("");
   const [posting, setPosting] = useState(false);
+  const [blockedComment, setBlockedComment] = useState(null);
   const [downloading, setDownloading] = useState(false);
   const [ingesting, setIngesting] = useState(false);
   // Chỉ phản ánh trạng thái trong phiên hiện tại (không có field ingested ở backend) -
@@ -100,20 +101,65 @@ export function useDocumentDetailPage() {
       setCommentText("");
       await load();
     } catch (err) {
-      showError(err.message);
+      if (err.status === 422 && err.raw?.response?.data?.blocked) {
+        setBlockedComment({
+          mode: "create",
+          content: commentText.trim(),
+          reason: err.raw.response.data.reason,
+        });
+      } else {
+        showError(err.message);
+      }
     } finally {
       setPosting(false);
     }
   };
 
   const handleUpdateComment = async (commentId, content) => {
-    if (!content.trim()) return;
+    if (!content.trim()) return false;
     try {
       await documentApi.updateComment(commentId, content.trim());
       showSuccess("Đã cập nhật bình luận.");
       await load();
+      return true;
+    } catch (err) {
+      if (err.status === 422 && err.raw?.response?.data?.blocked) {
+        setBlockedComment({
+          mode: "update",
+          commentId,
+          content: content.trim(),
+          reason: err.raw.response.data.reason,
+        });
+      } else {
+        showError(err.message);
+      }
+      return false;
+    }
+  };
+
+  const dismissBlockedComment = () => setBlockedComment(null);
+
+  const disputeBlockedComment = async (disputeNote) => {
+    if (!blockedComment) return false;
+    setPosting(true);
+    try {
+      const options = { dispute: true, disputeNote: disputeNote.trim() };
+      if (blockedComment.mode === "create") {
+        await documentApi.addComment(id, blockedComment.content, options);
+        setCommentText("");
+      } else {
+        await documentApi.updateComment(
+          blockedComment.commentId, blockedComment.content, options);
+      }
+      setBlockedComment(null);
+      showSuccess("Đã gửi bình luận để quản trị viên xem xét.");
+      await load();
+      return true;
     } catch (err) {
       showError(err.message);
+      return false;
+    } finally {
+      setPosting(false);
     }
   };
 
@@ -320,6 +366,9 @@ export function useDocumentDetailPage() {
     commentText,
     setCommentText,
     posting,
+    blockedComment,
+    dismissBlockedComment,
+    disputeBlockedComment,
     downloading,
     ingesting,
     ingested,

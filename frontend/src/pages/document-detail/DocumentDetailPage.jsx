@@ -27,6 +27,9 @@ export default function DocumentDetailPage() {
     commentText,
     setCommentText,
     posting,
+    blockedComment,
+    dismissBlockedComment,
+    disputeBlockedComment,
     downloading,
     ingesting,
     ingested,
@@ -270,6 +273,9 @@ export default function DocumentDetailPage() {
           currentUserName={currentUserName}
           onUpdateComment={handleUpdateComment}
           onDeleteComment={handleDeleteComment}
+          blockedComment={blockedComment}
+          onDismissBlocked={dismissBlockedComment}
+          onDisputeBlocked={disputeBlockedComment}
         />
       )}
 

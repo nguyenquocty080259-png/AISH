@@ -19,7 +19,8 @@ public class SchemaPatchRunner implements ApplicationRunner {
     private static final String NOTIFICATION_TYPE_CONSTRAINT_PATCH = """
             ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_type_check;
             ALTER TABLE notifications ADD CONSTRAINT notifications_type_check
-              CHECK (type IN ('REPORT_CREATED', 'REPORT_RESOLVED', 'DOCUMENT_SCREENED'));
+              CHECK (type IN ('REPORT_CREATED', 'REPORT_RESOLVED', 'DOCUMENT_SCREENED',
+                              'COMMENT_UNDER_REVIEW', 'COMMENT_REVIEWED'));
             """;
 
     private final JdbcTemplate jdbcTemplate;
