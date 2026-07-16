@@ -23,3 +23,7 @@ export function getRelatedDocuments(documentId) {
 export function getRecommendationsForYou() {
   return apiClient.get("/ai/recommendations").then((res) => res.data);
 }
+
+export function suggestMetadata(documentId) {
+  return apiClient.post(`/ai/documents/${documentId}/metadata-suggestion`).then((res) => res.data);
+}

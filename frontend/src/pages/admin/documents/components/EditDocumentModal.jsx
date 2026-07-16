@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Button from "../../../../components/ui/Button";
 import Modal from "../../../../components/ui/Modal";
+import * as aiApi from "../../../../api/aiApi";
 
 // Modal Admin sửa metadata tài liệu (title/description/subjectIds) — field shape đồng bộ với
 // document-detail/hooks/useDocumentDetailPage.js (handleUpdateDocument).
@@ -9,6 +10,8 @@ export default function EditDocumentModal({ open, doc, subjects, submitting, loa
   const [description, setDescription] = useState("");
   const [subjectIds, setSubjectIds] = useState([]);
   const [subjectError, setSubjectError] = useState(false);
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestionError, setSuggestionError] = useState("");
 
   useEffect(() => {
     if (doc) {
@@ -32,6 +35,12 @@ export default function EditDocumentModal({ open, doc, subjects, submitting, loa
     }
     onSubmit({ title, description, subjectIds });
   };
+  const suggest = async () => {
+    setSuggesting(true); setSuggestionError("");
+    try { const data = await aiApi.suggestMetadata(doc.id); setTitle(data.title ?? ""); setDescription(data.description ?? ""); setSubjectIds(data.subjectIds ?? []); }
+    catch (error) { setSuggestionError(error.response?.data?.message || error.message || "Không thể lấy gợi ý AI."); }
+    finally { setSuggesting(false); }
+  };
 
   return (
     <Modal open={open} onClose={onClose} title="Sửa tài liệu">
@@ -43,6 +52,10 @@ export default function EditDocumentModal({ open, doc, subjects, submitting, loa
           Tên tài liệu
           <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} />
         </label>
+        <Button type="button" variant="secondary" onClick={suggest} disabled={suggesting || submitting}>
+          {suggesting ? "Đang gợi ý..." : "AI gợi ý"}
+        </Button>
+        {suggestionError && <p className="admin-documents-page__subject-error">{suggestionError}</p>}
 
         <label className="admin-subjects-form__field">
           Mô tả

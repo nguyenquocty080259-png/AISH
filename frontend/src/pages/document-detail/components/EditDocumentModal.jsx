@@ -1,4 +1,5 @@
 import { useState } from "react";
+import * as aiApi from "../../../api/aiApi";
 
 // Modal sửa metadata: title, description, subjects. Prefill từ doc hiện tại.
 export default function EditDocumentModal({ open, doc, subjects, submitting, onClose, onSubmit }) {
@@ -7,6 +8,8 @@ export default function EditDocumentModal({ open, doc, subjects, submitting, onC
   const [subjectIds, setSubjectIds] = useState(doc?.subjectIds ?? []);
   const [subjectSearch, setSubjectSearch] = useState("");
   const [subjectError, setSubjectError] = useState(false);
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestionError, setSuggestionError] = useState("");
 
   if (!open) return null;
 
@@ -30,6 +33,12 @@ export default function EditDocumentModal({ open, doc, subjects, submitting, onC
     }
     onSubmit({ title, description, subjectIds });
   };
+  const suggest = async () => {
+    setSuggesting(true); setSuggestionError("");
+    try { const data = await aiApi.suggestMetadata(doc.id); setTitle(data.title ?? ""); setDescription(data.description ?? ""); setSubjectIds(data.subjectIds ?? []); }
+    catch (error) { setSuggestionError(error.response?.data?.message || error.message || "Không thể lấy gợi ý AI."); }
+    finally { setSuggesting(false); }
+  };
 
   return (
     <div className="doc-modal__overlay" onClick={onClose}>
@@ -41,6 +50,10 @@ export default function EditDocumentModal({ open, doc, subjects, submitting, onC
             Tên tài liệu
             <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} />
           </label>
+          <button type="button" onClick={suggest} disabled={suggesting || submitting} className="doc-modal__submit">
+            {suggesting ? "Đang gợi ý..." : "AI gợi ý"}
+          </button>
+          {suggestionError && <p style={{ color: "#e11", fontSize: 13 }}>{suggestionError}</p>}
 
           <label>
             Mô tả
