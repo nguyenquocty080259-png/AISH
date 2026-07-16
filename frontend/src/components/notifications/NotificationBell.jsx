@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import * as notificationApi from "../../api/notificationApi";
 import { useToast } from "../../hooks/useToast";
+import { ROUTES } from "../../constants/routes";
 import "./notification-bell.css";
 
 function formatDate(value) {
@@ -9,6 +11,7 @@ function formatDate(value) {
 
 export default function NotificationBell() {
   const { showError } = useToast();
+  const navigate = useNavigate();
   const rootRef = useRef(null);
   const [open, setOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -48,11 +51,15 @@ export default function NotificationBell() {
   };
 
   const handleMarkAsRead = async (notification) => {
-    if (notification.isRead) return;
     try {
-      const updated = await notificationApi.markAsRead(notification.id);
-      setNotifications((current) => current.map((item) => item.id === updated.id ? updated : item));
-      setUnreadCount((count) => Math.max(0, count - 1));
+      if (!notification.isRead) {
+        const updated = await notificationApi.markAsRead(notification.id);
+        setNotifications((current) => current.map((item) => item.id === updated.id ? updated : item));
+        setUnreadCount((count) => Math.max(0, count - 1));
+      }
+      if (notification.type === "DOCUMENT_SCREENED" && notification.relatedDocumentId) {
+        navigate(`${ROUTES.ADMIN_DOCUMENTS}?needsReview=true`);
+      }
     } catch (error) {
       showError(error.message);
     }
