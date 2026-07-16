@@ -50,6 +50,7 @@ public class AiChatService {
     private final DocDocumentRepository docDocumentRepository;
     private final AiRecommendationService aiRecommendationService;
     private final AiConversationService aiConversationService;
+    private final AdminAiTools adminAiTools;
 
     private static final String SYSTEM_PROMPT = """
             Bạn là AI HiveMind - trợ lý AI của nền tảng HiveMind dành cho sinh viên.
@@ -65,6 +66,13 @@ public class AiChatService {
             - Nếu câu hỏi liên quan đến HiveMind, trả lời dựa trên thông tin hệ thống trên
             - Nếu không liên quan, trả lời như AI thông thường
             - Luôn trả lời thân thiện, ngắn gọn, bằng tiếng Việt
+            """;
+
+    private static final String ADMIN_TOOLS_PROMPT = """
+
+            Công cụ số liệu dành cho quản trị viên:
+            - Khi quản trị viên hỏi về số liệu hệ thống hiện tại, hãy gọi công cụ getSystemStats.
+            - Phải dùng nguyên văn các con số do công cụ trả về và tuyệt đối không tự đoán số liệu.
             """;
 
     private static final String RAG_PROMPT_TEMPLATE = """
@@ -107,8 +115,8 @@ public class AiChatService {
         }
 
         response = resolution.documentUnavailable()
-                ? buildUnavailableDocumentGeneralResponse(message, currentUserId, recentMessages)
-                : buildGeneralResponse(message, currentUserId, recentMessages);
+                ? buildUnavailableDocumentGeneralResponse(message, currentUser, currentUserId, recentMessages)
+                : buildGeneralResponse(message, currentUser, currentUserId, recentMessages);
         persistIfAuthenticated(currentUser, request, response);
         return response;
     }
@@ -192,14 +200,20 @@ public class AiChatService {
 
     private AiChatResponse buildGeneralResponse(
             String userMessage,
+            AuthUser user,
             Long currentUserId,
             List<AiMessage> recentMessages) {
-        List<Message> promptMessages = new ArrayList<>();
-        promptMessages.add(new SystemMessage(SYSTEM_PROMPT));
-        promptMessages.addAll(toChatMessages(recentMessages));
-        promptMessages.add(new UserMessage(userMessage));
-        Prompt prompt = new Prompt(promptMessages);
-        String answer = chatClient.prompt(prompt).call().content();
+        boolean isAdmin = user != null && "ADMIN".equalsIgnoreCase(user.getRole().getRoleName());
+        String systemPrompt = isAdmin ? SYSTEM_PROMPT + ADMIN_TOOLS_PROMPT : SYSTEM_PROMPT;
+
+        ChatClient.ChatClientRequestSpec promptSpec = chatClient.prompt()
+                .system(systemPrompt)
+                .messages(toChatMessages(recentMessages))
+                .user(userMessage);
+        if (isAdmin) {
+            promptSpec = promptSpec.tools(adminAiTools);
+        }
+        String answer = promptSpec.call().content();
 
         List<RelatedDocDTO> relatedDocs = suggestPublicDocsForTopic(userMessage, currentUserId);
 
@@ -208,9 +222,10 @@ public class AiChatService {
 
     private AiChatResponse buildUnavailableDocumentGeneralResponse(
             String userMessage,
+            AuthUser user,
             Long currentUserId,
             List<AiMessage> recentMessages) {
-        AiChatResponse response = buildGeneralResponse(userMessage, currentUserId, recentMessages);
+        AiChatResponse response = buildGeneralResponse(userMessage, user, currentUserId, recentMessages);
         String answer = "Tài liệu gắn với cuộc trò chuyện này không còn khả dụng, nên mình sẽ trả lời ở chế độ GENERAL.\n\n"
                 + response.getAnswer();
         return new AiChatResponse(answer, "GENERAL", response.getCitations(), response.getRelatedDocs());
