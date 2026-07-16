@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ROUTES, buildRoute } from "../../../constants/routes";
 import DocumentThumb from "../../../components/ui/DocumentThumb";
 import ReportMenu from "../../../components/report/ReportMenu";
+import ModerationBadge from "./ModerationBadge";
 
 export default function DocumentCard({ doc, onToggleFavorite }) {
   return (
@@ -32,6 +33,7 @@ export default function DocumentCard({ doc, onToggleFavorite }) {
         {doc.title}
       </Link>
       <p className="doc-card__desc">{doc.description}</p>
+      <ModerationBadge doc={doc} />
 
       <div className="doc-card__meta">
         <span>{doc.ownerName}</span>

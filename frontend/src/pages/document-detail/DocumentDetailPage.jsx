@@ -12,6 +12,7 @@ import Button from "../../components/ui/Button";
 import EmptyState from "../../components/ui/EmptyState";
 import RecommendationCard from "../../components/recommendations/RecommendationCard";
 import ReportMenu from "../../components/report/ReportMenu";
+import ModerationBadge from "../document/components/ModerationBadge";
 import { ROUTES } from "../../constants/routes";
 import "./document-detail.css";
 
@@ -107,6 +108,7 @@ export default function DocumentDetailPage() {
         <span>Yêu thích: {doc.favoriteCount ?? 0}</span>
         <span>Trạng thái: {doc.visibility === "PUBLIC" ? "Công khai" : "Riêng tư"}</span>
       </div>
+      <ModerationBadge doc={doc} />
 
       <p className="detail-desc">{doc.description}</p>
 
