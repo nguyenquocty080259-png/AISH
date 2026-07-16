@@ -9,6 +9,9 @@ public interface NotificationService {
 
     void createNotification(Long recipientUserId, NotificationType type, String message, Long relatedReportId);
 
+    void createDocumentNotification(
+            Long recipientUserId, NotificationType type, String message, Long relatedDocumentId);
+
     List<NotificationResponseDTO> getMyNotifications();
 
     long getUnreadCount();

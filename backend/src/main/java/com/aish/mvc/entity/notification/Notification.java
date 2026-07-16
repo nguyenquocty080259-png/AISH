@@ -45,6 +45,9 @@ public class Notification {
     @Column(name = "related_report_id")
     private Long relatedReportId;
 
+    @Column(name = "related_document_id")
+    private Long relatedDocumentId;
+
     @ColumnDefault("false")
     @Column(name = "is_read", nullable = false)
     @Builder.Default

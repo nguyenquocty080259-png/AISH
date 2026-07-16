@@ -10,16 +10,22 @@ import com.aish.mvc.entity.doc.*;
 import com.aish.mvc.entity.enums.DocumentStatus;
 import com.aish.mvc.entity.enums.DocumentVisibility;
 import com.aish.mvc.entity.enums.ModerationStatus;
+import com.aish.mvc.entity.enums.NotificationType;
+import com.aish.mvc.entity.enums.UserStatus;
 import com.aish.mvc.exception.ForbiddenException;
 import com.aish.mvc.exception.ResourceNotFoundException;
 import com.aish.mvc.repository.ai.AiConversationRepository;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
+import com.aish.mvc.repository.auth.AuthUserRepository;
 import com.aish.mvc.repository.doc.*;
 import com.aish.mvc.service.ai.AiModerationService;
 import com.aish.mvc.service.doc.DocumentService;
+import com.aish.mvc.service.notification.NotificationService;
 import com.aish.mvc.service.stor.CloudinaryService;
 import com.aish.mvc.service.stor.FileStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -36,6 +42,8 @@ import java.util.stream.Collectors;
 @Service
 public class DocumentServiceImpl implements DocumentService {
 
+    private static final Logger log = LoggerFactory.getLogger(DocumentServiceImpl.class);
+
     @Autowired private DocDocumentRepository docDocumentRepository;
     @Autowired private DocFileRepository docFileRepository;
     @Autowired private FileStorageService fileStorageService;
@@ -49,11 +57,13 @@ public class DocumentServiceImpl implements DocumentService {
     @Autowired private ViewHistoryRepository viewHistoryRepository;
     @Autowired private AiConversationRepository aiConversationRepository;
     @Autowired private AuthAccountRepository authAccountRepository;
+    @Autowired private AuthUserRepository authUserRepository;
     @Autowired private SubjectRepository subjectRepository;
     @Autowired private CloudinaryService cloudinaryService;
     @Autowired private com.aish.mvc.service.stor.ThumbnailService thumbnailService;
     @Autowired private AiModerationService aiModerationService;
     @Autowired private DocumentMapper documentMapper;
+    @Autowired private NotificationService notificationService;
 
     private AuthUser getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -389,7 +399,22 @@ public class DocumentServiceImpl implements DocumentService {
             doc.setModerationStatus(ModerationStatus.REJECTED);
         }
 
-        return documentMapper.toResponseDTO(docDocumentRepository.save(doc));
+        DocDocument savedDocument = docDocumentRepository.save(doc);
+        try {
+            String message = "Tài liệu \"" + savedDocument.getTitle()
+                    + "\" đã được AI sàng lọc: " + result.getDecision().name();
+            authUserRepository.findByRole_RoleNameAndStatus("ADMIN", UserStatus.ACTIVE)
+                    .forEach(admin -> notificationService.createDocumentNotification(
+                            admin.getId(),
+                            NotificationType.DOCUMENT_SCREENED,
+                            message,
+                            savedDocument.getId()));
+        } catch (Exception exception) {
+            log.error("Không thể gửi thông báo kiểm duyệt tài liệu id={} cho Admin; publish vẫn tiếp tục.",
+                    savedDocument.getId(), exception);
+        }
+
+        return documentMapper.toResponseDTO(savedDocument);
     }
 
     @Override
