@@ -12,5 +12,6 @@ public class CommentDTO {
     private Long id;
     private String ownerName; // Tên của người dùng đã bình luận
     private String content;   // Nội dung bình luận
+    private String status;
     private LocalDateTime createdAt; // Thời gian bình luận
 }

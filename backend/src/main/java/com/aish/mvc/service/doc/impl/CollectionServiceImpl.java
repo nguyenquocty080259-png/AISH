@@ -12,6 +12,7 @@ import com.aish.mvc.repository.doc.CollectionItemRepository;
 import com.aish.mvc.repository.doc.CollectionRepository;
 import com.aish.mvc.service.doc.CollectionService;
 import com.aish.mvc.service.doc.DocumentAccessPort;
+import com.aish.mvc.service.doc.NamingModerationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,6 +30,7 @@ public class CollectionServiceImpl implements CollectionService {
     @Autowired private CollectionItemRepository collectionItemRepository;
     @Autowired private AuthAccountRepository authAccountRepository;
     @Autowired private DocumentAccessPort documentAccessPort;
+    @Autowired private NamingModerationService namingModerationService;
 
     // Sao chép đúng pattern getCurrentUser() của DocumentServiceImpl.
     private AuthUser getCurrentUser() {
@@ -48,7 +50,7 @@ public class CollectionServiceImpl implements CollectionService {
     @Transactional
     public CollectionResponseDTO createCollection(String name) {
         AuthUser user = getCurrentUser();
-        String cleaned = normalizeName(name);
+        String cleaned = namingModerationService.validate(name);
         if (collectionRepository.existsByUser_IdAndName(user.getId(), cleaned)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Bạn đã có bộ sưu tập trùng tên!");
         }
@@ -92,7 +94,7 @@ public class CollectionServiceImpl implements CollectionService {
     public CollectionResponseDTO renameCollection(Long id, String name) {
         Long uid = getCurrentUser().getId();
         Collection c = getOwnedCollection(id, uid);
-        String cleaned = normalizeName(name);
+        String cleaned = namingModerationService.validate(name);
         if (!cleaned.equals(c.getName()) && collectionRepository.existsByUser_IdAndName(uid, cleaned)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Bạn đã có bộ sưu tập trùng tên!");
         }
@@ -153,14 +155,6 @@ public class CollectionServiceImpl implements CollectionService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tài liệu không có trong bộ sưu tập!"));
         // Gỡ khỏi collection, KHÔNG xóa DocDocument.
         collectionItemRepository.delete(item);
-    }
-
-    private String normalizeName(String name) {
-        String cleaned = name == null ? "" : name.trim();
-        if (cleaned.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên bộ sưu tập không được để trống!");
-        }
-        return cleaned;
     }
 
     private CollectionResponseDTO toResponseDTO(Collection c, Long documentCount) {

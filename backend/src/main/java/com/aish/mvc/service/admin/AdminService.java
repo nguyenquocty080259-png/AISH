@@ -7,7 +7,9 @@ import com.aish.mvc.dto.auth.admin.AdminUpdateUserStatusRequestDTO;
 import com.aish.mvc.dto.auth.admin.AdminUserResponseDTO;
 import com.aish.mvc.dto.doc.AdminAppealResponseDTO;
 import com.aish.mvc.dto.doc.AdminStatsDTO;
+import com.aish.mvc.dto.doc.AdminCommentReviewDTO;
 import com.aish.mvc.entity.enums.AppealStatus;
+import com.aish.mvc.entity.enums.CommentStatus;
 
 import java.util.List;
 
@@ -22,6 +24,12 @@ public interface AdminService {
 
     // Reject: appeal -> APPEAL_REJECTED, document giữ nguyên PRIVATE/REJECTED.
     AdminAppealResponseDTO rejectAppeal(Long appealId, String adminNote);
+
+    List<AdminCommentReviewDTO> listComments(CommentStatus status);
+
+    AdminCommentReviewDTO approveComment(Long commentId);
+
+    AdminCommentReviewDTO rejectComment(Long commentId);
 
     void approveDocumentReview(Long documentId);
 

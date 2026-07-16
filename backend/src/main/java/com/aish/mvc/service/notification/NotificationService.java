@@ -12,6 +12,10 @@ public interface NotificationService {
     void createDocumentNotification(
             Long recipientUserId, NotificationType type, String message, Long relatedDocumentId);
 
+    void notifyCommentUnderReview(Long ownerUserId, Long commentId, Long documentId);
+
+    void notifyCommentReviewed(Long ownerUserId, Long commentId, Long documentId, boolean approved);
+
     List<NotificationResponseDTO> getMyNotifications();
 
     long getUnreadCount();

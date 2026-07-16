@@ -45,15 +45,17 @@ export function updateDocument(id, data) {
 export function toggleFavorite(id) {
   return apiClient.post(`/documents/${id}/favorite`);
 }
-export function addComment(id, content) {
+export function addComment(id, content, { dispute = false, disputeNote } = {}) {
   return apiClient.post(`/documents/${id}/comment`, content, {
     headers: { "Content-Type": "text/plain; charset=UTF-8" },
+    params: { dispute, ...(disputeNote ? { disputeNote } : {}) },
   });
 }
 
-export function updateComment(commentId, content) {
+export function updateComment(commentId, content, { dispute = false, disputeNote } = {}) {
   return apiClient.put(`/documents/comments/${commentId}`, content, {
     headers: { "Content-Type": "text/plain; charset=UTF-8" },
+    params: { dispute, ...(disputeNote ? { disputeNote } : {}) },
   });
 }
 export function deleteComment(commentId) {

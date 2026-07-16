@@ -21,6 +21,7 @@ public class NotificationResponseDTO {
     private String message;
     private Long relatedReportId;
     private Long relatedDocumentId;
+    private Long relatedCommentId;
     private Boolean isRead;
     private LocalDateTime createdAt;
 }

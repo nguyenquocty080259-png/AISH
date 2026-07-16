@@ -26,6 +26,20 @@ export function rejectAppeal(appealId, note) {
     .then((res) => res.data);
 }
 
+export function listPendingComments() {
+  return apiClient
+    .get("/admin/comments", { params: { status: "PENDING_REVIEW" } })
+    .then((res) => res.data);
+}
+
+export function approveComment(id) {
+  return apiClient.post(`/admin/comments/${id}/review-approve`).then((res) => res.data);
+}
+
+export function rejectComment(id) {
+  return apiClient.post(`/admin/comments/${id}/review-reject`).then((res) => res.data);
+}
+
 export function listReports(status) {
   return apiClient
     .get("/admin/reports", { params: status ? { status } : {} })
@@ -38,15 +52,26 @@ export function resolveReport(id, payload) {
 
 // Returns a Spring Data Page: { content, totalPages, totalElements, number, size, ... }.
 // page is 0-indexed (matches Spring Pageable). Backend default: size=20, sort=createdAt DESC.
-export function listDocuments(page = 0, size = 20, visibility = null) {
+export function listDocuments(page = 0, size = 20, visibility = null, needsReview = false) {
   const params = { page, size };
   if (visibility) {
     params.visibility = visibility;
+  }
+  if (needsReview) {
+    params.needsReview = true;
   }
 
   return apiClient
     .get("/admin/documents", { params })
     .then((res) => res.data);
+}
+
+export function approveDocumentReview(id) {
+  return apiClient.post(`/admin/documents/${id}/review-approve`);
+}
+
+export function removeDocumentReview(id) {
+  return apiClient.post(`/admin/documents/${id}/review-remove`);
 }
 
 // Takedown — no request body/reason supported by the backend (DELETE only takes the id).
@@ -79,5 +104,23 @@ export function updateUserStatus(id, status) {
   return apiClient
     .patch(`/admin/users/${id}/status`, { status })
     .then((res) => res.data);
+}
+
+export function listModerationKeywords(type) {
+  return apiClient
+    .get("/admin/moderation-keywords", { params: type ? { type } : {} })
+    .then((res) => res.data);
+}
+
+export function createModerationKeyword(payload) {
+  return apiClient.post("/admin/moderation-keywords", payload).then((res) => res.data);
+}
+
+export function updateModerationKeyword(id, payload) {
+  return apiClient.put(`/admin/moderation-keywords/${id}`, payload).then((res) => res.data);
+}
+
+export function deleteModerationKeyword(id) {
+  return apiClient.delete(`/admin/moderation-keywords/${id}`);
 }
 

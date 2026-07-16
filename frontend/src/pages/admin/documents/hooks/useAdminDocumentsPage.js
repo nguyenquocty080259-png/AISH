@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import * as adminApi from "../../../../api/adminApi";
 import * as documentApi from "../../../../api/documentApi";
 import * as subjectApi from "../../../../api/subjectApi";
@@ -6,6 +7,8 @@ import { useToast } from "../../../../hooks/useToast";
 
 export function useAdminDocumentsPage() {
   const { showSuccess, showError } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const needsReview = searchParams.get("needsReview") === "true";
 
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,6 +25,7 @@ export function useAdminDocumentsPage() {
   const [subjects, setSubjects] = useState([]);
 
   const [restoringId, setRestoringId] = useState(null);
+  const [reviewing, setReviewing] = useState(null);
 
   const [detailTarget, setDetailTarget] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
@@ -30,7 +34,7 @@ export function useAdminDocumentsPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await adminApi.listDocuments(targetPage);
+      const data = await adminApi.listDocuments(targetPage, 20, null, needsReview);
       setDocuments(data.content ?? []);
       setTotalPages(data.totalPages ?? 1);
     } catch (err) {
@@ -44,7 +48,29 @@ export function useAdminDocumentsPage() {
   useEffect(() => {
     load(page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, needsReview]);
+
+  const changeReviewFilter = (enabled) => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (enabled) nextParams.set("needsReview", "true");
+    else nextParams.delete("needsReview");
+    setPage(0);
+    setSearchParams(nextParams);
+  };
+
+  const reviewDocument = async (doc, action) => {
+    setReviewing({ id: doc.id, action });
+    try {
+      if (action === "approve") await adminApi.approveDocumentReview(doc.id);
+      else await adminApi.removeDocumentReview(doc.id);
+      showSuccess(action === "approve" ? "Đã duyệt tài liệu." : "Đã gỡ tài liệu khỏi công khai.");
+      await load(page);
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setReviewing(null);
+    }
+  };
 
   const openRemoveModal = (doc) => setRemoveTarget(doc);
   const closeRemoveModal = () => setRemoveTarget(null);
@@ -140,6 +166,8 @@ export function useAdminDocumentsPage() {
     page,
     totalPages,
     setPage,
+    needsReview,
+    changeReviewFilter,
     removeTarget,
     removing,
     openRemoveModal,
@@ -154,6 +182,8 @@ export function useAdminDocumentsPage() {
     submitEdit,
     restoringId,
     restoreDocument,
+    reviewing,
+    reviewDocument,
     detailTarget,
     loadingDetail,
     openDetailModal,

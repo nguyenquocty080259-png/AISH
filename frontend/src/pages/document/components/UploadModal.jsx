@@ -51,6 +51,11 @@ export default function UploadModal({ open, subjects, submitting, onClose, onSub
             Tên tài liệu
             <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} />
           </label>
+          <button type="button" disabled title="Tải lên xong, mở Sửa tài liệu để AI gợi ý"
+            style={{ opacity: 0.65, cursor: "not-allowed" }} className="doc-modal__submit">
+            AI gợi ý
+          </button>
+          <p style={{ color: "#777", fontSize: 12 }}>Tải lên xong, mở Sửa tài liệu để AI gợi ý</p>
 
           <label>
             Mô tả

@@ -20,6 +20,8 @@ import com.aish.mvc.repository.auth.AuthUserRepository;
 import com.aish.mvc.repository.doc.*;
 import com.aish.mvc.service.ai.AiModerationService;
 import com.aish.mvc.service.doc.DocumentService;
+import com.aish.mvc.service.doc.NamingModerationService;
+import com.aish.mvc.service.doc.DocumentContentKeywordService;
 import com.aish.mvc.service.notification.NotificationService;
 import com.aish.mvc.service.stor.CloudinaryService;
 import com.aish.mvc.service.stor.FileStorageService;
@@ -64,6 +66,8 @@ public class DocumentServiceImpl implements DocumentService {
     @Autowired private AiModerationService aiModerationService;
     @Autowired private DocumentMapper documentMapper;
     @Autowired private NotificationService notificationService;
+    @Autowired private NamingModerationService namingModerationService;
+    @Autowired private DocumentContentKeywordService documentContentKeywordService;
 
     private AuthUser getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -93,6 +97,7 @@ public class DocumentServiceImpl implements DocumentService {
 
     // Tạo document + gắn nhiều môn học (chưa gắn file)
     private DocDocument buildDocument(String title, String description, java.util.List<Long> subjectIds) {
+        String validatedTitle = namingModerationService.validate(title);
         // DEC-030: mỗi tài liệu phải thuộc >=1 môn học — chặn TRƯỚC khi tạo document/lưu file,
         // để không tạo ra document/file mồ côi khi validation fail.
         if (subjectIds == null || subjectIds.isEmpty()) {
@@ -109,7 +114,7 @@ public class DocumentServiceImpl implements DocumentService {
         }
 
         DocDocument doc = new DocDocument();
-        doc.setTitle(title);
+        doc.setTitle(validatedTitle);
         doc.setDescription(description);
         doc.setUser(getCurrentUser());
         doc.setStatus(DocumentStatus.COMPLETED);
@@ -213,7 +218,8 @@ public class DocumentServiceImpl implements DocumentService {
             throw new ForbiddenException("Bạn không có quyền sửa tài liệu này!");
         }
 
-        applyDocumentUpdate(doc, title, description, subjectIds);
+        String validatedTitle = title == null ? null : namingModerationService.validate(title);
+        applyDocumentUpdate(doc, validatedTitle, description, subjectIds);
 
         return documentMapper.toResponseDTO(docDocumentRepository.save(doc));
     }
@@ -381,11 +387,29 @@ public class DocumentServiceImpl implements DocumentService {
             return documentMapper.toResponseDTO(docDocumentRepository.save(doc));
         }
 
-        // -> PUBLIC: bắt buộc AI pre-screen trước (DEC-035).
-        ModerationResultDTO result = aiModerationService.screen(documentId);
-        doc.setModerationReason(result.getReason());
+        // -> PUBLIC: reset lớp admin review trước mọi loại pre-screen.
         doc.setAdminReviewedAt(null);
         doc.setAdminReviewedBy(null);
+
+        // Keyword DB là lớp rẻ nhất. Hit thì tự động từ chối và không gọi AI.
+        if (documentContentKeywordService.matches(doc)) {
+            log.info("Document {} matched a DOCUMENT_CONTENT keyword; skipping AI moderation screen", documentId);
+            doc.setVisibility(DocumentVisibility.PRIVATE);
+            doc.setModerationStatus(ModerationStatus.REJECTED);
+            doc.setModerationReason("Nội dung tài liệu kích hoạt quy tắc từ khóa không phù hợp.");
+            DocDocument rejected = docDocumentRepository.save(doc);
+            notifyAdminsDocumentScreened(rejected, "REJECTED_BY_CONTENT_KEYWORD");
+            return documentMapper.toResponseDTO(rejected);
+        }
+
+        // Không trúng keyword: tiếp tục AI pre-screen hiện có (DEC-035).
+        ModerationResultDTO result = aiModerationService.screen(documentId);
+        doc.setModerationReason(result.getReason());
+        if (result.isMetadataMismatch()) {
+            doc.setModerationReason((result.getReason() == null ? "" : result.getReason())
+                    + " | Lưu ý metadata: " + result.getMetadataMismatchReason());
+            notifyMetadataMismatch(doc, result.getMetadataMismatchReason());
+        }
 
         if (result.getDecision() == ModerationDecision.PASS) {
             doc.setVisibility(DocumentVisibility.PUBLIC);
@@ -400,21 +424,37 @@ public class DocumentServiceImpl implements DocumentService {
         }
 
         DocDocument savedDocument = docDocumentRepository.save(doc);
+        notifyAdminsDocumentScreened(savedDocument, result.getDecision().name());
+
+        return documentMapper.toResponseDTO(savedDocument);
+    }
+
+    private void notifyAdminsDocumentScreened(DocDocument document, String outcome) {
         try {
-            String message = "Tài liệu \"" + savedDocument.getTitle()
-                    + "\" đã được AI sàng lọc: " + result.getDecision().name();
+            String message = "Tài liệu \"" + document.getTitle()
+                    + "\" đã được sàng lọc: " + outcome;
             authUserRepository.findByRole_RoleNameAndStatus("ADMIN", UserStatus.ACTIVE)
                     .forEach(admin -> notificationService.createDocumentNotification(
                             admin.getId(),
                             NotificationType.DOCUMENT_SCREENED,
                             message,
-                            savedDocument.getId()));
+                            document.getId()));
         } catch (Exception exception) {
             log.error("Không thể gửi thông báo kiểm duyệt tài liệu id={} cho Admin; publish vẫn tiếp tục.",
-                    savedDocument.getId(), exception);
+                    document.getId(), exception);
         }
+    }
 
-        return documentMapper.toResponseDTO(savedDocument);
+    private void notifyMetadataMismatch(DocDocument document, String reason) {
+        try {
+            notificationService.createDocumentNotification(document.getUser().getId(), NotificationType.METADATA_MISMATCH,
+                    "Tiêu đề/môn học của '" + document.getTitle() + "' có vẻ chưa khớp nội dung — bạn nên chỉnh lại.", document.getId());
+            authUserRepository.findByRole_RoleNameAndStatus("ADMIN", UserStatus.ACTIVE).forEach(admin ->
+                    notificationService.createDocumentNotification(admin.getId(), NotificationType.METADATA_MISMATCH,
+                            "Metadata tài liệu '" + document.getTitle() + "' có dấu hiệu chưa khớp nội dung: " + reason, document.getId()));
+        } catch (Exception exception) {
+            log.warn("Không thể gửi thông báo metadata mismatch cho document {}; publish vẫn tiếp tục.", document.getId(), exception);
+        }
     }
 
     @Override

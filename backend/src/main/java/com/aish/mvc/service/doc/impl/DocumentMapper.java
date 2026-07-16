@@ -6,6 +6,8 @@ import com.aish.mvc.dto.doc.DocumentResponseDTO;
 import com.aish.mvc.entity.doc.DocDocument;
 import com.aish.mvc.entity.doc.DocFile;
 import com.aish.mvc.entity.doc.Subject;
+import com.aish.mvc.entity.auth.AuthUser;
+import com.aish.mvc.entity.enums.CommentStatus;
 import com.aish.mvc.entity.enums.IngestStatus;
 import com.aish.mvc.entity.enums.ModerationStatus;
 import com.aish.mvc.exception.ResourceNotFoundException;
@@ -33,11 +35,11 @@ public class DocumentMapper {
     private final AuthAccountRepository authAccountRepository;
     private final DocEmbeddingService docEmbeddingService;
 
-    private Long currentUserId() {
+    private AuthUser currentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return authAccountRepository.findByIdentifier(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy user đang đăng nhập"))
-                .getUser().getId();
+                .getUser();
     }
 
     // DocFile.resourceType: "local" (upload-server) | "image"/"raw" (Cloudinary) -> LOCAL/CLOUD cho FE (DEC-031).
@@ -46,6 +48,10 @@ public class DocumentMapper {
     }
 
     public DocumentResponseDTO toResponseDTO(DocDocument doc) {
+        AuthUser currentUser = currentUser();
+        Long currentUserId = currentUser.getId();
+        boolean isAdmin = currentUser.getRole() != null
+                && "ADMIN".equals(currentUser.getRole().getRoleName());
         DocumentResponseDTO dto = new DocumentResponseDTO();
         dto.setId(doc.getId());
         dto.setTitle(doc.getTitle());
@@ -94,10 +100,18 @@ public class DocumentMapper {
         dto.setFavoriteCount(favoriteRepository.countByDocumentId(doc.getId()));
         dto.setDownloadCount(downloadRepository.countByDocumentId(doc.getId()));
         dto.setAverageRating(ratingRepository.getAverageRatingByDocumentId(doc.getId()));
-        dto.setFavorited(favoriteRepository.existsByUserIdAndDocumentId(currentUserId(), doc.getId()));
+        dto.setFavorited(favoriteRepository.existsByUserIdAndDocumentId(currentUserId, doc.getId()));
 
         List<CommentDTO> commentDTOs = commentRepository.findByDocumentIdOrderByCreatedAtDesc(doc.getId()).stream()
-                .map(c -> new CommentDTO(c.getId(), c.getUser().getFullName(), c.getContent(), c.getCreatedAt()))
+                .filter(c -> c.getStatus() == CommentStatus.VISIBLE
+                        || (c.getStatus() == CommentStatus.PENDING_REVIEW
+                        && (isAdmin || c.getUser().getId().equals(currentUserId))))
+                .map(c -> new CommentDTO(
+                        c.getId(),
+                        c.getUser().getFullName(),
+                        c.getContent(),
+                        c.getStatus().name(),
+                        c.getCreatedAt()))
                 .collect(Collectors.toList());
         dto.setComments(commentDTOs);
 
