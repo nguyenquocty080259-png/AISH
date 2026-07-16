@@ -26,6 +26,20 @@ export function rejectAppeal(appealId, note) {
     .then((res) => res.data);
 }
 
+export function listPendingComments() {
+  return apiClient
+    .get("/admin/comments", { params: { status: "PENDING_REVIEW" } })
+    .then((res) => res.data);
+}
+
+export function approveComment(id) {
+  return apiClient.post(`/admin/comments/${id}/review-approve`).then((res) => res.data);
+}
+
+export function rejectComment(id) {
+  return apiClient.post(`/admin/comments/${id}/review-reject`).then((res) => res.data);
+}
+
 export function listReports(status) {
   return apiClient
     .get("/admin/reports", { params: status ? { status } : {} })

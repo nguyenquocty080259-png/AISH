@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
 import * as adminApi from "../../../../api/adminApi";
 import { useToast } from "../../../../hooks/useToast";
+import { useSearchParams } from "react-router-dom";
 
 export function useAdminAppealsPage() {
   const { showSuccess, showError } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTabState] = useState(
+    searchParams.get("tab") === "comments" ? "comments" : "appeals"
+  );
 
   const [appeals, setAppeals] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,6 +18,9 @@ export function useAdminAppealsPage() {
   const [decisionTarget, setDecisionTarget] = useState(null); // { appeal, action: "approve"|"reject" }
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentPendingIds, setCommentPendingIds] = useState(() => new Set());
 
   const load = async (status) => {
     setLoading(true);
@@ -32,6 +40,30 @@ export function useAdminAppealsPage() {
     load(statusFilter);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
+
+  const loadComments = async () => {
+    setCommentsLoading(true);
+    try {
+      setComments(await adminApi.listPendingComments());
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setCommentsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "comments") loadComments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  const setActiveTab = (tab) => {
+    setActiveTabState(tab);
+    const next = new URLSearchParams(searchParams);
+    if (tab === "comments") next.set("tab", "comments");
+    else next.delete("tab");
+    setSearchParams(next, { replace: true });
+  };
 
   const openDecisionModal = (appeal, action) => {
     setDecisionTarget({ appeal, action });
@@ -68,8 +100,28 @@ export function useAdminAppealsPage() {
     }
   };
 
+  const reviewComment = async (comment, approve) => {
+    setCommentPendingIds((previous) => new Set(previous).add(comment.id));
+    try {
+      if (approve) await adminApi.approveComment(comment.id);
+      else await adminApi.rejectComment(comment.id);
+      setComments((previous) => previous.filter((item) => item.id !== comment.id));
+      showSuccess(approve ? "Đã duyệt bình luận." : "Đã từ chối bình luận.");
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setCommentPendingIds((previous) => {
+        const next = new Set(previous);
+        next.delete(comment.id);
+        return next;
+      });
+    }
+  };
+
   return {
     appeals,
+    activeTab,
+    setActiveTab,
     loading,
     error,
     statusFilter,
@@ -81,5 +133,9 @@ export function useAdminAppealsPage() {
     openDecisionModal,
     closeDecisionModal,
     submitDecision,
+    comments,
+    commentsLoading,
+    commentPendingIds,
+    reviewComment,
   };
 }

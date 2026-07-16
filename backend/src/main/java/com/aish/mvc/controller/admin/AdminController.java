@@ -8,12 +8,14 @@ import com.aish.mvc.dto.auth.admin.AdminUserResponseDTO;
 import com.aish.mvc.dto.doc.AdminAppealResponseDTO;
 import com.aish.mvc.dto.doc.AdminDocumentSummaryDTO;
 import com.aish.mvc.dto.doc.AdminStatsDTO;
+import com.aish.mvc.dto.doc.AdminCommentReviewDTO;
 import com.aish.mvc.dto.doc.AppealDecisionRequestDTO;
 import com.aish.mvc.dto.doc.DocumentResponseDTO;
 import com.aish.mvc.dto.doc.DocumentUpdateRequestDTO;
 import com.aish.mvc.dto.report.AdminReportResponseDTO;
 import com.aish.mvc.dto.report.ResolveReportRequestDTO;
 import com.aish.mvc.entity.enums.AppealStatus;
+import com.aish.mvc.entity.enums.CommentStatus;
 import com.aish.mvc.entity.enums.DocumentVisibility;
 import com.aish.mvc.entity.enums.ReportStatus;
 import com.aish.mvc.service.admin.AdminService;
@@ -76,6 +78,22 @@ public class AdminController {
             @RequestBody(required = false) AppealDecisionRequestDTO body) {
         String note = body != null ? body.getNote() : null;
         return ResponseEntity.ok(adminService.rejectAppeal(appealId, note));
+    }
+
+    @GetMapping("/comments")
+    public ResponseEntity<List<AdminCommentReviewDTO>> listComments(
+            @RequestParam(defaultValue = "PENDING_REVIEW") CommentStatus status) {
+        return ResponseEntity.ok(adminService.listComments(status));
+    }
+
+    @PostMapping("/comments/{id}/review-approve")
+    public ResponseEntity<AdminCommentReviewDTO> approveComment(@PathVariable Long id) {
+        return ResponseEntity.ok(adminService.approveComment(id));
+    }
+
+    @PostMapping("/comments/{id}/review-reject")
+    public ResponseEntity<AdminCommentReviewDTO> rejectComment(@PathVariable Long id) {
+        return ResponseEntity.ok(adminService.rejectComment(id));
     }
 
     @GetMapping("/documents")

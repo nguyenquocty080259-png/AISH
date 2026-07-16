@@ -7,26 +7,31 @@ import com.aish.mvc.dto.auth.admin.AdminUpdateUserStatusRequestDTO;
 import com.aish.mvc.dto.auth.admin.AdminUserResponseDTO;
 import com.aish.mvc.dto.doc.AdminAppealResponseDTO;
 import com.aish.mvc.dto.doc.AdminStatsDTO;
+import com.aish.mvc.dto.doc.AdminCommentReviewDTO;
 import com.aish.mvc.dto.doc.DocumentSummaryDTO;
 import com.aish.mvc.entity.auth.AuthAccount;
 import com.aish.mvc.entity.auth.AuthRole;
 import com.aish.mvc.entity.auth.AuthUser;
 import com.aish.mvc.entity.doc.DocDocument;
 import com.aish.mvc.entity.doc.ModerationAppeal;
+import com.aish.mvc.entity.doc.Comment;
 import com.aish.mvc.entity.enums.AppealStatus;
 import com.aish.mvc.entity.enums.AuthProviders;
 import com.aish.mvc.entity.enums.DocumentVisibility;
 import com.aish.mvc.entity.enums.IngestStatus;
 import com.aish.mvc.entity.enums.ModerationStatus;
 import com.aish.mvc.entity.enums.UserStatus;
+import com.aish.mvc.entity.enums.CommentStatus;
 import com.aish.mvc.exception.ResourceNotFoundException;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.repository.auth.AuthRoleRepository;
 import com.aish.mvc.repository.auth.AuthUserRepository;
 import com.aish.mvc.repository.doc.DocDocumentRepository;
 import com.aish.mvc.repository.doc.ModerationAppealRepository;
+import com.aish.mvc.repository.doc.CommentRepository;
 import com.aish.mvc.repository.doc.SubjectRepository;
 import com.aish.mvc.service.admin.AdminService;
+import com.aish.mvc.service.notification.NotificationService;
 import com.aish.mvc.tools.seed.SeedCredentialRegistry;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -51,6 +56,7 @@ public class AdminServiceImpl implements AdminService {
     private static final Logger log = LoggerFactory.getLogger(AdminServiceImpl.class);
 
     private final ModerationAppealRepository moderationAppealRepository;
+    private final CommentRepository commentRepository;
     private final DocDocumentRepository docDocumentRepository;
     private final AuthUserRepository authUserRepository;
     private final SubjectRepository subjectRepository;
@@ -58,6 +64,7 @@ public class AdminServiceImpl implements AdminService {
     private final AuthRoleRepository authRoleRepository;
     private final PasswordEncoder passwordEncoder;
     private final SeedCredentialRegistry seedCredentialRegistry;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional(readOnly = true)
@@ -98,6 +105,27 @@ public class AdminServiceImpl implements AdminService {
         appeal.setAdminNote(adminNote);
         moderationAppealRepository.save(appeal);
         return toAdminDTO(appeal);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AdminCommentReviewDTO> listComments(CommentStatus status) {
+        List<Comment> comments = status == null
+                ? commentRepository.findAllByOrderByCreatedAtDesc()
+                : commentRepository.findByStatusOrderByCreatedAtDesc(status);
+        return comments.stream().map(this::toAdminCommentDTO).toList();
+    }
+
+    @Override
+    @Transactional
+    public AdminCommentReviewDTO approveComment(Long commentId) {
+        return reviewComment(commentId, true);
+    }
+
+    @Override
+    @Transactional
+    public AdminCommentReviewDTO rejectComment(Long commentId) {
+        return reviewComment(commentId, false);
     }
 
     @Override
@@ -318,6 +346,28 @@ public class AdminServiceImpl implements AdminService {
         return document;
     }
 
+    private AdminCommentReviewDTO reviewComment(Long commentId, boolean approved) {
+        Comment comment = commentRepository.findWithUserAndDocumentById(commentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bình luận không tồn tại!"));
+        if (comment.getStatus() != CommentStatus.PENDING_REVIEW) {
+            throw new IllegalStateException("Bình luận này không còn chờ duyệt.");
+        }
+
+        comment.setStatus(approved ? CommentStatus.VISIBLE : CommentStatus.REJECTED);
+        comment.setReviewedBy(getCurrentAdminId());
+        comment.setReviewedAt(LocalDateTime.now());
+        Comment saved = commentRepository.saveAndFlush(comment);
+
+        try {
+            notificationService.notifyCommentReviewed(
+                    saved.getUser().getId(), saved.getId(), saved.getDocument().getId(), approved);
+        } catch (Exception exception) {
+            log.warn("Không thể gửi thông báo kết quả duyệt bình luận {}; quyết định vẫn được lưu.",
+                    saved.getId(), exception);
+        }
+        return toAdminCommentDTO(saved);
+    }
+
     private Long getCurrentAdminId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String identifier = authentication != null ? authentication.getName() : null;
@@ -343,5 +393,18 @@ public class AdminServiceImpl implements AdminService {
                 appeal.getReason(),
                 appeal.getCreatedAt(),
                 appeal.getStatus());
+    }
+
+    private AdminCommentReviewDTO toAdminCommentDTO(Comment comment) {
+        return new AdminCommentReviewDTO(
+                comment.getId(),
+                comment.getContent(),
+                comment.getUser().getFullName(),
+                comment.getDocument().getId(),
+                comment.getDocument().getTitle(),
+                comment.getModerationReason(),
+                comment.getDisputeNote(),
+                comment.getCreatedAt(),
+                comment.getStatus());
     }
 }

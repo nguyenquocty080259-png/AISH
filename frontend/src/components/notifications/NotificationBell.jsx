@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import * as notificationApi from "../../api/notificationApi";
 import { useToast } from "../../hooks/useToast";
 import { ROUTES } from "../../constants/routes";
+import { useAuth } from "../../hooks/useAuth";
 import "./notification-bell.css";
 
 function formatDate(value) {
@@ -11,7 +12,9 @@ function formatDate(value) {
 
 export default function NotificationBell() {
   const { showError } = useToast();
+  const { role } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const rootRef = useRef(null);
   const [open, setOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -59,6 +62,12 @@ export default function NotificationBell() {
       }
       if (notification.type === "DOCUMENT_SCREENED" && notification.relatedDocumentId) {
         navigate(`${ROUTES.ADMIN_DOCUMENTS}?needsReview=true`);
+      } else if (notification.relatedCommentId) {
+        if (role === "ADMIN" || location.pathname.startsWith("/admin")) {
+          navigate(`${ROUTES.ADMIN_APPEALS}?tab=comments`);
+        } else if (notification.relatedDocumentId) {
+          navigate(`/documents/${notification.relatedDocumentId}?comment=${notification.relatedCommentId}`);
+        }
       }
     } catch (error) {
       showError(error.message);
