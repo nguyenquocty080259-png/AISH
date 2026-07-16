@@ -30,6 +30,7 @@ import AdminAppealsPage from "../pages/admin/appeals/AdminAppealsPage";
 import AdminReportsPage from "../pages/admin/reports/AdminReportsPage";
 import AdminDocumentsPage from "../pages/admin/documents/AdminDocumentsPage";
 import AdminSubjectsPage from "../pages/admin/subjects/AdminSubjectsPage";
+import AdminKeywordsPage from "../pages/admin/keywords/AdminKeywordsPage";
 import AdminUsersPage from "../pages/admin/users/AdminUsersPage";
 import NotFoundPage from "../pages/error/NotFoundPage";
 import UiPreviewPage from "../pages/ui-preview/UiPreviewPage";
@@ -74,6 +75,7 @@ export default function AppRoutes() {
           <Route path="reports" element={<AdminReportsPage />} />
           <Route path="documents" element={<AdminDocumentsPage />} />
           <Route path="subjects" element={<AdminSubjectsPage />} />
+          <Route path="keywords" element={<AdminKeywordsPage />} />
           <Route path="users" element={<AdminUsersPage />} />
         </Route>
       </Route>

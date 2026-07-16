@@ -92,3 +92,21 @@ export function updateUserStatus(id, status) {
     .then((res) => res.data);
 }
 
+export function listModerationKeywords(type) {
+  return apiClient
+    .get("/admin/moderation-keywords", { params: type ? { type } : {} })
+    .then((res) => res.data);
+}
+
+export function createModerationKeyword(payload) {
+  return apiClient.post("/admin/moderation-keywords", payload).then((res) => res.data);
+}
+
+export function updateModerationKeyword(id, payload) {
+  return apiClient.put(`/admin/moderation-keywords/${id}`, payload).then((res) => res.data);
+}
+
+export function deleteModerationKeyword(id) {
+  return apiClient.delete(`/admin/moderation-keywords/${id}`);
+}
+
