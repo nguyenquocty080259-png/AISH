@@ -54,6 +54,7 @@ public class DocumentMapper {
         dto.setVisibility(doc.getVisibility() != null ? doc.getVisibility().name() : "PUBLIC");
         dto.setModerationStatus(doc.getModerationStatus() != null ? doc.getModerationStatus().name() : ModerationStatus.NOT_REQUIRED.name());
         dto.setModerationReason(doc.getModerationReason());
+        dto.setAdminReviewedAt(doc.getAdminReviewedAt());
         dto.setIngestStatus(doc.getIngestStatus() != null ? doc.getIngestStatus().name() : IngestStatus.NOT_INGESTED.name());
         dto.setCreatedAt(doc.getCreatedAt());
         dto.setDeletedAt(doc.getDeletedAt());
@@ -116,6 +117,7 @@ public class DocumentMapper {
                 storageType,
                 doc.getCreatedAt(),
                 null,
+                doc.getAdminReviewedAt(),
                 doc.getDeletedAt());
     }
 }

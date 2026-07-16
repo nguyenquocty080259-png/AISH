@@ -84,6 +84,9 @@ public class AdminController {
             @RequestParam(required = false)
             DocumentVisibility visibility,
 
+            @RequestParam(defaultValue = "false")
+            boolean needsReview,
+
             @PageableDefault(
                     size = 20,
                     sort = "createdAt",
@@ -93,10 +96,23 @@ public class AdminController {
         return ResponseEntity.ok(
                 documentService.getAllDocumentsForAdmin(
                         visibility,
+                        needsReview,
                         pageable
                 )
         );
 
+    }
+
+    @PostMapping("/documents/{id}/review-approve")
+    public ResponseEntity<Void> approveDocumentReview(@PathVariable Long id) {
+        adminService.approveDocumentReview(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/documents/{id}/review-remove")
+    public ResponseEntity<Void> removeDocumentReview(@PathVariable Long id) {
+        adminService.removeDocumentReview(id);
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/documents/{id}")
