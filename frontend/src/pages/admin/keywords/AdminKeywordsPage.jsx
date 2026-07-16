@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Button from "../../../components/ui/Button";
 import EmptyState from "../../../components/ui/EmptyState";
 import Modal from "../../../components/ui/Modal";
@@ -30,6 +30,19 @@ export default function AdminKeywordsPage() {
   } = useAdminKeywordsPage();
   const [newKeyword, setNewKeyword] = useState("");
   const [editedKeyword, setEditedKeyword] = useState("");
+  const [search, setSearch] = useState("");
+  const [activeFilter, setActiveFilter] = useState("all");
+
+  const filteredKeywords = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return keywords.filter((item) => {
+      const matchesSearch = !query || item.keyword.toLowerCase().includes(query);
+      const matchesActive = activeFilter === "all"
+        || (activeFilter === "active" && item.active)
+        || (activeFilter === "inactive" && !item.active);
+      return matchesSearch && matchesActive;
+    });
+  }, [keywords, search, activeFilter]);
 
   useEffect(() => {
     setEditedKeyword(editTarget?.keyword ?? "");
@@ -90,10 +103,32 @@ export default function AdminKeywordsPage() {
         </div>
       </form>
 
+      <div className="admin-keywords-filters">
+        <label>
+          Tìm kiếm
+          <input
+            type="search"
+            placeholder="Lọc theo nội dung từ khóa"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+        </label>
+        <label>
+          Trạng thái
+          <select value={activeFilter} onChange={(event) => setActiveFilter(event.target.value)}>
+            <option value="all">Tất cả</option>
+            <option value="active">Đang bật</option>
+            <option value="inactive">Đã tắt</option>
+          </select>
+        </label>
+      </div>
+
       {loading ? (
         <p className="admin-keywords-page__loading">Đang tải danh sách từ khóa...</p>
-      ) : keywords.length === 0 ? (
-        <EmptyState icon="⌕" message="Chưa có từ khóa nào trong loại này." />
+      ) : filteredKeywords.length === 0 ? (
+        <EmptyState icon="⌕" message={keywords.length === 0
+          ? "Chưa có từ khóa nào trong loại này."
+          : "Không có từ khóa phù hợp bộ lọc."} />
       ) : (
         <Table>
           <Table.Head>
@@ -105,7 +140,7 @@ export default function AdminKeywordsPage() {
             </Table.Row>
           </Table.Head>
           <Table.Body>
-            {keywords.map((item) => {
+            {filteredKeywords.map((item) => {
               const pending = pendingIds.has(item.id);
               return (
                 <Table.Row key={item.id}>
