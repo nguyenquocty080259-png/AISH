@@ -38,15 +38,26 @@ export function resolveReport(id, payload) {
 
 // Returns a Spring Data Page: { content, totalPages, totalElements, number, size, ... }.
 // page is 0-indexed (matches Spring Pageable). Backend default: size=20, sort=createdAt DESC.
-export function listDocuments(page = 0, size = 20, visibility = null) {
+export function listDocuments(page = 0, size = 20, visibility = null, needsReview = false) {
   const params = { page, size };
   if (visibility) {
     params.visibility = visibility;
+  }
+  if (needsReview) {
+    params.needsReview = true;
   }
 
   return apiClient
     .get("/admin/documents", { params })
     .then((res) => res.data);
+}
+
+export function approveDocumentReview(id) {
+  return apiClient.post(`/admin/documents/${id}/review-approve`);
+}
+
+export function removeDocumentReview(id) {
+  return apiClient.post(`/admin/documents/${id}/review-remove`);
 }
 
 // Takedown — no request body/reason supported by the backend (DELETE only takes the id).

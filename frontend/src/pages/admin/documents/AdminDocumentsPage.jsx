@@ -40,6 +40,8 @@ export default function AdminDocumentsPage() {
     page,
     totalPages,
     setPage,
+    needsReview,
+    changeReviewFilter,
     removeTarget,
     removing,
     openRemoveModal,
@@ -54,6 +56,8 @@ export default function AdminDocumentsPage() {
     submitEdit,
     restoringId,
     restoreDocument,
+    reviewing,
+    reviewDocument,
     detailTarget,
     loadingDetail,
     openDetailModal,
@@ -66,6 +70,23 @@ export default function AdminDocumentsPage() {
         title="Quản lý tài liệu"
         subtitle="Gỡ tài liệu vi phạm chính sách (DEC-009: đây là xử lý vi phạm, KHÔNG chuyển quyền sở hữu, KHÔNG chỉnh sửa nội dung)."
       />
+
+      <div className="admin-documents-page__filters" role="group" aria-label="Lọc tài liệu">
+        <button
+          type="button"
+          className={!needsReview ? "admin-documents-page__filter--active" : ""}
+          onClick={() => changeReviewFilter(false)}
+        >
+          Tất cả
+        </button>
+        <button
+          type="button"
+          className={needsReview ? "admin-documents-page__filter--active" : ""}
+          onClick={() => changeReviewFilter(true)}
+        >
+          Cần xem xét
+        </button>
+      </div>
 
       {loading ? (
         <p className="admin-documents-page__loading">Đang tải danh sách tài liệu...</p>
@@ -120,6 +141,28 @@ export default function AdminDocumentsPage() {
                         <Button variant="secondary" onClick={() => openEditModal(doc)}>
                           Sửa
                         </Button>
+                        {!isRemoved && (
+                          <>
+                            <Button
+                              variant="primary"
+                              onClick={() => reviewDocument(doc, "approve")}
+                              disabled={reviewing?.id === doc.id}
+                            >
+                              {reviewing?.id === doc.id && reviewing.action === "approve"
+                                ? "Đang duyệt..."
+                                : "Duyệt"}
+                            </Button>
+                            <Button
+                              variant="danger"
+                              onClick={() => reviewDocument(doc, "remove")}
+                              disabled={reviewing?.id === doc.id}
+                            >
+                              {reviewing?.id === doc.id && reviewing.action === "remove"
+                                ? "Đang gỡ..."
+                                : "Gỡ"}
+                            </Button>
+                          </>
+                        )}
                         {isRemoved ? (
                           <Button
                             variant="primary"
