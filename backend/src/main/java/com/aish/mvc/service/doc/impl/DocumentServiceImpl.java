@@ -374,6 +374,8 @@ public class DocumentServiceImpl implements DocumentService {
         // -> PUBLIC: bắt buộc AI pre-screen trước (DEC-035).
         ModerationResultDTO result = aiModerationService.screen(documentId);
         doc.setModerationReason(result.getReason());
+        doc.setAdminReviewedAt(null);
+        doc.setAdminReviewedBy(null);
 
         if (result.getDecision() == ModerationDecision.PASS) {
             doc.setVisibility(DocumentVisibility.PUBLIC);

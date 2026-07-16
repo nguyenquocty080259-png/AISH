@@ -52,6 +52,12 @@ public class DocDocument {
     @Column(name = "moderation_reason", columnDefinition = "TEXT")
     private String moderationReason;
 
+    @Column(name = "admin_reviewed_at")
+    private LocalDateTime adminReviewedAt;
+
+    @Column(name = "admin_reviewed_by")
+    private Long adminReviewedBy;
+
     // Trạng thái AI-ingest — set khi ingest() chạy xong (INGESTED) hoặc phát hiện định
     // dạng không hỗ trợ (UNSUPPORTED_FORMAT), để FE không cần gọi lại ingest để biết.
     @Enumerated(EnumType.STRING)
