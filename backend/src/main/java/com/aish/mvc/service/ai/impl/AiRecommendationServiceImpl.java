@@ -65,13 +65,13 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
         Set<Long> excludeIds = new HashSet<>();
         excludeIds.add(documentId);
 
-        return rank(subjectIdsOf(seed), excludeIds, currentUserId, limit);
+        return rank(subjectIdsOf(seed), excludeIds, currentUserId, limit, false);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<RecommendedDocumentDTO> recommendForUser(Long currentUserId, int limit) {
-        return rank(personalSubjectAffinity(currentUserId), new HashSet<>(), currentUserId, limit);
+        return rank(personalSubjectAffinity(currentUserId), new HashSet<>(), currentUserId, limit, true);
     }
 
     // Tập subject user "quan tâm", gộp từ: tài liệu của chính mình + đã yêu thích + xem gần
@@ -102,14 +102,15 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
     }
 
     private List<RecommendedDocumentDTO> rank(Set<Long> affinitySubjectIds, Set<Long> excludeIds,
-                                               Long currentUserId, int limit) {
+                                               Long currentUserId, int limit, boolean excludeOwnDocuments) {
         List<DocDocument> candidates = docDocumentRepository.findPublicApprovedDocuments(
                 DocumentVisibility.PUBLIC, ModerationStatus.APPROVED);
 
         return candidates.stream()
                 .filter(d -> !excludeIds.contains(d.getId()))
-                // "Discover" style: không gợi ý lại tài liệu chính chủ user đã có sẵn.
-                .filter(d -> currentUserId == null || !d.getUser().getId().equals(currentUserId))
+                // Chỉ với "Discover": không gợi ý lại tài liệu chính chủ user đã có sẵn.
+                .filter(d -> !excludeOwnDocuments || currentUserId == null
+                        || !d.getUser().getId().equals(currentUserId))
                 // Double-check quyền truy cập theo đúng luật availability dùng chung toàn app,
                 // dù về lý thuyết PUBLIC+APPROVED đã luôn khả dụng với mọi người.
                 .filter(d -> documentAccessPort.isAvailableTo(d.getId(), currentUserId))
