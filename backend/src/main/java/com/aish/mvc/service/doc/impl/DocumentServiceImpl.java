@@ -428,11 +428,19 @@ public class DocumentServiceImpl implements DocumentService {
     @Transactional(readOnly = true)
     public Page<AdminDocumentSummaryDTO> getAllDocumentsForAdmin(
             DocumentVisibility visibility,
+            boolean needsReview,
             Pageable pageable) {
 
         Page<DocDocument> page;
 
-        if (visibility == null) {
+        if (needsReview) {
+
+            page = docDocumentRepository
+                    .findByModerationStatusInAndAdminReviewedAtIsNullAndDeletedAtIsNull(
+                            List.of(ModerationStatus.APPROVED, ModerationStatus.REJECTED),
+                            pageable);
+
+        } else if (visibility == null) {
 
             page = docDocumentRepository.findAll(pageable);
 
@@ -457,6 +465,7 @@ public class DocumentServiceImpl implements DocumentService {
                     storageType,
                     document.getCreatedAt(),
                     document.getIngestStatus() != null ? document.getIngestStatus().name() : null,
+                    document.getAdminReviewedAt(),
                     document.getDeletedAt()
             );
         });

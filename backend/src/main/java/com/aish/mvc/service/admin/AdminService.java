@@ -23,6 +23,10 @@ public interface AdminService {
     // Reject: appeal -> APPEAL_REJECTED, document giữ nguyên PRIVATE/REJECTED.
     AdminAppealResponseDTO rejectAppeal(Long appealId, String adminNote);
 
+    void approveDocumentReview(Long documentId);
+
+    void removeDocumentReview(Long documentId);
+
     AdminStatsDTO getStats();
 
     List<AdminUserResponseDTO> getAllUsers();

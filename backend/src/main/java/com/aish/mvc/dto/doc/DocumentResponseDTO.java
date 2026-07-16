@@ -35,6 +35,7 @@ public class DocumentResponseDTO {
     // DEC-035: kết quả kiểm duyệt AI cho lần chuyển PUBLIC gần nhất.
     private String moderationStatus; // NOT_REQUIRED | PENDING | APPROVED | REJECTED
     private String moderationReason;
+    private LocalDateTime adminReviewedAt;
 
     private String ingestStatus; // NOT_INGESTED | INGESTED | UNSUPPORTED_FORMAT
     private Boolean aiSupported;

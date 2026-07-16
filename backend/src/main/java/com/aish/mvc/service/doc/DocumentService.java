@@ -59,6 +59,7 @@ public interface DocumentService {
     // Mọi tài liệu, bất kỳ owner/visibility nào — không phải danh sách theo quyền xem của user.
     Page<AdminDocumentSummaryDTO> getAllDocumentsForAdmin(
             DocumentVisibility visibility,
+            boolean needsReview,
             Pageable pageable
     );
 

@@ -51,6 +51,11 @@ public interface DocDocumentRepository extends JpaRepository<DocDocument, Long> 
             DocumentVisibility visibility,
             Pageable pageable
     );
+
+    Page<DocDocument> findByModerationStatusInAndAdminReviewedAtIsNullAndDeletedAtIsNull(
+            List<ModerationStatus> moderationStatuses,
+            Pageable pageable
+    );
     @Query("SELECT DISTINCT d FROM DocDocument d LEFT JOIN FETCH d.subjects WHERE d.deletedAt IS NULL " +
             "AND (d.visibility = :pub OR d.user.id = :userId)")
     List<DocDocument> findVisibleDocuments(@Param("pub") DocumentVisibility pub, @Param("userId") Long userId);

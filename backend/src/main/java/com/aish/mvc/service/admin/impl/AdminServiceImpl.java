@@ -41,6 +41,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Locale;
+import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
 @Service
@@ -80,6 +81,8 @@ public class AdminServiceImpl implements AdminService {
         DocDocument doc = appeal.getDocument();
         doc.setVisibility(DocumentVisibility.PUBLIC);
         doc.setModerationStatus(ModerationStatus.APPROVED);
+        doc.setAdminReviewedAt(LocalDateTime.now());
+        doc.setAdminReviewedBy(getCurrentAdminId());
         docDocumentRepository.save(doc);
 
         moderationAppealRepository.save(appeal);
@@ -95,6 +98,28 @@ public class AdminServiceImpl implements AdminService {
         appeal.setAdminNote(adminNote);
         moderationAppealRepository.save(appeal);
         return toAdminDTO(appeal);
+    }
+
+    @Override
+    @Transactional
+    public void approveDocumentReview(Long documentId) {
+        DocDocument document = requireActiveDocument(documentId);
+        document.setVisibility(DocumentVisibility.PUBLIC);
+        document.setModerationStatus(ModerationStatus.APPROVED);
+        document.setAdminReviewedAt(LocalDateTime.now());
+        document.setAdminReviewedBy(getCurrentAdminId());
+        docDocumentRepository.save(document);
+    }
+
+    @Override
+    @Transactional
+    public void removeDocumentReview(Long documentId) {
+        DocDocument document = requireActiveDocument(documentId);
+        document.setVisibility(DocumentVisibility.PRIVATE);
+        document.setModerationStatus(ModerationStatus.REJECTED);
+        document.setAdminReviewedAt(LocalDateTime.now());
+        document.setAdminReviewedBy(getCurrentAdminId());
+        docDocumentRepository.save(document);
     }
 
     @Override
@@ -282,6 +307,25 @@ public class AdminServiceImpl implements AdminService {
             throw new IllegalStateException("Kháng cáo này đã được xử lý rồi.");
         }
         return appeal;
+    }
+
+    private DocDocument requireActiveDocument(Long documentId) {
+        DocDocument document = docDocumentRepository.findById(documentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
+        if (document.getDeletedAt() != null) {
+            throw new ResourceNotFoundException("Tài liệu đã bị xóa.");
+        }
+        return document;
+    }
+
+    private Long getCurrentAdminId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String identifier = authentication != null ? authentication.getName() : null;
+        return authAccountRepository.findByIdentifierWithUserAndRole(identifier)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, "Không xác định được admin đang thao tác."))
+                .getUser()
+                .getId();
     }
 
     private AdminAppealResponseDTO toAdminDTO(ModerationAppeal appeal) {
