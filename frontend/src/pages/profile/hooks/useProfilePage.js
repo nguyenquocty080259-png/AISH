@@ -4,7 +4,6 @@ import { useToast } from "../../../hooks/useToast";
 
 const EDITABLE_FIELDS = [
   "fullName",
-  "username",
   "bio",
   "dob",
   "gender",

@@ -98,7 +98,9 @@ export default function ProfilePage() {
         </div>
       ) : (
         <form className="profile-form" onSubmit={handleSave}>
-          {Object.keys(FIELD_LABELS).map((field) => (
+          {Object.keys(FIELD_LABELS)
+            .filter((field) => field !== "username")
+            .map((field) => (
             <label className="profile-form__field" key={field}>
               {FIELD_LABELS[field]}
               {field === "bio" ? (
