@@ -13,6 +13,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,7 @@ public class MetadataSuggestionService {
     private final AuthAccountRepository accountRepository;
     private final AiContentSignalService contentSignalService;
     private final ChatClient chatClient;
+    private final AiUsageTracker aiUsageTracker;
 
     @Transactional(readOnly = true)
     public MetadataSuggestionDTO suggest(Long documentId) {
@@ -52,7 +54,9 @@ public class MetadataSuggestionService {
                 + "Trả về JSON duy nhất theo dạng {\"title\":\"...\",\"description\":\"...\",\"subjectIds\":[1]}. "
                 + "subjectIds chỉ được dùng id trong danh sách đã cung cấp.";
         try {
-            String raw = chatClient.prompt(new Prompt(List.of(new SystemMessage(system), new UserMessage(promptText)))).call().content();
+            ChatResponse chatResponse = chatClient.prompt(new Prompt(List.of(new SystemMessage(system), new UserMessage(promptText)))).call().chatResponse();
+            String raw = chatResponse.getResult().getOutput().getText();
+            aiUsageTracker.log("METADATA_SUGGESTION", chatResponse, null);
             return parse(raw, subjects);
         } catch (ResponseStatusException e) { throw e; }
         catch (Exception e) { throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI hiện không thể tạo gợi ý. Vui lòng thử lại sau."); }

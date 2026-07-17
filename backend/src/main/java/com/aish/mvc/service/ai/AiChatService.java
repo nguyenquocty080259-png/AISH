@@ -22,6 +22,7 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.document.Document;
 import org.springframework.stereotype.Service;
 
@@ -52,6 +53,7 @@ public class AiChatService {
     private final AiConversationService aiConversationService;
     private final AdminAiTools adminAiTools;
     private final UserAiTools userAiTools;
+    private final AiUsageTracker aiUsageTracker;
 
     private static final String SYSTEM_PROMPT = """
             Bạn là AI HiveMind - trợ lý AI của nền tảng HiveMind dành cho sinh viên.
@@ -189,7 +191,9 @@ public class AiChatService {
         promptMessages.add(new UserMessage(userMessage));
         Prompt prompt = new Prompt(promptMessages);
 
-        String answer = chatClient.prompt(prompt).call().content();
+        ChatResponse chatResponse = chatClient.prompt(prompt).call().chatResponse();
+        String answer = chatResponse.getResult().getOutput().getText();
+        aiUsageTracker.log("CHAT_RAG", chatResponse, null);
 
         List<CitationDTO> citations = hits.stream()
                 .map(d -> new CitationDTO(
@@ -235,7 +239,9 @@ public class AiChatService {
         } else if (isAuthenticated) {
             promptSpec = promptSpec.tools(userAiTools);
         }
-        String answer = promptSpec.call().content();
+        ChatResponse chatResponse = promptSpec.call().chatResponse();
+        String answer = chatResponse.getResult().getOutput().getText();
+        aiUsageTracker.log("CHAT_GENERAL", chatResponse, null);
 
         List<RelatedDocDTO> relatedDocs = suggestPublicDocsForTopic(userMessage, currentUserId);
 
