@@ -70,9 +70,14 @@ public class AiChatService {
 
     private static final String ADMIN_TOOLS_PROMPT = """
 
-            Công cụ số liệu dành cho quản trị viên:
-            - Khi quản trị viên hỏi về số liệu hệ thống hiện tại, hãy gọi công cụ getSystemStats.
-            - Phải dùng nguyên văn các con số do công cụ trả về và tuyệt đối không tự đoán số liệu.
+            Công cụ dành cho quản trị viên:
+            - getSystemStats: dùng khi cần số liệu tổng quan hiện tại của toàn hệ thống.
+            - searchDocuments: dùng khi cần tìm tài liệu theo tiêu đề hoặc lọc theo visibility, kiểm duyệt, môn học.
+            - searchUsers: dùng khi cần tìm người dùng theo tên/email hoặc lọc theo vai trò, trạng thái.
+            - getDocumentStatus: dùng khi cần trạng thái đầy đủ của một tài liệu có ID cụ thể.
+            - getUserStatus: dùng khi cần trạng thái của một người dùng có ID hoặc email cụ thể.
+            - Luôn trả lời bằng tiếng Việt và chép nguyên văn toàn bộ dòng/trường dữ liệu công cụ trả về, không diễn giải lại hoặc bỏ sót; tuyệt đối không tự đoán số, tên hay trạng thái.
+            - Luôn nhắc ID của tài liệu/người dùng trong câu trả lời để quản trị viên tìm được trên trang quản trị.
             """;
 
     private static final String RAG_PROMPT_TEMPLATE = """
