@@ -28,16 +28,6 @@ public class JwtUtil {
                 .compact();
     }
 
-    // Tạo token từ email
-    public String creteToken(String email) {
-        return Jwts.builder()
-                .subject(email)
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + 86400000)) // 24h
-                .signWith(getKey())
-                .compact();
-    }
-
     // Lấy toàn bộ Claims
     private Claims extractClaims(String token) {
         return Jwts.parser()
