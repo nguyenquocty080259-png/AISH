@@ -45,7 +45,7 @@ class AiUsageTrackerTest {
         tracker.log("CHAT_GENERAL", response, null);
 
         ArgumentCaptor<AiUsageLog> captor = ArgumentCaptor.forClass(AiUsageLog.class);
-        verify(logs).save(captor.capture());
+        verify(logs).saveAndFlush(captor.capture());
         AiUsageLog saved = captor.getValue();
         assertEquals(1_000, saved.getInputTokens());
         assertEquals(500, saved.getOutputTokens());
@@ -58,7 +58,7 @@ class AiUsageTrackerTest {
         tracker.log("TEXT_MODERATION", responseWithUsage(0, 0), null);
 
         ArgumentCaptor<AiUsageLog> captor = ArgumentCaptor.forClass(AiUsageLog.class);
-        verify(logs).save(captor.capture());
+        verify(logs).saveAndFlush(captor.capture());
         assertNull(captor.getValue().getInputTokens());
         assertNull(captor.getValue().getOutputTokens());
         assertNull(captor.getValue().getTotalTokens());
@@ -66,7 +66,7 @@ class AiUsageTrackerTest {
 
     @Test
     void repositoryFailureNeverPropagates() {
-        when(logs.save(any())).thenThrow(new RuntimeException("database unavailable"));
+        when(logs.saveAndFlush(any())).thenThrow(new RuntimeException("database unavailable"));
 
         assertDoesNotThrow(() -> tracker.log("CHAT_RAG", responseWithUsage(10, 5), null));
     }

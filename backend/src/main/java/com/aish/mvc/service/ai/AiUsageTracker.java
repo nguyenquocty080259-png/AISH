@@ -51,7 +51,7 @@ public class AiUsageTracker {
                     ? null : valueOrZero(inputTokens) + valueOrZero(outputTokens);
             AuthUser currentUser = currentUserOrNull();
 
-            usageLogRepository.save(AiUsageLog.builder()
+            usageLogRepository.saveAndFlush(AiUsageLog.builder()
                     .messageId(messageId)
                     .callType(callType)
                     .userId(currentUser == null ? null : currentUser.getId())
