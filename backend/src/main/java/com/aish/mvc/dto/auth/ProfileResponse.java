@@ -40,4 +40,6 @@ public class ProfileResponse {
     private String linkedinUrl;
 
     private String websiteUrl;
+
+    private Integer trashRetentionDays;
 }

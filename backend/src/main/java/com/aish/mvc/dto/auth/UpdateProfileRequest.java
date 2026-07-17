@@ -38,4 +38,6 @@ public class UpdateProfileRequest {
     private String linkedinUrl;
 
     private String websiteUrl;
+
+    private Integer trashRetentionDays;
 }

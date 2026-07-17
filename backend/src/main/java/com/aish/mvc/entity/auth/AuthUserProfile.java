@@ -65,6 +65,11 @@ public class AuthUserProfile {
     @Column(name = "website_url")
     private String websiteUrl;
 
+    // Số ngày giữ tài liệu trong thùng rác trước khi bị xoá vĩnh viễn (TrashCleanupScheduler).
+    // null = dùng mặc định 30 ngày.
+    @Column(name = "trash_retention_days")
+    private Integer trashRetentionDays;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

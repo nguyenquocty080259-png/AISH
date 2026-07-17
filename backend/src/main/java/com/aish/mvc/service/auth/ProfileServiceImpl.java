@@ -64,6 +64,14 @@ public class ProfileServiceImpl implements ProfileService {
                     return authUserProfileRepository.save(p);
                 });
         // ==========================
+        // VALIDATE trashRetentionDays: null cho phép (dùng mặc định 30), ngoài ra phải 1..90
+        // ==========================
+        if (request.getTrashRetentionDays() != null
+                && (request.getTrashRetentionDays() < 1 || request.getTrashRetentionDays() > 90)) {
+            throw new IllegalArgumentException(
+                    "Số ngày giữ tài liệu trong thùng rác phải từ 1 đến 90.");
+        }
+        // ==========================
         // CHECK USERNAME DUPLICATE
         // ==========================
         if (request.getUsername() != null
@@ -111,6 +119,8 @@ public class ProfileServiceImpl implements ProfileService {
         profile.setLinkedinUrl(request.getLinkedinUrl());
 
         profile.setWebsiteUrl(request.getWebsiteUrl());
+
+        profile.setTrashRetentionDays(request.getTrashRetentionDays());
 
         authUserProfileRepository.save(profile);
 
@@ -165,6 +175,8 @@ public class ProfileServiceImpl implements ProfileService {
         response.setLinkedinUrl(profile.getLinkedinUrl());
 
         response.setWebsiteUrl(profile.getWebsiteUrl());
+
+        response.setTrashRetentionDays(profile.getTrashRetentionDays());
 
         return response;
     }
