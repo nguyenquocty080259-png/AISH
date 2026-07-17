@@ -51,6 +51,7 @@ public class AiChatService {
     private final AiRecommendationService aiRecommendationService;
     private final AiConversationService aiConversationService;
     private final AdminAiTools adminAiTools;
+    private final UserAiTools userAiTools;
 
     private static final String SYSTEM_PROMPT = """
             Bạn là AI HiveMind - trợ lý AI của nền tảng HiveMind dành cho sinh viên.
@@ -78,6 +79,17 @@ public class AiChatService {
             - getUserStatus: dùng khi cần trạng thái của một người dùng có ID hoặc email cụ thể.
             - Luôn trả lời bằng tiếng Việt và chép nguyên văn toàn bộ dòng/trường dữ liệu công cụ trả về, không diễn giải lại hoặc bỏ sót; tuyệt đối không tự đoán số, tên hay trạng thái.
             - Luôn nhắc ID của tài liệu/người dùng trong câu trả lời để quản trị viên tìm được trên trang quản trị.
+            """;
+
+    private static final String USER_TOOLS_PROMPT = """
+
+            Công cụ dữ liệu cá nhân dành cho người đang trò chuyện:
+            - getMyStats: dùng khi người dùng hỏi thống kê tài liệu, lượt yêu thích hoặc report của chính họ.
+            - searchMyDocuments: dùng khi người dùng muốn tìm tài liệu họ có quyền truy cập.
+            - getMyDocumentStatus: dùng khi người dùng hỏi trạng thái một tài liệu cụ thể của chính họ theo ID.
+            - getMyReportStatus: dùng khi người dùng hỏi trạng thái các report chính họ đã gửi.
+            - Tất cả công cụ có chữ "My" tự động dùng danh tính của người đang trò chuyện; không yêu cầu và không tự chọn userId/email chủ dữ liệu.
+            - Trả lời bằng tiếng Việt, chép nguyên văn dữ liệu công cụ trả về, luôn nhắc ID tài liệu/report và tuyệt đối không bịa thêm bản ghi.
             """;
 
     private static final String RAG_PROMPT_TEMPLATE = """
@@ -209,14 +221,19 @@ public class AiChatService {
             Long currentUserId,
             List<AiMessage> recentMessages) {
         boolean isAdmin = user != null && "ADMIN".equalsIgnoreCase(user.getRole().getRoleName());
-        String systemPrompt = isAdmin ? SYSTEM_PROMPT + ADMIN_TOOLS_PROMPT : SYSTEM_PROMPT;
+        boolean isAuthenticated = user != null;
+        String systemPrompt = isAdmin
+                ? SYSTEM_PROMPT + ADMIN_TOOLS_PROMPT + USER_TOOLS_PROMPT
+                : isAuthenticated ? SYSTEM_PROMPT + USER_TOOLS_PROMPT : SYSTEM_PROMPT;
 
         ChatClient.ChatClientRequestSpec promptSpec = chatClient.prompt()
                 .system(systemPrompt)
                 .messages(toChatMessages(recentMessages))
                 .user(userMessage);
         if (isAdmin) {
-            promptSpec = promptSpec.tools(adminAiTools);
+            promptSpec = promptSpec.tools(adminAiTools, userAiTools);
+        } else if (isAuthenticated) {
+            promptSpec = promptSpec.tools(userAiTools);
         }
         String answer = promptSpec.call().content();
 
