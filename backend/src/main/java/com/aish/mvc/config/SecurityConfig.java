@@ -2,6 +2,7 @@ package com.aish.mvc.config;
 
 import com.aish.mvc.exception.RestAccessDeniedHandler;
 import com.aish.mvc.exception.RestAuthenticationEntryPoint;
+import com.aish.mvc.security.CustomOAuth2UserService;
 import com.aish.mvc.security.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -23,6 +24,7 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
 
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final CustomOAuth2UserService customOAuth2UserService;
     private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
     private final RestAccessDeniedHandler restAccessDeniedHandler;
     @Bean
@@ -68,6 +70,7 @@ public class SecurityConfig {
                 )
                 .oauth2Login(oauth -> oauth
                         .successHandler(oAuth2SuccessHandler)
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                 )
                 .addFilterBefore(
                         jwtAuthFilter,
