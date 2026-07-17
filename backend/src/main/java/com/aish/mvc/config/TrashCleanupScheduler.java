@@ -39,22 +39,27 @@ public class TrashCleanupScheduler {
         LocalDateTime now = LocalDateTime.now();
         List<DocDocument> trashed = docDocumentRepository.findByDeletedAtIsNotNull();
 
-        SecurityContext previousContext = SecurityContextHolder.getContext();
-        try {
-            for (DocDocument doc : trashed) {
-                try {
-                    int retentionDays = retentionDaysForOwner(doc);
-                    if (doc.getDeletedAt().isBefore(now.minusDays(retentionDays))) {
+        for (DocDocument doc : trashed) {
+            try {
+                int retentionDays = retentionDaysForOwner(doc);
+                if (doc.getDeletedAt().isBefore(now.minusDays(retentionDays))) {
+                    try {
                         runAsOwner(doc);
                         documentService.permanentDeleteDocument(doc.getId());
+                    } finally {
+                        // Dọn danh tính "đóng vai" NGAY SAU MỖI tài liệu, không đợi hết cả batch.
+                        // Scheduler này chạy trên task-scheduling pool dùng CHUNG (mặc định 1
+                        // thread) với MetadataScanScheduler/BulkIngestRunner — sót context ở đây
+                        // sẽ khiến job kế tiếp trên cùng thread (và AiUsageTracker, vốn đọc
+                        // SecurityContext để gán user_id cho AiUsageLog) nhận nhầm danh tính chủ
+                        // tài liệu vừa xử lý thay vì chạy với danh tính hệ thống (null).
+                        SecurityContextHolder.clearContext();
                     }
-                } catch (Exception exception) {
-                    log.warn("Không thể dọn tài liệu id={} khỏi thùng rác: {}",
-                            doc.getId(), exception.getMessage());
                 }
+            } catch (Exception exception) {
+                log.warn("Không thể dọn tài liệu id={} khỏi thùng rác: {}",
+                        doc.getId(), exception.getMessage());
             }
-        } finally {
-            SecurityContextHolder.setContext(previousContext);
         }
     }
 
