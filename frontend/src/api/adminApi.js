@@ -128,3 +128,13 @@ export function deleteModerationKeyword(id) {
   return apiClient.delete(`/admin/moderation-keywords/${id}`);
 }
 
+export function getMinUploadAge() {
+  return apiClient.get("/admin/settings/min-upload-age").then((res) => res.data);
+}
+
+export function updateMinUploadAge(minUploadAge) {
+  return apiClient
+    .put("/admin/settings/min-upload-age", { minUploadAge })
+    .then((res) => res.data);
+}
+

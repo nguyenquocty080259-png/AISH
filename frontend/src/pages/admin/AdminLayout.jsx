@@ -13,6 +13,7 @@ const ADMIN_NAV_ITEMS = [
   { to: ROUTES.ADMIN_SUBJECTS, label: "Môn học", icon: "◫" },
   { to: "/admin/keywords", label: "Từ khóa", icon: "⌕" },
   { to: ROUTES.ADMIN_USERS, label: "Người dùng", icon: "♙" },
+  { to: ROUTES.ADMIN_SETTINGS, label: "Cài đặt", icon: "⚙" },
 ];
 
 function adminNavClassName({ isActive }) {
