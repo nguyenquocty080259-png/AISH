@@ -16,6 +16,7 @@ const FIELD_LABELS = {
   githubUrl: "GitHub",
   linkedinUrl: "LinkedIn",
   websiteUrl: "Website",
+  trashRetentionDays: "Số ngày giữ tài liệu trong thùng rác",
 };
 
 function initials(name) {
@@ -85,7 +86,11 @@ export default function ProfilePage() {
                     {FIELD_LABELS[field]}
                   </span>
                   <span className="profile-grid__value">
-                    {profile[field] || "—"}
+                    {field === "trashRetentionDays"
+                      ? profile[field]
+                        ? `${profile[field]} ngày`
+                        : "Mặc định (30 ngày)"
+                      : profile[field] || "—"}
                   </span>
                 </div>
               ))}
@@ -118,6 +123,19 @@ export default function ProfilePage() {
                   <option value="FEMALE">Nữ</option>
                   <option value="OTHER">Khác</option>
                 </select>
+              ) : field === "trashRetentionDays" ? (
+                <>
+                  <input
+                    type="number"
+                    min={1}
+                    max={90}
+                    value={form[field] ?? ""}
+                    onChange={(e) => handleFieldChange(field, e.target.value)}
+                  />
+                  <span className="profile-form__hint">
+                    Tài liệu trong thùng rác tự xóa vĩnh viễn sau số ngày này (mặc định 30, tối đa 90).
+                  </span>
+                </>
               ) : (
                 <input
                   type="text"

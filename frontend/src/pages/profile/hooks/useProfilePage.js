@@ -17,6 +17,7 @@ const EDITABLE_FIELDS = [
   "githubUrl",
   "linkedinUrl",
   "websiteUrl",
+  "trashRetentionDays",
 ];
 
 function toFormValues(profile) {
@@ -68,7 +69,14 @@ export function useProfilePage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const updated = await profileApi.updateMyProfile(form);
+      const payload = {
+        ...form,
+        trashRetentionDays:
+          form.trashRetentionDays === "" || form.trashRetentionDays == null
+            ? null
+            : Number(form.trashRetentionDays),
+      };
+      const updated = await profileApi.updateMyProfile(payload);
       setProfile(updated);
       setEditing(false);
       showSuccess("Đã cập nhật hồ sơ.");
