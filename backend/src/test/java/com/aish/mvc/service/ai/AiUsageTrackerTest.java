@@ -12,6 +12,8 @@ import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
 
 import java.util.Optional;
 
@@ -23,6 +25,7 @@ class AiUsageTrackerTest {
     private AiModelRepository models;
     private AuthAccountRepository accounts;
     private AiUsageTracker tracker;
+    private PlatformTransactionManager transactionManager;
     private AiModel model;
 
     @BeforeEach
@@ -30,7 +33,9 @@ class AiUsageTrackerTest {
         logs = mock(AiUsageLogRepository.class);
         models = mock(AiModelRepository.class);
         accounts = mock(AuthAccountRepository.class);
-        tracker = new AiUsageTracker(logs, models, accounts);
+        transactionManager = mock(PlatformTransactionManager.class);
+        when(transactionManager.getTransaction(any())).thenReturn(mock(TransactionStatus.class));
+        tracker = new AiUsageTracker(logs, models, accounts, transactionManager);
         ReflectionTestUtils.setField(tracker, "configuredChatModel", "llama-3.3-70b-versatile");
         model = AiModel.builder().id(1L).modelKey("llama-3.3-70b-versatile")
                 .displayName("Llama 3.3 70B (Groq)").inputPricePer1m(0.59)
@@ -45,7 +50,7 @@ class AiUsageTrackerTest {
         tracker.log("CHAT_GENERAL", response, null);
 
         ArgumentCaptor<AiUsageLog> captor = ArgumentCaptor.forClass(AiUsageLog.class);
-        verify(logs).saveAndFlush(captor.capture());
+        verify(logs).save(captor.capture());
         AiUsageLog saved = captor.getValue();
         assertEquals(1_000, saved.getInputTokens());
         assertEquals(500, saved.getOutputTokens());
@@ -58,7 +63,7 @@ class AiUsageTrackerTest {
         tracker.log("TEXT_MODERATION", responseWithUsage(0, 0), null);
 
         ArgumentCaptor<AiUsageLog> captor = ArgumentCaptor.forClass(AiUsageLog.class);
-        verify(logs).saveAndFlush(captor.capture());
+        verify(logs).save(captor.capture());
         assertNull(captor.getValue().getInputTokens());
         assertNull(captor.getValue().getOutputTokens());
         assertNull(captor.getValue().getTotalTokens());
@@ -66,7 +71,7 @@ class AiUsageTrackerTest {
 
     @Test
     void repositoryFailureNeverPropagates() {
-        when(logs.saveAndFlush(any())).thenThrow(new RuntimeException("database unavailable"));
+        when(logs.save(any())).thenThrow(new RuntimeException("database unavailable"));
 
         assertDoesNotThrow(() -> tracker.log("CHAT_RAG", responseWithUsage(10, 5), null));
     }

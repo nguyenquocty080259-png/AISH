@@ -15,6 +15,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +27,7 @@ public class AiUsageTracker {
     private final AiUsageLogRepository usageLogRepository;
     private final AiModelRepository aiModelRepository;
     private final AuthAccountRepository authAccountRepository;
+    private final PlatformTransactionManager transactionManager;
 
     @Value("${spring.ai.openai.chat.options.model}")
     private String configuredChatModel;
@@ -51,7 +55,7 @@ public class AiUsageTracker {
                     ? null : valueOrZero(inputTokens) + valueOrZero(outputTokens);
             AuthUser currentUser = currentUserOrNull();
 
-            usageLogRepository.saveAndFlush(AiUsageLog.builder()
+            AiUsageLog usageLog = AiUsageLog.builder()
                     .messageId(messageId)
                     .callType(callType)
                     .userId(currentUser == null ? null : currentUser.getId())
@@ -61,7 +65,10 @@ public class AiUsageTracker {
                     .totalTokens(totalTokens)
                     .costUsd(calculateCost(inputTokens, outputTokens,
                             model.getInputPricePer1m(), model.getOutputPricePer1m()))
-                    .build());
+                    .build();
+            TransactionTemplate transaction = new TransactionTemplate(transactionManager);
+            transaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+            transaction.executeWithoutResult(status -> usageLogRepository.save(usageLog));
         } catch (Exception exception) {
             log.warn("Could not persist AI usage for {}; AI response remains available: {}",
                     callType, exception.getMessage());

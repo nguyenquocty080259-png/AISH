@@ -25,7 +25,8 @@ public class AiUsageStatsService {
     }
 
     private AiUsageStatsDTO.PeriodStats period(LocalDateTime from, LocalDateTime to) {
-        Object[] total = usageLogRepository.aggregateTotals(from, to);
+        List<Object[]> totals = usageLogRepository.aggregateTotals(from, to);
+        Object[] total = totals.isEmpty() ? new Object[]{0L, 0L, 0.0} : totals.getFirst();
         List<AiUsageStatsDTO.CallTypeStats> breakdown = usageLogRepository
                 .aggregateByCallType(from, to).stream()
                 .map(row -> new AiUsageStatsDTO.CallTypeStats((String) row[0], number(row[1]).longValue(),
