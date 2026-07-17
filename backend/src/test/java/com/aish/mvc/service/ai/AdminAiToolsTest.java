@@ -1,6 +1,7 @@
 package com.aish.mvc.service.ai;
 
 import com.aish.mvc.dto.doc.AdminStatsDTO;
+import com.aish.mvc.dto.ai.AiUsageStatsDTO;
 import com.aish.mvc.entity.enums.DocumentVisibility;
 import com.aish.mvc.entity.enums.ModerationStatus;
 import com.aish.mvc.entity.enums.UserStatus;
@@ -24,7 +25,8 @@ class AdminAiToolsTest {
     private final DocDocumentRepository documents = mock(DocDocumentRepository.class);
     private final AuthAccountRepository accounts = mock(AuthAccountRepository.class);
     private final AuthUserRepository users = mock(AuthUserRepository.class);
-    private final AdminAiTools adminAiTools = new AdminAiTools(adminService, documents, accounts, users);
+    private final AiUsageStatsService usageStats = mock(AiUsageStatsService.class);
+    private final AdminAiTools adminAiTools = new AdminAiTools(adminService, documents, accounts, users, usageStats);
 
     @Test
     void formatsEverySystemCounter() {
@@ -44,6 +46,22 @@ class AdminAiToolsTest {
         when(adminService.getStats()).thenThrow(new RuntimeException("database unavailable"));
 
         assertTrue(adminAiTools.getSystemStats().startsWith("Không lấy được"));
+    }
+
+    @Test
+    void formatsAiUsageAndFailsSafe() {
+        AiUsageStatsDTO.CallTypeStats chat = new AiUsageStatsDTO.CallTypeStats("CHAT_GENERAL", 2, 300, 0.0002);
+        when(usageStats.getStats()).thenReturn(new AiUsageStatsDTO(
+                new AiUsageStatsDTO.PeriodStats(2, 300, 0.0002, List.of(chat)),
+                new AiUsageStatsDTO.PeriodStats(5, 900, 0.0007, List.of(chat))));
+
+        String result = adminAiTools.getAiUsageStats();
+        assertTrue(result.contains("CHAT_GENERAL"));
+        assertTrue(result.contains("300"));
+        assertTrue(result.contains("900"));
+
+        when(usageStats.getStats()).thenThrow(new RuntimeException("database unavailable"));
+        assertTrue(adminAiTools.getAiUsageStats().startsWith("Không thể lấy thống kê sử dụng AI"));
     }
 
     @Test

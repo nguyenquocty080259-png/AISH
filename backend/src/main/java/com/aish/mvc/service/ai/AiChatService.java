@@ -79,6 +79,7 @@ public class AiChatService {
             - searchUsers: dùng khi cần tìm người dùng theo tên/email hoặc lọc theo vai trò, trạng thái.
             - getDocumentStatus: dùng khi cần trạng thái đầy đủ của một tài liệu có ID cụ thể.
             - getUserStatus: dùng khi cần trạng thái của một người dùng có ID hoặc email cụ thể.
+            - getAiUsageStats: dùng khi cần số lượt gọi AI, token, chi phí hoặc phân loại usage hôm nay/7 ngày.
             - Luôn trả lời bằng tiếng Việt và chép nguyên văn toàn bộ dòng/trường dữ liệu công cụ trả về, không diễn giải lại hoặc bỏ sót; tuyệt đối không tự đoán số, tên hay trạng thái.
             - Luôn nhắc ID của tài liệu/người dùng trong câu trả lời để quản trị viên tìm được trên trang quản trị.
             """;

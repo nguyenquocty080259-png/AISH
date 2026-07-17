@@ -1,6 +1,7 @@
 package com.aish.mvc.service.ai;
 
 import com.aish.mvc.dto.doc.AdminStatsDTO;
+import com.aish.mvc.dto.ai.AiUsageStatsDTO;
 import com.aish.mvc.entity.auth.AuthAccount;
 import com.aish.mvc.entity.auth.AuthUser;
 import com.aish.mvc.entity.doc.DocDocument;
@@ -33,6 +34,7 @@ public class AdminAiTools {
     private final DocDocumentRepository docDocumentRepository;
     private final AuthAccountRepository authAccountRepository;
     private final AuthUserRepository authUserRepository;
+    private final AiUsageStatsService aiUsageStatsService;
 
     @Tool(description = "Use this tool when an ADMIN asks for current live, system-wide HiveMind statistics: "
             + "total users, total documents, public/private document counts, pending appeals, total subjects, "
@@ -64,6 +66,29 @@ public class AdminAiTools {
             log.warn("Không lấy được số liệu hệ thống cho AI admin: {}", exception.getMessage());
             return UNAVAILABLE_MESSAGE;
         }
+    }
+
+    @Tool(description = "Use this tool when an ADMIN asks about AI/Groq call volume, token consumption, cost, "
+            + "or usage breakdown today or over the last seven days. Always use live tracked data instead of guessing.")
+    public String getAiUsageStats() {
+        try {
+            AiUsageStatsDTO stats = aiUsageStatsService.getStats();
+            return formatUsagePeriod("Hôm nay", stats.today()) + "\n"
+                    + formatUsagePeriod("7 ngày gần nhất", stats.last7Days());
+        } catch (Exception exception) {
+            log.warn("Không thể lấy thống kê AI usage cho AI admin: {}", exception.getMessage());
+            return "Không thể lấy thống kê sử dụng AI lúc này. Vui lòng thử lại sau.";
+        }
+    }
+
+    private static String formatUsagePeriod(String label, AiUsageStatsDTO.PeriodStats period) {
+        String breakdown = period.byCallType().isEmpty() ? "Không có"
+                : period.byCallType().stream()
+                .map(item -> "%s: %d calls, %d tokens, $%.6f".formatted(item.callType(),
+                        item.totalCalls(), item.totalTokens(), item.totalCostUsd()))
+                .reduce((left, right) -> left + "; " + right).orElse("Không có");
+        return "%s — Tổng calls: %d | Tổng tokens: %d | Chi phí: $%.6f | Theo loại: %s"
+                .formatted(label, period.totalCalls(), period.totalTokens(), period.totalCostUsd(), breakdown);
     }
 
     @Tool(description = "Use this tool when an ADMIN wants to find documents by title keyword or filter them by "
