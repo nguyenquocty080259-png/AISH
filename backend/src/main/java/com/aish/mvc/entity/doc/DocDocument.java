@@ -52,6 +52,12 @@ public class DocDocument {
     @Column(name = "moderation_reason", columnDefinition = "TEXT")
     private String moderationReason;
 
+    @Column(name = "metadata_match_status", length = 10)
+    private String metadataMatchStatus;
+
+    @Column(name = "metadata_checked_at")
+    private LocalDateTime metadataCheckedAt;
+
     @Column(name = "admin_reviewed_at")
     private LocalDateTime adminReviewedAt;
 

@@ -88,4 +88,15 @@ public interface DocDocumentRepository extends JpaRepository<DocDocument, Long> 
             "WHERE d.deletedAt IS NULL AND d.visibility = :pub AND d.moderationStatus = :approved")
     List<DocDocument> findPublicApprovedDocuments(@Param("pub") DocumentVisibility pub,
                                                    @Param("approved") ModerationStatus approved);
+
+    @Query("SELECT DISTINCT d FROM DocDocument d LEFT JOIN FETCH d.files LEFT JOIN FETCH d.subjects " +
+            "WHERE d.deletedAt IS NULL AND d.visibility = :visibility " +
+            "AND d.moderationStatus = :moderationStatus AND d.ingestStatus = :ingestStatus " +
+            "AND (d.metadataCheckedAt IS NULL OR d.updatedAt > d.metadataCheckedAt) " +
+            "ORDER BY d.id ASC")
+    List<DocDocument> findMetadataScanCandidates(
+            @Param("visibility") DocumentVisibility visibility,
+            @Param("moderationStatus") ModerationStatus moderationStatus,
+            @Param("ingestStatus") IngestStatus ingestStatus,
+            Pageable pageable);
 }
