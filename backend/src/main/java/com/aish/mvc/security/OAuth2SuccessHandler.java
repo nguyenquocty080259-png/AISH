@@ -5,6 +5,7 @@ import com.aish.mvc.entity.enums.AuthProviders;
 import com.aish.mvc.entity.enums.UserStatus;
 import com.aish.mvc.repository.auth.*;
 import com.aish.mvc.service.auth.JwtUtil;
+import com.aish.mvc.service.auth.UsernameGenerator;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -27,8 +28,8 @@ public class OAuth2SuccessHandler
     private final AuthAccountRepository accountRepo;
     private final AuthUserRepository userRepo;
     private final AuthRoleRepository roleRepo;
-    private final AuthUserProfileRepository profileRepo;
     private final JwtUtil jwtUtil;
+    private final UsernameGenerator usernameGenerator;
 
     @Override
     public void onAuthenticationSuccess(
@@ -121,12 +122,7 @@ public class OAuth2SuccessHandler
 
         userRepo.save(user);
 
-        AuthUserProfile profile =
-                new AuthUserProfile();
-
-        profile.setUser(user);
-
-        profileRepo.save(profile);
+        usernameGenerator.createProfileForUser(user);
 
         AuthAccount account =
                 new AuthAccount();

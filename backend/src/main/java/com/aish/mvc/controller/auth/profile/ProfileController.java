@@ -1,8 +1,10 @@
 package com.aish.mvc.controller.auth.profile;
 
+import com.aish.mvc.dto.auth.OnboardingRequest;
 import com.aish.mvc.dto.auth.ProfileResponse;
 import com.aish.mvc.dto.auth.UpdateProfileRequest;
 import com.aish.mvc.service.auth.ProfileService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +31,16 @@ public class ProfileController {
 
         return ResponseEntity.ok(
                 profileService.updateMyProfile(request)
+        );
+    }
+
+    @PutMapping("/onboarding")
+    public ResponseEntity<ProfileResponse> completeOnboarding(
+            @Valid @RequestBody OnboardingRequest request
+    ) {
+
+        return ResponseEntity.ok(
+                profileService.completeOnboarding(request.getDob())
         );
     }
 }

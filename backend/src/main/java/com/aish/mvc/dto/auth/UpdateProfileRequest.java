@@ -13,8 +13,6 @@ public class UpdateProfileRequest {
     @NotBlank(message = "Họ tên không được để trống")
     private String fullName;
 
-    private String username;
-
     private String bio;
 
     private LocalDate dob;

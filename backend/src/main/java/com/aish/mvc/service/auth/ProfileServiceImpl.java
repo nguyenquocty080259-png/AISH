@@ -13,6 +13,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +23,7 @@ public class ProfileServiceImpl implements ProfileService {
     private final AuthAccountRepository authAccountRepository;
     private final AuthUserProfileRepository authUserProfileRepository;
     private final AuthUserRepository authUserRepository;
+    private final UsernameGenerator usernameGenerator;
 
     @Override
     public ProfileResponse getMyProfile() {
@@ -31,12 +34,8 @@ public class ProfileServiceImpl implements ProfileService {
 
         AuthUser user = account.getUser();
 
-        AuthUserProfile profile = authUserProfileRepository.findByUserId(user.getId()).orElseGet(() -> {
-                            AuthUserProfile p = new AuthUserProfile();
-
-                            p.setUser(user);
-
-                            return authUserProfileRepository.save(p);});
+        AuthUserProfile profile = authUserProfileRepository.findByUserId(user.getId())
+                .orElseGet(() -> usernameGenerator.createProfileForUser(user));
 
         return mapToResponse(user, profile);
     }
@@ -55,14 +54,7 @@ public class ProfileServiceImpl implements ProfileService {
 
         AuthUserProfile profile = authUserProfileRepository
                 .findByUserId(user.getId())
-                .orElseGet(() -> {
-
-                    AuthUserProfile p = new AuthUserProfile();
-
-                    p.setUser(user);
-
-                    return authUserProfileRepository.save(p);
-                });
+                .orElseGet(() -> usernameGenerator.createProfileForUser(user));
         // ==========================
         // VALIDATE trashRetentionDays: null cho phép (dùng mặc định 30), ngoài ra phải 1..90
         // ==========================
@@ -71,31 +63,10 @@ public class ProfileServiceImpl implements ProfileService {
             throw new IllegalArgumentException(
                     "Số ngày giữ tài liệu trong thùng rác phải từ 1 đến 90.");
         }
-        // ==========================
-        // CHECK USERNAME DUPLICATE
-        // ==========================
-        if (request.getUsername() != null
-                && !request.getUsername().isBlank()) {
-
-            authUserProfileRepository
-                    .findByUsername(request.getUsername())
-                    .ifPresent(existing -> {
-
-                        if (!existing.getUser()
-                                .getId()
-                                .equals(user.getId())) {
-
-                            throw new RuntimeException(
-                                    "Username already exists"
-                            );
-                        }
-                    });
-        }
         // AuthUser
         user.setFullName(request.getFullName());
         authUserRepository.save(user);
-        // AuthUserProfile
-        profile.setUsername(request.getUsername());
+        // AuthUserProfile (username không nhận từ request nữa - do hệ thống tự sinh)
         profile.setBio(request.getBio());
 
         profile.setDob(request.getDob());
@@ -121,6 +92,31 @@ public class ProfileServiceImpl implements ProfileService {
         profile.setWebsiteUrl(request.getWebsiteUrl());
 
         profile.setTrashRetentionDays(request.getTrashRetentionDays());
+
+        authUserProfileRepository.save(profile);
+
+        return mapToResponse(user, profile);
+    }
+
+    // Onboarding chỉ set dob, KHÔNG động vào các field khác của profile -
+    // updateMyProfile ghi đè toàn bộ nên không thể tái sử dụng cho bước này
+    // (sẽ null hoá bio, university... của những field FE onboarding không gửi).
+    @Override
+    public ProfileResponse completeOnboarding(LocalDate dob) {
+
+        String email = getCurrentEmail();
+
+        AuthAccount account = authAccountRepository
+                .findByIdentifier(email)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+
+        AuthUser user = account.getUser();
+
+        AuthUserProfile profile = authUserProfileRepository
+                .findByUserId(user.getId())
+                .orElseGet(() -> usernameGenerator.createProfileForUser(user));
+
+        profile.setDob(dob);
 
         authUserProfileRepository.save(profile);
 
