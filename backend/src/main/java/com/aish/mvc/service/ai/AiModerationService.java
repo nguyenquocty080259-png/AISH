@@ -1,6 +1,7 @@
 package com.aish.mvc.service.ai;
 
 import com.aish.mvc.dto.ai.ModerationResultDTO;
+import com.aish.mvc.entity.doc.DocDocument;
 
 public interface AiModerationService {
 
@@ -9,4 +10,12 @@ public interface AiModerationService {
     ModerationResultDTO screen(Long documentId);
 
     ModerationResultDTO screenText(String text);
+
+    MetadataMatchResult checkMetadata(DocDocument document);
+
+    record MetadataMatchResult(String status, String reason) {
+        public boolean isMismatch() {
+            return "LECH".equals(status);
+        }
+    }
 }

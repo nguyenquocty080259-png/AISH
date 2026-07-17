@@ -48,17 +48,39 @@ public class AiModerationServiceImpl implements AiModerationService {
         try {
             DocDocument doc = docDocumentRepository.findById(documentId)
                     .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
-            String content = contentSignalService.buildContentSignal(doc);
-            if (content.isBlank()) return failSafe(documentId, "Tài liệu chưa có nội dung để kiểm duyệt — cần Admin xem xét thủ công.");
-            String subjects = doc.getSubjects() == null ? "" : doc.getSubjects().stream().map(s -> s.getName()).toList().toString();
-            Prompt prompt = new Prompt(List.of(new SystemMessage(MODERATION_SYSTEM_PROMPT),
-                    new UserMessage(content + "\n\n[DATA METADATA]\nTITLE: " + doc.getTitle() + "\nSUBJECTS: " + subjects)));
-            String raw = chatClient.prompt(prompt).call().content();
-            return parseResponse(documentId, raw);
+            return callDocumentModeration(doc);
         } catch (Exception e) {
             log.warn("Kiểm duyệt AI lỗi cho document {}: {}", documentId, e.getMessage());
             return failSafe(documentId, "Lỗi khi gọi AI kiểm duyệt — cần Admin xem xét thủ công.");
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MetadataMatchResult checkMetadata(DocDocument document) {
+        ModerationResultDTO result = callDocumentModeration(document);
+        return new MetadataMatchResult(result.isMetadataMismatch() ? "LECH" : "KHOP",
+                result.getMetadataMismatchReason());
+    }
+
+    private ModerationResultDTO callDocumentModeration(DocDocument doc) {
+        String content = contentSignalService.buildContentSignal(doc);
+        if (content == null || content.isBlank()) {
+            throw new IllegalStateException("Tài liệu chưa có nội dung để kiểm duyệt.");
+        }
+        String fileName = doc.getFiles() == null || doc.getFiles().isEmpty()
+                ? "" : doc.getFiles().getFirst().getFileName();
+        String subjects = doc.getSubjects() == null ? ""
+                : doc.getSubjects().stream().map(s -> s.getName()).toList().toString();
+        Prompt prompt = new Prompt(List.of(new SystemMessage(MODERATION_SYSTEM_PROMPT),
+                new UserMessage(content + "\n\n[METADATA COMPARISON RULE]\nContent is the source of truth. Compare file name, title, description and subjects against content."
+                        + "\n\n[DATA METADATA]"
+                        + "\nFILE_NAME: " + fileName
+                        + "\nTITLE: " + doc.getTitle()
+                        + "\nDESCRIPTION: " + doc.getDescription()
+                        + "\nSUBJECTS: " + subjects)));
+        String raw = chatClient.prompt(prompt).call().content();
+        return parseResponse(doc.getId(), raw);
     }
 
     @Override
