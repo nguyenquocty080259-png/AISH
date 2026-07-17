@@ -56,6 +56,9 @@ export default function DocumentDetailPage() {
     goToDocument,
     addToCollectionModalOpen,
     myCollections,
+    filteredCollections,
+    collectionQuery,
+    setCollectionQuery,
     loadingCollections,
     selectedCollectionIds,
     addingToCollections,
@@ -310,23 +313,36 @@ export default function DocumentDetailPage() {
         ) : myCollections.length === 0 ? (
           <p className="detail-add-collection__loading">Bạn chưa có collection nào.</p>
         ) : (
-          <ul className="detail-add-collection__list">
-            {myCollections.map((c) => (
-              <li key={c.id} className="detail-add-collection__item">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={selectedCollectionIds.includes(c.id)}
-                    onChange={() => toggleSelectCollection(c.id)}
-                  />
-                  {c.name}
-                </label>
-                <span className="detail-add-collection__count">
-                  {c.documentCount ?? 0} tài liệu
-                </span>
-              </li>
-            ))}
-          </ul>
+          <>
+            <input
+              type="text"
+              className="detail-add-collection__search"
+              placeholder="Tìm collection..."
+              value={collectionQuery}
+              onChange={(e) => setCollectionQuery(e.target.value)}
+            />
+            {filteredCollections.length === 0 ? (
+              <p className="detail-add-collection__loading">Không tìm thấy collection nào.</p>
+            ) : (
+              <ul className="detail-add-collection__list">
+                {filteredCollections.map((c) => (
+                  <li key={c.id} className="detail-add-collection__item">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={selectedCollectionIds.includes(c.id)}
+                        onChange={() => toggleSelectCollection(c.id)}
+                      />
+                      {c.name}
+                    </label>
+                    <span className="detail-add-collection__count">
+                      {c.documentCount ?? 0} tài liệu
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
         )}
 
         {myCollections.length > 0 && (
