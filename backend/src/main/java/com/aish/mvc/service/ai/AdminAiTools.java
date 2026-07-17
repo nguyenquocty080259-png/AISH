@@ -1,12 +1,26 @@
 package com.aish.mvc.service.ai;
 
 import com.aish.mvc.dto.doc.AdminStatsDTO;
+import com.aish.mvc.entity.auth.AuthAccount;
+import com.aish.mvc.entity.auth.AuthUser;
+import com.aish.mvc.entity.doc.DocDocument;
+import com.aish.mvc.entity.enums.DocumentVisibility;
+import com.aish.mvc.entity.enums.ModerationStatus;
+import com.aish.mvc.entity.enums.UserStatus;
+import com.aish.mvc.repository.auth.AuthAccountRepository;
+import com.aish.mvc.repository.auth.AuthUserRepository;
+import com.aish.mvc.repository.doc.DocDocumentRepository;
 import com.aish.mvc.service.admin.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -16,6 +30,9 @@ public class AdminAiTools {
     private static final String UNAVAILABLE_MESSAGE = "Không lấy được số liệu hệ thống lúc này.";
 
     private final AdminService adminService;
+    private final DocDocumentRepository docDocumentRepository;
+    private final AuthAccountRepository authAccountRepository;
+    private final AuthUserRepository authUserRepository;
 
     @Tool(description = "Use this tool when an ADMIN asks for current live, system-wide HiveMind statistics: "
             + "total users, total documents, public/private document counts, pending appeals, total subjects, "
@@ -47,5 +64,146 @@ public class AdminAiTools {
             log.warn("Không lấy được số liệu hệ thống cho AI admin: {}", exception.getMessage());
             return UNAVAILABLE_MESSAGE;
         }
+    }
+
+    @Tool(description = "Use this tool when an ADMIN wants to find documents by title keyword or filter them by "
+            + "visibility, moderation status, or subject name. Filters are optional; use it instead of inventing document records.")
+    public String searchDocuments(String keyword, String visibility, String moderationStatus,
+                                  String subjectName, Integer limit) {
+        try {
+            List<DocDocument> documents = docDocumentRepository.searchForAdminTool(
+                    blankToNull(keyword), parseEnum(DocumentVisibility.class, visibility),
+                    parseEnum(ModerationStatus.class, moderationStatus), blankToNull(subjectName),
+                    PageRequest.of(0, normalizeLimit(limit)));
+            if (documents.isEmpty()) return "Không tìm thấy tài liệu phù hợp.";
+            return documents.stream().map(document -> "ID %d | %s | Chủ sở hữu: %s | visibility: %s | moderationStatus: %s | ingestStatus: %s"
+                            .formatted(document.getId(), value(document.getTitle()),
+                                    value(document.getUser().getFullName()), value(document.getVisibility()),
+                                    value(document.getModerationStatus()), value(document.getIngestStatus())))
+                    .reduce((left, right) -> left + "\n" + right).orElseThrow();
+        } catch (Exception exception) {
+            log.warn("Không thể tìm tài liệu cho AI admin: {}", exception.getMessage());
+            return "Không thể tìm tài liệu lúc này. Vui lòng thử lại sau.";
+        }
+    }
+
+    @Tool(description = "Use this tool when an ADMIN wants to find users by name or email, optionally filtered by "
+            + "role or account status. Never infer or expose credentials.")
+    public String searchUsers(String keyword, String role, String status, Integer limit) {
+        try {
+            String normalizedRole = recognizedRole(role);
+            List<AuthAccount> accounts = authAccountRepository.searchUsersForAdminTool(
+                    blankToNull(keyword), normalizedRole, parseEnum(UserStatus.class, status),
+                    PageRequest.of(0, normalizeLimit(limit)));
+            if (accounts.isEmpty()) return "Không tìm thấy người dùng phù hợp.";
+            return accounts.stream().map(account -> formatUser(account.getUser(), account.getIdentifier()))
+                    .reduce((left, right) -> left + "\n" + right).orElseThrow();
+        } catch (Exception exception) {
+            log.warn("Không thể tìm người dùng cho AI admin: {}", exception.getMessage());
+            return "Không thể tìm người dùng lúc này. Vui lòng thử lại sau.";
+        }
+    }
+
+    @Tool(description = "Use this tool when an ADMIN asks for the complete current status of one document by its numeric ID, "
+            + "including moderation, ingest, metadata-match, review, and trash status.")
+    public String getDocumentStatus(Long documentId) {
+        try {
+            if (documentId == null) return "Vui lòng cung cấp ID tài liệu.";
+            Optional<DocDocument> found = docDocumentRepository.findStatusByIdForAdminTool(documentId);
+            if (found.isEmpty()) return "Không tìm thấy tài liệu ID " + documentId + ".";
+            DocDocument document = found.get();
+            return """
+                    ID: %d
+                    Tiêu đề: %s
+                    Chủ sở hữu: %s
+                    Trạng thái xóa: %s
+                    Visibility: %s
+                    Moderation status: %s
+                    Lý do kiểm duyệt: %s
+                    Admin reviewed at: %s
+                    Admin reviewed by: %s
+                    Ingest status: %s
+                    Metadata match status: %s
+                    Metadata checked at: %s
+                    Created at: %s""".formatted(
+                    document.getId(), value(document.getTitle()), value(document.getUser().getFullName()),
+                    document.getDeletedAt() == null ? "Không ở trong thùng rác" : "ĐÃ XÓA MỀM - đang ở trong thùng rác",
+                    value(document.getVisibility()), value(document.getModerationStatus()),
+                    value(document.getModerationReason()), value(document.getAdminReviewedAt()),
+                    value(document.getAdminReviewedBy()), value(document.getIngestStatus()),
+                    value(document.getMetadataMatchStatus()), value(document.getMetadataCheckedAt()),
+                    value(document.getCreatedAt()));
+        } catch (Exception exception) {
+            log.warn("Không thể lấy trạng thái tài liệu {} cho AI admin: {}", documentId, exception.getMessage());
+            return "Không thể lấy trạng thái tài liệu lúc này. Vui lòng thử lại sau.";
+        }
+    }
+
+    @Tool(description = "Use this tool when an ADMIN asks for the current status of one user identified by numeric user ID "
+            + "or email, including role, status, and owned-document count.")
+    public String getUserStatus(String identifier) {
+        try {
+            String normalizedIdentifier = blankToNull(identifier);
+            if (normalizedIdentifier == null) return "Vui lòng cung cấp ID hoặc email người dùng.";
+
+            AuthUser user;
+            String email;
+            try {
+                Long userId = Long.valueOf(normalizedIdentifier);
+                Optional<AuthUser> foundUser = authUserRepository.findById(userId);
+                if (foundUser.isEmpty()) return "Không tìm thấy người dùng '" + normalizedIdentifier + "'.";
+                user = foundUser.get();
+                email = authAccountRepository.findFirstByUser_IdAndIsPrimaryTrue(userId)
+                        .map(AuthAccount::getIdentifier).orElse("-");
+            } catch (NumberFormatException ignored) {
+                Optional<AuthAccount> foundAccount = authAccountRepository.searchUsersForAdminTool(
+                                normalizedIdentifier, null, null, PageRequest.of(0, 10)).stream()
+                        .filter(account -> normalizedIdentifier.equalsIgnoreCase(account.getIdentifier()))
+                        .findFirst();
+                if (foundAccount.isEmpty()) return "Không tìm thấy người dùng '" + normalizedIdentifier + "'.";
+                user = foundAccount.get().getUser();
+                email = foundAccount.get().getIdentifier();
+            }
+            return formatUser(user, email) + " | Số tài liệu sở hữu: "
+                    + docDocumentRepository.countByUser_Id(user.getId());
+        } catch (Exception exception) {
+            log.warn("Không thể lấy trạng thái người dùng cho AI admin: {}", exception.getMessage());
+            return "Không thể lấy trạng thái người dùng lúc này. Vui lòng thử lại sau.";
+        }
+    }
+
+    private static String formatUser(AuthUser user, String email) {
+        return "ID %d | %s | Email: %s | Vai trò: %s | Trạng thái: %s".formatted(
+                user.getId(), value(user.getFullName()), value(email),
+                user.getRole() == null ? "-" : value(user.getRole().getRoleName()), value(user.getStatus()));
+    }
+
+    private static int normalizeLimit(Integer limit) {
+        return limit == null ? 5 : Math.max(1, Math.min(limit, 10));
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.strip();
+    }
+
+    private static String recognizedRole(String role) {
+        String normalized = blankToNull(role);
+        if (normalized == null) return null;
+        String upper = normalized.toUpperCase(Locale.ROOT);
+        return "ADMIN".equals(upper) || "USER".equals(upper) ? upper : null;
+    }
+
+    private static <E extends Enum<E>> E parseEnum(Class<E> type, String raw) {
+        String normalized = blankToNull(raw);
+        if (normalized == null) return null;
+        try {
+            return Enum.valueOf(type, normalized.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
+    }
+
+    private static String value(Object value) {
+        return value == null || value.toString().isBlank() ? "-" : value.toString();
     }
 }
