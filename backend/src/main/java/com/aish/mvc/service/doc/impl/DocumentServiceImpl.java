@@ -424,6 +424,9 @@ public class DocumentServiceImpl implements DocumentService {
         }
 
         DocDocument savedDocument = docDocumentRepository.save(doc);
+        LocalDateTime metadataCheckedAt = LocalDateTime.now();
+        docDocumentRepository.stampMetadataCheck(savedDocument.getId(),
+                result.isMetadataMismatch() ? "LECH" : "KHOP", metadataCheckedAt);
         notifyAdminsDocumentScreened(savedDocument, result.getDecision().name());
 
         return documentMapper.toResponseDTO(savedDocument);
