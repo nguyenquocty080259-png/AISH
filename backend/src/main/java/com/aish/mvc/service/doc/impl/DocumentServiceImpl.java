@@ -6,6 +6,7 @@ import com.aish.mvc.dto.doc.AdminDocumentSummaryDTO;
 import com.aish.mvc.dto.doc.CommunityPageResponseDTO;
 import com.aish.mvc.dto.doc.DocumentResponseDTO;
 import com.aish.mvc.entity.auth.AuthUser;
+import com.aish.mvc.entity.auth.AuthUserProfile;
 import com.aish.mvc.entity.doc.*;
 import com.aish.mvc.entity.enums.DocumentStatus;
 import com.aish.mvc.entity.enums.DocumentVisibility;
@@ -16,9 +17,11 @@ import com.aish.mvc.exception.ForbiddenException;
 import com.aish.mvc.exception.ResourceNotFoundException;
 import com.aish.mvc.repository.ai.AiConversationRepository;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
+import com.aish.mvc.repository.auth.AuthUserProfileRepository;
 import com.aish.mvc.repository.auth.AuthUserRepository;
 import com.aish.mvc.repository.doc.*;
 import com.aish.mvc.service.ai.AiModerationService;
+import com.aish.mvc.service.config.SystemSettingService;
 import com.aish.mvc.service.doc.DocumentService;
 import com.aish.mvc.service.doc.NamingModerationService;
 import com.aish.mvc.service.doc.DocumentContentKeywordService;
@@ -30,12 +33,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -68,6 +75,8 @@ public class DocumentServiceImpl implements DocumentService {
     @Autowired private NotificationService notificationService;
     @Autowired private NamingModerationService namingModerationService;
     @Autowired private DocumentContentKeywordService documentContentKeywordService;
+    @Autowired private AuthUserProfileRepository authUserProfileRepository;
+    @Autowired private SystemSettingService systemSettingService;
 
     private AuthUser getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -93,6 +102,32 @@ public class DocumentServiceImpl implements DocumentService {
         return docDocumentRepository.findByDeletedAtIsNullAndUser_Id(uid).stream()
                 .map(documentMapper::toResponseDTO)
                 .collect(Collectors.toList());
+    }
+
+    // Chặn upload nếu người dùng chưa đủ tuổi tối thiểu (system_settings.MIN_UPLOAD_AGE, mặc
+    // định 16, chỉnh tại /admin/settings). ADMIN được miễn, cùng kiểu miễn trừ role đã dùng ở
+    // các luồng khác trong service này (DocumentMapper.isAdmin, MetadataSuggestionService...).
+    private void enforceMinUploadAge() {
+        AuthUser currentUser = getCurrentUser();
+        boolean isAdmin = currentUser.getRole() != null
+                && "ADMIN".equals(currentUser.getRole().getRoleName());
+        if (isAdmin) return;
+
+        LocalDate dob = authUserProfileRepository.findByUserId(currentUser.getId())
+                .map(AuthUserProfile::getDob)
+                .orElse(null);
+        if (dob == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Bạn cần cập nhật ngày sinh trong Hồ sơ trước khi tải tài liệu lên.");
+        }
+
+        int age = Period.between(dob, LocalDate.now()).getYears();
+        int minAge = systemSettingService.getInt(
+                SystemSettingService.MIN_UPLOAD_AGE_KEY, SystemSettingService.MIN_UPLOAD_AGE_DEFAULT);
+        if (age < minAge) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Bạn cần đủ " + minAge + " tuổi để tải tài liệu lên.");
+        }
     }
 
     // Tạo document + gắn nhiều môn học (chưa gắn file)
@@ -145,6 +180,8 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     @Transactional
     public DocumentResponseDTO uploadDocument(String title, String description, java.util.List<Long> subjectIds, MultipartFile file, String storage) {
+        enforceMinUploadAge();
+
         String target = storage == null ? "LOCAL" : storage.trim().toUpperCase();
         if (!Set.of("LOCAL", "CLOUD", "BOTH").contains(target)) {
             throw new IllegalArgumentException("storage phải là LOCAL, CLOUD hoặc BOTH (nhận được: " + storage + ")");
