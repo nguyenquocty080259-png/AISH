@@ -6,6 +6,10 @@ export function getStats() {
   return apiClient.get("/admin/stats").then((res) => res.data);
 }
 
+export function getAiUsage() {
+  return apiClient.get("/admin/ai-usage").then((res) => res.data);
+}
+
 // status: AppealStatus ("APPEAL_PENDING" | "APPEAL_APPROVED" | "APPEAL_REJECTED"), optional.
 // Omit to get every appeal regardless of status.
 export function listAppeals(status) {
