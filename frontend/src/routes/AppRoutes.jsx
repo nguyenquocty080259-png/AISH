@@ -7,6 +7,7 @@ import GuestRoute from "./GuestRoute";
 import AdminRoute from "./AdminRoute";
 
 import LoginPage from "../pages/auth/LoginPage";
+import OAuthSuccessPage from "../pages/auth/OAuthSuccessPage";
 import SignUpPage from "../pages/auth/SignUpPage";
 import OtpPage from "../pages/auth/OtpPage";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
@@ -43,6 +44,7 @@ export default function AppRoutes() {
       <Route element={<AppLayout />}>
         <Route path={ROUTES.HOME} element={<HomePage />} />
         <Route path={ROUTES.AI_CHAT} element={<AiChatPage />} />
+        <Route path={ROUTES.OAUTH_SUCCESS} element={<OAuthSuccessPage />} />
 
         <Route element={<GuestRoute />}>
           <Route path={ROUTES.LOGIN} element={<LoginPage />} />

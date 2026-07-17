@@ -66,11 +66,12 @@ export function AuthProvider({ children }) {
       window.removeEventListener("auth:unauthorized", handleUnauthorized);
   }, [clearSession]);
 
-  const login = useCallback(async (credentials) => {
-    const data = await authApi.login(credentials);
-    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.accessToken);
-    localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, data.refreshToken ?? "");
-    setAccessToken(data.accessToken);
+  // Áp dụng session cho một access token đã có sẵn (login thường HOẶC token nhận từ
+  // redirect OAuth) - luôn đi qua GET /me + nạp profile một lần, không tách logic riêng.
+  const applySession = useCallback(async (accessTokenValue, refreshTokenValue = "") => {
+    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessTokenValue);
+    localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshTokenValue);
+    setAccessToken(accessTokenValue);
 
     const me = await authApi.getMe();
     setUser(me);
@@ -79,6 +80,17 @@ export function AuthProvider({ children }) {
     await refreshProfile();
     return me;
   }, [refreshProfile]);
+
+  const login = useCallback(async (credentials) => {
+    const data = await authApi.login(credentials);
+    return applySession(data.accessToken, data.refreshToken ?? "");
+  }, [applySession]);
+
+  // Redirect OAuth chỉ mang MỘT token (BE ký bằng generateToken, không có refresh token
+  // riêng cho luồng social) - refreshToken để rỗng, phần còn lại giống hệt login thường.
+  const loginWithToken = useCallback(async (accessTokenValue) => {
+    return applySession(accessTokenValue, "");
+  }, [applySession]);
 
   const logout = useCallback(async () => {
     try {
@@ -102,6 +114,7 @@ export function AuthProvider({ children }) {
     isAuthenticated: Boolean(accessToken),
     loading,
     login,
+    loginWithToken,
     logout,
     profile,
     refreshProfile,
