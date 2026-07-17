@@ -1,6 +1,8 @@
 import { createContext, useEffect, useState, useCallback } from "react";
 import { STORAGE_KEYS } from "../constants/storageKeys";
 import * as authApi from "../api/authApi";
+import * as profileApi from "../api/profileApi";
+import { ROLES } from "../constants/roles";
 
 export const AuthContext = createContext(null);
 
@@ -9,10 +11,11 @@ export function AuthProvider({ children }) {
   const [accessToken, setAccessToken] = useState(
     localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)
   );
-  // LƯU Ý: backend GET /api/auth/me hiện chưa trả "role" trong response,
-  // nên role tạm thời luôn là null cho tới khi backend bổ sung field này.
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Hồ sơ (dob, ...) được nạp một lần mỗi phiên đăng nhập, không nạp lại ở mỗi lần chuyển route -
+  // PrivateRoute/AdminRoute chỉ đọc lại state này để quyết định có bắt onboarding hay không.
+  const [profile, setProfile] = useState(null);
 
   const clearSession = useCallback(() => {
     localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
@@ -21,6 +24,18 @@ export function AuthProvider({ children }) {
     setAccessToken(null);
     setUser(null);
     setRole(null);
+    setProfile(null);
+  }, []);
+
+  const refreshProfile = useCallback(async () => {
+    try {
+      const myProfile = await profileApi.getMyProfile();
+      setProfile(myProfile);
+      return myProfile;
+    } catch {
+      // Không rõ dob thì đơn giản là chưa bắt được onboarding, không phải lỗi nghiêm trọng.
+      return null;
+    }
   }, []);
 
   // Khôi phục session khi load lại trang (nếu còn access token hợp lệ)
@@ -32,15 +47,16 @@ export function AuthProvider({ children }) {
     }
     authApi
       .getMe()
-      .then((profile) => {
-        setUser(profile);
-        setRole(profile.role ?? null);
+      .then(async (me) => {
+        setUser(me);
+        setRole(me.role ?? null);
+        await refreshProfile();
       })
       .catch(() => {
         clearSession();
       })
       .finally(() => setLoading(false));
-  }, [clearSession]);
+  }, [clearSession, refreshProfile]);
 
   // apiClient tự phát event này khi nhận 401 (token hết hạn / sai)
   useEffect(() => {
@@ -56,12 +72,13 @@ export function AuthProvider({ children }) {
     localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, data.refreshToken ?? "");
     setAccessToken(data.accessToken);
 
-    const profile = await authApi.getMe();
-    setUser(profile);
-    setRole(profile.role ?? null);
-    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(profile));
-    return profile;
-  }, []);
+    const me = await authApi.getMe();
+    setUser(me);
+    setRole(me.role ?? null);
+    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(me));
+    await refreshProfile();
+    return me;
+  }, [refreshProfile]);
 
   const logout = useCallback(async () => {
     try {
@@ -74,6 +91,10 @@ export function AuthProvider({ children }) {
     }
   }, [clearSession]);
 
+  const needsOnboarding = Boolean(
+    accessToken && role && role !== ROLES.ADMIN && profile && !profile.dob
+  );
+
   const value = {
     user,
     role,
@@ -82,6 +103,9 @@ export function AuthProvider({ children }) {
     loading,
     login,
     logout,
+    profile,
+    refreshProfile,
+    needsOnboarding,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

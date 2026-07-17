@@ -22,6 +22,7 @@ import CollectionDetailPage from "../pages/collection-detail/CollectionDetailPag
 import DocumentDetailPage from "../pages/document-detail/DocumentDetailPage";
 import FavoritesPage from "../pages/favorites/FavoritesPage";
 import ProfilePage from "../pages/profile/ProfilePage";
+import OnboardingPage from "../pages/onboarding/OnboardingPage";
 import AiChatPage from "../pages/ai-chat/AiChatPage";
 import MyReportsPage from "../pages/my-reports/MyReportsPage";
 import AdminLayout from "../pages/admin/AdminLayout";
@@ -52,6 +53,7 @@ export default function AppRoutes() {
         </Route>
 
         <Route element={<PrivateRoute />}>
+          <Route path={ROUTES.ONBOARDING} element={<OnboardingPage />} />
           <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
           <Route path={ROUTES.DOCUMENTS} element={<DocumentPage />} />
           <Route path={ROUTES.TRASH} element={<TrashPage />} />
