@@ -31,6 +31,12 @@ public class AiModel {
     @Column(nullable = false)
     private Boolean isActive = true;
 
+    @Column(name = "input_price_per1m")
+    private Double inputPricePer1m;
+
+    @Column(name = "output_price_per1m")
+    private Double outputPricePer1m;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
