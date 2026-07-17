@@ -1,0 +1,66 @@
+spring.application.name=backend
+spring.datasource.url=jdbc:postgresql://localhost:5432/aish
+spring.datasource.username=YOUR_USERNAME
+spring.datasource.password=YOUR_PASSWORD
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.jdbc.time_zone=UTC
+logging.level.org.springframework.security=TRACE
+server.port=8080
+
+# Mail
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+
+spring.mail.username=YOUR_USERNAME
+spring.mail.password=YOUR_PASSWORD
+
+
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+
+logging.level.org.springframework.mail=DEBUG
+logging.level.com.sun.mail=DEBUG
+# Google
+spring.security.oauth2.client.registration.google.client-id=YOUR_GOOGLE_CLIENT_ID
+spring.security.oauth2.client.registration.google.client-secret=YOUR_GOOGLE_CLIENT_SECRET
+spring.security.oauth2.client.registration.google.scope=email,profile
+# Github
+spring.security.oauth2.client.registration.github.client-id=YOUR_GITHUB_CLIENT_ID
+spring.security.oauth2.client.registration.github.client-secret=YOUR_GITHUB_CLIENT_SECRET
+spring.security.oauth2.client.registration.github.scope=user:email
+# Facebook
+spring.security.oauth2.client.registration.facebook.client-id=YOUR_FACEBOOK_CLIENT_ID
+spring.security.oauth2.client.registration.facebook.client-secret=YOUR_FACEBOOK_CLIENT_SECRET
+spring.security.oauth2.client.registration.facebook.scope=email,public_profile
+spring.mail.properties.mail.debug=true
+# AI - Chat (Groq via OpenAI-compatible client)
+spring.ai.openai.api-key=YOUR_API_KEY
+spring.ai.openai.base-url=https://api.groq.com/openai
+spring.ai.openai.chat.options.model=llama-3.3-70b-versatile
+
+# AI - Model routing: pin chat to OpenAI/Groq and embedding to Gemini so the
+# spring-ai-starter-model-google-genai chat autoconfig (and the OpenAI embedding
+# autoconfig, which would otherwise point at Groq — no embeddings endpoint there)
+# both back off instead of racing to register competing beans.
+spring.ai.model.chat=openai
+spring.ai.model.embedding=google-genai
+spring.ai.model.embedding.text=google-genai
+
+# AI - Embedding (Google Gemini Developer API)
+spring.ai.google.genai.embedding.api-key=YOUR_API_KEY
+spring.ai.google.genai.embedding.text.options.model=gemini-embedding-001
+spring.ai.google.genai.embedding.text.options.dimensions=768
+
+app.upload.dir=uploads
+# Cloudinary
+cloudinary.cloud-name=YOUR_CLOUD_NAME
+cloudinary.api-key=YOUR_API_KEY
+cloudinary.api-secret=YOUR_API_SECRET
+# Giới hạn dung lượng 1 file
+spring.servlet.multipart.max-file-size=50MB
+# Giới hạn tổng dung lượng 1 request (form + file)
+spring.servlet.multipart.max-request-size=50MB
+
+app.seed.db.enabled=true
+app.ingest.auto.enabled=true
