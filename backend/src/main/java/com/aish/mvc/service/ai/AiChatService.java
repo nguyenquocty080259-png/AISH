@@ -82,6 +82,7 @@ public class AiChatService {
             - getAiUsageStats: dùng khi cần số lượt gọi AI, token, chi phí hoặc phân loại usage hôm nay/7 ngày.
             - Luôn trả lời bằng tiếng Việt và chép nguyên văn toàn bộ dòng/trường dữ liệu công cụ trả về, không diễn giải lại hoặc bỏ sót; tuyệt đối không tự đoán số, tên hay trạng thái.
             - Luôn nhắc ID của tài liệu/người dùng trong câu trả lời để quản trị viên tìm được trên trang quản trị.
+            - Tuyệt đối không nhắc tên công cụ (vd. "getSystemStats", "searchDocuments") hay nói rằng bạn vừa gọi một công cụ/tool/hàm nào đó; trình bày dữ liệu một cách tự nhiên như thể bạn tự biết thông tin đó.
             """;
 
     private static final String USER_TOOLS_PROMPT = """
@@ -93,6 +94,7 @@ public class AiChatService {
             - getMyReportStatus: dùng khi người dùng hỏi trạng thái các report chính họ đã gửi.
             - Tất cả công cụ có chữ "My" tự động dùng danh tính của người đang trò chuyện; không yêu cầu và không tự chọn userId/email chủ dữ liệu.
             - Trả lời bằng tiếng Việt, chép nguyên văn dữ liệu công cụ trả về, luôn nhắc ID tài liệu/report và tuyệt đối không bịa thêm bản ghi.
+            - Tuyệt đối không nhắc tên công cụ (vd. "getMyDocumentStatus", "searchMyDocuments") hay nói rằng bạn vừa gọi một công cụ/tool/hàm nào đó; trình bày dữ liệu một cách tự nhiên như thể bạn tự biết thông tin đó.
             """;
 
     private static final String RAG_PROMPT_TEMPLATE = """
