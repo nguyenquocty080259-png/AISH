@@ -109,4 +109,24 @@ public interface DocDocumentRepository extends JpaRepository<DocDocument, Long> 
     int stampMetadataCheck(@Param("documentId") Long documentId,
                            @Param("status") String status,
                            @Param("checkedAt") LocalDateTime checkedAt);
+
+    @Query("SELECT DISTINCT d FROM DocDocument d JOIN FETCH d.user u " +
+            "WHERE d.deletedAt IS NULL " +
+            "AND (:keyword IS NULL OR LOWER(d.title) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%'))) " +
+            "AND (:visibility IS NULL OR d.visibility = :visibility) " +
+            "AND (:moderationStatus IS NULL OR d.moderationStatus = :moderationStatus) " +
+            "AND (:subjectName IS NULL OR EXISTS (SELECT 1 FROM d.subjects s " +
+            "WHERE LOWER(s.name) = LOWER(CAST(:subjectName AS string)))) " +
+            "ORDER BY d.id ASC")
+    List<DocDocument> searchForAdminTool(
+            @Param("keyword") String keyword,
+            @Param("visibility") DocumentVisibility visibility,
+            @Param("moderationStatus") ModerationStatus moderationStatus,
+            @Param("subjectName") String subjectName,
+            Pageable pageable);
+
+    @Query("SELECT d FROM DocDocument d JOIN FETCH d.user WHERE d.id = :documentId")
+    java.util.Optional<DocDocument> findStatusByIdForAdminTool(@Param("documentId") Long documentId);
+
+    long countByUser_Id(Long userId);
 }
