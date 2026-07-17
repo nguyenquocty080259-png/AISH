@@ -22,7 +22,13 @@ function Period({ label, value }) {
       <div style={metricGrid}>
         <span><b>{value.totalCalls.toLocaleString()}</b><br />lượt gọi</span>
         <span><b>{value.totalTokens.toLocaleString()}</b><br />tokens</span>
-        <span><b>${value.totalCostUsd.toFixed(6)}</b><br />chi phí</span>
+        <span>
+          <b>${value.totalCostUsd.toFixed(6)}</b><br />
+          chi phí ước tính
+          <small style={{ display: "block", color: "#64748b", fontSize: "0.72rem" }}>
+            (theo giá niêm yết Groq — free tier không bị trừ tiền)
+          </small>
+        </span>
       </div>
     </div>
   );
@@ -53,6 +59,9 @@ export default function AdminAiUsageCard() {
                 <b>{item.callType}</b>: {item.totalCalls.toLocaleString()} calls · {item.totalTokens.toLocaleString()} tokens · ${item.totalCostUsd.toFixed(6)}
               </div>
             ))}
+            <small style={{ display: "block", marginTop: "6px", color: "#64748b", fontSize: "0.76rem" }}>
+              CHAT_GENERAL tính theo response cuối, chưa gộp các vòng tool nội bộ; lượt gọi lỗi giữa chừng không được ghi.
+            </small>
           </div>
         </>
       )}
