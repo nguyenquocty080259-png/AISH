@@ -45,6 +45,28 @@ public class SchemaPatchRunner implements ApplicationRunner {
             END $$;
             """;
 
+    private static final String DROP_AI_PROMPTS_PATCH = """
+            DO $$
+            DECLARE fk_name text;
+            BEGIN
+              FOR fk_name IN
+                SELECT tc.constraint_name
+                FROM information_schema.table_constraints tc
+                JOIN information_schema.key_column_usage kcu
+                  ON kcu.constraint_name = tc.constraint_name
+                 AND kcu.constraint_schema = tc.constraint_schema
+                WHERE tc.table_schema = current_schema()
+                  AND tc.table_name = 'ai_conversations'
+                  AND tc.constraint_type = 'FOREIGN KEY'
+                  AND kcu.column_name = 'prompt_id'
+              LOOP
+                EXECUTE format('ALTER TABLE ai_conversations DROP CONSTRAINT IF EXISTS %I', fk_name);
+              END LOOP;
+              ALTER TABLE ai_conversations DROP COLUMN IF EXISTS prompt_id;
+              DROP TABLE IF EXISTS ai_prompts;
+            END $$;
+            """;
+
     private final JdbcTemplate jdbcTemplate;
 
     @Value("${spring.ai.openai.chat.options.model}")
@@ -67,6 +89,13 @@ public class SchemaPatchRunner implements ApplicationRunner {
             log.info("Applied ai_usage_logs message_id FK/nullability startup schema patch.");
         } catch (Exception exception) {
             log.warn("Could not patch ai_usage_logs.message_id; startup will continue: {}", exception.getMessage());
+        }
+
+        try {
+            jdbcTemplate.execute(DROP_AI_PROMPTS_PATCH);
+            log.info("Applied ai_prompts removal startup schema patch.");
+        } catch (Exception exception) {
+            log.warn("Could not drop ai_prompts/prompt_id; startup will continue: {}", exception.getMessage());
         }
 
         try {

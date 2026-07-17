@@ -40,11 +40,6 @@ public class AiConversation {
     @JoinColumn(name = "model_id")
     private AiModel model;
 
-    // Prompt hệ thống nào
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "prompt_id")
-    private AiPrompt prompt;
-
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
