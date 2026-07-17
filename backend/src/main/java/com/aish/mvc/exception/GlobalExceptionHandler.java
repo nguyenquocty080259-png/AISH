@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -70,6 +71,12 @@ public class GlobalExceptionHandler {
         HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
         String message = ex.getReason() != null ? ex.getReason() : status.getReasonPhrase();
         return build(status, message, request);
+    }
+
+    // Race hoặc constraint trùng (vd. username unique) rơi xuống đây thay vì 500 chung chung.
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex, HttpServletRequest request) {
+        return build(HttpStatus.CONFLICT, "Dữ liệu bị trùng, vui lòng thử lại.", request);
     }
 
     @ExceptionHandler(AuthenticationException.class)

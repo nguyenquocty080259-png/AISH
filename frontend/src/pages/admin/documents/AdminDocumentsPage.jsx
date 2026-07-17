@@ -23,7 +23,6 @@ const STATUS_BADGE = {
 
 const MODERATION_BADGE = {
   NOT_REQUIRED: { intent: "neutral", label: "Không cần duyệt" },
-  PENDING: { intent: "warning", label: "Đang chờ duyệt" },
   APPROVED: { intent: "success", label: "Đã duyệt" },
   REJECTED: { intent: "error", label: "Đã từ chối" },
 };

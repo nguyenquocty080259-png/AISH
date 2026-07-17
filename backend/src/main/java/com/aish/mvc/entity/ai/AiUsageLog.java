@@ -19,10 +19,15 @@ public class AiUsageLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Tin nhắn nào sinh ra log này
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "message_id", nullable = false)
-    private AiMessage message;
+    // FK-lite: log vẫn tồn tại khi conversation/message bị xóa.
+    @Column(name = "message_id")
+    private Long messageId;
+
+    @Column(name = "call_type", nullable = false, length = 30)
+    private String callType;
+
+    @Column(name = "user_id")
+    private Long userId;
 
     // Dùng model nào
     @ManyToOne(fetch = FetchType.LAZY)

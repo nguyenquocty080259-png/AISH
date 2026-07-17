@@ -11,7 +11,8 @@ import static org.mockito.Mockito.mock;
 class AiModerationMetadataParseTest {
     private final AiModerationServiceImpl service = new AiModerationServiceImpl(
             mock(com.aish.mvc.repository.doc.DocDocumentRepository.class),
-            mock(AiContentSignalService.class), mock(ChatClient.class));
+            mock(AiContentSignalService.class), mock(ChatClient.class),
+            mock(com.aish.mvc.service.ai.AiUsageTracker.class));
 
     @Test
     void malformedMetadataLinesFailOpenToMatch() {

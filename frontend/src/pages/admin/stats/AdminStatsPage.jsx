@@ -6,6 +6,7 @@ import { ROUTES } from "../../../constants/routes";
 import { useAdminStatsPage } from "./hooks/useAdminStatsPage";
 import IngestStatusBadge from "../documents/components/IngestStatusBadge";
 import AdminPagination from "../components/AdminPagination";
+import AdminAiUsageCard from "../../../components/admin/AdminAiUsageCard";
 import "./admin-stats.css";
 
 const STAT_TILES = [
@@ -129,6 +130,8 @@ export default function AdminStatsPage() {
           </p>
         </Card>
       </div>
+
+      <AdminAiUsageCard />
 
       {/* ================= USER ================= */}
 

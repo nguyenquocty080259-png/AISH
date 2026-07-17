@@ -7,6 +7,7 @@ import GuestRoute from "./GuestRoute";
 import AdminRoute from "./AdminRoute";
 
 import LoginPage from "../pages/auth/LoginPage";
+import OAuthSuccessPage from "../pages/auth/OAuthSuccessPage";
 import SignUpPage from "../pages/auth/SignUpPage";
 import OtpPage from "../pages/auth/OtpPage";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
@@ -22,6 +23,7 @@ import CollectionDetailPage from "../pages/collection-detail/CollectionDetailPag
 import DocumentDetailPage from "../pages/document-detail/DocumentDetailPage";
 import FavoritesPage from "../pages/favorites/FavoritesPage";
 import ProfilePage from "../pages/profile/ProfilePage";
+import OnboardingPage from "../pages/onboarding/OnboardingPage";
 import AiChatPage from "../pages/ai-chat/AiChatPage";
 import MyReportsPage from "../pages/my-reports/MyReportsPage";
 import AdminLayout from "../pages/admin/AdminLayout";
@@ -32,6 +34,7 @@ import AdminDocumentsPage from "../pages/admin/documents/AdminDocumentsPage";
 import AdminSubjectsPage from "../pages/admin/subjects/AdminSubjectsPage";
 import AdminKeywordsPage from "../pages/admin/keywords/AdminKeywordsPage";
 import AdminUsersPage from "../pages/admin/users/AdminUsersPage";
+import AdminSettingsPage from "../pages/admin/settings/AdminSettingsPage";
 import NotFoundPage from "../pages/error/NotFoundPage";
 import UiPreviewPage from "../pages/ui-preview/UiPreviewPage";
 
@@ -41,6 +44,7 @@ export default function AppRoutes() {
       <Route element={<AppLayout />}>
         <Route path={ROUTES.HOME} element={<HomePage />} />
         <Route path={ROUTES.AI_CHAT} element={<AiChatPage />} />
+        <Route path={ROUTES.OAUTH_SUCCESS} element={<OAuthSuccessPage />} />
 
         <Route element={<GuestRoute />}>
           <Route path={ROUTES.LOGIN} element={<LoginPage />} />
@@ -51,6 +55,7 @@ export default function AppRoutes() {
         </Route>
 
         <Route element={<PrivateRoute />}>
+          <Route path={ROUTES.ONBOARDING} element={<OnboardingPage />} />
           <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
           <Route path={ROUTES.DOCUMENTS} element={<DocumentPage />} />
           <Route path={ROUTES.TRASH} element={<TrashPage />} />
@@ -77,6 +82,7 @@ export default function AppRoutes() {
           <Route path="subjects" element={<AdminSubjectsPage />} />
           <Route path="keywords" element={<AdminKeywordsPage />} />
           <Route path="users" element={<AdminUsersPage />} />
+          <Route path="settings" element={<AdminSettingsPage />} />
         </Route>
       </Route>
 

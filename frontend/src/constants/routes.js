@@ -5,6 +5,8 @@ export const ROUTES = {
   VERIFY_OTP: "/verify-otp",
   FORGOT_PASSWORD: "/forgot-password",
   RESET_PASSWORD: "/reset-password",
+  OAUTH_SUCCESS: "/oauth-success",
+  ONBOARDING: "/onboarding",
   DASHBOARD: "/dashboard",
   DOCUMENTS: "/documents",
   DOCUMENT_DETAIL: "/documents/:id",
@@ -24,6 +26,7 @@ export const ROUTES = {
   ADMIN_DOCUMENTS: "/admin/documents",
   ADMIN_SUBJECTS: "/admin/subjects",
   ADMIN_USERS: "/admin/users",
+  ADMIN_SETTINGS: "/admin/settings",
   NOT_FOUND: "/404",
 };
 

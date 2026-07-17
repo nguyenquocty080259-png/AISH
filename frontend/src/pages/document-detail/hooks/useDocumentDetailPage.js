@@ -8,6 +8,15 @@ import { useAuth } from "../../../hooks/useAuth";
 import { useToast } from "../../../hooks/useToast";
 import { ROUTES, buildRoute } from "../../../constants/routes";
 
+// Bỏ dấu tiếng Việt để so khớp không phân biệt hoa/thường và có dấu/không dấu.
+const COMBINING_MARKS_RE = /[̀-ͯ]/g;
+function normalizeForSearch(text) {
+  return (text ?? "")
+    .normalize("NFD")
+    .replace(COMBINING_MARKS_RE, "")
+    .toLowerCase();
+}
+
 export function useDocumentDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -38,6 +47,7 @@ export function useDocumentDetailPage() {
   const [selectedCollectionIds, setSelectedCollectionIds] = useState([]);
   const [addingToCollections, setAddingToCollections] = useState(false);
   const [creatingCollection, setCreatingCollection] = useState(false);
+  const [collectionQuery, setCollectionQuery] = useState("");
 
   const [activeTab, setActiveTab] = useState("comments");
   const [relatedDocs, setRelatedDocs] = useState([]);
@@ -305,6 +315,7 @@ export function useDocumentDetailPage() {
   const openAddToCollectionModal = async () => {
     setAddToCollectionModalOpen(true);
     setSelectedCollectionIds([]);
+    setCollectionQuery("");
     setLoadingCollections(true);
     try {
       const list = await collectionApi.listMyCollections();
@@ -317,6 +328,11 @@ export function useDocumentDetailPage() {
   };
 
   const closeAddToCollectionModal = () => setAddToCollectionModalOpen(false);
+
+  const normalizedCollectionQuery = normalizeForSearch(collectionQuery);
+  const filteredCollections = normalizedCollectionQuery
+    ? myCollections.filter((c) => normalizeForSearch(c.name).includes(normalizedCollectionQuery))
+    : myCollections;
 
   const toggleSelectCollection = (collectionId) => {
     setSelectedCollectionIds((prev) =>
@@ -398,6 +414,9 @@ export function useDocumentDetailPage() {
 
     addToCollectionModalOpen,
     myCollections,
+    filteredCollections,
+    collectionQuery,
+    setCollectionQuery,
     loadingCollections,
     selectedCollectionIds,
     addingToCollections,

@@ -1,7 +1,0 @@
-package com.aish.mvc.repository.ai;
-
-import com.aish.mvc.entity.ai.AiPrompt;
-import org.springframework.data.jpa.repository.JpaRepository;
-
-public interface AiPromptRepository extends JpaRepository<AiPrompt, Long> {
-}

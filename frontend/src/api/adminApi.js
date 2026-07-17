@@ -6,6 +6,10 @@ export function getStats() {
   return apiClient.get("/admin/stats").then((res) => res.data);
 }
 
+export function getAiUsage() {
+  return apiClient.get("/admin/ai-usage").then((res) => res.data);
+}
+
 // status: AppealStatus ("APPEAL_PENDING" | "APPEAL_APPROVED" | "APPEAL_REJECTED"), optional.
 // Omit to get every appeal regardless of status.
 export function listAppeals(status) {
@@ -122,5 +126,15 @@ export function updateModerationKeyword(id, payload) {
 
 export function deleteModerationKeyword(id) {
   return apiClient.delete(`/admin/moderation-keywords/${id}`);
+}
+
+export function getMinUploadAge() {
+  return apiClient.get("/admin/settings/min-upload-age").then((res) => res.data);
+}
+
+export function updateMinUploadAge(minUploadAge) {
+  return apiClient
+    .put("/admin/settings/min-upload-age", { minUploadAge })
+    .then((res) => res.data);
 }
 

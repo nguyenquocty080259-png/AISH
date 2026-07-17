@@ -67,7 +67,6 @@ public class BulkIngestRunner {
             return;
         }
 
-        SecurityContext previousContext = SecurityContextHolder.getContext();
         SecurityContext workerContext = SecurityContextHolder.createEmptyContext();
         workerContext.setAuthentication(new UsernamePasswordAuthenticationToken(
                 SYSTEM_ADMIN_EMAIL, null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))));
@@ -90,7 +89,11 @@ public class BulkIngestRunner {
             }
         }
         finally {
-            SecurityContextHolder.setContext(previousContext);
+            // Dọn hẳn (không "restore previousContext") — thread scheduling pool này chạy CHUNG
+            // (mặc định 1 thread) với TrashCleanupScheduler/MetadataScanScheduler; restore về một
+            // context có thể đã bị nhiễm từ trước chỉ khiến rò rỉ danh tính lan tiếp sang job kế
+            // tiếp thay vì chặn lại ở đây.
+            SecurityContextHolder.clearContext();
         }
     }
 

@@ -22,6 +22,7 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.document.Document;
 import org.springframework.stereotype.Service;
 
@@ -51,6 +52,8 @@ public class AiChatService {
     private final AiRecommendationService aiRecommendationService;
     private final AiConversationService aiConversationService;
     private final AdminAiTools adminAiTools;
+    private final UserAiTools userAiTools;
+    private final AiUsageTracker aiUsageTracker;
 
     private static final String SYSTEM_PROMPT = """
             Bạn là AI HiveMind - trợ lý AI của nền tảng HiveMind dành cho sinh viên.
@@ -70,9 +73,28 @@ public class AiChatService {
 
     private static final String ADMIN_TOOLS_PROMPT = """
 
-            Công cụ số liệu dành cho quản trị viên:
-            - Khi quản trị viên hỏi về số liệu hệ thống hiện tại, hãy gọi công cụ getSystemStats.
-            - Phải dùng nguyên văn các con số do công cụ trả về và tuyệt đối không tự đoán số liệu.
+            Công cụ dành cho quản trị viên:
+            - getSystemStats: dùng khi cần số liệu tổng quan hiện tại của toàn hệ thống.
+            - searchDocuments: dùng khi cần tìm tài liệu theo tiêu đề hoặc lọc theo visibility, kiểm duyệt, môn học.
+            - searchUsers: dùng khi cần tìm người dùng theo tên/email hoặc lọc theo vai trò, trạng thái.
+            - getDocumentStatus: dùng khi cần trạng thái đầy đủ của một tài liệu có ID cụ thể.
+            - getUserStatus: dùng khi cần trạng thái của một người dùng có ID hoặc email cụ thể.
+            - getAiUsageStats: dùng khi cần số lượt gọi AI, token, chi phí hoặc phân loại usage hôm nay/7 ngày.
+            - Luôn trả lời bằng tiếng Việt và chép nguyên văn toàn bộ dòng/trường dữ liệu công cụ trả về, không diễn giải lại hoặc bỏ sót; tuyệt đối không tự đoán số, tên hay trạng thái.
+            - Luôn nhắc ID của tài liệu/người dùng trong câu trả lời để quản trị viên tìm được trên trang quản trị.
+            - Tuyệt đối không nhắc tên công cụ (vd. "getSystemStats", "searchDocuments") hay nói rằng bạn vừa gọi một công cụ/tool/hàm nào đó; trình bày dữ liệu một cách tự nhiên như thể bạn tự biết thông tin đó.
+            """;
+
+    private static final String USER_TOOLS_PROMPT = """
+
+            Công cụ dữ liệu cá nhân dành cho người đang trò chuyện:
+            - getMyStats: dùng khi người dùng hỏi thống kê tài liệu, lượt yêu thích hoặc report của chính họ.
+            - searchMyDocuments: dùng khi người dùng muốn tìm tài liệu họ có quyền truy cập.
+            - getMyDocumentStatus: dùng khi người dùng hỏi trạng thái một tài liệu cụ thể của chính họ theo ID.
+            - getMyReportStatus: dùng khi người dùng hỏi trạng thái các report chính họ đã gửi.
+            - Tất cả công cụ có chữ "My" tự động dùng danh tính của người đang trò chuyện; không yêu cầu và không tự chọn userId/email chủ dữ liệu.
+            - Trả lời bằng tiếng Việt, chép nguyên văn dữ liệu công cụ trả về, luôn nhắc ID tài liệu/report và tuyệt đối không bịa thêm bản ghi.
+            - Tuyệt đối không nhắc tên công cụ (vd. "getMyDocumentStatus", "searchMyDocuments") hay nói rằng bạn vừa gọi một công cụ/tool/hàm nào đó; trình bày dữ liệu một cách tự nhiên như thể bạn tự biết thông tin đó.
             """;
 
     private static final String RAG_PROMPT_TEMPLATE = """
@@ -172,7 +194,9 @@ public class AiChatService {
         promptMessages.add(new UserMessage(userMessage));
         Prompt prompt = new Prompt(promptMessages);
 
-        String answer = chatClient.prompt(prompt).call().content();
+        ChatResponse chatResponse = chatClient.prompt(prompt).call().chatResponse();
+        String answer = chatResponse.getResult().getOutput().getText();
+        aiUsageTracker.log("CHAT_RAG", chatResponse, null);
 
         List<CitationDTO> citations = hits.stream()
                 .map(d -> new CitationDTO(
@@ -204,16 +228,23 @@ public class AiChatService {
             Long currentUserId,
             List<AiMessage> recentMessages) {
         boolean isAdmin = user != null && "ADMIN".equalsIgnoreCase(user.getRole().getRoleName());
-        String systemPrompt = isAdmin ? SYSTEM_PROMPT + ADMIN_TOOLS_PROMPT : SYSTEM_PROMPT;
+        boolean isAuthenticated = user != null;
+        String systemPrompt = isAdmin
+                ? SYSTEM_PROMPT + ADMIN_TOOLS_PROMPT + USER_TOOLS_PROMPT
+                : isAuthenticated ? SYSTEM_PROMPT + USER_TOOLS_PROMPT : SYSTEM_PROMPT;
 
         ChatClient.ChatClientRequestSpec promptSpec = chatClient.prompt()
                 .system(systemPrompt)
                 .messages(toChatMessages(recentMessages))
                 .user(userMessage);
         if (isAdmin) {
-            promptSpec = promptSpec.tools(adminAiTools);
+            promptSpec = promptSpec.tools(adminAiTools, userAiTools);
+        } else if (isAuthenticated) {
+            promptSpec = promptSpec.tools(userAiTools);
         }
-        String answer = promptSpec.call().content();
+        ChatResponse chatResponse = promptSpec.call().chatResponse();
+        String answer = chatResponse.getResult().getOutput().getText();
+        aiUsageTracker.log("CHAT_GENERAL", chatResponse, null);
 
         List<RelatedDocDTO> relatedDocs = suggestPublicDocsForTopic(userMessage, currentUserId);
 

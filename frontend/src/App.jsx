@@ -24,8 +24,11 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppRoutes />
+        {/* Trước AppRoutes để useToastListener đăng ký listener trước khi các trang con
+            (vd. OAuthSuccessPage, useLoginPage) gọi showError() ngay trong effect mount đầu tiên -
+            thứ tự ngược lại làm mất toast khi vào thẳng trang qua hard redirect từ BE. */}
         <ToastStack />
+        <AppRoutes />
       </AuthProvider>
     </BrowserRouter>
   );

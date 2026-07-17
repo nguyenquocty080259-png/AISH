@@ -1,7 +1,7 @@
 spring.application.name=backend
 spring.datasource.url=jdbc:postgresql://localhost:5432/aish
-spring.datasource.username=postgres
-spring.datasource.password=12345
+spring.datasource.username=YOUR_USERNAME
+spring.datasource.password=YOUR_PASSWORD
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.jdbc.time_zone=UTC
@@ -12,8 +12,8 @@ server.port=8080
 spring.mail.host=smtp.gmail.com
 spring.mail.port=587
 
-spring.mail.username=se193810nguyenthianhnhu@gmail.com
-spring.mail.password=sajqpdfqvqfasvfd
+spring.mail.username=YOUR_USERNAME
+spring.mail.password=YOUR_PASSWORD
 
 
 spring.mail.properties.mail.smtp.auth=true
@@ -35,7 +35,7 @@ spring.security.oauth2.client.registration.facebook.client-secret=YOUR_FACEBOOK_
 spring.security.oauth2.client.registration.facebook.scope=email,public_profile
 spring.mail.properties.mail.debug=true
 # AI - Chat (Groq via OpenAI-compatible client)
-spring.ai.openai.api-key=
+spring.ai.openai.api-key=YOUR_API_KEY
 spring.ai.openai.base-url=https://api.groq.com/openai
 spring.ai.openai.chat.options.model=llama-3.3-70b-versatile
 
@@ -48,15 +48,15 @@ spring.ai.model.embedding=google-genai
 spring.ai.model.embedding.text=google-genai
 
 # AI - Embedding (Google Gemini Developer API)
-spring.ai.google.genai.embedding.api-key=
+spring.ai.google.genai.embedding.api-key=YOUR_API_KEY
 spring.ai.google.genai.embedding.text.options.model=gemini-embedding-001
 spring.ai.google.genai.embedding.text.options.dimensions=768
 
 app.upload.dir=uploads
 # Cloudinary
-cloudinary.cloud-name=dmclc6ft8
-cloudinary.api-key=226592843567854
-cloudinary.api-secret=QprngO4Vnls8Hn-WCHMUGaYmKhY
+cloudinary.cloud-name=YOUR_CLOUD_NAME
+cloudinary.api-key=YOUR_API_KEY
+cloudinary.api-secret=YOUR_API_SECRET
 # Giới hạn dung lượng 1 file
 spring.servlet.multipart.max-file-size=50MB
 # Giới hạn tổng dung lượng 1 request (form + file)

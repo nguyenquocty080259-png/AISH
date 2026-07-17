@@ -33,7 +33,7 @@ public class DocumentResponseDTO {
     private String thumbnailUrl; // tương đối trong /uploads (vd. "thumbnails/x.png") | null -> FE dùng icon // LOCAL | CLOUD — chuẩn hóa từ DocFile.resourceType
 
     // DEC-035: kết quả kiểm duyệt AI cho lần chuyển PUBLIC gần nhất.
-    private String moderationStatus; // NOT_REQUIRED | PENDING | APPROVED | REJECTED
+    private String moderationStatus; // NOT_REQUIRED | APPROVED | REJECTED
     private String moderationReason;
     private LocalDateTime adminReviewedAt;
 

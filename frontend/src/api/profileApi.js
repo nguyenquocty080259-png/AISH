@@ -7,3 +7,7 @@ export function getMyProfile() {
 export function updateMyProfile(data) {
   return apiClient.put("/profile/me", data).then((res) => res.data);
 }
+
+export function completeOnboarding(data) {
+  return apiClient.put("/profile/onboarding", data).then((res) => res.data);
+}

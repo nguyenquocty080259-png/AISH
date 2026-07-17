@@ -6,6 +6,7 @@ import com.aish.mvc.entity.doc.DocDocument;
 import com.aish.mvc.repository.doc.DocDocumentRepository;
 import com.aish.mvc.service.ai.AiContentSignalService;
 import com.aish.mvc.service.ai.AiModerationService;
+import com.aish.mvc.service.ai.AiUsageTracker;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +43,7 @@ public class AiModerationServiceImpl implements AiModerationService {
     private final DocDocumentRepository docDocumentRepository;
     private final AiContentSignalService contentSignalService;
     private final ChatClient chatClient;
+    private final AiUsageTracker aiUsageTracker;
 
     @Override
     @Transactional(readOnly = true)
@@ -48,17 +51,41 @@ public class AiModerationServiceImpl implements AiModerationService {
         try {
             DocDocument doc = docDocumentRepository.findById(documentId)
                     .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
-            String content = contentSignalService.buildContentSignal(doc);
-            if (content.isBlank()) return failSafe(documentId, "Tài liệu chưa có nội dung để kiểm duyệt — cần Admin xem xét thủ công.");
-            String subjects = doc.getSubjects() == null ? "" : doc.getSubjects().stream().map(s -> s.getName()).toList().toString();
-            Prompt prompt = new Prompt(List.of(new SystemMessage(MODERATION_SYSTEM_PROMPT),
-                    new UserMessage(content + "\n\n[DATA METADATA]\nTITLE: " + doc.getTitle() + "\nSUBJECTS: " + subjects)));
-            String raw = chatClient.prompt(prompt).call().content();
-            return parseResponse(documentId, raw);
+            return callDocumentModeration(doc, "DOC_MODERATION");
         } catch (Exception e) {
             log.warn("Kiểm duyệt AI lỗi cho document {}: {}", documentId, e.getMessage());
             return failSafe(documentId, "Lỗi khi gọi AI kiểm duyệt — cần Admin xem xét thủ công.");
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MetadataMatchResult checkMetadata(DocDocument document) {
+        ModerationResultDTO result = callDocumentModeration(document, "METADATA_SCAN");
+        return new MetadataMatchResult(result.isMetadataMismatch() ? "LECH" : "KHOP",
+                result.getMetadataMismatchReason());
+    }
+
+    private ModerationResultDTO callDocumentModeration(DocDocument doc, String callType) {
+        String content = contentSignalService.buildContentSignal(doc);
+        if (content == null || content.isBlank()) {
+            throw new IllegalStateException("Tài liệu chưa có nội dung để kiểm duyệt.");
+        }
+        String fileName = doc.getFiles() == null || doc.getFiles().isEmpty()
+                ? "" : doc.getFiles().getFirst().getFileName();
+        String subjects = doc.getSubjects() == null ? ""
+                : doc.getSubjects().stream().map(s -> s.getName()).toList().toString();
+        Prompt prompt = new Prompt(List.of(new SystemMessage(MODERATION_SYSTEM_PROMPT),
+                new UserMessage(content + "\n\n[METADATA COMPARISON RULE]\nContent is the source of truth. Compare file name, title, description and subjects against content."
+                        + "\n\n[DATA METADATA]"
+                        + "\nFILE_NAME: " + fileName
+                        + "\nTITLE: " + doc.getTitle()
+                        + "\nDESCRIPTION: " + doc.getDescription()
+                        + "\nSUBJECTS: " + subjects)));
+        ChatResponse chatResponse = chatClient.prompt(prompt).call().chatResponse();
+        String raw = chatResponse.getResult().getOutput().getText();
+        aiUsageTracker.log(callType, chatResponse, null);
+        return parseResponse(doc.getId(), raw);
     }
 
     @Override
@@ -67,7 +94,9 @@ public class AiModerationServiceImpl implements AiModerationService {
         try {
             String sample = text.strip();
             if (sample.length() > AiContentSignalService.MAX_SAMPLE_CHARS) sample = sample.substring(0, AiContentSignalService.MAX_SAMPLE_CHARS);
-            String raw = chatClient.prompt(new Prompt(List.of(new SystemMessage(CHAT_MODERATION_SYSTEM_PROMPT), new UserMessage(sample)))).call().content();
+            ChatResponse chatResponse = chatClient.prompt(new Prompt(List.of(new SystemMessage(CHAT_MODERATION_SYSTEM_PROMPT), new UserMessage(sample)))).call().chatResponse();
+            String raw = chatResponse.getResult().getOutput().getText();
+            aiUsageTracker.log("TEXT_MODERATION", chatResponse, null);
             return parseTextResponse(raw);
         } catch (Exception e) {
             log.warn("Kiểm duyệt AI cho chat bị lỗi; fail-open: {}", e.getMessage());

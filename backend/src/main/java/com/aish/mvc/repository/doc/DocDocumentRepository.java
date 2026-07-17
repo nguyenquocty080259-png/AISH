@@ -8,10 +8,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.time.LocalDateTime;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public interface DocDocumentRepository extends JpaRepository<DocDocument, Long> {
@@ -88,4 +90,43 @@ public interface DocDocumentRepository extends JpaRepository<DocDocument, Long> 
             "WHERE d.deletedAt IS NULL AND d.visibility = :pub AND d.moderationStatus = :approved")
     List<DocDocument> findPublicApprovedDocuments(@Param("pub") DocumentVisibility pub,
                                                    @Param("approved") ModerationStatus approved);
+
+    @Query("SELECT DISTINCT d FROM DocDocument d LEFT JOIN FETCH d.files LEFT JOIN FETCH d.subjects " +
+            "WHERE d.deletedAt IS NULL AND d.visibility = :visibility " +
+            "AND d.moderationStatus = :moderationStatus AND d.ingestStatus = :ingestStatus " +
+            "AND (d.metadataCheckedAt IS NULL OR d.updatedAt > d.metadataCheckedAt) " +
+            "ORDER BY d.id ASC")
+    List<DocDocument> findMetadataScanCandidates(
+            @Param("visibility") DocumentVisibility visibility,
+            @Param("moderationStatus") ModerationStatus moderationStatus,
+            @Param("ingestStatus") IngestStatus ingestStatus,
+            Pageable pageable);
+
+    @Modifying(clearAutomatically = true)
+    @Transactional
+    @Query("UPDATE DocDocument d SET d.metadataMatchStatus = :status, d.metadataCheckedAt = :checkedAt " +
+            "WHERE d.id = :documentId")
+    int stampMetadataCheck(@Param("documentId") Long documentId,
+                           @Param("status") String status,
+                           @Param("checkedAt") LocalDateTime checkedAt);
+
+    @Query("SELECT DISTINCT d FROM DocDocument d JOIN FETCH d.user u " +
+            "WHERE d.deletedAt IS NULL " +
+            "AND (:keyword IS NULL OR LOWER(d.title) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%'))) " +
+            "AND (:visibility IS NULL OR d.visibility = :visibility) " +
+            "AND (:moderationStatus IS NULL OR d.moderationStatus = :moderationStatus) " +
+            "AND (:subjectName IS NULL OR EXISTS (SELECT 1 FROM d.subjects s " +
+            "WHERE LOWER(s.name) = LOWER(CAST(:subjectName AS string)))) " +
+            "ORDER BY d.id ASC")
+    List<DocDocument> searchForAdminTool(
+            @Param("keyword") String keyword,
+            @Param("visibility") DocumentVisibility visibility,
+            @Param("moderationStatus") ModerationStatus moderationStatus,
+            @Param("subjectName") String subjectName,
+            Pageable pageable);
+
+    @Query("SELECT d FROM DocDocument d JOIN FETCH d.user WHERE d.id = :documentId")
+    java.util.Optional<DocDocument> findStatusByIdForAdminTool(@Param("documentId") Long documentId);
+
+    long countByUser_Id(Long userId);
 }
