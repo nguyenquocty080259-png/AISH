@@ -37,4 +37,8 @@ public interface FavoriteRepository extends JpaRepository<Favorite, Object> {
     @Transactional
     @Modifying
     void deleteByDocumentId(Long documentId);
+
+    @Query("SELECT COUNT(f) FROM Favorite f, DocDocument d " +
+            "WHERE f.documentId = d.id AND d.user.id = :ownerId AND d.deletedAt IS NULL")
+    long countReceivedByDocumentOwner(@Param("ownerId") Long ownerId);
 }
