@@ -50,6 +50,24 @@ public class SchemaPatchRunner implements ApplicationRunner {
             END $$;
             """;
 
+    // A2b: MAX_UPLOAD_LOCAL_BYTES/MAX_UPLOAD_CLOUD_BYTES đổi tên thành MAX_FILE_LOCAL_BYTES/
+    // MAX_FILE_CLOUD_BYTES (xem SystemSettingService) - đã có sẵn trên DB của mọi dev/env cũ.
+    // Rename giữ nguyên value (carry-over) MIỄN LÀ key mới chưa tồn tại; nếu key mới đã có sẵn
+    // (vd. app đã seed mặc định trước khi patch này chạy) thì chỉ xoá hàng cũ, không ghi đè.
+    // Idempotent: lần chạy thứ 2 trở đi, hàng MAX_UPLOAD_* không còn tồn tại -> cả 2 câu lệnh
+    // đều 0 dòng ảnh hưởng, không lỗi.
+    private static final String RENAME_UPLOAD_LIMIT_KEYS_PATCH = """
+            UPDATE system_settings SET setting_key = 'MAX_FILE_LOCAL_BYTES'
+            WHERE setting_key = 'MAX_UPLOAD_LOCAL_BYTES'
+              AND NOT EXISTS (SELECT 1 FROM system_settings WHERE setting_key = 'MAX_FILE_LOCAL_BYTES');
+            DELETE FROM system_settings WHERE setting_key = 'MAX_UPLOAD_LOCAL_BYTES';
+
+            UPDATE system_settings SET setting_key = 'MAX_FILE_CLOUD_BYTES'
+            WHERE setting_key = 'MAX_UPLOAD_CLOUD_BYTES'
+              AND NOT EXISTS (SELECT 1 FROM system_settings WHERE setting_key = 'MAX_FILE_CLOUD_BYTES');
+            DELETE FROM system_settings WHERE setting_key = 'MAX_UPLOAD_CLOUD_BYTES';
+            """;
+
     private static final String DROP_AI_PROMPTS_PATCH = """
             DO $$
             DECLARE fk_name text;
@@ -102,6 +120,13 @@ public class SchemaPatchRunner implements ApplicationRunner {
             log.info("Applied ai_prompts removal startup schema patch.");
         } catch (Exception exception) {
             log.warn("Could not drop ai_prompts/prompt_id; startup will continue: {}", exception.getMessage());
+        }
+
+        try {
+            jdbcTemplate.execute(RENAME_UPLOAD_LIMIT_KEYS_PATCH);
+            log.info("Applied MAX_UPLOAD_*_BYTES -> MAX_FILE_*_BYTES rename startup schema patch.");
+        } catch (Exception exception) {
+            log.warn("Could not rename MAX_UPLOAD_*_BYTES settings; startup will continue: {}", exception.getMessage());
         }
 
         try {

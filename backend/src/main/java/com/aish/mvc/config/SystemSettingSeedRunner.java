@@ -19,12 +19,18 @@ public class SystemSettingSeedRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        // Order(0) SchemaPatchRunner đã chạy trước, migrate MAX_UPLOAD_*_BYTES -> MAX_FILE_*_BYTES
+        // nếu có - nên seedIfMissing dưới đây chỉ thực sự tạo mới trên DB hoàn toàn chưa có key nào.
         seedIfMissing(SystemSettingService.MIN_UPLOAD_AGE_KEY,
                 String.valueOf(SystemSettingService.MIN_UPLOAD_AGE_DEFAULT));
-        seedIfMissing(SystemSettingService.MAX_UPLOAD_LOCAL_BYTES_KEY,
-                String.valueOf(SystemSettingService.MAX_UPLOAD_LOCAL_BYTES_DEFAULT));
-        seedIfMissing(SystemSettingService.MAX_UPLOAD_CLOUD_BYTES_KEY,
-                String.valueOf(SystemSettingService.MAX_UPLOAD_CLOUD_BYTES_DEFAULT));
+        seedIfMissing(SystemSettingService.MAX_FILE_LOCAL_BYTES_KEY,
+                String.valueOf(SystemSettingService.MAX_FILE_LOCAL_BYTES_DEFAULT));
+        seedIfMissing(SystemSettingService.MAX_FILE_CLOUD_BYTES_KEY,
+                String.valueOf(SystemSettingService.MAX_FILE_CLOUD_BYTES_DEFAULT));
+        seedIfMissing(SystemSettingService.QUOTA_LOCAL_BYTES_KEY,
+                String.valueOf(SystemSettingService.QUOTA_LOCAL_BYTES_DEFAULT));
+        seedIfMissing(SystemSettingService.QUOTA_CLOUD_BYTES_KEY,
+                String.valueOf(SystemSettingService.QUOTA_CLOUD_BYTES_DEFAULT));
     }
 
     // Mỗi key seed độc lập - key đã tồn tại (kể cả admin đã sửa giá trị) thì bỏ qua riêng
