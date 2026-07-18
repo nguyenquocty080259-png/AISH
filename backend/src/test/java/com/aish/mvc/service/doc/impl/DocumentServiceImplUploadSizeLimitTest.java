@@ -22,9 +22,9 @@ class DocumentServiceImplUploadSizeLimitTest {
 
     private DocumentServiceImpl newServiceWithLimits(long maxLocal, long maxCloud) {
         SystemSettingService systemSettingService = mock(SystemSettingService.class);
-        when(systemSettingService.getLong(eq(SystemSettingService.MAX_UPLOAD_LOCAL_BYTES_KEY), eq(SystemSettingService.MAX_UPLOAD_LOCAL_BYTES_DEFAULT)))
+        when(systemSettingService.getLong(eq(SystemSettingService.MAX_FILE_LOCAL_BYTES_KEY), eq(SystemSettingService.MAX_FILE_LOCAL_BYTES_DEFAULT)))
                 .thenReturn(maxLocal);
-        when(systemSettingService.getLong(eq(SystemSettingService.MAX_UPLOAD_CLOUD_BYTES_KEY), eq(SystemSettingService.MAX_UPLOAD_CLOUD_BYTES_DEFAULT)))
+        when(systemSettingService.getLong(eq(SystemSettingService.MAX_FILE_CLOUD_BYTES_KEY), eq(SystemSettingService.MAX_FILE_CLOUD_BYTES_DEFAULT)))
                 .thenReturn(maxCloud);
 
         DocumentServiceImpl service = new DocumentServiceImpl();
