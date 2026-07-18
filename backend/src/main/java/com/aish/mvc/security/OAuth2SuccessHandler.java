@@ -9,6 +9,7 @@ import com.aish.mvc.service.auth.UsernameGenerator;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -31,6 +32,9 @@ public class OAuth2SuccessHandler
     private final JwtUtil jwtUtil;
     private final UsernameGenerator usernameGenerator;
 
+    @Value("${app.frontend.base-url:http://localhost:5173}")
+    private String frontendBaseUrl = "http://localhost:5173";
+
     @Override
     public void onAuthenticationSuccess(
             HttpServletRequest request,
@@ -52,7 +56,7 @@ public class OAuth2SuccessHandler
         if(email == null || email.isBlank()) {
 
             response.sendRedirect(
-                    "http://localhost:3000/login?error=no_email"
+                    frontendBaseUrl + "/login?error=no_email"
             );
 
             return;
@@ -75,12 +79,12 @@ public class OAuth2SuccessHandler
             AuthUser existingUser = socialAccount.get().getUser();
 
             if (existingUser.getStatus() == UserStatus.BANNED) {
-                response.sendRedirect("http://localhost:3000/login?error=banned");
+                response.sendRedirect(frontendBaseUrl + "/login?error=banned");
                 return;
             }
 
             if (existingUser.getStatus() == UserStatus.PENDING) {
-                response.sendRedirect("http://localhost:3000/login?error=pending");
+                response.sendRedirect(frontendBaseUrl + "/login?error=pending");
                 return;
             }
 
@@ -88,7 +92,7 @@ public class OAuth2SuccessHandler
                     jwtUtil.generateToken(email, existingUser.getRole().getRoleName());
 
             response.sendRedirect(
-                    "http://localhost:3000/oauth-success?token="
+                    frontendBaseUrl + "/oauth-success?token="
                             + jwt
             );
 
@@ -111,7 +115,7 @@ public class OAuth2SuccessHandler
                     );
 
             response.sendRedirect(
-                    "http://localhost:3000/login?error="
+                    frontendBaseUrl + "/login?error="
                             + msg
             );
 
@@ -153,7 +157,7 @@ public class OAuth2SuccessHandler
                 jwtUtil.generateToken(email, role.getRoleName());
 
         response.sendRedirect(
-                "http://localhost:3000/oauth-success?token="
+                frontendBaseUrl + "/oauth-success?token="
                         + jwt
         );
     }

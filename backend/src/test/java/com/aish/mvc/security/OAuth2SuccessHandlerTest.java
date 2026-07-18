@@ -70,7 +70,7 @@ class OAuth2SuccessHandlerTest {
         assertEquals(email, accountCaptor.getValue().getIdentifier());
         assertEquals(Boolean.TRUE, accountCaptor.getValue().getIsVerified());
 
-        verify(response).sendRedirect("http://localhost:3000/oauth-success?token=new-user-jwt");
+        verify(response).sendRedirect("http://localhost:5173/oauth-success?token=new-user-jwt");
     }
 
     @Test
@@ -102,7 +102,7 @@ class OAuth2SuccessHandlerTest {
 
         handler.onAuthenticationSuccess(request, response, tokenFor(email, "google"));
 
-        verify(response).sendRedirect("http://localhost:3000/login?error=banned");
+        verify(response).sendRedirect("http://localhost:5173/login?error=banned");
         verify(jwtUtil, never()).generateToken(anyString(), anyString());
     }
 
@@ -135,7 +135,7 @@ class OAuth2SuccessHandlerTest {
 
         handler.onAuthenticationSuccess(request, response, tokenFor(email, "github"));
 
-        verify(response).sendRedirect("http://localhost:3000/login?error=pending");
+        verify(response).sendRedirect("http://localhost:5173/login?error=pending");
         verify(jwtUtil, never()).generateToken(anyString(), anyString());
     }
 
@@ -169,9 +169,9 @@ class OAuth2SuccessHandlerTest {
 
         handler.onAuthenticationSuccess(request, response, tokenFor(email, "facebook"));
 
-        verify(response).sendRedirect("http://localhost:3000/oauth-success?token=relogin-jwt");
-        verify(response, never()).sendRedirect("http://localhost:3000/login?error=banned");
-        verify(response, never()).sendRedirect("http://localhost:3000/login?error=pending");
+        verify(response).sendRedirect("http://localhost:5173/oauth-success?token=relogin-jwt");
+        verify(response, never()).sendRedirect("http://localhost:5173/login?error=banned");
+        verify(response, never()).sendRedirect("http://localhost:5173/login?error=pending");
     }
 
     @Test
@@ -188,7 +188,7 @@ class OAuth2SuccessHandlerTest {
 
         handler.onAuthenticationSuccess(request, response, tokenFor(null, "github"));
 
-        verify(response).sendRedirect("http://localhost:3000/login?error=no_email");
+        verify(response).sendRedirect("http://localhost:5173/login?error=no_email");
         verify(userRepo, never()).save(any());
     }
 }
