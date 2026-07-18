@@ -1,6 +1,54 @@
 import { useState } from "react";
+import { formatBytes } from "../../../components/ui/StorageUsageBar";
 
-export default function UploadModal({ open, subjects, submitting, onClose, onSubmit }) {
+// Trả về thông báo lỗi tiếng Việt nếu file vượt giới hạn 1 tệp HOẶC vượt quota còn lại cho
+// storage đã chọn, null nếu ổn. storageUsage null (chưa tải được / lỗi) -> fail-open, không
+// chặn gì ở FE (BE vẫn là chốt chặn thật - xem DocumentServiceImpl.enforceUploadSizeLimit/
+// enforceUploadQuota).
+function checkSizeLimit(file, storage, storageUsage) {
+  if (!file || !storageUsage) return null;
+  const {
+    usedLocalBytes, usedCloudBytes,
+    quotaLocalBytes, quotaCloudBytes,
+    maxFileLocalBytes, maxFileCloudBytes,
+  } = storageUsage;
+
+  if (storage === "LOCAL" || storage === "BOTH") {
+    if (maxFileLocalBytes != null && file.size > maxFileLocalBytes) {
+      return `Tệp ${formatBytes(file.size)} vượt giới hạn ${formatBytes(maxFileLocalBytes)} cho nơi lưu Máy chủ.`;
+    }
+    const remainingLocal = quotaLocalBytes - usedLocalBytes;
+    if (quotaLocalBytes != null && file.size > remainingLocal) {
+      return `Dung lượng còn lại ${formatBytes(Math.max(remainingLocal, 0))} không đủ cho tệp ${formatBytes(file.size)} ở nơi lưu Máy chủ.`;
+    }
+  }
+  if (storage === "CLOUD" || storage === "BOTH") {
+    if (maxFileCloudBytes != null && file.size > maxFileCloudBytes) {
+      return `Tệp ${formatBytes(file.size)} vượt giới hạn ${formatBytes(maxFileCloudBytes)} cho nơi lưu Cloud.`;
+    }
+    const remainingCloud = quotaCloudBytes - usedCloudBytes;
+    if (quotaCloudBytes != null && file.size > remainingCloud) {
+      return `Dung lượng còn lại ${formatBytes(Math.max(remainingCloud, 0))} không đủ cho tệp ${formatBytes(file.size)} ở nơi lưu Cloud.`;
+    }
+  }
+  return null;
+}
+
+// Text "Còn lại: ..." cho nơi lưu đang chọn, hiển thị trước khi user chọn file.
+function remainingSpaceText(storage, storageUsage) {
+  if (!storageUsage) return null;
+  const { usedLocalBytes, usedCloudBytes, quotaLocalBytes, quotaCloudBytes } = storageUsage;
+  const parts = [];
+  if (storage === "LOCAL" || storage === "BOTH") {
+    parts.push(`Máy chủ: ${formatBytes(Math.max(quotaLocalBytes - usedLocalBytes, 0))}`);
+  }
+  if (storage === "CLOUD" || storage === "BOTH") {
+    parts.push(`Cloud: ${formatBytes(Math.max(quotaCloudBytes - usedCloudBytes, 0))}`);
+  }
+  return "Còn lại - " + parts.join(", ");
+}
+
+export default function UploadModal({ open, subjects, submitting, storageUsage, onClose, onSubmit }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [subjectIds, setSubjectIds] = useState([]);
@@ -15,6 +63,9 @@ export default function UploadModal({ open, subjects, submitting, onClose, onSub
     { value: "CLOUD", label: "Cloud", hint: "Lưu trên Cloudinary" },
     { value: "BOTH", label: "Cả hai", hint: "Lưu cả server lẫn Cloudinary" },
   ];
+
+  const sizeError = checkSizeLimit(file, storage, storageUsage);
+  const remainingText = remainingSpaceText(storage, storageUsage);
 
   if (!open) return null;
 
@@ -38,6 +89,7 @@ export default function UploadModal({ open, subjects, submitting, onClose, onSub
       setSubjectError(true);
       return;
     }
+    if (sizeError) return;
    onSubmit({ title, description, subjectIds, file, storage });
   };
 
@@ -193,10 +245,17 @@ export default function UploadModal({ open, subjects, submitting, onClose, onSub
           <p style={{ color: "#888", fontSize: 12, margin: "2px 0 0" }}>
             {STORAGE_OPTIONS.find((o) => o.value === storage)?.hint}
           </p>
+          {remainingText && (
+            <p style={{ color: "#888", fontSize: 12, margin: "2px 0 0" }}>{remainingText}</p>
+          )}
+
+          {sizeError && (
+            <p style={{ color: "#e11", fontSize: 13, margin: "4px 0 0" }}>{sizeError}</p>
+          )}
 
           <div className="doc-modal__actions">
             <button type="button" onClick={onClose} className="doc-modal__cancel">Hủy</button>
-            <button type="submit" disabled={submitting} className="doc-modal__submit">
+            <button type="submit" disabled={submitting || !!sizeError} className="doc-modal__submit">
               {submitting ? "Đang tải lên..." : "Tải lên"}
             </button>
           </div>

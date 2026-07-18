@@ -1,15 +1,19 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useDocumentDetailPage } from "./hooks/useDocumentDetailPage";
+import { useDocumentDetailPage, resolveViewerKind } from "./hooks/useDocumentDetailPage";
 import RatingStars from "./components/RatingStars";
 import CommentSection from "./components/CommentSection";
 import EditDocumentModal from "./components/EditDocumentModal";
 import PdfViewer from "./components/PdfViewer";
 import TextFileViewer from "./components/TextFileViewer";
+import DocxViewer from "./components/DocxViewer";
+import XlsxViewer from "./components/XlsxViewer";
+import ExtractedTextViewer from "./components/ExtractedTextViewer";
 import AiReadinessBadge from "./components/AiReadinessBadge";
 import Modal from "../../components/ui/Modal";
 import Button from "../../components/ui/Button";
 import EmptyState from "../../components/ui/EmptyState";
+import FormatBadge from "../../components/ui/FormatBadge";
 import RecommendationCard from "../../components/recommendations/RecommendationCard";
 import ReportMenu from "../../components/report/ReportMenu";
 import ModerationBadge from "../document/components/ModerationBadge";
@@ -24,6 +28,8 @@ export default function DocumentDetailPage() {
     currentUserName,
     highlightPage,
     highlightSnippet,
+    previewBlobUrl,
+    previewBlobError,
     commentText,
     setCommentText,
     posting,
@@ -107,6 +113,8 @@ export default function DocumentDetailPage() {
         </button>
       </div>
 
+      <FormatBadge fileType={doc.fileType} fileName={doc.fileName} />
+
       <div className="detail-meta">
         <span>Người đăng: {doc.ownerName}</span>
         {doc.subjectNames?.length > 0 && <span>Môn: {doc.subjectNames.join(", ")}</span>}
@@ -121,56 +129,82 @@ export default function DocumentDetailPage() {
       {doc.fileUrl && (
         <div className={`detail-preview ${previewUnlocked ? "detail-preview--open" : "detail-preview--locked"}`}>
           <div className="detail-preview__content">
-      {(() => {
-        const fileUrl = doc.fileUrl.startsWith("http")
-          ? doc.fileUrl
-          : `http://localhost:8080/uploads/${doc.fileUrl}`;
-        const type = (doc.fileType || "").toLowerCase();
-        const name = (doc.fileName || "").toLowerCase();
-        const isImage = type.includes("image") || /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(name);
-        const isPdf = type.includes("pdf") || name.endsWith(".pdf");
-        // Cùng tiêu chí với backend (DocEmbeddingServiceImpl.resolveIngestFormat) cho nhánh TXT.
-        const isTxt = type === "text/plain" || name.endsWith(".txt");
+            {(() => {
+              const viewerKind = resolveViewerKind(doc.fileType, doc.fileName);
+              // PDF/TXT tô sáng đoạn trích ngay trong nội dung (xem PdfViewer/TextFileViewer);
+              // ảnh không áp dụng khái niệm trích dẫn văn bản. Các định dạng còn lại (DOCX/
+              // XLSX/PPTX/khác) không có trang thật (page=null) nên chỉ hiển thị callout phía
+              // trên, không tô sáng/nhảy trang được (xem RULES trong đặc tả A3).
+              const CALLOUT_KINDS = new Set(["docx", "xlsx", "pptx", "other"]);
+              const showCitationCallout = highlightSnippet && CALLOUT_KINDS.has(viewerKind);
 
-        return (
-          <div style={{ margin: "16px 0" }}>
-            {isImage && (
-              <img
-                src={fileUrl}
-                alt={doc.title}
-                style={{ maxWidth: "100%", maxHeight: "80vh", borderRadius: 8 }}
-              />
-            )}
-            {isPdf && (
-              <PdfViewer
-                fileUrl={fileUrl}
-                initialPage={highlightPage}
-                highlightText={highlightSnippet}
-              />
-            )}
-            {!isImage && !isPdf && isTxt && (
-              <TextFileViewer documentId={doc.id} highlightText={highlightSnippet} />
-            )}
-            {!isImage && !isPdf && !isTxt && (
-              <>
-                {highlightSnippet && (
-                  <div className="detail-citation-callout">
-                    <span className="detail-citation-callout__label">Đoạn trích được chọn</span>
-                    <p>&ldquo;{highlightSnippet}&rdquo;</p>
-                    <span className="detail-citation-callout__hint">
-                      Định dạng này chưa hỗ trợ tô sáng trực tiếp trong trình xem — hãy mở
-                      file bên dưới để tìm đoạn trích trên.
-                    </span>
-                  </div>
-                )}
-                <a href={fileUrl} target="_blank" rel="noreferrer">
-                  Mở file trong tab mới
-                </a>
-              </>
-            )}
-          </div>
-        );
-      })()}
+              return (
+                <div style={{ margin: "16px 0" }}>
+                  {showCitationCallout && (
+                    <div className="detail-citation-callout">
+                      <span className="detail-citation-callout__label">Đoạn trích được chọn</span>
+                      <p>&ldquo;{highlightSnippet}&rdquo;</p>
+                      <span className="detail-citation-callout__hint">
+                        {viewerKind === "docx" || viewerKind === "xlsx" || viewerKind === "pptx"
+                          ? "Định dạng này chưa hỗ trợ tô sáng theo trang — xem nội dung bên dưới để tìm đoạn trích trên."
+                          : "Định dạng này chưa hỗ trợ tô sáng trực tiếp trong trình xem — hãy mở file bên dưới để tìm đoạn trích trên."}
+                      </span>
+                    </div>
+                  )}
+
+                  {viewerKind === "image" &&
+                    (previewBlobError ? (
+                      <div className="detail-preview__load-error">Không tải được ảnh.</div>
+                    ) : previewBlobUrl ? (
+                      <img
+                        src={previewBlobUrl}
+                        alt={doc.title}
+                        style={{ maxWidth: "100%", maxHeight: "80vh", borderRadius: 8 }}
+                      />
+                    ) : (
+                      <div className="detail-preview__loading">Đang tải ảnh...</div>
+                    ))}
+
+                  {viewerKind === "pdf" &&
+                    (previewBlobError ? (
+                      <div className="detail-preview__load-error">Không tải được PDF.</div>
+                    ) : previewBlobUrl ? (
+                      <PdfViewer
+                        fileUrl={previewBlobUrl}
+                        initialPage={highlightPage}
+                        highlightText={highlightSnippet}
+                      />
+                    ) : (
+                      <div className="detail-preview__loading">Đang tải PDF...</div>
+                    ))}
+
+                  {viewerKind === "txt" && (
+                    <TextFileViewer documentId={doc.id} highlightText={highlightSnippet} />
+                  )}
+
+                  {viewerKind === "docx" && (
+                    <DocxViewer documentId={doc.id} highlightText={highlightSnippet} />
+                  )}
+
+                  {viewerKind === "xlsx" && <XlsxViewer documentId={doc.id} />}
+
+                  {viewerKind === "pptx" && (
+                    <ExtractedTextViewer documentId={doc.id} highlightText={highlightSnippet} />
+                  )}
+
+                  {viewerKind === "other" &&
+                    (previewBlobError ? (
+                      <div className="detail-preview__load-error">Không mở được file.</div>
+                    ) : previewBlobUrl ? (
+                      <a href={previewBlobUrl} target="_blank" rel="noreferrer">
+                        Mở file trong tab mới
+                      </a>
+                    ) : (
+                      <div className="detail-preview__loading">Đang chuẩn bị file...</div>
+                    ))}
+                </div>
+              );
+            })()}
           </div>
 
           {!previewUnlocked && (

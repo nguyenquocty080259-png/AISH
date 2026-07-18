@@ -17,6 +17,30 @@ function normalizeForSearch(text) {
     .toLowerCase();
 }
 
+// Nguồn duy nhất để quyết định trình xem nào hiển thị (A3/T7) — trước đây là 1 IIFE lồng
+// nhau trong JSX của DocumentDetailPage, giờ tách ra để thêm định dạng mới không phải sửa
+// ternary lồng nhau. Cùng tiêu chí với backend (DocEmbeddingServiceImpl.resolveIngestFormat)
+// cho các nhánh dùng chung MIME, nhưng đây là whitelist xuôi (chỉ định dạng có viewer riêng
+// mới thoát khỏi "other") vì FE cần biết chính xác nên render component nào.
+export function resolveViewerKind(fileType, fileName) {
+  const type = (fileType || "").toLowerCase();
+  const name = (fileName || "").toLowerCase();
+
+  if (type.includes("image") || /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(name)) return "image";
+  if (type.includes("pdf") || name.endsWith(".pdf")) return "pdf";
+  if (type === "text/plain" || name.endsWith(".txt")) return "txt";
+  if (type.includes("wordprocessingml") || name.endsWith(".docx")) return "docx";
+  if (type.includes("spreadsheetml") || name.endsWith(".xlsx")) return "xlsx";
+  if (type.includes("presentationml") || name.endsWith(".pptx")) return "pptx";
+  return "other";
+}
+
+// Kind cần 1 blob thô từ /preview để hiển thị trực tiếp (ảnh <img>, PDF qua react-pdf, hoặc
+// link "Mở file trong tab mới" cho định dạng không có viewer riêng). DOCX/XLSX/PPTX/TXT tự
+// fetch blob/text riêng bên trong component viewer của chúng (xem DocxViewer, XlsxViewer,
+// TextFileViewer, ExtractedTextViewer) nên không cần state chung ở đây.
+const RAW_BLOB_KINDS = new Set(["image", "pdf", "other"]);
+
 export function useDocumentDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -40,6 +64,11 @@ export function useDocumentDetailPage() {
   // Chỉ phản ánh trạng thái trong phiên hiện tại (không có field ingested ở backend) -
   // reload trang sẽ mất, không phải bug.
   const [ingested, setIngested] = useState(false);
+
+  // Blob thô cho ảnh/PDF/định dạng không có viewer riêng (xem RAW_BLOB_KINDS) — object URL,
+  // phải revoke khi đổi tài liệu hoặc unmount để không rò rỉ bộ nhớ.
+  const [previewBlobUrl, setPreviewBlobUrl] = useState(null);
+  const [previewBlobError, setPreviewBlobError] = useState(false);
 
   const [addToCollectionModalOpen, setAddToCollectionModalOpen] = useState(false);
   const [myCollections, setMyCollections] = useState([]);
@@ -75,6 +104,37 @@ export function useDocumentDetailPage() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  // Chỉ fetch blob thô khi viewer thực sự cần (RAW_BLOB_KINDS) — DOCX/XLSX/PPTX/TXT tự lo lấy
+  // dữ liệu bên trong viewer riêng. Phụ thuộc vào fileType/fileName (giá trị nguyên thuỷ) thay
+  // vì cả object doc — tránh fetch lại mỗi khi load() chạy lại do thao tác khác (thích, đánh
+  // giá, bình luận...) mà file không đổi.
+  useEffect(() => {
+    if (!doc?.id || !RAW_BLOB_KINDS.has(resolveViewerKind(doc.fileType, doc.fileName))) {
+      setPreviewBlobUrl(null);
+      setPreviewBlobError(false);
+      return;
+    }
+    let cancelled = false;
+    let objectUrl = null;
+    setPreviewBlobUrl(null);
+    setPreviewBlobError(false);
+    documentApi
+      .previewFile(doc.id)
+      .then((blob) => {
+        if (cancelled) return;
+        objectUrl = window.URL.createObjectURL(blob);
+        setPreviewBlobUrl(objectUrl);
+      })
+      .catch(() => {
+        if (!cancelled) setPreviewBlobError(true);
+      });
+    return () => {
+      cancelled = true;
+      if (objectUrl) window.URL.revokeObjectURL(objectUrl);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doc?.id, doc?.fileType, doc?.fileName]);
 
   // GHI CHÚ: DocumentResponseDTO chỉ trả ownerName (string), không có ownerId,
   // nên đây chỉ là check tương đối ở FE để ẨN/HIỆN nút quản lý cho gọn UI.
@@ -379,6 +439,8 @@ export function useDocumentDetailPage() {
     currentUserName: user?.fullName ?? null,
     highlightPage,
     highlightSnippet,
+    previewBlobUrl,
+    previewBlobError,
     commentText,
     setCommentText,
     posting,

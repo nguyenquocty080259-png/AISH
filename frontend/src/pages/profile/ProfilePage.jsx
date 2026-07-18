@@ -1,4 +1,5 @@
 import { useProfilePage } from "./hooks/useProfilePage";
+import StorageUsageBar from "../../components/ui/StorageUsageBar";
 import "./profile.css";
 
 const FIELD_LABELS = {
@@ -40,6 +41,7 @@ export default function ProfilePage() {
     cancelEditing,
     handleFieldChange,
     handleSave,
+    storageUsage,
   } = useProfilePage();
 
   if (loading) {
@@ -95,6 +97,10 @@ export default function ProfilePage() {
                 </div>
               ))}
           </div>
+          <div className="profile-storage">
+            <h3 className="profile-storage__title">Dung lượng lưu trữ</h3>
+            <StorageUsageBar usage={storageUsage} />
+          </div>
         </div>
       ) : (
         <form className="profile-form" onSubmit={handleSave}>
@@ -147,6 +153,11 @@ export default function ProfilePage() {
               )}
             </label>
           ))}
+
+          <div className="profile-storage">
+            <h3 className="profile-storage__title">Dung lượng lưu trữ</h3>
+            <StorageUsageBar usage={storageUsage} />
+          </div>
 
           <div className="profile-form__actions">
             <button

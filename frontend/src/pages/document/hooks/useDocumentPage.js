@@ -20,6 +20,16 @@ export function useDocumentPage() {
 
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
+  // null = chưa biết / lấy thất bại -> UploadModal không chặn gì, để BE tự quyết định
+  // (fail-open, giống tinh thần fail-safe của SystemSettingService ở BE).
+  const [storageUsage, setStorageUsage] = useState(null);
+
+  const loadStorageUsage = () => {
+    documentApi
+      .getStorageUsage()
+      .then(setStorageUsage)
+      .catch(() => setStorageUsage(null));
+  };
 
   const loadAll = async () => {
     setLoading(true);
@@ -35,12 +45,21 @@ export function useDocumentPage() {
     } finally {
       setLoading(false);
     }
+    loadStorageUsage();
   };
 
   useEffect(() => {
     loadAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Lấy lại dung lượng đã dùng mỗi lần mở modal upload (ngoài lần tải khi vào trang) để form
+  // luôn có số mới nhất nếu admin vừa đổi cài đặt hoặc user vừa xóa tài liệu vĩnh viễn ở tab khác.
+  useEffect(() => {
+    if (!isUploadOpen) return;
+    loadStorageUsage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isUploadOpen]);
 
   // Lọc client: theo tên + mô tả + môn học (môn là mảng subjectIds)
   const filteredDocuments = useMemo(() => {
@@ -121,6 +140,7 @@ export function useDocumentPage() {
     isUploadOpen,
     setIsUploadOpen,
     uploading,
+    storageUsage,
     handleUpload,
     handleToggleFavorite,
   };

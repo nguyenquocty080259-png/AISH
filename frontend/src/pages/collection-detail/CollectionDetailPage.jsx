@@ -19,6 +19,7 @@ export default function CollectionDetailPage() {
     removingDocId,
     addDocsModalOpen,
     availableDocs,
+    filteredAvailableDocs,
     loadingAvailableDocs,
     selectedDocIds,
     addingDocs,
@@ -26,6 +27,13 @@ export default function CollectionDetailPage() {
     closeAddDocsModal,
     toggleSelectDoc,
     handleAddDocuments,
+    docQuery,
+    setDocQuery,
+    storageFilter,
+    setStorageFilter,
+    subjectFilter,
+    setSubjectFilter,
+    subjectOptions,
     renameModalOpen,
     renaming,
     openRenameModal,
@@ -146,21 +154,76 @@ export default function CollectionDetailPage() {
             Không còn tài liệu nào khác để thêm vào collection này.
           </p>
         ) : (
-          <ul className="collection-detail-add__list">
-            {availableDocs.map((doc) => (
-              <li key={doc.id} className="collection-detail-add__item">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={selectedDocIds.includes(doc.id)}
-                    onChange={() => toggleSelectDoc(doc.id)}
-                  />
-                  {doc.title}
-                </label>
-                {doc.storageType && <Badge intent="info">{doc.storageType}</Badge>}
-              </li>
-            ))}
-          </ul>
+          <>
+            <div className="collection-detail-add__filters">
+              <input
+                type="text"
+                className="collection-detail-add__search"
+                placeholder="Tìm tài liệu theo tên..."
+                value={docQuery}
+                onChange={(e) => setDocQuery(e.target.value)}
+              />
+              <div className="collection-detail-add__filter-row">
+                <div className="collection-detail-add__segmented">
+                  <button
+                    type="button"
+                    className={storageFilter === "ALL" ? "is-active" : ""}
+                    onClick={() => setStorageFilter("ALL")}
+                  >
+                    Tất cả
+                  </button>
+                  <button
+                    type="button"
+                    className={storageFilter === "LOCAL" ? "is-active" : ""}
+                    onClick={() => setStorageFilter("LOCAL")}
+                  >
+                    LOCAL
+                  </button>
+                  <button
+                    type="button"
+                    className={storageFilter === "CLOUD" ? "is-active" : ""}
+                    onClick={() => setStorageFilter("CLOUD")}
+                  >
+                    CLOUD
+                  </button>
+                </div>
+                <select
+                  className="collection-detail-add__subject-select"
+                  value={subjectFilter}
+                  onChange={(e) =>
+                    setSubjectFilter(e.target.value === "ALL" ? "ALL" : Number(e.target.value))
+                  }
+                >
+                  <option value="ALL">Tất cả môn</option>
+                  {subjectOptions.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {filteredAvailableDocs.length === 0 ? (
+              <p className="collection-detail-add__loading">Không tìm thấy tài liệu phù hợp.</p>
+            ) : (
+              <ul className="collection-detail-add__list">
+                {filteredAvailableDocs.map((doc) => (
+                  <li key={doc.id} className="collection-detail-add__item">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={selectedDocIds.includes(doc.id)}
+                        onChange={() => toggleSelectDoc(doc.id)}
+                      />
+                      {doc.title}
+                    </label>
+                    {doc.storageType && <Badge intent="info">{doc.storageType}</Badge>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
         )}
 
         <p className="collection-detail-add__note">

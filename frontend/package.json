@@ -9,7 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@e965/xlsx": "^0.20.3",
     "axios": "^1.7.9",
+    "docx-preview": "^0.4.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-pdf": "^10.4.1",

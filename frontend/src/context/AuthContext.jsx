@@ -104,7 +104,11 @@ export function AuthProvider({ children }) {
   }, [clearSession]);
 
   const needsOnboarding = Boolean(
-    accessToken && role && role !== ROLES.ADMIN && profile && !profile.dob
+    accessToken &&
+      role &&
+      role !== ROLES.ADMIN &&
+      profile &&
+      (!profile.dob || !profile.fullName?.trim())
   );
 
   const value = {

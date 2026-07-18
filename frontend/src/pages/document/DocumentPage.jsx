@@ -4,6 +4,7 @@ import FilterBar from "./components/FilterBar";
 import DocumentCard from "./components/DocumentCard";
 import Pagination from "./components/Pagination";
 import UploadModal from "./components/UploadModal";
+import StorageUsageBar from "../../components/ui/StorageUsageBar";
 import "./document.css";
 
 export default function DocumentPage() {
@@ -22,6 +23,7 @@ export default function DocumentPage() {
     isUploadOpen,
     setIsUploadOpen,
     uploading,
+    storageUsage,
     handleUpload,
     handleToggleFavorite,
   } = useDocumentPage();
@@ -34,6 +36,8 @@ export default function DocumentPage() {
           + Tải lên tài liệu
         </button>
       </div>
+
+      <StorageUsageBar usage={storageUsage} className="doc-page__storage" />
 
       <div className="doc-page__toolbar">
         <SearchBar value={searchText} onChange={setSearchText} />
@@ -67,6 +71,7 @@ export default function DocumentPage() {
         open={isUploadOpen}
         subjects={subjects}
         submitting={uploading}
+        storageUsage={storageUsage}
         onClose={() => setIsUploadOpen(false)}
         onSubmit={handleUpload}
       />

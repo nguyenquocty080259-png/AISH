@@ -5,6 +5,7 @@ import com.aish.mvc.dto.ai.ModerationResultDTO;
 import com.aish.mvc.dto.doc.AdminDocumentSummaryDTO;
 import com.aish.mvc.dto.doc.CommunityPageResponseDTO;
 import com.aish.mvc.dto.doc.DocumentResponseDTO;
+import com.aish.mvc.dto.doc.StorageUsageDTO;
 import com.aish.mvc.entity.auth.AuthUser;
 import com.aish.mvc.entity.auth.AuthUserProfile;
 import com.aish.mvc.entity.doc.*;
@@ -130,6 +131,67 @@ public class DocumentServiceImpl implements DocumentService {
         }
     }
 
+    // Chặn upload vượt giới hạn dung lượng MỘT FILE, cấu hình theo nơi lưu (system_settings.
+    // MAX_FILE_LOCAL_BYTES / MAX_FILE_CLOUD_BYTES, mặc định 200 MiB, chỉnh tại /admin/settings).
+    // BOTH phải vượt qua CẢ HAI giới hạn vì file được lưu ở cả 2 nơi. Package-private để unit
+    // test gọi trực tiếp mà không cần dựng lại toàn bộ pipeline buildDocument()/file storage.
+    void enforceUploadSizeLimit(long fileSize, String storage) {
+        if ("LOCAL".equals(storage) || "BOTH".equals(storage)) {
+            long maxLocal = systemSettingService.getLong(
+                    SystemSettingService.MAX_FILE_LOCAL_BYTES_KEY, SystemSettingService.MAX_FILE_LOCAL_BYTES_DEFAULT);
+            if (fileSize > maxLocal) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Tệp " + humanReadableSize(fileSize) + " vượt giới hạn " + humanReadableSize(maxLocal)
+                                + " cho nơi lưu LOCAL.");
+            }
+        }
+        if ("CLOUD".equals(storage) || "BOTH".equals(storage)) {
+            long maxCloud = systemSettingService.getLong(
+                    SystemSettingService.MAX_FILE_CLOUD_BYTES_KEY, SystemSettingService.MAX_FILE_CLOUD_BYTES_DEFAULT);
+            if (fileSize > maxCloud) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Tệp " + humanReadableSize(fileSize) + " vượt giới hạn " + humanReadableSize(maxCloud)
+                                + " cho nơi lưu CLOUD.");
+            }
+        }
+    }
+
+    // Chặn upload vượt TỔNG QUOTA dung lượng của người dùng (system_settings.QUOTA_LOCAL_BYTES /
+    // QUOTA_CLOUD_BYTES, mặc định 1 GiB, chung cho mọi user - không có override theo từng
+    // người). Dùng đã dùng tính CẢ tài liệu trong thùng rác (xem DocFileRepository) - đây là
+    // chủ ý: bytes vẫn còn chiếm disk/Cloudinary tới khi xoá vĩnh viễn. BOTH phải vượt qua CẢ
+    // HAI quota, kiểm tra độc lập (không dừng sớm sau khi 1 bên qua). Package-private để test.
+    void enforceUploadQuota(long fileSize, String storage, Long userId) {
+        if ("LOCAL".equals(storage) || "BOTH".equals(storage)) {
+            long usedLocal = docFileRepository.sumLocalFileSizeByUserId(userId);
+            long quotaLocal = systemSettingService.getLong(
+                    SystemSettingService.QUOTA_LOCAL_BYTES_KEY, SystemSettingService.QUOTA_LOCAL_BYTES_DEFAULT);
+            if (usedLocal + fileSize > quotaLocal) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Dung lượng đã dùng " + humanReadableSize(usedLocal) + " + tệp " + humanReadableSize(fileSize)
+                                + " vượt quota " + humanReadableSize(quotaLocal) + " cho nơi lưu LOCAL.");
+            }
+        }
+        if ("CLOUD".equals(storage) || "BOTH".equals(storage)) {
+            long usedCloud = docFileRepository.sumCloudFileSizeByUserId(userId);
+            long quotaCloud = systemSettingService.getLong(
+                    SystemSettingService.QUOTA_CLOUD_BYTES_KEY, SystemSettingService.QUOTA_CLOUD_BYTES_DEFAULT);
+            if (usedCloud + fileSize > quotaCloud) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Dung lượng đã dùng " + humanReadableSize(usedCloud) + " + tệp " + humanReadableSize(fileSize)
+                                + " vượt quota " + humanReadableSize(quotaCloud) + " cho nơi lưu CLOUD.");
+            }
+        }
+    }
+
+    private static String humanReadableSize(long bytes) {
+        double gb = bytes / (1024.0 * 1024 * 1024);
+        if (gb >= 1) return String.format("%.1f GB", gb);
+        double mb = bytes / (1024.0 * 1024);
+        if (mb >= 1) return String.format("%.1f MB", mb);
+        return String.format("%.1f KB", bytes / 1024.0);
+    }
+
     // Tạo document + gắn nhiều môn học (chưa gắn file)
     private DocDocument buildDocument(String title, String description, java.util.List<Long> subjectIds) {
         String validatedTitle = namingModerationService.validate(title);
@@ -186,6 +248,9 @@ public class DocumentServiceImpl implements DocumentService {
         if (!Set.of("LOCAL", "CLOUD", "BOTH").contains(target)) {
             throw new IllegalArgumentException("storage phải là LOCAL, CLOUD hoặc BOTH (nhận được: " + storage + ")");
         }
+
+        enforceUploadSizeLimit(file.getSize(), target);
+        enforceUploadQuota(file.getSize(), target, getCurrentUser().getId());
 
         DocDocument savedDoc = buildDocument(title, description, subjectIds);
 
@@ -270,6 +335,23 @@ public class DocumentServiceImpl implements DocumentService {
         return docDocumentRepository.findByIdInAndDeletedAtIsNull(favoriteIds).stream()
                 .map(documentMapper::toResponseDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public StorageUsageDTO getStorageUsage() {
+        Long uid = getCurrentUser().getId();
+        long usedLocal = docFileRepository.sumLocalFileSizeByUserId(uid);
+        long usedCloud = docFileRepository.sumCloudFileSizeByUserId(uid);
+        long quotaLocal = systemSettingService.getLong(
+                SystemSettingService.QUOTA_LOCAL_BYTES_KEY, SystemSettingService.QUOTA_LOCAL_BYTES_DEFAULT);
+        long quotaCloud = systemSettingService.getLong(
+                SystemSettingService.QUOTA_CLOUD_BYTES_KEY, SystemSettingService.QUOTA_CLOUD_BYTES_DEFAULT);
+        long maxFileLocal = systemSettingService.getLong(
+                SystemSettingService.MAX_FILE_LOCAL_BYTES_KEY, SystemSettingService.MAX_FILE_LOCAL_BYTES_DEFAULT);
+        long maxFileCloud = systemSettingService.getLong(
+                SystemSettingService.MAX_FILE_CLOUD_BYTES_KEY, SystemSettingService.MAX_FILE_CLOUD_BYTES_DEFAULT);
+        return new StorageUsageDTO(usedLocal, usedCloud, quotaLocal, quotaCloud, maxFileLocal, maxFileCloud);
     }
 
     @Override

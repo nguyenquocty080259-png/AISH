@@ -12,6 +12,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
@@ -77,6 +78,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex, HttpServletRequest request) {
         return build(HttpStatus.CONFLICT, "Dữ liệu bị trùng, vui lòng thử lại.", request);
+    }
+
+    // Chặn cứng ở tầng Tomcat/multipart (spring.servlet.multipart.max-*) trước khi request tới
+    // được controller - đây là backstop cuối, luồng bình thường đã bị chặn sớm hơn (400) bởi
+    // DocumentServiceImpl.enforceUploadSizeLimit() với giới hạn cấu hình riêng theo LOCAL/CLOUD.
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceeded(
+            MaxUploadSizeExceededException ex, HttpServletRequest request) {
+        return build(HttpStatus.PAYLOAD_TOO_LARGE, "Tệp tải lên vượt quá dung lượng tối đa cho phép.", request);
     }
 
     @ExceptionHandler(AuthenticationException.class)

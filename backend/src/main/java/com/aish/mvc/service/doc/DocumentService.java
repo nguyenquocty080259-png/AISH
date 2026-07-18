@@ -3,6 +3,7 @@ package com.aish.mvc.service.doc;
 import com.aish.mvc.dto.doc.AdminDocumentSummaryDTO;
 import com.aish.mvc.dto.doc.CommunityPageResponseDTO;
 import com.aish.mvc.dto.doc.DocumentResponseDTO;
+import com.aish.mvc.dto.doc.StorageUsageDTO;
 import com.aish.mvc.entity.doc.DocFile;
 import com.aish.mvc.entity.enums.DocumentVisibility;
 import org.springframework.data.domain.Page;
@@ -34,6 +35,10 @@ public interface DocumentService {
 
     // Trang "Yêu thích" của user đang đăng nhập — loại tài liệu đã bị xoá mềm (thùng rác).
     List<DocumentResponseDTO> getFavoriteDocuments();
+
+    // Dung lượng đã dùng + giới hạn hiện hành của user đang đăng nhập - dùng cho form upload
+    // (pre-flight FE) và thanh hiển thị dung lượng (My Documents, Hồ sơ).
+    StorageUsageDTO getStorageUsage();
 
 
 

@@ -1,9 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import * as collectionApi from "../../../api/collectionApi";
 import * as documentApi from "../../../api/documentApi";
 import { useToast } from "../../../hooks/useToast";
 import { ROUTES } from "../../../constants/routes";
+
+// Bỏ dấu tiếng Việt để so khớp không phân biệt hoa/thường và có dấu/không dấu.
+const COMBINING_MARKS_RE = /[̀-ͯ]/g;
+function normalizeForSearch(text) {
+  return (text ?? "")
+    .normalize("NFD")
+    .replace(COMBINING_MARKS_RE, "")
+    .toLowerCase();
+}
 
 export function useCollectionDetailPage() {
   const { id } = useParams();
@@ -27,6 +36,10 @@ export function useCollectionDetailPage() {
   const [loadingAvailableDocs, setLoadingAvailableDocs] = useState(false);
   const [selectedDocIds, setSelectedDocIds] = useState([]);
   const [addingDocs, setAddingDocs] = useState(false);
+
+  const [docQuery, setDocQuery] = useState("");
+  const [storageFilter, setStorageFilter] = useState("ALL");
+  const [subjectFilter, setSubjectFilter] = useState("ALL");
 
   const load = async () => {
     setLoading(true);
@@ -99,6 +112,9 @@ export function useCollectionDetailPage() {
   const openAddDocsModal = async () => {
     setAddDocsModalOpen(true);
     setSelectedDocIds([]);
+    setDocQuery("");
+    setStorageFilter("ALL");
+    setSubjectFilter("ALL");
     setLoadingAvailableDocs(true);
     try {
       const allDocs = await documentApi.getAll();
@@ -111,13 +127,50 @@ export function useCollectionDetailPage() {
     }
   };
 
-  const closeAddDocsModal = () => setAddDocsModalOpen(false);
+  const closeAddDocsModal = () => {
+    setAddDocsModalOpen(false);
+    setDocQuery("");
+    setStorageFilter("ALL");
+    setSubjectFilter("ALL");
+  };
 
   const toggleSelectDoc = (docId) => {
     setSelectedDocIds((prev) =>
       prev.includes(docId) ? prev.filter((x) => x !== docId) : [...prev, docId]
     );
   };
+
+  // Danh sách môn học duy nhất xuất hiện trong availableDocs, để đổ vào dropdown lọc.
+  const subjectOptions = useMemo(() => {
+    const map = new Map();
+    availableDocs.forEach((doc) => {
+      (doc.subjectIds ?? []).forEach((subjectId, idx) => {
+        const name = doc.subjectNames?.[idx];
+        if (subjectId != null && name && !map.has(subjectId)) {
+          map.set(subjectId, name);
+        }
+      });
+    });
+    return Array.from(map, ([id, name]) => ({ id, name })).sort((a, b) =>
+      a.name.localeCompare(b.name, "vi")
+    );
+  }, [availableDocs]);
+
+  const filteredAvailableDocs = useMemo(() => {
+    const normalizedQuery = normalizeForSearch(docQuery);
+    return availableDocs.filter((doc) => {
+      if (normalizedQuery && !normalizeForSearch(doc.title).includes(normalizedQuery)) {
+        return false;
+      }
+      if (storageFilter !== "ALL" && doc.storageType !== storageFilter && doc.storageType !== "BOTH") {
+        return false;
+      }
+      if (subjectFilter !== "ALL" && !(doc.subjectIds ?? []).includes(subjectFilter)) {
+        return false;
+      }
+      return true;
+    });
+  }, [availableDocs, docQuery, storageFilter, subjectFilter]);
 
   // Thêm là THAM CHIẾU (DEC-007) — tài liệu vẫn còn nguyên trong My Documents.
   const handleAddDocuments = async () => {
@@ -146,6 +199,7 @@ export function useCollectionDetailPage() {
 
     addDocsModalOpen,
     availableDocs,
+    filteredAvailableDocs,
     loadingAvailableDocs,
     selectedDocIds,
     addingDocs,
@@ -153,6 +207,13 @@ export function useCollectionDetailPage() {
     closeAddDocsModal,
     toggleSelectDoc,
     handleAddDocuments,
+    docQuery,
+    setDocQuery,
+    storageFilter,
+    setStorageFilter,
+    subjectFilter,
+    setSubjectFilter,
+    subjectOptions,
 
     renameModalOpen,
     renaming,
