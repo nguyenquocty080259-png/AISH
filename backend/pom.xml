@@ -127,15 +127,18 @@
 			<artifactId>spring-ai-tika-document-reader</artifactId>
 		</dependency>
 
-		<!-- Chỉ dùng cho seed utility (com.aish.mvc.tools.seed) để SINH file mẫu PDF/DOCX/PPTX
-		     — không phải runtime app. Version khớp đúng bản mà spring-ai-tika-document-reader
-		     đã kéo transitively (qua tika-parser-pdf-module/tika-parser-microsoft-module) để
-		     tránh xung đột classpath. -->
+		<!-- pdfbox: chỉ dùng cho seed utility (com.aish.mvc.tools.seed) để SINH file mẫu PDF —
+		     không phải runtime app. Version khớp đúng bản mà spring-ai-tika-document-reader
+		     đã kéo transitively (qua tika-parser-pdf-module) để tránh xung đột classpath. -->
 		<dependency>
 			<groupId>org.apache.pdfbox</groupId>
 			<artifactId>pdfbox</artifactId>
 			<version>3.0.5</version>
 		</dependency>
+		<!-- poi-ooxml: RUNTIME dependency (A3/T4) — DocumentTextExtractor dùng để trích DOCX/PPTX
+		     cho GET /api/documents/{id}/preview-text, không còn chỉ là seed utility. Version giữ
+		     nguyên, khớp đúng bản mà spring-ai-tika-document-reader kéo transitively (qua
+		     tika-parser-microsoft-module) để tránh xung đột classpath — KHÔNG bump. -->
 		<dependency>
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi-ooxml</artifactId>

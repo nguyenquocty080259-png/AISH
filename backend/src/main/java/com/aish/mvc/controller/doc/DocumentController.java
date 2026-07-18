@@ -8,17 +8,20 @@ import com.aish.mvc.dto.doc.StorageUsageDTO;
 import com.aish.mvc.entity.doc.DocFile;
 import com.aish.mvc.exception.CommentBlockedException;
 import com.aish.mvc.service.doc.DocumentService;
+import com.aish.mvc.service.doc.DocumentTextExtractor;
 import com.aish.mvc.service.doc.EngagementService;
 import com.aish.mvc.service.doc.ModerationAppealService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import com.aish.mvc.dto.doc.DocumentUpdateRequestDTO;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
@@ -30,6 +33,7 @@ public class DocumentController {
     private final EngagementService engagementService;
     private final ModerationAppealService moderationAppealService;
     private final com.aish.mvc.service.stor.FileResourceResolver fileResourceResolver;
+    private final DocumentTextExtractor documentTextExtractor;
 
     @GetMapping
     public ResponseEntity<List<DocumentResponseDTO>> getAll() {
@@ -222,6 +226,27 @@ public class DocumentController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    // Text trích xuất best-effort cho DOCX/PPTX/khác — dùng CHUNG getFileForPreview() nên
+    // quyền truy cập giống hệt /preview (owner hoặc PUBLIC). Không đọc file trực tiếp từ đĩa:
+    // đi qua fileResourceResolver như mọi nhánh khác. 204 khi không trích xuất được (file rỗng,
+    // hỏng, hoặc có mật khẩu) thay vì lỗi 500 — FE coi đó là tín hiệu chuyển sang nhánh tải file.
+    @GetMapping("/{id}/preview-text")
+    public ResponseEntity<String> previewText(@PathVariable Long id) {
+        try {
+            DocFile docFile = documentService.getFileForPreview(id);
+            Resource resource = resolveResource(docFile);
+            String text = documentTextExtractor.extract(resource, docFile);
+            if (text == null || text.isBlank()) {
+                return ResponseEntity.noContent().build();
+            }
+            return ResponseEntity.ok()
+                    .contentType(new MediaType("text", "plain", StandardCharsets.UTF_8))
+                    .body(text);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
     }
 
