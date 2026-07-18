@@ -138,14 +138,15 @@ export function updateMinUploadAge(minUploadAge) {
     .then((res) => res.data);
 }
 
-// Byte - quy đổi GB chỉ ở FE (xem useAdminSettingsPage.js).
+// Byte - quy đổi GB chỉ ở FE (xem useAdminSettingsPage.js). maxFile* = giới hạn 1 file;
+// quota* = tổng dung lượng cho phép của 1 user (chung cho mọi user).
 export function getUploadLimits() {
   return apiClient.get("/admin/settings/upload-limits").then((res) => res.data);
 }
 
-export function updateUploadLimits({ maxUploadLocalBytes, maxUploadCloudBytes }) {
+export function updateUploadLimits({ maxFileLocalBytes, maxFileCloudBytes, quotaLocalBytes, quotaCloudBytes }) {
   return apiClient
-    .put("/admin/settings/upload-limits", { maxUploadLocalBytes, maxUploadCloudBytes })
+    .put("/admin/settings/upload-limits", { maxFileLocalBytes, maxFileCloudBytes, quotaLocalBytes, quotaCloudBytes })
     .then((res) => res.data);
 }
 

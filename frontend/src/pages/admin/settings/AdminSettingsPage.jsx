@@ -10,26 +10,38 @@ export default function AdminSettingsPage() {
     loading,
     saving,
     saveMinUploadAge,
-    uploadLimitLocalGb,
-    uploadLimitCloudGb,
+    maxFileLocalGb,
+    maxFileCloudGb,
+    quotaLocalGb,
+    quotaCloudGb,
     savingLimits,
     saveUploadLimits,
   } = useAdminSettingsPage();
   const [value, setValue] = useState("");
-  const [localGb, setLocalGb] = useState("");
-  const [cloudGb, setCloudGb] = useState("");
+  const [maxFileLocal, setMaxFileLocal] = useState("");
+  const [maxFileCloud, setMaxFileCloud] = useState("");
+  const [quotaLocal, setQuotaLocal] = useState("");
+  const [quotaCloud, setQuotaCloud] = useState("");
 
   useEffect(() => {
     setValue(minUploadAge);
   }, [minUploadAge]);
 
   useEffect(() => {
-    setLocalGb(uploadLimitLocalGb);
-  }, [uploadLimitLocalGb]);
+    setMaxFileLocal(maxFileLocalGb);
+  }, [maxFileLocalGb]);
 
   useEffect(() => {
-    setCloudGb(uploadLimitCloudGb);
-  }, [uploadLimitCloudGb]);
+    setMaxFileCloud(maxFileCloudGb);
+  }, [maxFileCloudGb]);
+
+  useEffect(() => {
+    setQuotaLocal(quotaLocalGb);
+  }, [quotaLocalGb]);
+
+  useEffect(() => {
+    setQuotaCloud(quotaCloudGb);
+  }, [quotaCloudGb]);
 
   const submit = (e) => {
     e.preventDefault();
@@ -37,10 +49,18 @@ export default function AdminSettingsPage() {
     saveMinUploadAge(value);
   };
 
+  const limitsFieldsFilled =
+    maxFileLocal !== "" && maxFileCloud !== "" && quotaLocal !== "" && quotaCloud !== "";
+
   const submitLimits = (e) => {
     e.preventDefault();
-    if (localGb === "" || cloudGb === "") return;
-    saveUploadLimits(localGb, cloudGb);
+    if (!limitsFieldsFilled) return;
+    saveUploadLimits({
+      maxFileLocalGbValue: maxFileLocal,
+      maxFileCloudGbValue: maxFileCloud,
+      quotaLocalGbValue: quotaLocal,
+      quotaCloudGbValue: quotaCloud,
+    });
   };
 
   return (
@@ -80,31 +100,57 @@ export default function AdminSettingsPage() {
 
           <form className="admin-settings-form" onSubmit={submitLimits}>
             <h2 className="admin-settings-form__title">Giới hạn dung lượng tải lên</h2>
+
+            <p className="admin-settings-form__section-label">Mỗi tệp (áp dụng cho từng lần tải lên)</p>
             <label className="admin-settings-form__field">
-              Giới hạn dung lượng tải lên - Máy chủ (LOCAL, GB)
+              Máy chủ (LOCAL, GB / tệp)
               <input
                 type="number"
                 min={0}
                 max={2}
                 step="any"
-                value={localGb}
-                onChange={(e) => setLocalGb(e.target.value)}
+                value={maxFileLocal}
+                onChange={(e) => setMaxFileLocal(e.target.value)}
+              />
+            </label>
+            <label className="admin-settings-form__field">
+              Cloud (CLOUD, GB / tệp)
+              <input
+                type="number"
+                min={0}
+                max={2}
+                step="any"
+                value={maxFileCloud}
+                onChange={(e) => setMaxFileCloud(e.target.value)}
               />
             </label>
 
+            <p className="admin-settings-form__section-label">Tổng dung lượng mỗi người dùng (quota, chung cho mọi user)</p>
             <label className="admin-settings-form__field">
-              Giới hạn dung lượng tải lên - Cloud (CLOUD, GB)
+              Máy chủ (LOCAL, GB / người dùng)
               <input
                 type="number"
                 min={0}
                 max={2}
                 step="any"
-                value={cloudGb}
-                onChange={(e) => setCloudGb(e.target.value)}
+                value={quotaLocal}
+                onChange={(e) => setQuotaLocal(e.target.value)}
+              />
+            </label>
+            <label className="admin-settings-form__field">
+              Cloud (CLOUD, GB / người dùng)
+              <input
+                type="number"
+                min={0}
+                max={2}
+                step="any"
+                value={quotaCloud}
+                onChange={(e) => setQuotaCloud(e.target.value)}
               />
               <span className="admin-settings-form__hint">
-                Nhập số GB thập phân (vd. 1, 0.5). Áp dụng riêng cho từng nơi lưu; tài liệu lưu
-                "Cả hai" phải đạt cả hai giới hạn. Tối đa 2 GB.
+                Nhập số GB thập phân (vd. 1, 0.5), tối đa 2 GB cho mỗi giá trị. Giới hạn mỗi tệp
+                không được vượt quá quota tương ứng. Tài liệu trong thùng rác vẫn tính vào quota
+                cho tới khi bị xóa vĩnh viễn. Tài liệu lưu "Cả hai" chiếm quota ở cả hai nơi.
               </span>
             </label>
 
@@ -112,7 +158,7 @@ export default function AdminSettingsPage() {
               <Button
                 type="submit"
                 variant="primary"
-                disabled={savingLimits || localGb === "" || cloudGb === ""}
+                disabled={savingLimits || !limitsFieldsFilled}
               >
                 {savingLimits ? "Đang lưu..." : "Lưu"}
               </Button>

@@ -49,6 +49,13 @@
     font-weight: 400;
 }
 
+.admin-settings-form__section-label {
+    font-size: var(--body-sm);
+    color: var(--color-text);
+    font-weight: 600;
+    margin-top: var(--spacing-xs);
+}
+
 .admin-settings-form__actions {
     display: flex;
     justify-content: flex-end;
