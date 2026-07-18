@@ -58,9 +58,11 @@ cloudinary.cloud-name=YOUR_CLOUD_NAME
 cloudinary.api-key=YOUR_API_KEY
 cloudinary.api-secret=YOUR_API_SECRET
 # Giới hạn dung lượng 1 file
-spring.servlet.multipart.max-file-size=50MB
+spring.servlet.multipart.max-file-size=2GB
 # Giới hạn tổng dung lượng 1 request (form + file)
-spring.servlet.multipart.max-request-size=50MB
+spring.servlet.multipart.max-request-size=2GB
+# Không ngắt kết nối khi request vượt giới hạn trước khi response lỗi được ghi ra
+server.tomcat.max-swallow-size=-1
 
 app.seed.db.enabled=true
 app.ingest.auto.enabled=true

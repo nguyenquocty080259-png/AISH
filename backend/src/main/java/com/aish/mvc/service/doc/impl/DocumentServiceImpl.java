@@ -130,6 +130,39 @@ public class DocumentServiceImpl implements DocumentService {
         }
     }
 
+    // Chặn upload vượt giới hạn dung lượng cấu hình theo nơi lưu (system_settings.
+    // MAX_UPLOAD_LOCAL_BYTES / MAX_UPLOAD_CLOUD_BYTES, mặc định 1 GiB, chỉnh tại /admin/settings).
+    // BOTH phải vượt qua CẢ HAI giới hạn vì file được lưu ở cả 2 nơi. Package-private để unit
+    // test gọi trực tiếp mà không cần dựng lại toàn bộ pipeline buildDocument()/file storage.
+    void enforceUploadSizeLimit(long fileSize, String storage) {
+        if ("LOCAL".equals(storage) || "BOTH".equals(storage)) {
+            long maxLocal = systemSettingService.getLong(
+                    SystemSettingService.MAX_UPLOAD_LOCAL_BYTES_KEY, SystemSettingService.MAX_UPLOAD_LOCAL_BYTES_DEFAULT);
+            if (fileSize > maxLocal) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Tệp " + humanReadableSize(fileSize) + " vượt giới hạn " + humanReadableSize(maxLocal)
+                                + " cho nơi lưu LOCAL.");
+            }
+        }
+        if ("CLOUD".equals(storage) || "BOTH".equals(storage)) {
+            long maxCloud = systemSettingService.getLong(
+                    SystemSettingService.MAX_UPLOAD_CLOUD_BYTES_KEY, SystemSettingService.MAX_UPLOAD_CLOUD_BYTES_DEFAULT);
+            if (fileSize > maxCloud) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Tệp " + humanReadableSize(fileSize) + " vượt giới hạn " + humanReadableSize(maxCloud)
+                                + " cho nơi lưu CLOUD.");
+            }
+        }
+    }
+
+    private static String humanReadableSize(long bytes) {
+        double gb = bytes / (1024.0 * 1024 * 1024);
+        if (gb >= 1) return String.format("%.1f GB", gb);
+        double mb = bytes / (1024.0 * 1024);
+        if (mb >= 1) return String.format("%.1f MB", mb);
+        return String.format("%.1f KB", bytes / 1024.0);
+    }
+
     // Tạo document + gắn nhiều môn học (chưa gắn file)
     private DocDocument buildDocument(String title, String description, java.util.List<Long> subjectIds) {
         String validatedTitle = namingModerationService.validate(title);
@@ -186,6 +219,8 @@ public class DocumentServiceImpl implements DocumentService {
         if (!Set.of("LOCAL", "CLOUD", "BOTH").contains(target)) {
             throw new IllegalArgumentException("storage phải là LOCAL, CLOUD hoặc BOTH (nhận được: " + storage + ")");
         }
+
+        enforceUploadSizeLimit(file.getSize(), target);
 
         DocDocument savedDoc = buildDocument(title, description, subjectIds);
 

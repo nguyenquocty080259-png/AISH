@@ -19,7 +19,17 @@ public class SystemSettingSeedRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        String key = SystemSettingService.MIN_UPLOAD_AGE_KEY;
+        seedIfMissing(SystemSettingService.MIN_UPLOAD_AGE_KEY,
+                String.valueOf(SystemSettingService.MIN_UPLOAD_AGE_DEFAULT));
+        seedIfMissing(SystemSettingService.MAX_UPLOAD_LOCAL_BYTES_KEY,
+                String.valueOf(SystemSettingService.MAX_UPLOAD_LOCAL_BYTES_DEFAULT));
+        seedIfMissing(SystemSettingService.MAX_UPLOAD_CLOUD_BYTES_KEY,
+                String.valueOf(SystemSettingService.MAX_UPLOAD_CLOUD_BYTES_DEFAULT));
+    }
+
+    // Mỗi key seed độc lập - key đã tồn tại (kể cả admin đã sửa giá trị) thì bỏ qua riêng
+    // key đó, không skip toàn bộ chỉ vì 1 key khác đã có sẵn.
+    private void seedIfMissing(String key, String defaultValue) {
         if (systemSettingRepository.existsBySettingKey(key)) {
             log.info("System setting {} already exists; skipping seed", key);
             return;
@@ -27,8 +37,8 @@ public class SystemSettingSeedRunner implements CommandLineRunner {
 
         systemSettingRepository.save(SystemSetting.builder()
                 .settingKey(key)
-                .settingValue(String.valueOf(SystemSettingService.MIN_UPLOAD_AGE_DEFAULT))
+                .settingValue(defaultValue)
                 .build());
-        log.info("Seeded system setting {}={}", key, SystemSettingService.MIN_UPLOAD_AGE_DEFAULT);
+        log.info("Seeded system setting {}={}", key, defaultValue);
     }
 }
