@@ -1,13 +1,12 @@
 package com.aish.mvc.controller.doc;
 
-import com.aish.mvc.dto.config.UploadLimitsDTO;
 import com.aish.mvc.dto.doc.AppealRequestDTO;
 import com.aish.mvc.dto.doc.CommentBlockedResponseDTO;
 import com.aish.mvc.dto.doc.DocumentResponseDTO;
 import com.aish.mvc.dto.doc.ModerationAppealResponseDTO;
+import com.aish.mvc.dto.doc.StorageUsageDTO;
 import com.aish.mvc.entity.doc.DocFile;
 import com.aish.mvc.exception.CommentBlockedException;
-import com.aish.mvc.service.config.SystemSettingService;
 import com.aish.mvc.service.doc.DocumentService;
 import com.aish.mvc.service.doc.EngagementService;
 import com.aish.mvc.service.doc.ModerationAppealService;
@@ -31,7 +30,6 @@ public class DocumentController {
     private final EngagementService engagementService;
     private final ModerationAppealService moderationAppealService;
     private final com.aish.mvc.service.stor.FileResourceResolver fileResourceResolver;
-    private final SystemSettingService systemSettingService;
 
     @GetMapping
     public ResponseEntity<List<DocumentResponseDTO>> getAll() {
@@ -39,15 +37,11 @@ public class DocumentController {
     }
 
     // Đọc cho bất kỳ user đã đăng nhập nào (anyRequest().authenticated() trong SecurityConfig) -
-    // form upload FE dùng để tự chặn trước khi gửi file lớn, không cần quyền ADMIN vì không
-    // có dữ liệu nhạy cảm (chỉ 2 con số giới hạn dung lượng).
-    @GetMapping("/upload-limits")
-    public ResponseEntity<UploadLimitsDTO> getUploadLimits() {
-        long local = systemSettingService.getLong(
-                SystemSettingService.MAX_UPLOAD_LOCAL_BYTES_KEY, SystemSettingService.MAX_UPLOAD_LOCAL_BYTES_DEFAULT);
-        long cloud = systemSettingService.getLong(
-                SystemSettingService.MAX_UPLOAD_CLOUD_BYTES_KEY, SystemSettingService.MAX_UPLOAD_CLOUD_BYTES_DEFAULT);
-        return ResponseEntity.ok(new UploadLimitsDTO(local, cloud));
+    // form upload FE dùng để tự chặn trước khi gửi file lớn/vượt quota, và để hiển thị thanh
+    // dung lượng (My Documents, Hồ sơ). Luôn tính theo user của token, không nhận userId từ client.
+    @GetMapping("/storage-usage")
+    public ResponseEntity<StorageUsageDTO> getStorageUsage() {
+        return ResponseEntity.ok(documentService.getStorageUsage());
     }
 
     // Endpoint hợp nhất: storage = LOCAL | CLOUD | BOTH (BOTH lưu cả 2 nơi).

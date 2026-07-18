@@ -42,30 +42,54 @@ public class SystemSettingAdminController {
 
     @GetMapping("/upload-limits")
     public ResponseEntity<UploadLimitsDTO> getUploadLimits() {
-        long local = systemSettingService.getLong(
-                SystemSettingService.MAX_UPLOAD_LOCAL_BYTES_KEY, SystemSettingService.MAX_UPLOAD_LOCAL_BYTES_DEFAULT);
-        long cloud = systemSettingService.getLong(
-                SystemSettingService.MAX_UPLOAD_CLOUD_BYTES_KEY, SystemSettingService.MAX_UPLOAD_CLOUD_BYTES_DEFAULT);
-        return ResponseEntity.ok(new UploadLimitsDTO(local, cloud));
+        return ResponseEntity.ok(readUploadLimits());
     }
 
     @PutMapping("/upload-limits")
     public ResponseEntity<UploadLimitsDTO> updateUploadLimits(@RequestBody UploadLimitsDTO request) {
-        Long local = request.getMaxUploadLocalBytes();
-        Long cloud = request.getMaxUploadCloudBytes();
-        validateUploadLimit(local, "LOCAL");
-        validateUploadLimit(cloud, "CLOUD");
+        Long maxFileLocal = request.getMaxFileLocalBytes();
+        Long maxFileCloud = request.getMaxFileCloudBytes();
+        Long quotaLocal = request.getQuotaLocalBytes();
+        Long quotaCloud = request.getQuotaCloudBytes();
 
-        systemSettingService.setValue(SystemSettingService.MAX_UPLOAD_LOCAL_BYTES_KEY, String.valueOf(local));
-        systemSettingService.setValue(SystemSettingService.MAX_UPLOAD_CLOUD_BYTES_KEY, String.valueOf(cloud));
-        return ResponseEntity.ok(new UploadLimitsDTO(local, cloud));
+        validateUploadLimit(maxFileLocal, "tệp LOCAL");
+        validateUploadLimit(maxFileCloud, "tệp CLOUD");
+        validateUploadLimit(quotaLocal, "quota LOCAL");
+        validateUploadLimit(quotaCloud, "quota CLOUD");
+
+        // Giới hạn 1 file lớn hơn quota tổng là vô lý — không file nào tải lên được nữa.
+        if (maxFileLocal > quotaLocal) {
+            throw new IllegalArgumentException(
+                    "Giới hạn dung lượng tệp LOCAL không được vượt quá quota LOCAL.");
+        }
+        if (maxFileCloud > quotaCloud) {
+            throw new IllegalArgumentException(
+                    "Giới hạn dung lượng tệp CLOUD không được vượt quá quota CLOUD.");
+        }
+
+        systemSettingService.setValue(SystemSettingService.MAX_FILE_LOCAL_BYTES_KEY, String.valueOf(maxFileLocal));
+        systemSettingService.setValue(SystemSettingService.MAX_FILE_CLOUD_BYTES_KEY, String.valueOf(maxFileCloud));
+        systemSettingService.setValue(SystemSettingService.QUOTA_LOCAL_BYTES_KEY, String.valueOf(quotaLocal));
+        systemSettingService.setValue(SystemSettingService.QUOTA_CLOUD_BYTES_KEY, String.valueOf(quotaCloud));
+        return ResponseEntity.ok(readUploadLimits());
     }
 
-    private void validateUploadLimit(Long value, String storageLabel) {
+    private UploadLimitsDTO readUploadLimits() {
+        long maxFileLocal = systemSettingService.getLong(
+                SystemSettingService.MAX_FILE_LOCAL_BYTES_KEY, SystemSettingService.MAX_FILE_LOCAL_BYTES_DEFAULT);
+        long maxFileCloud = systemSettingService.getLong(
+                SystemSettingService.MAX_FILE_CLOUD_BYTES_KEY, SystemSettingService.MAX_FILE_CLOUD_BYTES_DEFAULT);
+        long quotaLocal = systemSettingService.getLong(
+                SystemSettingService.QUOTA_LOCAL_BYTES_KEY, SystemSettingService.QUOTA_LOCAL_BYTES_DEFAULT);
+        long quotaCloud = systemSettingService.getLong(
+                SystemSettingService.QUOTA_CLOUD_BYTES_KEY, SystemSettingService.QUOTA_CLOUD_BYTES_DEFAULT);
+        return new UploadLimitsDTO(maxFileLocal, maxFileCloud, quotaLocal, quotaCloud);
+    }
+
+    private void validateUploadLimit(Long value, String label) {
         if (value == null || value <= 0 || value > MULTIPART_CEILING_BYTES) {
             throw new IllegalArgumentException(
-                    "Giới hạn dung lượng cho nơi lưu " + storageLabel
-                            + " phải lớn hơn 0 và không vượt quá 2GB.");
+                    "Giới hạn dung lượng " + label + " phải lớn hơn 0 và không vượt quá 2GB.");
         }
     }
 }
