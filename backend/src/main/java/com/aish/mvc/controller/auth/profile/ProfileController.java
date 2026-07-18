@@ -40,7 +40,7 @@ public class ProfileController {
     ) {
 
         return ResponseEntity.ok(
-                profileService.completeOnboarding(request.getDob())
+                profileService.completeOnboarding(request)
         );
     }
 }
