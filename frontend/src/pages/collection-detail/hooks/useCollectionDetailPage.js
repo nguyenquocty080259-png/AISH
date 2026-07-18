@@ -162,7 +162,7 @@ export function useCollectionDetailPage() {
       if (normalizedQuery && !normalizeForSearch(doc.title).includes(normalizedQuery)) {
         return false;
       }
-      if (storageFilter !== "ALL" && doc.storageType !== storageFilter) {
+      if (storageFilter !== "ALL" && doc.storageType !== storageFilter && doc.storageType !== "BOTH") {
         return false;
       }
       if (subjectFilter !== "ALL" && !(doc.subjectIds ?? []).includes(subjectFilter)) {
