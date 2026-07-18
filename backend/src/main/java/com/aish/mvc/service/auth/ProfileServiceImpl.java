@@ -1,5 +1,6 @@
 package com.aish.mvc.service.auth;
 
+import com.aish.mvc.dto.auth.OnboardingRequest;
 import com.aish.mvc.dto.auth.ProfileResponse;
 import com.aish.mvc.dto.auth.UpdateProfileRequest;
 import com.aish.mvc.entity.auth.AuthAccount;
@@ -13,7 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
+import java.util.function.Consumer;
 
 
 @Service
@@ -98,11 +99,12 @@ public class ProfileServiceImpl implements ProfileService {
         return mapToResponse(user, profile);
     }
 
-    // Onboarding chỉ set dob, KHÔNG động vào các field khác của profile -
-    // updateMyProfile ghi đè toàn bộ nên không thể tái sử dụng cho bước này
-    // (sẽ null hoá bio, university... của những field FE onboarding không gửi).
+    // Onboarding là partial-update: chỉ field khác blank trong request mới được ghi đè, không
+    // bao giờ null-hoá giá trị đã có (khác updateMyProfile - ghi đè toàn bộ). dob luôn bắt buộc
+    // (validate ở @Valid trên controller); fullName bắt buộc CÓ nếu user hiện chưa có (vd. GitHub
+    // OAuth không trả name) - nếu user đã có fullName rồi thì request có thể bỏ trống.
     @Override
-    public ProfileResponse completeOnboarding(LocalDate dob) {
+    public ProfileResponse completeOnboarding(OnboardingRequest request) {
 
         String email = getCurrentEmail();
 
@@ -116,11 +118,46 @@ public class ProfileServiceImpl implements ProfileService {
                 .findByUserId(user.getId())
                 .orElseGet(() -> usernameGenerator.createProfileForUser(user));
 
-        profile.setDob(dob);
+        String requestedFullName = blankToNull(request.getFullName());
+
+        if (requestedFullName != null) {
+            user.setFullName(requestedFullName);
+            authUserRepository.save(user);
+        } else if (isBlank(user.getFullName())) {
+            throw new IllegalArgumentException("Họ tên không được để trống");
+        }
+
+        profile.setDob(request.getDob());
+
+        applyIfPresent(request.getBio(), profile::setBio);
+        applyIfPresent(request.getGender(), profile::setGender);
+        applyIfPresent(request.getPhoneNumber(), profile::setPhoneNumber);
+        applyIfPresent(request.getUniversity(), profile::setUniversity);
+        applyIfPresent(request.getFaculty(), profile::setFaculty);
+        applyIfPresent(request.getMajor(), profile::setMajor);
+        applyIfPresent(request.getCountry(), profile::setCountry);
+        applyIfPresent(request.getCity(), profile::setCity);
+        applyIfPresent(request.getGithubUrl(), profile::setGithubUrl);
+        applyIfPresent(request.getLinkedinUrl(), profile::setLinkedinUrl);
+        applyIfPresent(request.getWebsiteUrl(), profile::setWebsiteUrl);
 
         authUserProfileRepository.save(profile);
 
         return mapToResponse(user, profile);
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
+
+    private static String blankToNull(String value) {
+        return isBlank(value) ? null : value;
+    }
+
+    private static void applyIfPresent(String value, Consumer<String> setter) {
+        if (!isBlank(value)) {
+            setter.accept(value);
+        }
     }
 
     private String getCurrentEmail() {
