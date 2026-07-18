@@ -29,6 +29,14 @@ export function previewFile(id) {
     .then((res) => res.data);
 }
 
+// Text trích xuất best-effort (DOCX/PPTX/khác) cho ExtractedTextViewer — BE trả 204 khi
+// không trích được gì (file rỗng/hỏng/có mật khẩu), ở đây quy về null cho FE dễ xử lý.
+export function previewText(id) {
+  return apiClient
+    .get(`/documents/${id}/preview-text`, { responseType: "text" })
+    .then((res) => (res.status === 204 ? null : res.data));
+}
+
 // Endpoint hợp nhất — formData nên kèm field "storage": LOCAL | CLOUD | BOTH
 // (không gửi thì BE mặc định LOCAL, tương thích ngược).
 export function upload(formData, onProgress) {
