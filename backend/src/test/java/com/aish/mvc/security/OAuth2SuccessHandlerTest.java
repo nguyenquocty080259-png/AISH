@@ -18,9 +18,12 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
+import java.util.Map;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -31,9 +34,33 @@ import static org.mockito.Mockito.when;
 class OAuth2SuccessHandlerTest {
 
     private OAuth2AuthenticationToken tokenFor(String email, String registrationId) {
+        return tokenFor(email, registrationId, Map.of());
+    }
+
+    private OAuth2AuthenticationToken tokenFor(
+            String email, String registrationId, Map<String, Object> extraAttributes) {
         OAuth2User oAuth2User = mock(OAuth2User.class);
         when(oAuth2User.getAttribute("email")).thenReturn(email);
+        extraAttributes.forEach((key, value) ->
+                when(oAuth2User.getAttribute(key)).thenReturn(value));
         return new OAuth2AuthenticationToken(oAuth2User, AuthorityUtils.NO_AUTHORITIES, registrationId);
+    }
+
+    private OAuth2SuccessHandler newHandlerForNewUser(
+            AuthAccountRepository accountRepo,
+            AuthUserRepository userRepo,
+            AuthRoleRepository roleRepo,
+            JwtUtil jwtUtil,
+            UsernameGenerator usernameGenerator,
+            String email,
+            AuthProviders provider) {
+        when(accountRepo.findByProviderAndIdentifier(provider, email)).thenReturn(Optional.empty());
+        when(accountRepo.findByProviderAndIdentifier(AuthProviders.LOCAL, email)).thenReturn(Optional.empty());
+        AuthRole userRole = new AuthRole();
+        userRole.setRoleName("USER");
+        when(roleRepo.findByRoleName("USER")).thenReturn(Optional.of(userRole));
+        when(jwtUtil.generateToken(anyString(), anyString())).thenReturn("jwt");
+        return new OAuth2SuccessHandler(accountRepo, userRepo, roleRepo, jwtUtil, usernameGenerator);
     }
 
     @Test
@@ -190,5 +217,108 @@ class OAuth2SuccessHandlerTest {
 
         verify(response).sendRedirect("http://localhost:5173/login?error=no_email");
         verify(userRepo, never()).save(any());
+    }
+
+    @Test
+    void googleNewUserMapsFullNameAndAvatarFromProviderAttributes() throws Exception {
+        AuthAccountRepository accountRepo = mock(AuthAccountRepository.class);
+        AuthUserRepository userRepo = mock(AuthUserRepository.class);
+        AuthRoleRepository roleRepo = mock(AuthRoleRepository.class);
+        JwtUtil jwtUtil = mock(JwtUtil.class);
+        UsernameGenerator usernameGenerator = mock(UsernameGenerator.class);
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        HttpServletResponse response = mock(HttpServletResponse.class);
+
+        String email = "google.new.user@example.com";
+        OAuth2SuccessHandler handler = newHandlerForNewUser(
+                accountRepo, userRepo, roleRepo, jwtUtil, usernameGenerator, email, AuthProviders.GOOGLE);
+
+        handler.onAuthenticationSuccess(request, response, tokenFor(email, "google", Map.of(
+                "name", "Nguyen Van A",
+                "picture", "https://lh3.googleusercontent.com/a/avatar.jpg"
+        )));
+
+        ArgumentCaptor<AuthUser> userCaptor = ArgumentCaptor.forClass(AuthUser.class);
+        verify(userRepo).save(userCaptor.capture());
+        assertEquals("Nguyen Van A", userCaptor.getValue().getFullName());
+        assertEquals("https://lh3.googleusercontent.com/a/avatar.jpg", userCaptor.getValue().getAvatarUrl());
+        verify(usernameGenerator).createProfileForUser(userCaptor.getValue());
+    }
+
+    @Test
+    void githubNewUserWithNullNameLeavesFullNameNullButMapsAvatar() throws Exception {
+        AuthAccountRepository accountRepo = mock(AuthAccountRepository.class);
+        AuthUserRepository userRepo = mock(AuthUserRepository.class);
+        AuthRoleRepository roleRepo = mock(AuthRoleRepository.class);
+        JwtUtil jwtUtil = mock(JwtUtil.class);
+        UsernameGenerator usernameGenerator = mock(UsernameGenerator.class);
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        HttpServletResponse response = mock(HttpServletResponse.class);
+
+        String email = "github.new.user@example.com";
+        OAuth2SuccessHandler handler = newHandlerForNewUser(
+                accountRepo, userRepo, roleRepo, jwtUtil, usernameGenerator, email, AuthProviders.GITHUB);
+
+        handler.onAuthenticationSuccess(request, response, tokenFor(email, "github", Map.of(
+                "avatar_url", "https://avatars.githubusercontent.com/u/1"
+        )));
+
+        ArgumentCaptor<AuthUser> userCaptor = ArgumentCaptor.forClass(AuthUser.class);
+        verify(userRepo).save(userCaptor.capture());
+        assertNull(userCaptor.getValue().getFullName());
+        assertEquals("https://avatars.githubusercontent.com/u/1", userCaptor.getValue().getAvatarUrl());
+    }
+
+    @Test
+    void facebookNewUserExtractsAvatarFromNestedPictureData() throws Exception {
+        AuthAccountRepository accountRepo = mock(AuthAccountRepository.class);
+        AuthUserRepository userRepo = mock(AuthUserRepository.class);
+        AuthRoleRepository roleRepo = mock(AuthRoleRepository.class);
+        JwtUtil jwtUtil = mock(JwtUtil.class);
+        UsernameGenerator usernameGenerator = mock(UsernameGenerator.class);
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        HttpServletResponse response = mock(HttpServletResponse.class);
+
+        String email = "facebook.new.user@example.com";
+        OAuth2SuccessHandler handler = newHandlerForNewUser(
+                accountRepo, userRepo, roleRepo, jwtUtil, usernameGenerator, email, AuthProviders.FACEBOOK);
+
+        Map<String, Object> picture = Map.of("data", Map.of("url", "https://scontent.example.com/avatar.jpg"));
+        handler.onAuthenticationSuccess(request, response, tokenFor(email, "facebook", Map.of(
+                "name", "Tran Thi B",
+                "picture", picture
+        )));
+
+        ArgumentCaptor<AuthUser> userCaptor = ArgumentCaptor.forClass(AuthUser.class);
+        verify(userRepo).save(userCaptor.capture());
+        assertEquals("Tran Thi B", userCaptor.getValue().getFullName());
+        assertEquals("https://scontent.example.com/avatar.jpg", userCaptor.getValue().getAvatarUrl());
+    }
+
+    @Test
+    void facebookNewUserWithMalformedPictureLeavesAvatarNullAndNeverThrows() throws Exception {
+        AuthAccountRepository accountRepo = mock(AuthAccountRepository.class);
+        AuthUserRepository userRepo = mock(AuthUserRepository.class);
+        AuthRoleRepository roleRepo = mock(AuthRoleRepository.class);
+        JwtUtil jwtUtil = mock(JwtUtil.class);
+        UsernameGenerator usernameGenerator = mock(UsernameGenerator.class);
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        HttpServletResponse response = mock(HttpServletResponse.class);
+
+        String email = "facebook.malformed.user@example.com";
+        OAuth2SuccessHandler handler = newHandlerForNewUser(
+                accountRepo, userRepo, roleRepo, jwtUtil, usernameGenerator, email, AuthProviders.FACEBOOK);
+
+        OAuth2AuthenticationToken token = tokenFor(email, "facebook", Map.of(
+                "name", "Le Van C",
+                "picture", "not-a-map-just-a-string"
+        ));
+
+        assertDoesNotThrow(() -> handler.onAuthenticationSuccess(request, response, token));
+
+        ArgumentCaptor<AuthUser> userCaptor = ArgumentCaptor.forClass(AuthUser.class);
+        verify(userRepo).save(userCaptor.capture());
+        assertEquals("Le Van C", userCaptor.getValue().getFullName());
+        assertNull(userCaptor.getValue().getAvatarUrl());
     }
 }
