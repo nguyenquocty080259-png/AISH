@@ -22,7 +22,14 @@ export function useDocumentPage() {
   const [uploading, setUploading] = useState(false);
   // null = chưa biết / lấy thất bại -> UploadModal không chặn gì, để BE tự quyết định
   // (fail-open, giống tinh thần fail-safe của SystemSettingService ở BE).
-  const [uploadLimits, setUploadLimits] = useState(null);
+  const [storageUsage, setStorageUsage] = useState(null);
+
+  const loadStorageUsage = () => {
+    documentApi
+      .getStorageUsage()
+      .then(setStorageUsage)
+      .catch(() => setStorageUsage(null));
+  };
 
   const loadAll = async () => {
     setLoading(true);
@@ -38,6 +45,7 @@ export function useDocumentPage() {
     } finally {
       setLoading(false);
     }
+    loadStorageUsage();
   };
 
   useEffect(() => {
@@ -45,14 +53,12 @@ export function useDocumentPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Lấy giới hạn dung lượng mỗi lần mở modal upload (không preload cùng trang) để form
-  // luôn có số mới nhất nếu admin vừa đổi cài đặt. Lỗi lấy về -> fail-open, không chặn upload.
+  // Lấy lại dung lượng đã dùng mỗi lần mở modal upload (ngoài lần tải khi vào trang) để form
+  // luôn có số mới nhất nếu admin vừa đổi cài đặt hoặc user vừa xóa tài liệu vĩnh viễn ở tab khác.
   useEffect(() => {
     if (!isUploadOpen) return;
-    documentApi
-      .getUploadLimits()
-      .then(setUploadLimits)
-      .catch(() => setUploadLimits(null));
+    loadStorageUsage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isUploadOpen]);
 
   // Lọc client: theo tên + mô tả + môn học (môn là mảng subjectIds)
@@ -134,7 +140,7 @@ export function useDocumentPage() {
     isUploadOpen,
     setIsUploadOpen,
     uploading,
-    uploadLimits,
+    storageUsage,
     handleUpload,
     handleToggleFavorite,
   };

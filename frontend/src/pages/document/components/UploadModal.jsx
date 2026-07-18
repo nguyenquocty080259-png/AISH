@@ -1,31 +1,54 @@
 import { useState } from "react";
+import { formatBytes } from "../../../components/ui/StorageUsageBar";
 
-// Chỉ dùng để hiển thị - không cần khớp chính xác helper riêng bên BE
-// (DocumentServiceImpl.humanReadableSize), chỉ cần dễ đọc cho người dùng.
-function formatBytes(bytes) {
-  const gb = bytes / (1024 * 1024 * 1024);
-  if (gb >= 1) return `${gb.toFixed(1)} GB`;
-  const mb = bytes / (1024 * 1024);
-  if (mb >= 1) return `${mb.toFixed(1)} MB`;
-  return `${(bytes / 1024).toFixed(1)} KB`;
-}
+// Trả về thông báo lỗi tiếng Việt nếu file vượt giới hạn 1 tệp HOẶC vượt quota còn lại cho
+// storage đã chọn, null nếu ổn. storageUsage null (chưa tải được / lỗi) -> fail-open, không
+// chặn gì ở FE (BE vẫn là chốt chặn thật - xem DocumentServiceImpl.enforceUploadSizeLimit/
+// enforceUploadQuota).
+function checkSizeLimit(file, storage, storageUsage) {
+  if (!file || !storageUsage) return null;
+  const {
+    usedLocalBytes, usedCloudBytes,
+    quotaLocalBytes, quotaCloudBytes,
+    maxFileLocalBytes, maxFileCloudBytes,
+  } = storageUsage;
 
-// Trả về thông báo lỗi tiếng Việt nếu file vượt giới hạn cho storage đã chọn, null nếu ổn.
-// uploadLimits null (chưa tải được / lỗi) -> fail-open, không chặn gì (BE vẫn là chốt chặn thật).
-function checkSizeLimit(file, storage, uploadLimits) {
-  if (!file || !uploadLimits) return null;
-  const { maxUploadLocalBytes, maxUploadCloudBytes } = uploadLimits;
-
-  if ((storage === "LOCAL" || storage === "BOTH") && maxUploadLocalBytes != null && file.size > maxUploadLocalBytes) {
-    return `Tệp ${formatBytes(file.size)} vượt giới hạn ${formatBytes(maxUploadLocalBytes)} cho nơi lưu Máy chủ.`;
+  if (storage === "LOCAL" || storage === "BOTH") {
+    if (maxFileLocalBytes != null && file.size > maxFileLocalBytes) {
+      return `Tệp ${formatBytes(file.size)} vượt giới hạn ${formatBytes(maxFileLocalBytes)} cho nơi lưu Máy chủ.`;
+    }
+    const remainingLocal = quotaLocalBytes - usedLocalBytes;
+    if (quotaLocalBytes != null && file.size > remainingLocal) {
+      return `Dung lượng còn lại ${formatBytes(Math.max(remainingLocal, 0))} không đủ cho tệp ${formatBytes(file.size)} ở nơi lưu Máy chủ.`;
+    }
   }
-  if ((storage === "CLOUD" || storage === "BOTH") && maxUploadCloudBytes != null && file.size > maxUploadCloudBytes) {
-    return `Tệp ${formatBytes(file.size)} vượt giới hạn ${formatBytes(maxUploadCloudBytes)} cho nơi lưu Cloud.`;
+  if (storage === "CLOUD" || storage === "BOTH") {
+    if (maxFileCloudBytes != null && file.size > maxFileCloudBytes) {
+      return `Tệp ${formatBytes(file.size)} vượt giới hạn ${formatBytes(maxFileCloudBytes)} cho nơi lưu Cloud.`;
+    }
+    const remainingCloud = quotaCloudBytes - usedCloudBytes;
+    if (quotaCloudBytes != null && file.size > remainingCloud) {
+      return `Dung lượng còn lại ${formatBytes(Math.max(remainingCloud, 0))} không đủ cho tệp ${formatBytes(file.size)} ở nơi lưu Cloud.`;
+    }
   }
   return null;
 }
 
-export default function UploadModal({ open, subjects, submitting, uploadLimits, onClose, onSubmit }) {
+// Text "Còn lại: ..." cho nơi lưu đang chọn, hiển thị trước khi user chọn file.
+function remainingSpaceText(storage, storageUsage) {
+  if (!storageUsage) return null;
+  const { usedLocalBytes, usedCloudBytes, quotaLocalBytes, quotaCloudBytes } = storageUsage;
+  const parts = [];
+  if (storage === "LOCAL" || storage === "BOTH") {
+    parts.push(`Máy chủ: ${formatBytes(Math.max(quotaLocalBytes - usedLocalBytes, 0))}`);
+  }
+  if (storage === "CLOUD" || storage === "BOTH") {
+    parts.push(`Cloud: ${formatBytes(Math.max(quotaCloudBytes - usedCloudBytes, 0))}`);
+  }
+  return "Còn lại - " + parts.join(", ");
+}
+
+export default function UploadModal({ open, subjects, submitting, storageUsage, onClose, onSubmit }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [subjectIds, setSubjectIds] = useState([]);
@@ -41,7 +64,8 @@ export default function UploadModal({ open, subjects, submitting, uploadLimits, 
     { value: "BOTH", label: "Cả hai", hint: "Lưu cả server lẫn Cloudinary" },
   ];
 
-  const sizeError = checkSizeLimit(file, storage, uploadLimits);
+  const sizeError = checkSizeLimit(file, storage, storageUsage);
+  const remainingText = remainingSpaceText(storage, storageUsage);
 
   if (!open) return null;
 
@@ -221,6 +245,9 @@ export default function UploadModal({ open, subjects, submitting, uploadLimits, 
           <p style={{ color: "#888", fontSize: 12, margin: "2px 0 0" }}>
             {STORAGE_OPTIONS.find((o) => o.value === storage)?.hint}
           </p>
+          {remainingText && (
+            <p style={{ color: "#888", fontSize: 12, margin: "2px 0 0" }}>{remainingText}</p>
+          )}
 
           {sizeError && (
             <p style={{ color: "#e11", fontSize: 13, margin: "4px 0 0" }}>{sizeError}</p>

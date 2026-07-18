@@ -32,6 +32,15 @@
     background-color: var(--color-primary-dark);
 }
 
+.doc-page__storage {
+    max-width: 420px;
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+}
+
 .doc-page__toolbar {
     display: flex;
     gap: var(--spacing-sm);

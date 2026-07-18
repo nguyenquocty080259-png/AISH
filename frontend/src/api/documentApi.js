@@ -37,9 +37,11 @@ export function upload(formData, onProgress) {
     .then((res) => res.data);
 }
 
-// Byte - dùng để chặn trước ở FE trước khi gửi file lớn lên server (xem UploadModal.jsx).
-export function getUploadLimits() {
-  return apiClient.get("/documents/upload-limits").then((res) => res.data);
+// Byte - dùng để chặn trước ở FE trước khi gửi file lớn/vượt quota lên server (xem
+// UploadModal.jsx) và để hiển thị thanh dung lượng (My Documents, Hồ sơ). Luôn là số liệu
+// của user đang đăng nhập (token) - không nhận userId từ client.
+export function getStorageUsage() {
+  return apiClient.get("/documents/storage-usage").then((res) => res.data);
 }
 
 export function updateDocument(id, data) {

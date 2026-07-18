@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import * as profileApi from "../../../api/profileApi";
+import * as documentApi from "../../../api/documentApi";
 import { useToast } from "../../../hooks/useToast";
 
 const EDITABLE_FIELDS = [
@@ -35,6 +36,8 @@ export function useProfilePage() {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
+  // null = chưa tải xong / lỗi -> StorageUsageBar tự ẩn, không phải lỗi hiển thị (fail-open).
+  const [storageUsage, setStorageUsage] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -46,6 +49,10 @@ export function useProfilePage() {
     } finally {
       setLoading(false);
     }
+    documentApi
+      .getStorageUsage()
+      .then(setStorageUsage)
+      .catch(() => setStorageUsage(null));
   };
 
   useEffect(() => {
@@ -96,5 +103,6 @@ export function useProfilePage() {
     cancelEditing,
     handleFieldChange,
     handleSave,
+    storageUsage,
   };
 }
