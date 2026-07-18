@@ -138,3 +138,14 @@ export function updateMinUploadAge(minUploadAge) {
     .then((res) => res.data);
 }
 
+// Byte - quy đổi GB chỉ ở FE (xem useAdminSettingsPage.js).
+export function getUploadLimits() {
+  return apiClient.get("/admin/settings/upload-limits").then((res) => res.data);
+}
+
+export function updateUploadLimits({ maxUploadLocalBytes, maxUploadCloudBytes }) {
+  return apiClient
+    .put("/admin/settings/upload-limits", { maxUploadLocalBytes, maxUploadCloudBytes })
+    .then((res) => res.data);
+}
+

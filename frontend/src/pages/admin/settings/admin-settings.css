@@ -14,6 +14,16 @@
     max-width: 420px;
 }
 
+.admin-settings-form + .admin-settings-form {
+    margin-top: var(--spacing-lg);
+}
+
+.admin-settings-form__title {
+    font-size: var(--title-md);
+    color: var(--color-text);
+    font-weight: 600;
+}
+
 .admin-settings-form__field {
     display: flex;
     flex-direction: column;

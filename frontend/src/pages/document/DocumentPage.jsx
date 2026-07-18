@@ -22,6 +22,7 @@ export default function DocumentPage() {
     isUploadOpen,
     setIsUploadOpen,
     uploading,
+    uploadLimits,
     handleUpload,
     handleToggleFavorite,
   } = useDocumentPage();
@@ -67,6 +68,7 @@ export default function DocumentPage() {
         open={isUploadOpen}
         subjects={subjects}
         submitting={uploading}
+        uploadLimits={uploadLimits}
         onClose={() => setIsUploadOpen(false)}
         onSubmit={handleUpload}
       />

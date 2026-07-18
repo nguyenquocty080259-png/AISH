@@ -1,6 +1,31 @@
 import { useState } from "react";
 
-export default function UploadModal({ open, subjects, submitting, onClose, onSubmit }) {
+// Chỉ dùng để hiển thị - không cần khớp chính xác helper riêng bên BE
+// (DocumentServiceImpl.humanReadableSize), chỉ cần dễ đọc cho người dùng.
+function formatBytes(bytes) {
+  const gb = bytes / (1024 * 1024 * 1024);
+  if (gb >= 1) return `${gb.toFixed(1)} GB`;
+  const mb = bytes / (1024 * 1024);
+  if (mb >= 1) return `${mb.toFixed(1)} MB`;
+  return `${(bytes / 1024).toFixed(1)} KB`;
+}
+
+// Trả về thông báo lỗi tiếng Việt nếu file vượt giới hạn cho storage đã chọn, null nếu ổn.
+// uploadLimits null (chưa tải được / lỗi) -> fail-open, không chặn gì (BE vẫn là chốt chặn thật).
+function checkSizeLimit(file, storage, uploadLimits) {
+  if (!file || !uploadLimits) return null;
+  const { maxUploadLocalBytes, maxUploadCloudBytes } = uploadLimits;
+
+  if ((storage === "LOCAL" || storage === "BOTH") && maxUploadLocalBytes != null && file.size > maxUploadLocalBytes) {
+    return `Tệp ${formatBytes(file.size)} vượt giới hạn ${formatBytes(maxUploadLocalBytes)} cho nơi lưu Máy chủ.`;
+  }
+  if ((storage === "CLOUD" || storage === "BOTH") && maxUploadCloudBytes != null && file.size > maxUploadCloudBytes) {
+    return `Tệp ${formatBytes(file.size)} vượt giới hạn ${formatBytes(maxUploadCloudBytes)} cho nơi lưu Cloud.`;
+  }
+  return null;
+}
+
+export default function UploadModal({ open, subjects, submitting, uploadLimits, onClose, onSubmit }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [subjectIds, setSubjectIds] = useState([]);
@@ -15,6 +40,8 @@ export default function UploadModal({ open, subjects, submitting, onClose, onSub
     { value: "CLOUD", label: "Cloud", hint: "Lưu trên Cloudinary" },
     { value: "BOTH", label: "Cả hai", hint: "Lưu cả server lẫn Cloudinary" },
   ];
+
+  const sizeError = checkSizeLimit(file, storage, uploadLimits);
 
   if (!open) return null;
 
@@ -38,6 +65,7 @@ export default function UploadModal({ open, subjects, submitting, onClose, onSub
       setSubjectError(true);
       return;
     }
+    if (sizeError) return;
    onSubmit({ title, description, subjectIds, file, storage });
   };
 
@@ -194,9 +222,13 @@ export default function UploadModal({ open, subjects, submitting, onClose, onSub
             {STORAGE_OPTIONS.find((o) => o.value === storage)?.hint}
           </p>
 
+          {sizeError && (
+            <p style={{ color: "#e11", fontSize: 13, margin: "4px 0 0" }}>{sizeError}</p>
+          )}
+
           <div className="doc-modal__actions">
             <button type="button" onClick={onClose} className="doc-modal__cancel">Hủy</button>
-            <button type="submit" disabled={submitting} className="doc-modal__submit">
+            <button type="submit" disabled={submitting || !!sizeError} className="doc-modal__submit">
               {submitting ? "Đang tải lên..." : "Tải lên"}
             </button>
           </div>
