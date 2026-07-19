@@ -1,4 +1,4 @@
-import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
 import { ROUTES } from "../constants/routes";
@@ -23,6 +23,11 @@ const NAV_ITEMS = [
   { to: ROUTES.TRASH, label: "Thùng rác", icon: "🗑️" },
 ];
 
+const AUTH_PATHS = [
+  ROUTES.LOGIN, ROUTES.SIGNUP, ROUTES.VERIFY_OTP,
+  ROUTES.FORGOT_PASSWORD, ROUTES.RESET_PASSWORD, ROUTES.OAUTH_SUCCESS,
+];
+
 function navLinkClassName({ isActive }) {
   return `sidebar__link${isActive ? " sidebar__link--active" : ""}`;
 }
@@ -31,6 +36,8 @@ export default function AppLayout() {
   const { isAuthenticated, user, role, logout } = useAuth();
   const { showSuccess } = useToast();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const showGuestChrome = !isAuthenticated && !AUTH_PATHS.includes(pathname);
 
   const handleLogout = async () => {
     await logout();
@@ -75,13 +82,13 @@ export default function AppLayout() {
         )}
 
         <div className="app-shell__body">
-          {!isAuthenticated && <GuestNavbar />}
+          {showGuestChrome && <GuestNavbar />}
 
           <main className="app-main">
             <Outlet />
           </main>
 
-          {!isAuthenticated && <GuestFooter />}
+          {showGuestChrome && <GuestFooter />}
         </div>
       </div>
       {isAuthenticated && <AIHiveMindWidget />}
