@@ -6,6 +6,7 @@
 import { useEffect, useState } from "react";
 import { thumbnailUrl } from "../../lib/fileUrl";
 import * as documentApi from "../../api/documentApi";
+import "./doc-thumb.css";
 
 export default function DocumentThumb({ doc }) {
   const [blobUrl, setBlobUrl] = useState(null);

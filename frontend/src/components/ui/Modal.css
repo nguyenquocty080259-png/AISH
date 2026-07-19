@@ -1,7 +1,9 @@
+/* Overlay sẫm hơn tí + panel có shadow-lg + border thin để nổi khỏi trang. */
+
 .ui-modal__overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(20, 22, 26, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -11,15 +13,18 @@
 
 .ui-modal {
     background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-card);
+    box-shadow: var(--shadow-lg);
     padding: var(--spacing-lg);
-    width: min(100%, 480px);
+    width: min(100%, 560px);
     max-height: 90vh;
     overflow-y: auto;
 }
 
 .ui-modal__title {
     font-size: var(--title-md);
+    font-weight: 700;
     margin-bottom: var(--spacing-md);
     color: var(--color-text);
 }

@@ -27,6 +27,7 @@ export const ROUTES = {
   ADMIN_APPEALS: "/admin/appeals",
   ADMIN_REPORTS: "/admin/reports",
   ADMIN_DOCUMENTS: "/admin/documents",
+  ADMIN_KEYWORDS: "/admin/keywords",
   ADMIN_SUBJECTS: "/admin/subjects",
   ADMIN_USERS: "/admin/users",
   ADMIN_SETTINGS: "/admin/settings",

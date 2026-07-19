@@ -15,4 +15,6 @@ public class AdminStatsDTO {
     private long docsIngested;
     private long docsNotIngested;
     private long docsUnsupported;
+    private long usedLocalBytes;
+    private long usedCloudBytes;
 }

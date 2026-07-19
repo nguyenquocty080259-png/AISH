@@ -1,21 +1,27 @@
+/* Header trang: tăng spacing dưới + title đậm hơn tí, subtitle line-height rộng. */
+
 .ui-page-header {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
     flex-wrap: wrap;
 }
 
 .ui-page-header__title {
     font-size: var(--headline-lg);
+    font-weight: 700;
     color: var(--color-text);
+    letter-spacing: -0.01em;
 }
 
 .ui-page-header__subtitle {
     font-size: var(--body-sm);
     color: var(--color-text-secondary);
-    margin-top: var(--spacing-xs);
+    margin-top: 6px;
+    line-height: 1.6;
+    max-width: 720px;
 }
 
 .ui-page-header__actions {

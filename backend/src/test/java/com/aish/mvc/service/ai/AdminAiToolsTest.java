@@ -30,7 +30,7 @@ class AdminAiToolsTest {
 
     @Test
     void formatsEverySystemCounter() {
-        when(adminService.getStats()).thenReturn(new AdminStatsDTO(7, 50, 38, 12, 3, 10, 42, 6, 2));
+        when(adminService.getStats()).thenReturn(new AdminStatsDTO(7, 50, 38, 12, 3, 10, 42, 6, 2, 0, 0));
 
         String result = adminAiTools.getSystemStats();
 

@@ -1,11 +1,14 @@
+/* Pill badge intent-based. Padding tăng nhẹ để cân với table row cao hơn. Token giữ nguyên. */
+
 .ui-badge {
     display: inline-flex;
     align-items: center;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
-    padding: 2px var(--spacing-sm);
+    padding: 3px 10px;
     border-radius: var(--radius-pill);
     line-height: 1.6;
+    white-space: nowrap;
 }
 
 .ui-badge--neutral {
@@ -15,17 +18,17 @@
 
 .ui-badge--success {
     color: var(--color-success);
-    background-color: rgba(46, 125, 50, 0.1);
+    background-color: rgba(46, 125, 50, 0.12);
 }
 
 .ui-badge--warning {
     color: var(--color-warning);
-    background-color: rgba(245, 124, 0, 0.1);
+    background-color: rgba(245, 124, 0, 0.12);
 }
 
 .ui-badge--error {
     color: var(--color-error);
-    background-color: rgba(186, 26, 26, 0.1);
+    background-color: rgba(186, 26, 26, 0.12);
 }
 
 .ui-badge--info {
