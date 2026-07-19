@@ -1,15 +1,17 @@
 // Mini preview cho card.
-// Ưu tiên thumbnail do BE sinh sẵn (thumbnailUrl) — nhanh, không tải cả file PDF/ảnh gốc.
-// Nếu chưa có thumbnail: ảnh -> <img> file gốc, PDF -> iframe trang 1, còn lại -> icon.
-import { useState } from "react";
-import { uploadUrl, thumbnailUrl } from "../../lib/fileUrl";
+// Ưu tiên thumbnail do BE sinh sẵn (endpoint /thumbnail có xác thực) — nhanh, không tải cả file
+// PDF/ảnh gốc. Nếu chưa có thumbnail (204): ảnh/PDF -> lấy blob /preview (có xác thực) và render
+// như cũ, còn lại -> icon. Không phải chủ sở hữu và tài liệu không PUBLIC (403) -> hiển thị dòng
+// chữ thay vì ảnh vỡ.
+import { useEffect, useState } from "react";
+import { thumbnailUrl } from "../../lib/fileUrl";
+import * as documentApi from "../../api/documentApi";
 
 export default function DocumentThumb({ doc }) {
-  console.log("THUMB DEBUG:", { title: doc?.title, thumbnailUrl: doc?.thumbnailUrl, fileUrl: doc?.fileUrl, fileType: doc?.fileType });
-  const [thumbFailed, setThumbFailed] = useState(false);
-
-  const thumb = thumbnailUrl(doc);
-  const fileUrl = uploadUrl(doc?.fileUrl);
+  const [blobUrl, setBlobUrl] = useState(null);
+  const [kind, setKind] = useState(null); // "thumb" | "image" | "pdf" | null (-> icon)
+  const [imgError, setImgError] = useState(false);
+  const [forbidden, setForbidden] = useState(false);
 
   const type = (doc?.fileType || "").toLowerCase();
   const name = (doc?.fileName || "").toLowerCase();
@@ -22,26 +24,77 @@ export default function DocumentThumb({ doc }) {
   else if (name.endsWith(".xls") || name.endsWith(".xlsx")) icon = "📈";
   else if (name.endsWith(".txt")) icon = "📃";
 
-  // Có thumbnail sẵn và chưa lỗi -> dùng luôn (ưu tiên cao nhất).
-  const useThumb = thumb && !thumbFailed;
+  useEffect(() => {
+    setBlobUrl(null);
+    setKind(null);
+    setImgError(false);
+    setForbidden(false);
+
+    // thumbnailUrl tuyệt đối (Cloudinary) -> dùng thẳng, không cần fetch có xác thực.
+    const cloudThumb = thumbnailUrl(doc);
+    if (cloudThumb) {
+      setBlobUrl(cloudThumb);
+      setKind("thumb");
+      return;
+    }
+
+    if (!doc?.id) return;
+
+    let cancelled = false;
+    let objectUrl = null;
+
+    documentApi
+      .getThumbnail(doc.id)
+      .then((blob) => {
+        if (cancelled) return null;
+        if (blob) {
+          objectUrl = window.URL.createObjectURL(blob);
+          setBlobUrl(objectUrl);
+          setKind("thumb");
+          return null;
+        }
+        // Không có thumbnail (204) -> fallback ảnh/PDF gốc qua /preview, còn lại giữ icon.
+        return isImage || isPdf ? documentApi.previewFile(doc.id) : null;
+      })
+      .then((previewBlob) => {
+        if (cancelled || !previewBlob) return;
+        objectUrl = window.URL.createObjectURL(previewBlob);
+        setBlobUrl(objectUrl);
+        setKind(isPdf ? "pdf" : "image");
+      })
+      .catch((err) => {
+        if (!cancelled && err?.status === 403) setForbidden(true);
+      });
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) window.URL.revokeObjectURL(objectUrl);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doc?.id, doc?.thumbnailUrl, doc?.fileType, doc?.fileName]);
 
   return (
     <div className="doc-thumb">
       <div className="doc-thumb__inner">
-        {useThumb ? (
+        {forbidden ? (
+          <div
+            className="doc-thumb__icon"
+            style={{ fontSize: 13, padding: 8, textAlign: "center", lineHeight: 1.3 }}
+          >
+            Bạn không có quyền xem tài liệu này
+          </div>
+        ) : (kind === "thumb" || kind === "image") && !imgError ? (
           <img
             className="doc-thumb__img"
-            src={thumb}
+            src={blobUrl}
             alt=""
             loading="lazy"
-            onError={() => setThumbFailed(true)}
+            onError={() => setImgError(true)}
           />
-        ) : fileUrl && isImage ? (
-          <img className="doc-thumb__img" src={fileUrl} alt="" loading="lazy" />
-        ) : fileUrl && isPdf ? (
+        ) : kind === "pdf" ? (
           <iframe
             className="doc-thumb__pdf"
-            src={`${fileUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+            src={`${blobUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
             title="preview"
             tabIndex={-1}
           />
