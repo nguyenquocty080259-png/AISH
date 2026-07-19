@@ -14,6 +14,9 @@ import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
 
 import HomePage from "../pages/home/HomePage";
+import FeaturesPage from "../pages/features/FeaturesPage";
+import HowItWorksPage from "../pages/how-it-works/HowItWorksPage";
+import AboutPage from "../pages/about/AboutPage";
 import DashboardPage from "../pages/dashboard/DashboardPage";
 import DocumentPage from "../pages/document/DocumentPage";
 import TrashPage from "../pages/document/TrashPage";
@@ -42,6 +45,9 @@ export default function AppRoutes() {
     <Routes>
       <Route element={<AppLayout />}>
         <Route path={ROUTES.HOME} element={<HomePage />} />
+        <Route path={ROUTES.FEATURES} element={<FeaturesPage />} />
+        <Route path={ROUTES.HOW_IT_WORKS} element={<HowItWorksPage />} />
+        <Route path={ROUTES.ABOUT} element={<AboutPage />} />
         <Route path={ROUTES.AI_CHAT} element={<AiChatPage />} />
         <Route path={ROUTES.OAUTH_SUCCESS} element={<OAuthSuccessPage />} />
 
