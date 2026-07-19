@@ -36,7 +36,6 @@ import AdminKeywordsPage from "../pages/admin/keywords/AdminKeywordsPage";
 import AdminUsersPage from "../pages/admin/users/AdminUsersPage";
 import AdminSettingsPage from "../pages/admin/settings/AdminSettingsPage";
 import NotFoundPage from "../pages/error/NotFoundPage";
-import UiPreviewPage from "../pages/ui-preview/UiPreviewPage";
 
 export default function AppRoutes() {
   return (
@@ -66,8 +65,6 @@ export default function AppRoutes() {
           <Route path={ROUTES.FAVORITES} element={<FavoritesPage />} />
           <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
           <Route path={ROUTES.MY_REPORTS} element={<MyReportsPage />} />
-          {/* TEMPORARY — internal ui/ primitives preview, not linked in nav. Remove before shipping. */}
-          <Route path="/_ui-preview" element={<UiPreviewPage />} />
         </Route>
 
       </Route>
