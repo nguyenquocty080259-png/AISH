@@ -31,7 +31,6 @@ export default function ForgotPasswordPage() {
           }
         }
       );
-      console.log("Navigate success");
     } catch (err) {
 
       console.error(err);
