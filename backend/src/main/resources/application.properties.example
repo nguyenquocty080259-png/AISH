@@ -29,11 +29,8 @@ spring.security.oauth2.client.registration.google.scope=email,profile
 spring.security.oauth2.client.registration.github.client-id=YOUR_GITHUB_CLIENT_ID
 spring.security.oauth2.client.registration.github.client-secret=YOUR_GITHUB_CLIENT_SECRET
 spring.security.oauth2.client.registration.github.scope=user:email
-# Facebook
-spring.security.oauth2.client.registration.facebook.client-id=YOUR_FACEBOOK_CLIENT_ID
-spring.security.oauth2.client.registration.facebook.client-secret=YOUR_FACEBOOK_CLIENT_SECRET
-spring.security.oauth2.client.registration.facebook.scope=email,public_profile
 spring.mail.properties.mail.debug=true
+
 # AI - Chat (Groq via OpenAI-compatible client)
 spring.ai.openai.api-key=YOUR_API_KEY
 spring.ai.openai.base-url=https://api.groq.com/openai

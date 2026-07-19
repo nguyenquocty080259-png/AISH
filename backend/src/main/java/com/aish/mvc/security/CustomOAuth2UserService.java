@@ -22,7 +22,7 @@ import java.util.Map;
 
 // GitHub trả "email" = null cho user để email riêng tư. Không có bước bổ sung này thì
 // OAuth2SuccessHandler luôn thấy email null -> redirect no_email, chặn đăng nhập GitHub
-// của phần lớn user thật. Chỉ can thiệp cho provider github, google/facebook đi qua nguyên vẹn.
+// của phần lớn user thật. Chỉ can thiệp cho provider github, google đi qua nguyên vẹn.
 @Service
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 

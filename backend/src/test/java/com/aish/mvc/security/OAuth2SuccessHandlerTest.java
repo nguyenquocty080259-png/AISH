@@ -21,7 +21,6 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -185,16 +184,16 @@ class OAuth2SuccessHandlerTest {
 
         AuthAccount existingAccount = new AuthAccount();
         existingAccount.setUser(activeUser);
-        existingAccount.setProvider(AuthProviders.FACEBOOK);
+        existingAccount.setProvider(AuthProviders.GOOGLE);
         existingAccount.setIdentifier(email);
 
-        when(accountRepo.findByProviderAndIdentifier(AuthProviders.FACEBOOK, email))
+        when(accountRepo.findByProviderAndIdentifier(AuthProviders.GOOGLE, email))
                 .thenReturn(Optional.of(existingAccount));
         when(jwtUtil.generateToken(email, "ADMIN")).thenReturn("relogin-jwt");
 
         OAuth2SuccessHandler handler = new OAuth2SuccessHandler(accountRepo, userRepo, roleRepo, jwtUtil, usernameGenerator);
 
-        handler.onAuthenticationSuccess(request, response, tokenFor(email, "facebook"));
+        handler.onAuthenticationSuccess(request, response, tokenFor(email, "google"));
 
         verify(response).sendRedirect("http://localhost:5173/oauth-success?token=relogin-jwt");
         verify(response, never()).sendRedirect("http://localhost:5173/login?error=banned");
@@ -269,56 +268,4 @@ class OAuth2SuccessHandlerTest {
         assertEquals("https://avatars.githubusercontent.com/u/1", userCaptor.getValue().getAvatarUrl());
     }
 
-    @Test
-    void facebookNewUserExtractsAvatarFromNestedPictureData() throws Exception {
-        AuthAccountRepository accountRepo = mock(AuthAccountRepository.class);
-        AuthUserRepository userRepo = mock(AuthUserRepository.class);
-        AuthRoleRepository roleRepo = mock(AuthRoleRepository.class);
-        JwtUtil jwtUtil = mock(JwtUtil.class);
-        UsernameGenerator usernameGenerator = mock(UsernameGenerator.class);
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        HttpServletResponse response = mock(HttpServletResponse.class);
-
-        String email = "facebook.new.user@example.com";
-        OAuth2SuccessHandler handler = newHandlerForNewUser(
-                accountRepo, userRepo, roleRepo, jwtUtil, usernameGenerator, email, AuthProviders.FACEBOOK);
-
-        Map<String, Object> picture = Map.of("data", Map.of("url", "https://scontent.example.com/avatar.jpg"));
-        handler.onAuthenticationSuccess(request, response, tokenFor(email, "facebook", Map.of(
-                "name", "Tran Thi B",
-                "picture", picture
-        )));
-
-        ArgumentCaptor<AuthUser> userCaptor = ArgumentCaptor.forClass(AuthUser.class);
-        verify(userRepo).save(userCaptor.capture());
-        assertEquals("Tran Thi B", userCaptor.getValue().getFullName());
-        assertEquals("https://scontent.example.com/avatar.jpg", userCaptor.getValue().getAvatarUrl());
-    }
-
-    @Test
-    void facebookNewUserWithMalformedPictureLeavesAvatarNullAndNeverThrows() throws Exception {
-        AuthAccountRepository accountRepo = mock(AuthAccountRepository.class);
-        AuthUserRepository userRepo = mock(AuthUserRepository.class);
-        AuthRoleRepository roleRepo = mock(AuthRoleRepository.class);
-        JwtUtil jwtUtil = mock(JwtUtil.class);
-        UsernameGenerator usernameGenerator = mock(UsernameGenerator.class);
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        HttpServletResponse response = mock(HttpServletResponse.class);
-
-        String email = "facebook.malformed.user@example.com";
-        OAuth2SuccessHandler handler = newHandlerForNewUser(
-                accountRepo, userRepo, roleRepo, jwtUtil, usernameGenerator, email, AuthProviders.FACEBOOK);
-
-        OAuth2AuthenticationToken token = tokenFor(email, "facebook", Map.of(
-                "name", "Le Van C",
-                "picture", "not-a-map-just-a-string"
-        ));
-
-        assertDoesNotThrow(() -> handler.onAuthenticationSuccess(request, response, token));
-
-        ArgumentCaptor<AuthUser> userCaptor = ArgumentCaptor.forClass(AuthUser.class);
-        verify(userRepo).save(userCaptor.capture());
-        assertEquals("Le Van C", userCaptor.getValue().getFullName());
-        assertNull(userCaptor.getValue().getAvatarUrl());
-    }
 }
