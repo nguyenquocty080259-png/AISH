@@ -5,6 +5,7 @@ import { useToast } from "../../hooks/useToast";
 import { ROUTES } from "../../constants/routes";
 import { ROLES } from "../../constants/roles";
 import NotificationBell from "../notifications/NotificationBell";
+import "./top-bar.css";
 
 function initials(name) {
   if (!name) return "?";
@@ -36,8 +37,10 @@ export default function TopBar() {
   const go = (route) => { setOpen(false); navigate(route); };
 
   return (
-    <header className="flex h-16 items-center justify-end gap-4 border-b border-border bg-surface px-6">
-      <NotificationBell />
+    <header className="sticky top-0 z-40 flex h-16 items-center justify-end gap-4 border-b border-border bg-surface px-6">
+      <div className="topbar-bell">
+        <NotificationBell />
+      </div>
       <div className="relative" ref={rootRef}>
         <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open}
           className="flex items-center gap-2 rounded-pill p-1 pr-2 transition-colors hover:bg-surface-soft">
@@ -48,7 +51,7 @@ export default function TopBar() {
         </button>
 
         {open && (
-          <div className="absolute right-0 top-full mt-2 w-60 rounded-card border border-border bg-surface py-2 shadow-lg">
+          <div className="absolute right-0 top-full z-50 mt-2 w-60 rounded-card border border-border bg-surface py-2 shadow-lg">
             <div className="px-4 py-2">
               <p className="text-[10px] font-semibold uppercase tracking-widest text-secondary">Tài khoản</p>
               <p className="mt-0.5 truncate font-semibold text-app">{user?.fullName ?? "Người dùng"}</p>

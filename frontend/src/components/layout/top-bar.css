@@ -1,0 +1,9 @@
+/* Bell nằm ở top bar: lật dropdown xuống dưới + canh phải (mặc định của
+   notification-bell.css mở lên trên vì thiết kế cho bell ở chân sidebar).
+   Override scoped, KHÔNG động tới notification-bell.css để AdminLayout giữ nguyên. */
+.topbar-bell .notification-bell__dropdown {
+  top: calc(100% + 10px);
+  bottom: auto;
+  left: auto;
+  right: 0;
+}
