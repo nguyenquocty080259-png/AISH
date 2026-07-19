@@ -1,9 +1,13 @@
 /* Tailwind utilities only: reset.css remains the app's sole reset/preflight. */
+@import "tailwindcss/theme.css";
 @import "tailwindcss/utilities.css";
 
 /* Utilities reference the existing app tokens; no values are duplicated. */
 @utility bg-primary { background-color: var(--color-primary); }
+@utility text-primary { color: var(--color-primary); }
 @utility text-primary-dark { color: var(--color-primary-dark); }
+@utility bg-primary-dark { background-color: var(--color-primary-dark); }
+@utility border-primary { border-color: var(--color-primary); }
 @utility bg-accent { background-color: var(--color-accent); }
 @utility bg-surface { background-color: var(--color-surface); }
 @utility bg-surface-soft { background-color: var(--color-surface-soft); }

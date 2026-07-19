@@ -5,6 +5,8 @@ import { ROUTES } from "../constants/routes";
 import { ROLES } from "../constants/roles";
 import AIHiveMindWidget from "../components/ai-widget/AIHiveMindWidget";
 import NotificationBell from "../components/notifications/NotificationBell";
+import GuestNavbar from "../components/guest/GuestNavbar";
+import GuestFooter from "../components/guest/GuestFooter";
 import { AiWidgetProvider } from "../context/AiWidgetContext";
 import "./AppLayout.css";
 
@@ -73,24 +75,13 @@ export default function AppLayout() {
         )}
 
         <div className="app-shell__body">
-          {!isAuthenticated && (
-            <header className="guest-topbar">
-              <Link to={ROUTES.HOME} className="guest-topbar__brand">
-                🐝 HiveMind
-              </Link>
-              <nav className="guest-topbar__nav">
-                <Link to={ROUTES.AI_CHAT}>AI HiveMind</Link>
-                <Link to={ROUTES.LOGIN}>Đăng nhập</Link>
-                <Link to={ROUTES.SIGNUP} className="guest-topbar__cta">
-                  Đăng ký
-                </Link>
-              </nav>
-            </header>
-          )}
+          {!isAuthenticated && <GuestNavbar />}
 
           <main className="app-main">
             <Outlet />
           </main>
+
+          {!isAuthenticated && <GuestFooter />}
         </div>
       </div>
       {isAuthenticated && <AIHiveMindWidget />}
