@@ -19,7 +19,6 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 import java.util.Optional;
 
 @Component
@@ -165,8 +164,7 @@ public class OAuth2SuccessHandler
 
     // Lấy fullName/avatar từ attribute của provider TRƯỚC khi sinh username, để username dựa
     // trên tên thật thay vì rơi về fallback "user". Không bao giờ throw ra ngoài - OAuth login
-    // vẫn phải thành công dù attribute provider trả về bất thường (vd. facebook picture lồng
-    // nhau sai cấu trúc).
+    // vẫn phải thành công dù attribute provider trả về bất thường.
     private void applyProviderProfile(AuthUser user, AuthProviders provider, OAuth2User oauthUser) {
         try {
             switch (provider) {
@@ -177,10 +175,6 @@ public class OAuth2SuccessHandler
                 case GITHUB -> {
                     user.setFullName(asNonBlankString(oauthUser.getAttribute("name")));
                     user.setAvatarUrl(asNonBlankString(oauthUser.getAttribute("avatar_url")));
-                }
-                case FACEBOOK -> {
-                    user.setFullName(asNonBlankString(oauthUser.getAttribute("name")));
-                    user.setAvatarUrl(extractFacebookAvatarUrl(oauthUser.getAttribute("picture")));
                 }
                 case LOCAL -> {
                     // OAuth2SuccessHandler chỉ xử lý luồng social - LOCAL không đi qua đây.
@@ -193,18 +187,5 @@ public class OAuth2SuccessHandler
 
     private String asNonBlankString(Object value) {
         return (value instanceof String str && !str.isBlank()) ? str : null;
-    }
-
-    private String extractFacebookAvatarUrl(Object pictureAttribute) {
-        if (!(pictureAttribute instanceof Map<?, ?> picture)) {
-            return null;
-        }
-
-        Object data = picture.get("data");
-        if (!(data instanceof Map<?, ?> dataMap)) {
-            return null;
-        }
-
-        return asNonBlankString(dataMap.get("url"));
     }
 }

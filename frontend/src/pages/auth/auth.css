@@ -175,11 +175,6 @@
   color: white;
 }
 
-.social-btn.facebook {
-  background: #1877f2;
-  color: white;
-}
-
 .auth-actions {
   display: flex;
   justify-content: flex-end;

@@ -75,17 +75,6 @@ export default function LoginPage() {
       >
         GitHub
       </button>
-
-      <button
-        type="button"
-        className="social-btn facebook"
-        onClick={() => {
-          window.location.href =
-            "http://localhost:8080/oauth2/authorization/facebook";
-        }}
-      >
-        Facebook
-      </button>
         <p className="auth-footer">
           Chưa có tài khoản? <Link to={ROUTES.SIGNUP}>Đăng ký ngay</Link>
         </p>
