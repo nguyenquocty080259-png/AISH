@@ -1,15 +1,12 @@
-// Ghép URL file tĩnh phục vụ từ backend (thư mục /uploads).
-// - raw bắt đầu bằng "http" -> URL tuyệt đối (Cloudinary), giữ nguyên.
-// - còn lại -> tên/đường dẫn tương đối trong /uploads.
-const FILE_HOST = "http://localhost:8080";
-
+// Chỉ còn xử lý URL tuyệt đối (Cloudinary). File local giờ đi qua endpoint có xác thực
+// (/documents/{id}/preview, /documents/{id}/thumbnail) — xem documentApi.js + DocumentThumb.jsx.
 export function uploadUrl(raw) {
   if (!raw) return null;
-  return raw.startsWith("http") ? raw : `${FILE_HOST}/uploads/${raw}`;
+  return raw.startsWith("http") ? raw : null;
 }
 
-// Ảnh thumbnail do BE sinh lúc upload (thumbnailUrl trong DTO, vd. "thumbnails/x.png").
-// Trả null nếu không có -> caller tự fallback (iframe PDF / icon).
+// Ảnh thumbnail do BE sinh lúc upload (thumbnailUrl trong DTO). Chỉ còn dùng cho trường hợp
+// Cloudinary (URL tuyệt đối) — thumbnail local phải gọi documentApi.getThumbnail(id).
 export function thumbnailUrl(doc) {
   return doc?.thumbnailUrl ? uploadUrl(doc.thumbnailUrl) : null;
 }

@@ -7,12 +7,15 @@ import com.aish.mvc.dto.doc.ModerationAppealResponseDTO;
 import com.aish.mvc.dto.doc.StorageUsageDTO;
 import com.aish.mvc.entity.doc.DocFile;
 import com.aish.mvc.exception.CommentBlockedException;
+import com.aish.mvc.exception.ForbiddenException;
 import com.aish.mvc.service.doc.DocumentService;
 import com.aish.mvc.service.doc.DocumentTextExtractor;
 import com.aish.mvc.service.doc.EngagementService;
 import com.aish.mvc.service.doc.ModerationAppealService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -22,6 +25,8 @@ import org.springframework.web.multipart.MultipartFile;
 import com.aish.mvc.dto.doc.DocumentUpdateRequestDTO;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 @RestController
@@ -29,11 +34,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DocumentController {
 
+    private static final String THUMB_SUBDIR = "thumbnails";
+
     private final DocumentService documentService;
     private final EngagementService engagementService;
     private final ModerationAppealService moderationAppealService;
     private final com.aish.mvc.service.stor.FileResourceResolver fileResourceResolver;
     private final DocumentTextExtractor documentTextExtractor;
+
+    @Value("${app.upload.dir}")
+    private String uploadDir;
 
     @GetMapping
     public ResponseEntity<List<DocumentResponseDTO>> getAll() {
@@ -226,6 +236,47 @@ public class DocumentController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    // Ảnh thumbnail do BE sinh lúc upload — dùng CHUNG getFileForPreview() nên quyền truy cập
+    // giống hệt /preview (owner hoặc PUBLIC, sai quyền -> 403 qua ForbiddenException, tài liệu/
+    // file không tồn tại -> 404 qua ResourceNotFoundException ném thẳng lên GlobalExceptionHandler).
+    // 204 khi tài liệu không có thumbnail (docx/pptx/txt, hoặc sinh thumbnail lúc upload thất bại)
+    // thay vì ảnh vỡ — FE coi đó là tín hiệu chuyển sang nhánh fallback (preview gốc / icon).
+    @GetMapping("/{id}/thumbnail")
+    public ResponseEntity<Resource> thumbnail(@PathVariable Long id) {
+        DocFile docFile;
+        try {
+            docFile = documentService.getFileForPreview(id);
+        } catch (ForbiddenException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        String thumbnailUrl = docFile.getThumbnailUrl();
+        if (thumbnailUrl == null || thumbnailUrl.isBlank()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        try {
+            Path thumbDir = Paths.get(uploadDir).resolve(THUMB_SUBDIR).normalize();
+            Path path = Paths.get(uploadDir).resolve(thumbnailUrl).normalize();
+            // Chống path traversal: chỉ đọc file nằm TRONG uploads/thumbnails (giống
+            // ThumbnailServiceImpl.deleteThumbnail).
+            if (!path.startsWith(thumbDir)) {
+                return ResponseEntity.noContent().build();
+            }
+
+            Resource resource = new UrlResource(path.toUri());
+            if (resource.exists() || resource.isReadable()) {
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_TYPE, "image/png")
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + path.getFileName() + "\"")
+                        .body(resource);
+            }
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            return ResponseEntity.noContent().build();
         }
     }
 

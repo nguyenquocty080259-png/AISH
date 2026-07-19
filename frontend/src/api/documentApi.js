@@ -29,6 +29,15 @@ export function previewFile(id) {
     .then((res) => res.data);
 }
 
+// Ảnh thumbnail do BE sinh sẵn (không phải file gốc) — có xác thực, quyền giống /preview
+// (owner hoặc PUBLIC). BE trả 204 khi tài liệu không có thumbnail (docx/pptx/txt, hoặc sinh
+// thumbnail lúc upload thất bại), quy về null cho FE dễ fallback (xem DocumentThumb.jsx).
+export function getThumbnail(id) {
+  return apiClient
+    .get(`/documents/${id}/thumbnail`, { responseType: "blob" })
+    .then((res) => (res.status === 204 ? null : res.data));
+}
+
 // Text trích xuất best-effort (DOCX/PPTX/khác) cho ExtractedTextViewer — BE trả 204 khi
 // không trích được gì (file rỗng/hỏng/có mật khẩu), ở đây quy về null cho FE dễ xử lý.
 export function previewText(id) {
