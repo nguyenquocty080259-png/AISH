@@ -136,7 +136,7 @@ export default function AdminDocumentsPage() {
                     </Table.Cell>
                     <Table.Cell>{formatDate(doc.createdAt)}</Table.Cell>
                     <Table.Cell>
-                      <div className="ui-table__actions">
+                      <div className="flex flex-col items-stretch gap-1.5 w-40">
                         <Button variant="secondary" onClick={() => openDetailModal(doc)}>
                           Chi tiết
                         </Button>
