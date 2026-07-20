@@ -114,6 +114,9 @@ export default function AdminDocumentsPage() {
                   MODERATION_BADGE[doc.moderationStatus] ?? MODERATION_BADGE.NOT_REQUIRED;
                 const isRemoved = !!doc.deletedAt;
                 const statusBadge = isRemoved ? STATUS_BADGE.REMOVED : STATUS_BADGE.ACTIVE;
+                const isApproved = doc.moderationStatus === "APPROVED";
+                const isRejected = doc.moderationStatus === "REJECTED";
+                const isReviewingThis = reviewing?.id === doc.id;
                 return (
                   <Table.Row key={doc.id}>
                     <Table.Cell className="ui-table__truncate">{doc.title}</Table.Cell>
@@ -142,34 +145,53 @@ export default function AdminDocumentsPage() {
                         </Button>
                         {!isRemoved && (
                           <>
-                            <Button
-                              variant="primary"
-                              onClick={() => reviewDocument(doc, "approve")}
-                              disabled={reviewing?.id === doc.id}
-                            >
-                              {reviewing?.id === doc.id && reviewing.action === "approve"
-                                ? "Đang duyệt..."
-                                : "Duyệt"}
-                            </Button>
-                            <Button
-                              variant="danger"
-                              onClick={() => reviewDocument(doc, "remove")}
-                              disabled={reviewing?.id === doc.id}
-                            >
-                              {reviewing?.id === doc.id && reviewing.action === "remove"
-                                ? "Đang gỡ..."
-                                : "Gỡ"}
-                            </Button>
+                            {isApproved ? (
+                              <Button variant="secondary" disabled>
+                                ✓ Đã duyệt
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="primary"
+                                onClick={() => reviewDocument(doc, "approve")}
+                                disabled={isReviewingThis}
+                              >
+                                {isReviewingThis && reviewing.action === "approve"
+                                  ? "Đang duyệt..."
+                                  : "Duyệt"}
+                              </Button>
+                            )}
+
+                            {isRejected ? (
+                              <Button variant="secondary" disabled>
+                                ✓ Đã gỡ
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="danger"
+                                onClick={() => reviewDocument(doc, "remove")}
+                                disabled={isReviewingThis}
+                              >
+                                {isReviewingThis && reviewing.action === "remove"
+                                  ? "Đang gỡ..."
+                                  : "Gỡ"}
+                              </Button>
+                            )}
                           </>
                         )}
+
                         {isRemoved ? (
-                          <Button
-                            variant="primary"
-                            onClick={() => restoreDocument(doc)}
-                            disabled={restoringId === doc.id}
-                          >
-                            {restoringId === doc.id ? "Đang khôi phục..." : "Khôi phục"}
-                          </Button>
+                          <>
+                            <Button variant="secondary" disabled>
+                              ✓ Đã gỡ vi phạm
+                            </Button>
+                            <Button
+                              variant="primary"
+                              onClick={() => restoreDocument(doc)}
+                              disabled={restoringId === doc.id}
+                            >
+                              {restoringId === doc.id ? "Đang khôi phục..." : "Khôi phục"}
+                            </Button>
+                          </>
                         ) : (
                           <Button variant="danger" onClick={() => openRemoveModal(doc)}>
                             Gỡ vi phạm
