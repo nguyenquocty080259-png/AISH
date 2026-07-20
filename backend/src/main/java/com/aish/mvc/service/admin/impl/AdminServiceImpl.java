@@ -27,6 +27,7 @@ import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.repository.auth.AuthRoleRepository;
 import com.aish.mvc.repository.auth.AuthUserRepository;
 import com.aish.mvc.repository.doc.DocDocumentRepository;
+import com.aish.mvc.repository.doc.DocFileRepository;
 import com.aish.mvc.repository.doc.ModerationAppealRepository;
 import com.aish.mvc.repository.doc.CommentRepository;
 import com.aish.mvc.repository.doc.SubjectRepository;
@@ -58,6 +59,7 @@ public class AdminServiceImpl implements AdminService {
     private final ModerationAppealRepository moderationAppealRepository;
     private final CommentRepository commentRepository;
     private final DocDocumentRepository docDocumentRepository;
+    private final DocFileRepository docFileRepository;
     private final AuthUserRepository authUserRepository;
     private final SubjectRepository subjectRepository;
     private final AuthAccountRepository authAccountRepository;
@@ -163,8 +165,10 @@ public class AdminServiceImpl implements AdminService {
         long docsNotIngested = docDocumentRepository.countByIngestStatusAndDeletedAtIsNull(IngestStatus.NOT_INGESTED)
                 + docDocumentRepository.countByIngestStatusIsNullAndDeletedAtIsNull();
         long docsUnsupported = docDocumentRepository.countByIngestStatusAndDeletedAtIsNull(IngestStatus.UNSUPPORTED_FORMAT);
+        long usedLocalBytes = docFileRepository.sumLocalFileSizeAll();
+        long usedCloudBytes = docFileRepository.sumCloudFileSizeAll();
         return new AdminStatsDTO(totalUsers, totalDocuments, publicDocuments, privateDocuments, pendingAppeals,
-                totalSubjects, docsIngested, docsNotIngested, docsUnsupported);
+                totalSubjects, docsIngested, docsNotIngested, docsUnsupported, usedLocalBytes, usedCloudBytes);
     }
 
     @Override

@@ -26,4 +26,15 @@ public interface DocFileRepository extends JpaRepository<DocFile, Long> {
     @Query("SELECT COALESCE(SUM(f.fileSize), 0) FROM DocFile f " +
             "WHERE f.document.user.id = :userId AND LOWER(f.resourceType) <> 'local'")
     long sumCloudFileSizeByUserId(@Param("userId") Long userId);
+
+    // Tổng dung lượng đã dùng TOÀN HỆ THỐNG, tách theo nơi lưu — cho dashboard admin.
+    // Mirror sumLocal/CloudFileSizeByUserId nhưng không lọc user. Vẫn tính cả tài liệu trong
+    // thùng rác (giống quy ước quota). COALESCE về 0 khi chưa có file.
+    @Query("SELECT COALESCE(SUM(f.fileSize), 0) FROM DocFile f " +
+            "WHERE LOWER(f.resourceType) = 'local'")
+    long sumLocalFileSizeAll();
+
+    @Query("SELECT COALESCE(SUM(f.fileSize), 0) FROM DocFile f " +
+            "WHERE LOWER(f.resourceType) <> 'local'")
+    long sumCloudFileSizeAll();
 }
