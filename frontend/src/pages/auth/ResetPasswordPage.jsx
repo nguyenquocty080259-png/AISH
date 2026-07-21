@@ -26,7 +26,7 @@ export default function ResetPasswordPage() {
       alert("Đổi mật khẩu thành công.");
       navigate(ROUTES.LOGIN);
     } catch (err) {
-      setError(err?.response?.data?.message ?? "Đổi mật khẩu thất bại.");
+      setError(err.message);
     } finally {
       setSubmitting(false);
     }

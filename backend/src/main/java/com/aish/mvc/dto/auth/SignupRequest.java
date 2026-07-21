@@ -21,9 +21,9 @@ public class SignupRequest {
     private String password;
 
     @NotBlank(message = "Họ và tên không được để trống")
-//    @Pattern(
-//            regexp = "^[^0-9]+$",
-//            message = "Họ và tên không được chứa số"
-//    )
+    @Pattern(
+            regexp = "^[^0-9]+$",
+            message = "Họ và tên không được chứa số"
+    )
     private String fullName;
 }
