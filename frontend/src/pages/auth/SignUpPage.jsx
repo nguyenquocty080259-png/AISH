@@ -24,7 +24,7 @@ export default function SignUpPage() {
           <input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ban@email.com"
             className="w-full rounded-input border border-border bg-surface px-4 py-2.5 text-app outline-none focus:border-primary" />
         </div>
-        <PasswordField id="password" label="Mật khẩu" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" minLength={6} helper="Tối thiểu 8 ký tự và phải có một kí tự in hoa" />
+        <PasswordField id="password" label="Mật khẩu" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" minLength={8} helper="Tối thiểu 8 ký tự và phải có một kí tự in hoa" />
 
         <button type="submit" disabled={submitting}
           className="mt-1 w-full rounded-input bg-primary py-3 font-semibold text-white transition-colors hover:bg-primary-dark disabled:opacity-60">

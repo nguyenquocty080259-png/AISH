@@ -82,38 +82,31 @@ public class AuthServiceImpl implements AuthService {
         verification.setExpiresAt(Instant.now().plusSeconds(120));
         verificationRepo.save(verification);
 
-        System.out.println("OTP = " + otp);
-
         try {
             emailService.sendOtpEmail(request.getEmail(), otp);
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("[DEV] Email failed, OTP = " + otp);
         }
     }
 
     @Override
     public AuthResponse login(LoginRequest request) {
         AuthAccount account = accountRepo.findByProviderAndIdentifier(AuthProviders.LOCAL, request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản."));
         if (!Boolean.TRUE.equals(account.getIsVerified())) {
-            throw new RuntimeException("Please verify your email first");
+            throw new IllegalArgumentException("Vui lòng xác minh email trước khi đăng nhập.");
         }
         if (!passwordEncoder.matches(request.getPassword(), account.getPasswordHash())) {
-            throw new RuntimeException("Invalid password");
+            throw new IllegalArgumentException("Mật khẩu không chính xác.");
         }
         AuthUser user = account.getUser();
 
-        if (!account.getIsVerified()) {
-            throw new RuntimeException("Email has not been verified.");
-        }
-
         if (user.getStatus() == UserStatus.PENDING) {
-            throw new RuntimeException("Your account is pending approval.");
+            throw new IllegalArgumentException("Tài khoản của bạn đang chờ phê duyệt.");
         }
 
         if (user.getStatus() == UserStatus.BANNED) {
-            throw new RuntimeException("Your account has been blocked.");
+            throw new IllegalArgumentException("Tài khoản của bạn đã bị khóa.");
         }
 
         AuthRole role = user.getRole();
@@ -169,7 +162,6 @@ public class AuthServiceImpl implements AuthService {
             emailService.sendOtpEmail(email, otp);
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("[DEV] Email failed, NEW OTP = " + otp);
         }
     }
 
