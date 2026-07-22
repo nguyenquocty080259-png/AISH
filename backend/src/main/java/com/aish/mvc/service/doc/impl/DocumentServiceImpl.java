@@ -446,12 +446,12 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     // getCommunityDocuments - đổi đầu method:
-    public CommunityPageResponseDTO getCommunityDocuments(String keyword, Long subjectId, Long tagId, Double minRating, String sortBy, int page, int size) {
+    public CommunityPageResponseDTO getCommunityDocuments(String keyword, Long subjectId, Double minRating, String sortBy, int page, int size) {
         if (page < 0) page = 0;
         if (size <= 0) size = 12;
 
         String kw = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
-        List<DocDocument> all = docDocumentRepository.findCommunityDocuments(DocumentVisibility.PUBLIC, kw, subjectId, tagId);
+        List<DocDocument> all = docDocumentRepository.findCommunityDocuments(DocumentVisibility.PUBLIC, kw, subjectId);
         // ... phần còn lại giữ nguyên (minRating + sort + phân trang)
         List<DocumentResponseDTO> mapped = all.stream().map(documentMapper::toResponseDTO).collect(Collectors.toList());
 

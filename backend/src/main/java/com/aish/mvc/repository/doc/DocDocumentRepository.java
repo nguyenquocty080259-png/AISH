@@ -69,12 +69,10 @@ public interface DocDocumentRepository extends JpaRepository<DocDocument, Long> 
             "AND (:keyword IS NULL " +
             "     OR LOWER(d.title) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%')) " +
             "     OR LOWER(d.description) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%'))) " +
-            "AND (:subjectId IS NULL OR EXISTS (SELECT 1 FROM d.subjects s WHERE s.id = :subjectId)) " +
-            "AND (:tagId IS NULL OR EXISTS (SELECT 1 FROM d.tags t WHERE t.id = :tagId))")
+            "AND (:subjectId IS NULL OR EXISTS (SELECT 1 FROM d.subjects s WHERE s.id = :subjectId))")
     List<DocDocument> findCommunityDocuments(@Param("pub") DocumentVisibility pub,
                                              @Param("keyword") String keyword,
-                                             @Param("subjectId") Long subjectId,
-                                             @Param("tagId") Long tagId);
+                                             @Param("subjectId") Long subjectId);
     // Dùng bởi BulkIngestRunner: lấy 1 lô tài liệu CHƯA ingest, thứ tự id tăng dần để lần
     // chạy sau (resume sau khi bị rate-limit dừng giữa chừng) luôn nhặt tiếp đúng thứ tự,
     // không bỏ sót/không lặp lại tài liệu đã xử lý. JOIN FETCH d.files vì BulkIngestRunner đọc
