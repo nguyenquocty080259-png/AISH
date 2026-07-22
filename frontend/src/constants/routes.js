@@ -21,6 +21,7 @@ export const ROUTES = {
   SPACES: "/collections",
   COLLECTION_DETAIL: "/collections/:id",
   FAVORITES: "/favorites",
+  SHARED_WITH_ME: "/shared-with-me",
   MY_REPORTS: "/reports/mine",
   ADMIN: "/admin",
   ADMIN_STATS: "/admin/stats",
