@@ -19,7 +19,7 @@ export function listFavorites() {
 }
 
 export function getCommunity(params) {
-  // params: { keyword, subjectId, tagId, minRating, sortBy, page, size }
+  // params: { keyword, subjectId, minRating, sortBy, page, size }
   return apiClient.get("/documents/community", { params }).then((res) => res.data);
 }
 
