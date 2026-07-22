@@ -4,6 +4,7 @@ import { useDocumentDetailPage, resolveViewerKind } from "./hooks/useDocumentDet
 import RatingStars from "./components/RatingStars";
 import CommentSection from "./components/CommentSection";
 import EditDocumentModal from "./components/EditDocumentModal";
+import ShareModal from "./components/ShareModal";
 import PdfViewer from "./components/PdfViewer";
 import TextFileViewer from "./components/TextFileViewer";
 import DocxViewer from "./components/DocxViewer";
@@ -50,6 +51,12 @@ export default function DocumentDetailPage() {
     subjects,
     openEditModal,
     closeEditModal,
+    shareModalOpen,
+    sharing,
+    openShareModal,
+    closeShareModal,
+    handleShare,
+    documentDetailPath,
     handleDownload,
     handleIngest,
     handleToggleVisibility,
@@ -271,6 +278,9 @@ export default function DocumentDetailPage() {
             <button className="detail-btn" onClick={openEditModal}>
               ✏️ Sửa tài liệu
             </button>
+            <button className="detail-btn" onClick={openShareModal}>
+              🔗 Chia sẻ
+            </button>
             <button className="detail-btn" onClick={handleToggleVisibility}>
               Đổi sang {doc.visibility === "PUBLIC" ? "riêng tư" : "công khai"}
             </button>
@@ -414,6 +424,16 @@ export default function DocumentDetailPage() {
           submitting={editSubmitting}
           onClose={closeEditModal}
           onSubmit={handleUpdateDocument}
+        />
+      )}
+
+      {shareModalOpen && (
+        <ShareModal
+          open
+          sharing={sharing}
+          documentDetailPath={documentDetailPath}
+          onShare={handleShare}
+          onClose={closeShareModal}
         />
       )}
     </div>
