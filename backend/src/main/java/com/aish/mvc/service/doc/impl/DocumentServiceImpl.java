@@ -24,6 +24,7 @@ import com.aish.mvc.repository.doc.*;
 import com.aish.mvc.service.ai.AiModerationService;
 import com.aish.mvc.service.config.SystemSettingService;
 import com.aish.mvc.service.doc.DocumentService;
+import com.aish.mvc.service.doc.DocumentShareService;
 import com.aish.mvc.service.doc.NamingModerationService;
 import com.aish.mvc.service.doc.DocumentContentKeywordService;
 import com.aish.mvc.service.notification.NotificationService;
@@ -74,6 +75,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Autowired private com.aish.mvc.service.stor.ThumbnailService thumbnailService;
     @Autowired private AiModerationService aiModerationService;
     @Autowired private DocumentMapper documentMapper;
+    @Autowired private DocumentShareService documentShareService;
     @Autowired private NotificationService notificationService;
     @Autowired private NamingModerationService namingModerationService;
     @Autowired private DocumentContentKeywordService documentContentKeywordService;
@@ -436,9 +438,12 @@ public class DocumentServiceImpl implements DocumentService {
     public DocFile getFileForPreview(Long id) {
         DocDocument doc = docDocumentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
-        boolean isOwner = doc.getUser().getId().equals(getCurrentUser().getId());
+        Long currentUserId = getCurrentUser().getId();
+        boolean isOwner = doc.getUser().getId().equals(currentUserId);
         boolean isPublic = doc.getVisibility() == DocumentVisibility.PUBLIC;
-        if (!isOwner && !isPublic) {
+        // Người được chia sẻ (RESTRICTED theo userId, hoặc ANYONE_WITH_LINK) cũng được xem trước.
+        boolean isShared = documentShareService.hasShareAccess(id, currentUserId);
+        if (!isOwner && !isPublic && !isShared) {
             throw new ForbiddenException("Bạn không có quyền xem trước tài liệu này!");
         }
         if (doc.getFiles() == null || doc.getFiles().isEmpty()) {
