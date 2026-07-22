@@ -25,8 +25,9 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest request) {
+        System.out.println("===== SIGNUP CONTROLLER =====");
         authService.signup(request);
-        return ResponseEntity.ok("Register success");
+        return ResponseEntity.ok("Register thành công");
     }
 
     @PostMapping("/login")
@@ -39,7 +40,7 @@ public class AuthController {
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest request) {
         authService.verifyOtp(request);
-        return ResponseEntity.ok("Email verified successfully");
+        return ResponseEntity.ok("Email đã xác thực thành công");
     }
 
     @PostMapping("/resend-otp")
@@ -58,9 +59,8 @@ public class AuthController {
         authService.forgotPassword(
                 request.getEmail()
         );
-        System.out.println("Forgot password done");
         return ResponseEntity.ok(
-                "OTP sent"
+                "OTP đã gửi"
         );
     }
 
@@ -88,16 +88,16 @@ public class AuthController {
         );
 
         return ResponseEntity.ok(
-                "Password changed"
+                "Password đã đổi"
         );
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> getMe(@RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<?> getMe(@Valid @RequestHeader("Authorization") String authHeader) {
         String token = authHeader.replace("Bearer ", "");
         String email = jwtUtil.extractUsername(token);
         AuthAccount account = accountRepo.findByIdentifier(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User không tìm thấy"));
         Map<String, Object> result = new HashMap<>();
         result.put("email", email);
         result.put("fullName", account.getUser().getFullName());
@@ -124,7 +124,7 @@ public class AuthController {
 
         authService.logout(token);
 
-        return ResponseEntity.ok("Logout successful");
+        return ResponseEntity.ok("Đã đăng xuất thành công ");
     }
 
 }
