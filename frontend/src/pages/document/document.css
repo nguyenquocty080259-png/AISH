@@ -145,20 +145,6 @@
     -webkit-box-orient: vertical;
 }
 
-.doc-card__tags {
-    display: flex;
-    gap: var(--spacing-xs);
-    flex-wrap: wrap;
-}
-
-.doc-card__tag {
-    font-size: 12px;
-    color: var(--color-text-secondary);
-    background-color: var(--color-background);
-    border-radius: var(--radius-pill);
-    padding: 2px var(--spacing-sm);
-}
-
 .doc-card__meta {
     display: flex;
     justify-content: space-between;
