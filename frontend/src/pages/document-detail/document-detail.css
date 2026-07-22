@@ -671,3 +671,49 @@
   font-weight: 400;
   resize: vertical;
 }
+
+/* Modal chia sẻ tài liệu */
+.detail-share {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.detail-share__field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    font-size: var(--body-sm);
+    color: var(--color-text-secondary);
+}
+
+.detail-share__field select,
+.detail-share__field input {
+    padding: var(--spacing-sm);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+}
+
+.detail-share__actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.detail-share__link {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+}
+
+.detail-share__link input {
+    flex: 1;
+    padding: var(--spacing-sm);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
+    background: var(--color-background);
+    color: var(--color-text);
+    font: inherit;
+}
