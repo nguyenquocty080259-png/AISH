@@ -20,6 +20,7 @@ const IconDoc = () => <I><path d="M6 2h8l4 4v16H6z" /><path d="M14 2v4h4" /></I>
 const IconUsers = () => <I><circle cx="9" cy="8" r="3" /><path d="M3 21v-1a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v1" /><path d="M16 6a3 3 0 0 1 0 6" /><path d="M21 21v-1a5 5 0 0 0-3-4.6" /></I>;
 const IconCollection = () => <I><path d="M4 4h16v14l-8-4-8 4z" /></I>;
 const IconHeart = () => <I><path d="M12 21s-7-4.5-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z" /></I>;
+const IconShare = () => <I><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" /></I>;
 const IconAi = () => <I><path d="M12 3v3M12 18v3M3 12h3M18 12h3" /><circle cx="12" cy="12" r="4" /></I>;
 const IconReport = () => <I><path d="M4 20V10M10 20V4M16 20v-6M2 20h20" /></I>;
 const IconTrash = () => <I><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" /></I>;
@@ -34,6 +35,7 @@ const USER_NAV_GROUPS = [{
     { to: ROUTES.COMMUNITY, label: "Cộng đồng", icon: <IconUsers /> },
     { to: ROUTES.SPACES, label: "Bộ sưu tập", icon: <IconCollection /> },
     { to: ROUTES.FAVORITES, label: "Yêu thích", icon: <IconHeart /> },
+    { to: ROUTES.SHARED_WITH_ME, label: "Được chia sẻ", icon: <IconShare /> },
     { to: ROUTES.AI_CHAT, label: "AI HiveMind", icon: <IconAi /> },
   ],
 }, {

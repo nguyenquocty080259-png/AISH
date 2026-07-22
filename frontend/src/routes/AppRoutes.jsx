@@ -25,6 +25,7 @@ import CollectionsPage from "../pages/collections/CollectionsPage";
 import CollectionDetailPage from "../pages/collection-detail/CollectionDetailPage";
 import DocumentDetailPage from "../pages/document-detail/DocumentDetailPage";
 import FavoritesPage from "../pages/favorites/FavoritesPage";
+import SharedWithMePage from "../pages/shared-with-me/SharedWithMePage";
 import ProfilePage from "../pages/profile/ProfilePage";
 import OnboardingPage from "../pages/onboarding/OnboardingPage";
 import AiChatPage from "../pages/ai-chat/AiChatPage";
@@ -69,6 +70,7 @@ export default function AppRoutes() {
           <Route path={ROUTES.COLLECTION_DETAIL} element={<CollectionDetailPage />} />
           <Route path={ROUTES.DOCUMENT_DETAIL} element={<DocumentDetailPage />} />
           <Route path={ROUTES.FAVORITES} element={<FavoritesPage />} />
+          <Route path={ROUTES.SHARED_WITH_ME} element={<SharedWithMePage />} />
           <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
           <Route path={ROUTES.MY_REPORTS} element={<MyReportsPage />} />
         </Route>
