@@ -1,8 +1,10 @@
 package com.aish.mvc.controller.admin;
 
 import com.aish.mvc.dto.config.MinUploadAgeDTO;
+import com.aish.mvc.dto.config.UploadFileTypesDTO;
 import com.aish.mvc.dto.config.UploadLimitsDTO;
 import com.aish.mvc.service.config.SystemSettingService;
+import com.aish.mvc.service.stor.UploadFileTypeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,6 +12,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/settings")
@@ -21,7 +25,11 @@ public class SystemSettingAdminController {
     // chặn ở tầng multipart trước khi tới được gate của DocumentServiceImpl.
     private static final long MULTIPART_CEILING_BYTES = 2L * 1024 * 1024 * 1024; // 2 GiB
 
+    // Trần độ dài chuỗi allowlist khi ghép lại - khớp giới hạn cột setting_value (VARCHAR 255).
+    private static final int ALLOWED_EXTENSIONS_MAX_LENGTH = 255;
+
     private final SystemSettingService systemSettingService;
+    private final UploadFileTypeService uploadFileTypeService;
 
     @GetMapping("/min-upload-age")
     public ResponseEntity<MinUploadAgeDTO> getMinUploadAge() {
@@ -72,6 +80,37 @@ public class SystemSettingAdminController {
         systemSettingService.setValue(SystemSettingService.QUOTA_LOCAL_BYTES_KEY, String.valueOf(quotaLocal));
         systemSettingService.setValue(SystemSettingService.QUOTA_CLOUD_BYTES_KEY, String.valueOf(quotaCloud));
         return ResponseEntity.ok(readUploadLimits());
+    }
+
+    @GetMapping("/upload-file-types")
+    public ResponseEntity<UploadFileTypesDTO> getUploadFileTypes() {
+        return ResponseEntity.ok(new UploadFileTypesDTO(uploadFileTypeService.getAllowedExtensions()));
+    }
+
+    @PutMapping("/upload-file-types")
+    public ResponseEntity<UploadFileTypesDTO> updateUploadFileTypes(@RequestBody UploadFileTypesDTO request) {
+        // Chuẩn hoá y hệt lúc đọc (viết thường, bỏ dấu chấm, bỏ trùng, giữ thứ tự) để lưu và trả
+        // về nhất quán. Nhận cả khi client gửi 1 chuỗi có phẩy trong 1 phần tử.
+        List<String> normalized = UploadFileTypeService.parseExtensions(
+                request.getAllowedExtensions() == null ? "" : String.join(",", request.getAllowedExtensions()));
+
+        if (normalized.isEmpty()) {
+            throw new IllegalArgumentException("Danh sách loại tệp được phép không được để trống.");
+        }
+        for (String ext : normalized) {
+            if (!ext.matches("[a-z0-9]{1,12}")) {
+                throw new IllegalArgumentException(
+                        "Đuôi tệp '" + ext + "' không hợp lệ - chỉ gồm chữ thường/số, tối đa 12 ký tự.");
+            }
+        }
+        String joined = String.join(",", normalized);
+        if (joined.length() > ALLOWED_EXTENSIONS_MAX_LENGTH) {
+            throw new IllegalArgumentException(
+                    "Danh sách loại tệp quá dài (tối đa " + ALLOWED_EXTENSIONS_MAX_LENGTH + " ký tự khi ghép lại).");
+        }
+
+        systemSettingService.setValue(SystemSettingService.UPLOAD_ALLOWED_EXTENSIONS_KEY, joined);
+        return ResponseEntity.ok(new UploadFileTypesDTO(normalized));
     }
 
     private UploadLimitsDTO readUploadLimits() {

@@ -2,6 +2,7 @@ package com.aish.mvc.controller.admin;
 
 import com.aish.mvc.dto.config.UploadLimitsDTO;
 import com.aish.mvc.service.config.SystemSettingService;
+import com.aish.mvc.service.stor.UploadFileTypeService;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,7 +20,8 @@ class SystemSettingAdminControllerTest {
     private SystemSettingAdminController newController() {
         // setValue()/getLong() không được gọi tới trong các test này vì validate luôn ném
         // exception trước - mock trống là đủ.
-        return new SystemSettingAdminController(mock(SystemSettingService.class));
+        return new SystemSettingAdminController(
+                mock(SystemSettingService.class), mock(UploadFileTypeService.class));
     }
 
     @Test

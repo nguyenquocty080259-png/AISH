@@ -31,6 +31,14 @@ public class SystemSettingService {
     public static final String QUOTA_CLOUD_BYTES_KEY = "QUOTA_CLOUD_BYTES";
     public static final long QUOTA_CLOUD_BYTES_DEFAULT = 1073741824L; // 1 GiB
 
+    // Whitelist đuôi tệp được phép tải lên (global, mọi user), lưu dạng chuỗi đuôi ngăn cách bằng
+    // dấu phẩy - viết thường, không kèm dấu chấm. Default = đúng bộ loại tệp hệ thống vốn hỗ trợ
+    // (tài liệu + ảnh phổ biến); trước đây KHÔNG có kiểm tra loại tệp nên đây là danh sách chuẩn
+    // hoá "không regress". Chuỗi phải gọn trong 255 ký tự (giới hạn cột setting_value).
+    public static final String UPLOAD_ALLOWED_EXTENSIONS_KEY = "UPLOAD_ALLOWED_EXTENSIONS";
+    public static final String UPLOAD_ALLOWED_EXTENSIONS_DEFAULT =
+            "pdf,doc,docx,ppt,pptx,xls,xlsx,txt,csv,png,jpg,jpeg,gif,webp";
+
     private final SystemSettingRepository systemSettingRepository;
 
     // Fail-safe: bất kỳ lỗi nào (không tìm thấy key, giá trị không parse được số, lỗi DB...)
@@ -55,6 +63,22 @@ public class SystemSettingService {
             return systemSettingRepository.findBySettingKey(key)
                     .map(SystemSetting::getSettingValue)
                     .map(Long::parseLong)
+                    .orElse(defaultValue);
+        } catch (Exception exception) {
+            log.warn("Không đọc được system setting {}; dùng giá trị mặc định {}: {}",
+                    key, defaultValue, exception.getMessage());
+            return defaultValue;
+        }
+    }
+
+    // Fail-safe giống getInt()/getLong(): key vắng mặt, giá trị rỗng/trắng hoặc lỗi DB đều trả
+    // về defaultValue thay vì ném exception - để cấu hình hỏng không làm sập luồng upload. Đọc
+    // tươi từ DB mỗi lần gọi nên admin đổi giá trị là ăn liền, không cần restart.
+    public String getString(String key, String defaultValue) {
+        try {
+            return systemSettingRepository.findBySettingKey(key)
+                    .map(SystemSetting::getSettingValue)
+                    .filter(value -> !value.isBlank())
                     .orElse(defaultValue);
         } catch (Exception exception) {
             log.warn("Không đọc được system setting {}; dùng giá trị mặc định {}: {}",

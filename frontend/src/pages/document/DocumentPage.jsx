@@ -24,6 +24,7 @@ export default function DocumentPage() {
     setIsUploadOpen,
     uploading,
     storageUsage,
+    allowedFileTypes,
     handleUpload,
     handleToggleFavorite,
   } = useDocumentPage();
@@ -72,6 +73,7 @@ export default function DocumentPage() {
         subjects={subjects}
         submitting={uploading}
         storageUsage={storageUsage}
+        allowedFileTypes={allowedFileTypes}
         onClose={() => setIsUploadOpen(false)}
         onSubmit={handleUpload}
       />

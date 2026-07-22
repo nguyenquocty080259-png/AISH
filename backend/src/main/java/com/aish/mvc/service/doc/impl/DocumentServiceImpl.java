@@ -73,6 +73,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Autowired private SubjectRepository subjectRepository;
     @Autowired private CloudinaryService cloudinaryService;
     @Autowired private com.aish.mvc.service.stor.ThumbnailService thumbnailService;
+    @Autowired private com.aish.mvc.service.stor.UploadFileTypeService uploadFileTypeService;
     @Autowired private AiModerationService aiModerationService;
     @Autowired private DocumentMapper documentMapper;
     @Autowired private DocumentShareService documentShareService;
@@ -251,6 +252,10 @@ public class DocumentServiceImpl implements DocumentService {
         if (!Set.of("LOCAL", "CLOUD", "BOTH").contains(target)) {
             throw new IllegalArgumentException("storage phải là LOCAL, CLOUD hoặc BOTH (nhận được: " + storage + ")");
         }
+
+        // Chốt chặn loại tệp (allowlist đuôi + đối chiếu content-type thật, chống đổi đuôi).
+        // Đọc allowlist tươi từ DB mỗi lần nên admin đổi là ăn liền, không cần restart.
+        uploadFileTypeService.validate(file);
 
         enforceUploadSizeLimit(file.getSize(), target);
         enforceUploadQuota(file.getSize(), target, getCurrentUser().getId());

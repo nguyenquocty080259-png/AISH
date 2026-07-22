@@ -23,12 +23,22 @@ export function useDocumentPage() {
   // null = chưa biết / lấy thất bại -> UploadModal không chặn gì, để BE tự quyết định
   // (fail-open, giống tinh thần fail-safe của SystemSettingService ở BE).
   const [storageUsage, setStorageUsage] = useState(null);
+  // null = chưa biết / lấy thất bại -> UploadModal không set accept và không tiền-kiểm đuôi,
+  // để BE tự quyết (fail-open, giống storageUsage).
+  const [allowedFileTypes, setAllowedFileTypes] = useState(null);
 
   const loadStorageUsage = () => {
     documentApi
       .getStorageUsage()
       .then(setStorageUsage)
       .catch(() => setStorageUsage(null));
+  };
+
+  const loadAllowedFileTypes = () => {
+    documentApi
+      .getAllowedFileTypes()
+      .then((data) => setAllowedFileTypes(data.allowedExtensions || null))
+      .catch(() => setAllowedFileTypes(null));
   };
 
   const loadAll = async () => {
@@ -58,6 +68,8 @@ export function useDocumentPage() {
   useEffect(() => {
     if (!isUploadOpen) return;
     loadStorageUsage();
+    // Lấy allowlist mới nhất mỗi lần mở modal, để admin vừa đổi là user thấy ngay.
+    loadAllowedFileTypes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isUploadOpen]);
 
@@ -141,6 +153,7 @@ export function useDocumentPage() {
     setIsUploadOpen,
     uploading,
     storageUsage,
+    allowedFileTypes,
     handleUpload,
     handleToggleFavorite,
   };

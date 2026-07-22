@@ -3,10 +3,12 @@ package com.aish.mvc.controller.doc;
 import com.aish.mvc.entity.doc.DocFile;
 import com.aish.mvc.exception.ForbiddenException;
 import com.aish.mvc.service.doc.DocumentService;
+import com.aish.mvc.service.doc.DocumentShareService;
 import com.aish.mvc.service.doc.DocumentTextExtractor;
 import com.aish.mvc.service.doc.EngagementService;
 import com.aish.mvc.service.doc.ModerationAppealService;
 import com.aish.mvc.service.stor.FileResourceResolver;
+import com.aish.mvc.service.stor.UploadFileTypeService;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
@@ -27,12 +29,14 @@ class DocumentControllerPreviewTextTest {
     private final DocumentService documentService = mock(DocumentService.class);
     private final EngagementService engagementService = mock(EngagementService.class);
     private final ModerationAppealService moderationAppealService = mock(ModerationAppealService.class);
+    private final DocumentShareService documentShareService = mock(DocumentShareService.class);
     private final FileResourceResolver fileResourceResolver = mock(FileResourceResolver.class);
     private final DocumentTextExtractor documentTextExtractor = mock(DocumentTextExtractor.class);
+    private final UploadFileTypeService uploadFileTypeService = mock(UploadFileTypeService.class);
 
     private final DocumentController controller = new DocumentController(
-            documentService, engagementService, moderationAppealService,
-            fileResourceResolver, documentTextExtractor);
+            documentService, engagementService, moderationAppealService, documentShareService,
+            fileResourceResolver, documentTextExtractor, uploadFileTypeService);
 
     @Test
     void deniesAccessExactlyLikePreview() {
