@@ -7,7 +7,7 @@ import img4 from "../../assets/images/how-4-ai-chat.png";
 
 const STEPS = [
   { n: 1, icon: "📤", title: "Tải tài liệu lên", desc: "Tải lên mọi định dạng tài liệu học tập: PDF, DOCX, hoặc hình ảnh bài giảng. HiveMind sẽ tự động trích xuất nội dung và sẵn sàng xử lý.", image: img1 },
-  { n: 2, icon: "🏷️", title: "Phân loại theo môn và nhãn", desc: "Hệ thống đề xuất môn học và nhãn (tags) phù hợp cho tài liệu của bạn. Tổ chức kho tri thức của riêng bạn một cách khoa học nhất.", image: img2 },
+  { n: 2, icon: "📚", title: "Phân loại theo môn học", desc: "Hệ thống đề xuất môn học phù hợp cho tài liệu của bạn. Tổ chức kho tri thức của riêng bạn một cách khoa học nhất.", image: img2 },
   { n: 3, icon: "👥", title: "Chia sẻ với cộng đồng", desc: "Kết nối với tổ ong tri thức. Chia sẻ tài liệu của bạn hoặc tham khảo tài liệu từ hàng ngàn người học khác để mở rộng góc nhìn.", image: img3 },
   { n: 4, icon: "🤖", title: "Hỏi AI về nội dung tài liệu", desc: "Trò chuyện trực tiếp với tài liệu của bạn. Yêu cầu tóm tắt, giải thích khái niệm khó hoặc đặt câu hỏi tự kiểm tra kiến thức.", image: img4 },
 ];
