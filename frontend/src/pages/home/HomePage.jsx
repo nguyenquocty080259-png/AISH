@@ -11,7 +11,7 @@ const FEATURES = [
 
 const STEPS = [
   { n: 1, title: "Tải lên", desc: "Tải file PDF, DOCX hoặc ghi chú trực tiếp vào hệ thống.", filled: false },
-  { n: 2, title: "Phân loại", desc: "Sắp xếp và gắn tag từ khóa cho tài liệu của bạn.", filled: false },
+  { n: 2, title: "Phân loại", desc: "Sắp xếp tài liệu theo môn học để dễ tìm lại.", filled: false },
   { n: 3, title: "Chia sẻ & hỏi AI", desc: "Tương tác với tài liệu qua chat AI và mời bạn bè cùng học.", filled: true },
 ];
 
