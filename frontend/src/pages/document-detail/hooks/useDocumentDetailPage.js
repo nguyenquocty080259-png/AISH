@@ -4,6 +4,7 @@ import * as documentApi from "../../../api/documentApi";
 import * as aiApi from "../../../api/aiApi";
 import * as collectionApi from "../../../api/collectionApi";
 import * as subjectApi from "../../../api/subjectApi";
+import * as shareApi from "../../../api/shareApi";
 import { useAuth } from "../../../hooks/useAuth";
 import { useToast } from "../../../hooks/useToast";
 import { ROUTES, buildRoute } from "../../../constants/routes";
@@ -87,6 +88,10 @@ export function useDocumentDetailPage() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [subjects, setSubjects] = useState([]);
+
+  // Modal chia sẻ
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [sharing, setSharing] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -432,6 +437,33 @@ export function useDocumentDetailPage() {
     }
   };
 
+  const openShareModal = () => setShareModalOpen(true);
+  const closeShareModal = () => setShareModalOpen(false);
+
+  // payload: { mode, userIds?, permission? }. Trả về { shareMode, shareToken } hoặc null nếu lỗi
+  // (để ShareModal hiển thị link khi mode = ANYONE_WITH_LINK). Sau khi chia sẻ, reload để cập
+  // nhật visibility (SHARED) trên UI.
+  const handleShare = async (payload) => {
+    setSharing(true);
+    try {
+      const res = await shareApi.shareDocument(id, payload);
+      if (payload.mode === "RESTRICTED") {
+        showSuccess("Đã chia sẻ tài liệu với những người được chọn.");
+      } else if (payload.mode === "ANYONE_WITH_LINK") {
+        showSuccess("Đã bật chia sẻ qua liên kết.");
+      } else {
+        showSuccess("Đã tắt chia sẻ qua liên kết.");
+      }
+      await load();
+      return res;
+    } catch (err) {
+      showError(err.message);
+      return null;
+    } finally {
+      setSharing(false);
+    }
+  };
+
   return {
     doc,
     loading,
@@ -461,6 +493,12 @@ export function useDocumentDetailPage() {
     subjects,
     openEditModal,
     closeEditModal,
+    shareModalOpen,
+    sharing,
+    openShareModal,
+    closeShareModal,
+    handleShare,
+    documentDetailPath: buildRoute(ROUTES.DOCUMENT_DETAIL, { id }),
     handleDownload,
     handleIngest,
     handleToggleVisibility,
