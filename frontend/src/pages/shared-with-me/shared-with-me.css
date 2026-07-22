@@ -1,0 +1,23 @@
+.shared-page {
+    padding: var(--spacing-xl);
+}
+
+.shared-page__loading {
+    color: var(--color-text-secondary);
+    padding: var(--spacing-lg) 0;
+}
+
+.shared-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.shared-page__by {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    background-color: var(--color-background);
+    border-radius: var(--radius-pill);
+    padding: 2px var(--spacing-sm);
+    white-space: nowrap;
+}
