@@ -100,16 +100,6 @@ public class DocDocument {
     @Builder.Default
     private java.util.Set<Subject> subjects = new java.util.HashSet<>();
 
-    // 1 tài liệu có nhiều tag, 1 tag gắn nhiều tài liệu (nhiều-nhiều). Bảng nối document_tags đã tồn tại.
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "document_tags",
-            joinColumns = @JoinColumn(name = "document_id"),
-            inverseJoinColumns = @JoinColumn(name = "tag_id")
-    )
-    @Builder.Default
-    private java.util.Set<Tag> tags = new java.util.HashSet<>();
-
     public void addFile(DocFile file) {
         if (this.files == null) this.files = new ArrayList<>();
         this.files.add(file);
