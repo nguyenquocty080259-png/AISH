@@ -46,6 +46,7 @@ public class DocumentController {
     private final DocumentShareService documentShareService;
     private final com.aish.mvc.service.stor.FileResourceResolver fileResourceResolver;
     private final DocumentTextExtractor documentTextExtractor;
+    private final com.aish.mvc.service.stor.UploadFileTypeService uploadFileTypeService;
 
     @Value("${app.upload.dir}")
     private String uploadDir;
@@ -61,6 +62,14 @@ public class DocumentController {
     @GetMapping("/storage-usage")
     public ResponseEntity<StorageUsageDTO> getStorageUsage() {
         return ResponseEntity.ok(documentService.getStorageUsage());
+    }
+
+    // Đọc cho mọi user đã đăng nhập - form upload FE dùng để set thuộc tính accept và tiền-kiểm
+    // đuôi tệp phía client. BE (DocumentServiceImpl -> UploadFileTypeService) vẫn là chốt chặn cuối.
+    @GetMapping("/allowed-file-types")
+    public ResponseEntity<com.aish.mvc.dto.config.UploadFileTypesDTO> getAllowedFileTypes() {
+        return ResponseEntity.ok(
+                new com.aish.mvc.dto.config.UploadFileTypesDTO(uploadFileTypeService.getAllowedExtensions()));
     }
 
     // Endpoint hợp nhất: storage = LOCAL | CLOUD | BOTH (BOTH lưu cả 2 nơi).

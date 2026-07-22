@@ -20,22 +20,26 @@ export function useAdminSettingsPage() {
   const [maxFileCloudGb, setMaxFileCloudGb] = useState("");
   const [quotaLocalGb, setQuotaLocalGb] = useState("");
   const [quotaCloudGb, setQuotaCloudGb] = useState("");
+  const [allowedFileTypes, setAllowedFileTypes] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingLimits, setSavingLimits] = useState(false);
+  const [savingFileTypes, setSavingFileTypes] = useState(false);
 
   const load = async () => {
     setLoading(true);
     try {
-      const [ageData, limitsData] = await Promise.all([
+      const [ageData, limitsData, fileTypesData] = await Promise.all([
         adminApi.getMinUploadAge(),
         adminApi.getUploadLimits(),
+        adminApi.getUploadFileTypes(),
       ]);
       setMinUploadAge(String(ageData.minUploadAge));
       setMaxFileLocalGb(bytesToGb(limitsData.maxFileLocalBytes));
       setMaxFileCloudGb(bytesToGb(limitsData.maxFileCloudBytes));
       setQuotaLocalGb(bytesToGb(limitsData.quotaLocalBytes));
       setQuotaCloudGb(bytesToGb(limitsData.quotaCloudBytes));
+      setAllowedFileTypes((fileTypesData.allowedExtensions || []).join(", "));
     } catch (err) {
       showError(err.message);
     } finally {
@@ -127,6 +131,48 @@ export function useAdminSettingsPage() {
     }
   };
 
+  // Parse chuỗi admin nhập (ngăn cách bằng dấu phẩy/khoảng trắng/xuống dòng) thành mảng đuôi
+  // chuẩn hoá: viết thường, bỏ dấu chấm đầu, bỏ trùng, giữ thứ tự. BE cũng chuẩn hoá lại lần nữa.
+  const parseExtensions = (raw) => {
+    const seen = new Set();
+    const result = [];
+    for (const part of String(raw).split(/[\s,]+/)) {
+      let cleaned = part.trim().toLowerCase();
+      if (cleaned.startsWith(".")) cleaned = cleaned.slice(1);
+      if (cleaned && !seen.has(cleaned)) {
+        seen.add(cleaned);
+        result.push(cleaned);
+      }
+    }
+    return result;
+  };
+
+  const saveAllowedFileTypes = async (raw) => {
+    const extensions = parseExtensions(raw);
+    if (extensions.length === 0) {
+      showError("Danh sách loại tệp được phép không được để trống.");
+      return false;
+    }
+    const invalid = extensions.find((ext) => !/^[a-z0-9]{1,12}$/.test(ext));
+    if (invalid) {
+      showError(`Đuôi tệp '${invalid}' không hợp lệ - chỉ gồm chữ thường/số, tối đa 12 ký tự.`);
+      return false;
+    }
+
+    setSavingFileTypes(true);
+    try {
+      const data = await adminApi.updateUploadFileTypes(extensions);
+      setAllowedFileTypes((data.allowedExtensions || []).join(", "));
+      showSuccess("Đã lưu cài đặt.");
+      return true;
+    } catch (err) {
+      showError(err.message);
+      return false;
+    } finally {
+      setSavingFileTypes(false);
+    }
+  };
+
   return {
     minUploadAge,
     loading,
@@ -138,5 +184,8 @@ export function useAdminSettingsPage() {
     quotaCloudGb,
     savingLimits,
     saveUploadLimits,
+    allowedFileTypes,
+    savingFileTypes,
+    saveAllowedFileTypes,
   };
 }

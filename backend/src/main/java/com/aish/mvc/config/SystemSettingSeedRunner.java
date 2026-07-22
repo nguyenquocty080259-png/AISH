@@ -31,6 +31,8 @@ public class SystemSettingSeedRunner implements CommandLineRunner {
                 String.valueOf(SystemSettingService.QUOTA_LOCAL_BYTES_DEFAULT));
         seedIfMissing(SystemSettingService.QUOTA_CLOUD_BYTES_KEY,
                 String.valueOf(SystemSettingService.QUOTA_CLOUD_BYTES_DEFAULT));
+        seedIfMissing(SystemSettingService.UPLOAD_ALLOWED_EXTENSIONS_KEY,
+                SystemSettingService.UPLOAD_ALLOWED_EXTENSIONS_DEFAULT);
     }
 
     // Mỗi key seed độc lập - key đã tồn tại (kể cả admin đã sửa giá trị) thì bỏ qua riêng

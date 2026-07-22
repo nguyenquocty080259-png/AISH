@@ -61,6 +61,12 @@ export function getStorageUsage() {
   return apiClient.get("/documents/storage-usage").then((res) => res.data);
 }
 
+// Whitelist đuôi tệp được phép tải lên (cấu hình bởi admin, chung mọi user). Form upload dùng để
+// set thuộc tính accept + tiền-kiểm phía client. BE vẫn là chốt chặn cuối. { allowedExtensions }.
+export function getAllowedFileTypes() {
+  return apiClient.get("/documents/allowed-file-types").then((res) => res.data);
+}
+
 export function updateDocument(id, data) {
   // data: { title?, description?, subjectIds? }  (field bỏ trống = giữ nguyên)
   return apiClient.put(`/documents/${id}`, data).then((res) => res.data);

@@ -48,7 +48,28 @@ function remainingSpaceText(storage, storageUsage) {
   return "Còn lại - " + parts.join(", ");
 }
 
-export default function UploadModal({ open, subjects, submitting, storageUsage, onClose, onSubmit }) {
+// Đuôi tệp của 1 tên file, viết thường, không kèm dấu chấm ("bao-cao.PDF" -> "pdf"). "" nếu
+// không có đuôi.
+function extensionOf(filename) {
+  if (!filename) return "";
+  const name = filename.trim().toLowerCase();
+  const dot = name.lastIndexOf(".");
+  if (dot < 0 || dot === name.length - 1) return "";
+  return name.slice(dot + 1);
+}
+
+// Thông báo lỗi nếu đuôi tệp không thuộc allowlist, null nếu ổn / chưa biết allowlist (fail-open,
+// BE vẫn là chốt chặn cuối - xem UploadFileTypeService).
+function checkFileType(file, allowedFileTypes) {
+  if (!file || !allowedFileTypes || allowedFileTypes.length === 0) return null;
+  const ext = extensionOf(file.name);
+  if (!ext || !allowedFileTypes.includes(ext)) {
+    return `Loại tệp${ext ? " ." + ext : ""} không được phép. Các loại được phép: ${allowedFileTypes.join(", ")}.`;
+  }
+  return null;
+}
+
+export default function UploadModal({ open, subjects, submitting, storageUsage, allowedFileTypes, onClose, onSubmit }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [subjectIds, setSubjectIds] = useState([]);
@@ -65,7 +86,13 @@ export default function UploadModal({ open, subjects, submitting, storageUsage, 
   ];
 
   const sizeError = checkSizeLimit(file, storage, storageUsage);
+  const typeError = checkFileType(file, allowedFileTypes);
   const remainingText = remainingSpaceText(storage, storageUsage);
+  // Thuộc tính accept cho input file - chỉ set khi biết allowlist, để hộp thoại chọn tệp lọc sẵn.
+  const acceptAttr =
+    allowedFileTypes && allowedFileTypes.length > 0
+      ? allowedFileTypes.map((ext) => "." + ext).join(",")
+      : undefined;
 
   if (!open) return null;
 
@@ -89,7 +116,7 @@ export default function UploadModal({ open, subjects, submitting, storageUsage, 
       setSubjectError(true);
       return;
     }
-    if (sizeError) return;
+    if (sizeError || typeError) return;
    onSubmit({ title, description, subjectIds, file, storage });
   };
 
@@ -207,6 +234,7 @@ export default function UploadModal({ open, subjects, submitting, storageUsage, 
             <input
               type="file"
               required
+              accept={acceptAttr}
               onChange={(e) => {
                 const f = e.target.files[0];
                 if (!f) return;
@@ -215,6 +243,14 @@ export default function UploadModal({ open, subjects, submitting, storageUsage, 
               }}
             />
           </label>
+          {allowedFileTypes && allowedFileTypes.length > 0 && (
+            <p style={{ color: "#888", fontSize: 12, margin: "2px 0 0" }}>
+              Loại tệp được phép: {allowedFileTypes.join(", ")}.
+            </p>
+          )}
+          {typeError && (
+            <p style={{ color: "#e11", fontSize: 13, margin: "4px 0 0" }}>{typeError}</p>
+          )}
           <label style={{ fontWeight: 600 }}>Nơi lưu trữ</label>
           <div style={{ display: "flex", gap: 8 }}>
             {STORAGE_OPTIONS.map((opt) => {
@@ -255,7 +291,7 @@ export default function UploadModal({ open, subjects, submitting, storageUsage, 
 
           <div className="doc-modal__actions">
             <button type="button" onClick={onClose} className="doc-modal__cancel">Hủy</button>
-            <button type="submit" disabled={submitting || !!sizeError} className="doc-modal__submit">
+            <button type="submit" disabled={submitting || !!sizeError || !!typeError} className="doc-modal__submit">
               {submitting ? "Đang tải lên..." : "Tải lên"}
             </button>
           </div>

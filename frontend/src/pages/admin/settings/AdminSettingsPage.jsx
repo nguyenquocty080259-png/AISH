@@ -16,12 +16,16 @@ export default function AdminSettingsPage() {
     quotaCloudGb,
     savingLimits,
     saveUploadLimits,
+    allowedFileTypes,
+    savingFileTypes,
+    saveAllowedFileTypes,
   } = useAdminSettingsPage();
   const [value, setValue] = useState("");
   const [maxFileLocal, setMaxFileLocal] = useState("");
   const [maxFileCloud, setMaxFileCloud] = useState("");
   const [quotaLocal, setQuotaLocal] = useState("");
   const [quotaCloud, setQuotaCloud] = useState("");
+  const [fileTypes, setFileTypes] = useState("");
 
   useEffect(() => {
     setValue(minUploadAge);
@@ -43,6 +47,10 @@ export default function AdminSettingsPage() {
     setQuotaCloud(quotaCloudGb);
   }, [quotaCloudGb]);
 
+  useEffect(() => {
+    setFileTypes(allowedFileTypes);
+  }, [allowedFileTypes]);
+
   const submit = (e) => {
     e.preventDefault();
     if (value === "") return;
@@ -61,6 +69,12 @@ export default function AdminSettingsPage() {
       quotaLocalGbValue: quotaLocal,
       quotaCloudGbValue: quotaCloud,
     });
+  };
+
+  const submitFileTypes = (e) => {
+    e.preventDefault();
+    if (fileTypes.trim() === "") return;
+    saveAllowedFileTypes(fileTypes);
   };
 
   return (
@@ -161,6 +175,35 @@ export default function AdminSettingsPage() {
                 disabled={savingLimits || !limitsFieldsFilled}
               >
                 {savingLimits ? "Đang lưu..." : "Lưu"}
+              </Button>
+            </div>
+          </form>
+
+          <form className="admin-settings-form" onSubmit={submitFileTypes}>
+            <h2 className="admin-settings-form__title">Loại tệp được phép tải lên</h2>
+            <label className="admin-settings-form__field">
+              Danh sách đuôi tệp (ngăn cách bằng dấu phẩy)
+              <textarea
+                rows={3}
+                value={fileTypes}
+                onChange={(e) => setFileTypes(e.target.value)}
+                placeholder="pdf, docx, png, jpg"
+              />
+              <span className="admin-settings-form__hint">
+                Chỉ những đuôi tệp trong danh sách này mới được tải lên (áp dụng cho mọi người
+                dùng). Không kèm dấu chấm, mỗi đuôi tối đa 12 ký tự chữ thường/số. Hệ thống còn
+                kiểm tra nội dung thật của tệp để chống đổi đuôi giả. Thay đổi có hiệu lực ngay,
+                không cần khởi động lại.
+              </span>
+            </label>
+
+            <div className="admin-settings-form__actions">
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={savingFileTypes || fileTypes.trim() === ""}
+              >
+                {savingFileTypes ? "Đang lưu..." : "Lưu"}
               </Button>
             </div>
           </form>

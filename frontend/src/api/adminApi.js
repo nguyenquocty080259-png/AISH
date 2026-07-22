@@ -150,3 +150,15 @@ export function updateUploadLimits({ maxFileLocalBytes, maxFileCloudBytes, quota
     .then((res) => res.data);
 }
 
+// Whitelist đuôi tệp được phép tải lên (áp dụng chung mọi user). BE chuẩn hoá (viết thường, bỏ
+// dấu chấm, bỏ trùng) và trả về mảng đã chuẩn hoá. { allowedExtensions: string[] }.
+export function getUploadFileTypes() {
+  return apiClient.get("/admin/settings/upload-file-types").then((res) => res.data);
+}
+
+export function updateUploadFileTypes(allowedExtensions) {
+  return apiClient
+    .put("/admin/settings/upload-file-types", { allowedExtensions })
+    .then((res) => res.data);
+}
+
