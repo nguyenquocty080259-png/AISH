@@ -4,11 +4,15 @@ import com.aish.mvc.dto.doc.AppealRequestDTO;
 import com.aish.mvc.dto.doc.CommentBlockedResponseDTO;
 import com.aish.mvc.dto.doc.DocumentResponseDTO;
 import com.aish.mvc.dto.doc.ModerationAppealResponseDTO;
+import com.aish.mvc.dto.doc.ShareRequestDTO;
+import com.aish.mvc.dto.doc.ShareResponseDTO;
+import com.aish.mvc.dto.doc.SharedWithMeItemDTO;
 import com.aish.mvc.dto.doc.StorageUsageDTO;
 import com.aish.mvc.entity.doc.DocFile;
 import com.aish.mvc.exception.CommentBlockedException;
 import com.aish.mvc.exception.ForbiddenException;
 import com.aish.mvc.service.doc.DocumentService;
+import com.aish.mvc.service.doc.DocumentShareService;
 import com.aish.mvc.service.doc.DocumentTextExtractor;
 import com.aish.mvc.service.doc.EngagementService;
 import com.aish.mvc.service.doc.ModerationAppealService;
@@ -39,6 +43,7 @@ public class DocumentController {
     private final DocumentService documentService;
     private final EngagementService engagementService;
     private final ModerationAppealService moderationAppealService;
+    private final DocumentShareService documentShareService;
     private final com.aish.mvc.service.stor.FileResourceResolver fileResourceResolver;
     private final DocumentTextExtractor documentTextExtractor;
 
@@ -189,6 +194,25 @@ public class DocumentController {
         return new ResponseEntity<>(
                 moderationAppealService.appeal(id, request.getReason()),
                 HttpStatus.CREATED);
+    }
+
+    // Chia sẻ tài liệu — chỉ chủ sở hữu. mode = RESTRICTED (userIds) | ANYONE_WITH_LINK (token) | NONE.
+    @PostMapping("/{id}/share")
+    public ResponseEntity<ShareResponseDTO> share(@PathVariable Long id, @RequestBody ShareRequestDTO request) {
+        return ResponseEntity.ok(documentShareService.shareDocument(id, request));
+    }
+
+    // Danh sách tài liệu được chia sẻ với người dùng hiện tại.
+    @GetMapping("/shared-with-me")
+    public ResponseEntity<List<SharedWithMeItemDTO>> sharedWithMe() {
+        return ResponseEntity.ok(documentShareService.listSharedWithMe());
+    }
+
+    // Gỡ quyền chia sẻ của 1 user cụ thể — chỉ chủ sở hữu.
+    @DeleteMapping("/{id}/share/{userId}")
+    public ResponseEntity<Void> revokeShare(@PathVariable Long id, @PathVariable Long userId) {
+        documentShareService.revokeShare(id, userId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")
