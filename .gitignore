@@ -95,3 +95,6 @@ postgres_data/
 **/*.back.*
 *.tmp
 *.temp
+
+# === Claude Code (local, do not track) ===
+.claude/
