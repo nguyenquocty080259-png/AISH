@@ -14,7 +14,9 @@ import com.aish.mvc.repository.auth.AuthUserRepository;
 import com.aish.mvc.service.auth.AuthService;
 import com.aish.mvc.service.auth.EmailService;
 import com.aish.mvc.service.auth.JwtUtil;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +25,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthServiceImpl implements AuthService {
 
     private final AuthUserRepository userRepo;
@@ -39,7 +42,7 @@ public class AuthServiceImpl implements AuthService {
         // Email đã tồn tại
         if (existingAccount != null) {
             if (Boolean.TRUE.equals(existingAccount.getIsVerified())) {
-                throw new RuntimeException("Email already exists");
+                throw new IllegalArgumentException("Email đã tồn tại");
             }
             String otp = String.valueOf((int) (Math.random() * 900000) + 100000);
             AuthEmailVerification verification = new AuthEmailVerification();
@@ -85,14 +88,18 @@ public class AuthServiceImpl implements AuthService {
         try {
             emailService.sendOtpEmail(request.getEmail(), otp);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Không thể gửi OTP tới email {}: {}", request.getEmail(), e.getMessage());
+
+            throw new IllegalArgumentException(
+                    "Địa chỉ Gmail không tồn tại hoặc không thể nhận email."
+            );
         }
     }
 
     @Override
     public AuthResponse login(LoginRequest request) {
         AuthAccount account = accountRepo.findByProviderAndIdentifier(AuthProviders.LOCAL, request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản."));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản."));
         if (!Boolean.TRUE.equals(account.getIsVerified())) {
             throw new IllegalArgumentException("Vui lòng xác minh email trước khi đăng nhập.");
         }
@@ -129,13 +136,13 @@ public class AuthServiceImpl implements AuthService {
         AuthAccount account = accountRepo.findByIdentifier(request.getEmail()).orElseThrow(() -> new RuntimeException("Email not found"));
         AuthEmailVerification verification = verificationRepo.findTopByAuthAccountOrderByCreatedAtDesc(account).orElseThrow(() -> new RuntimeException("OTP not found"));
         if (Boolean.TRUE.equals(verification.getIsUsed())) {
-            throw new RuntimeException("OTP already used");
+            throw new RuntimeException("OTP đã được sử dụng");
         }
         if (Instant.now().isAfter(verification.getExpiresAt())) {
-            throw new RuntimeException("OTP expired");
+            throw new RuntimeException("Mã OTP đã hết hạn");
         }
         if (!verification.getVerificationCode().equals(request.getOtp())) {
-            throw new RuntimeException("Invalid OTP");
+            throw new RuntimeException("OTP không hợp lệ");
         }
         verification.setIsUsed(true);
         verification.setVerifiedAt(Instant.now());
@@ -147,21 +154,27 @@ public class AuthServiceImpl implements AuthService {
         userRepo.save(user);
     }
 
+    @Transactional
     @Override
     public void resendOtp(String email) {
-        AuthAccount account = accountRepo.findByIdentifier(email).orElseThrow(() -> new RuntimeException("Email not found"));
+        AuthAccount account = accountRepo.findByIdentifier(email)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy email."));
+
         String otp = String.valueOf((int) (Math.random() * 900000) + 100000);
+
         AuthEmailVerification verification = new AuthEmailVerification();
         verification.setAuthAccount(account);
         verification.setVerificationCode(otp);
         verification.setAttemptCount(0);
         verification.setIsUsed(false);
         verification.setExpiresAt(Instant.now().plusSeconds(120));
+
         verificationRepo.save(verification);
+
         try {
             emailService.sendOtpEmail(email, otp);
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new IllegalStateException("Không thể gửi OTP đến địa chỉ email này.");
         }
     }
 
@@ -175,7 +188,7 @@ public class AuthServiceImpl implements AuthService {
     public void forgotPassword(String email) {
         AuthAccount account = accountRepo.findByIdentifier(email)
                 .orElseThrow(() ->
-                        new RuntimeException("Email does not exist"));
+                        new IllegalArgumentException("Email không tồn tại"));
 
         String otp = String.valueOf((int) (Math.random() * 900000) + 100000);
 
@@ -194,13 +207,13 @@ public class AuthServiceImpl implements AuthService {
         AuthAccount account = accountRepo.findByIdentifier(request.getEmail()).orElseThrow(() -> new RuntimeException("Email not found"));
         AuthEmailVerification verification = verificationRepo.findTopByAuthAccountOrderByCreatedAtDesc(account).orElseThrow(() -> new RuntimeException("OTP not found"));
         if (Boolean.TRUE.equals(verification.getIsUsed())) {
-            throw new RuntimeException("OTP already used");
+            throw new RuntimeException("OTP đã được sử dụng");
         }
         if (Instant.now().isAfter(verification.getExpiresAt())) {
-            throw new RuntimeException("OTP expired");
+            throw new RuntimeException("Mã OTP đã hết hạn");
         }
         if (!verification.getVerificationCode().equals(request.getOtp())) {
-            throw new RuntimeException("Invalid OTP");
+            throw new RuntimeException("OTP không hợp lệ");
         }
 
         verification.setVerifiedAt(Instant.now());
@@ -228,10 +241,10 @@ public class AuthServiceImpl implements AuthService {
         AuthEmailVerification verification = verificationRepo
                 .findByResetToken(resetToken)
                 .orElseThrow(() ->
-                        new RuntimeException("Invalid reset token"));
+                        new IllegalArgumentException("Reset token không hợp lệ"));
 
         if (verification.getResetTokenExpiresAt().isBefore(Instant.now())) {
-            throw new RuntimeException("Reset token expired");
+            throw new RuntimeException("Reset token đã hết hạn");
         }
 
         AuthAccount account = verification.getAuthAccount();
