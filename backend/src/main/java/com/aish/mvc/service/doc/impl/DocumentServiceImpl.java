@@ -65,6 +65,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Autowired private DocEmbeddingRepository docEmbeddingRepository;
     @Autowired private ModerationAppealRepository moderationAppealRepository;
     @Autowired private ViewHistoryRepository viewHistoryRepository;
+    @Autowired private DocumentShareRepository documentShareRepository;
     @Autowired private AiConversationRepository aiConversationRepository;
     @Autowired private AuthAccountRepository authAccountRepository;
     @Autowired private AuthUserRepository authUserRepository;
@@ -417,6 +418,7 @@ public class DocumentServiceImpl implements DocumentService {
         docEmbeddingRepository.deleteByDocument_Id(id);
         moderationAppealRepository.deleteByDocumentId(id);
         viewHistoryRepository.deleteByDocumentId(id);
+        documentShareRepository.deleteByDocumentId(id);
         aiConversationRepository.clearDocumentReference(id);
 
         docDocumentRepository.delete(doc);
