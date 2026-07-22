@@ -30,10 +30,7 @@ import java.util.stream.Collectors;
 /**
  * MVP recommendation scoring (DEC-041/DEC-019, file 13 §12): subject overlap + trending.
  *
- * Tag signal SKIPPED on purpose: {@code Tag} (entity/doc/Tag.java) has zero relationship
- * field to DocDocument anywhere in the codebase — just {id, name}, no join table, no FK.
- * There is nothing to compute tag overlap from without inventing data, so it's left out
- * rather than faked. Content/deep-user-similarity signals are explicitly Full/later scope.
+ * Content/deep-user-similarity signals are explicitly Full/later scope.
  */
 @Service
 @RequiredArgsConstructor
