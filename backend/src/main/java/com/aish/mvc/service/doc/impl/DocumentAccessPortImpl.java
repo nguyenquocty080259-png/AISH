@@ -6,6 +6,7 @@ import com.aish.mvc.entity.enums.DocumentVisibility;
 import com.aish.mvc.repository.doc.DocDocumentRepository;
 import com.aish.mvc.service.doc.DocumentAccessPort;
 import com.aish.mvc.service.doc.DocumentService;
+import com.aish.mvc.service.doc.DocumentShareService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,7 @@ public class DocumentAccessPortImpl implements DocumentAccessPort {
 
     @Autowired private DocDocumentRepository docDocumentRepository;
     @Autowired private DocumentService documentService;
+    @Autowired private DocumentShareService documentShareService;
 
     @Override
     @Transactional(readOnly = true)
@@ -41,10 +43,11 @@ public class DocumentAccessPortImpl implements DocumentAccessPort {
         return false;
     }
 
-    // ⚠️ STUB — repo CHƯA có bảng share nên LUÔN trả false cho người không phải owner.
-    // TODO(Person3-Prompt4): điền logic thật khi có bảng share.
+    // Truy vấn bảng share thật: khả dụng nếu user được mời trực tiếp (RESTRICTED) hoặc tài liệu
+    // đang bật link-share (ANYONE_WITH_LINK). Người được share chỉ XEM/tải/hỏi AI/bình luận —
+    // sửa/xóa/đổi visibility vẫn bị chặn ở tầng service tài liệu (yêu cầu đúng chủ sở hữu).
     private boolean isSharedTo(Long documentId, Long currentUserId) {
-        return false;
+        return documentShareService.hasShareAccess(documentId, currentUserId);
     }
 
     @Override
