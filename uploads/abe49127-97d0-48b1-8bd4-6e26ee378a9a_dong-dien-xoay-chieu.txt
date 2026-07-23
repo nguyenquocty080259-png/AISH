@@ -1,0 +1,14 @@
+Dòng điện xoay chiều
+
+I. KIẾN THỨC TRỌNG TÂM — Dòng điện xoay chiều là dòng điện có cường độ biến thiên điều hòa theo thời gian theo quy luật hàm sin hoặc côsin: i = I0.cos(ωt + φ). Giá trị hiệu dụng của dòng điện xoay chiều I = I0/√2 được dùng phổ biến trong tính toán công suất tiêu thụ trên các thiết bị điện.
+
+II. PHÂN TÍCH VÀ MỞ RỘNG — Mạch điện xoay chiều RLC nối tiếp có tổng trở Z phụ thuộc vào điện trở R, cảm kháng ZL = ωL và dung kháng ZC = 1/(ωC). Hiện tượng cộng hưởng điện xảy ra khi ZL = ZC, lúc đó tổng trở của mạch đạt giá trị nhỏ nhất bằng R và cường độ dòng điện trong mạch đạt giá trị cực đại.
+
+III. VẬN DỤNG — Máy biến áp hoạt động dựa trên hiện tượng cảm ứng điện từ, dùng để biến đổi điện áp xoay chiều mà không làm thay đổi tần số, với tỉ số điện áp giữa hai cuộn dây bằng tỉ số số vòng dây tương ứng. Đây là thiết bị then chốt trong truyền tải điện năng đi xa với hao phí thấp.
+
+IV. VÍ DỤ CÓ HƯỚNG DẪN — Xét một tình huống tiêu biểu của bài “Dòng điện xoay chiều”. Trước hết xác định dữ kiện, khái niệm hoặc quy tắc liên quan; tiếp theo lựa chọn phương pháp, trình bày từng bước và kiểm tra điều kiện áp dụng. Sau khi có kết quả, đối chiếu lại với yêu cầu, giải thích ý nghĩa và chỉ ra lỗi sai thường gặp. Cách làm này giúp học sinh không chỉ ghi nhớ đáp án mà còn hình thành quy trình giải quyết vấn đề có thể dùng cho các câu hỏi tương tự.
+
+V. BÀI TẬP LUYỆN TẬP — Bài 1: trình bày lại nội dung cốt lõi bằng sơ đồ hoặc bảng so sánh. Bài 2: giải một trường hợp cơ bản và giải thích từng bước. Bài 3: thay đổi một dữ kiện của ví dụ để dự đoán kết quả mới. Bài 4: tìm và sửa một lời giải hoặc nhận định sai. Bài 5: liên hệ kiến thức với một hiện tượng trong học tập hoặc đời sống. Học sinh nên làm độc lập trước, sau đó trao đổi cách giải và tự chấm theo tiêu chí đúng kiến thức, đủ lập luận, rõ trình bày.
+
+VI. TỔNG KẾT VÀ TỰ HỌC — Sau bài học, học sinh cần tự trả lời được ba câu hỏi: kiến thức nào là nền tảng, dấu hiệu nào cho biết nên áp dụng kiến thức đó, và làm thế nào kiểm tra kết quả. Hãy lập một trang ghi chú gồm từ khóa, công thức hoặc luận điểm chính, một ví dụ mẫu và một lỗi dễ mắc. Ôn lại sau một ngày và một tuần, đồng thời tự tạo thêm câu hỏi vận dụng để củng cố khả năng nhớ lâu và sử dụng kiến thức linh hoạt.
+

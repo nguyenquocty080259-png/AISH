@@ -1,7 +1,6 @@
 package com.aish.mvc.dto.auth;
 
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,6 +12,11 @@ public class OnboardingRequest {
 
     // Bắt buộc: nếu user chưa có fullName (vd. GitHub OAuth không trả name), phải nhập ở đây -
     // validate ở ProfileServiceImpl vì phụ thuộc dữ liệu hiện có của user, không chỉ payload.
+    @NotBlank(message = "Họ và tên không được để trống")
+    @Pattern(
+            regexp = "^[^0-9]+$",
+            message = "Họ và tên không được chứa số"
+    )
     private String fullName;
 
     @NotNull(message = "Ngày sinh không được để trống")

@@ -11,7 +11,7 @@ public class SignupRequest {
     @NotBlank(message = "Email không được để trống")
     @Email(message = "Email không đúng định dạng")
     @Pattern(
-            regexp = "^[A-Za-z0-9._%+-]+@(gmail|yahoo|outlook|hotmail)\\.(com|vn)$",
+            regexp = "^[A-Za-z0-9._%+-]+@(gmail|yahoo|outlook|hotmail|aish)\\.(local|com|vn)$",
             message = "Email theo đúng định dạng"
     )
     private String email;

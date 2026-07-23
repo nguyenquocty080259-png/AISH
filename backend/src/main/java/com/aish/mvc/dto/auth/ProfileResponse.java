@@ -1,5 +1,9 @@
 package com.aish.mvc.dto.auth;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,6 +15,11 @@ public class ProfileResponse {
 
     private Long userId;
 
+    @NotBlank(message = "Họ và tên không được để trống")
+    @Pattern(
+            regexp = "^[^0-9]+$",
+            message = "Họ và tên không được chứa số"
+    )
     private String fullName;
 
     private String avatarUrl;
@@ -19,6 +28,8 @@ public class ProfileResponse {
 
     private String bio;
 
+    @NotNull(message = "Ngày sinh không được để trống")
+    @Past(message = "Ngày sinh phải là một ngày trong quá khứ")
     private LocalDate dob;
 
     private String gender;
