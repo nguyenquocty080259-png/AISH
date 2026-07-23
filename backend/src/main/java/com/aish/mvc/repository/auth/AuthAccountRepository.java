@@ -28,8 +28,15 @@ public interface AuthAccountRepository extends JpaRepository<AuthAccount, Long> 
     Optional<AuthAccount> findByIdentifierWithUserAndRole(@Param("identifier") String identifier);
 
     boolean existsByIdentifier(String identifier);
-
-    Optional<AuthAccount> findByProviderAndIdentifier(AuthProviders provider, String identifier);
+    @Query("""
+        select a
+        from AuthAccount a
+        join fetch a.user u
+        join fetch u.role
+        where a.provider = :provider
+        and a.identifier = :identifier
+        """)
+    Optional<AuthAccount> findByProviderAndIdentifier(@Param("provider") AuthProviders provider, @Param("identifier") String identifier);
 
     Optional<AuthAccount> findByUserAndProvider(AuthUser user, AuthProviders provider);
 

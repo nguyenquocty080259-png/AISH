@@ -63,11 +63,17 @@ public class OAuth2SuccessHandler
                         providerName.toUpperCase()
                 );
 
+        email = email.trim().toLowerCase();
+
+        System.out.println("OAuth Email = " + email);
+
         Optional<AuthAccount> socialAccount =
                 accountRepo.findByProviderAndIdentifier(
                         provider,
                         email
                 );
+
+        System.out.println("Found social account = " + socialAccount.isPresent());
 
         // Tìm account đúng provider
         Optional<AuthAccount> providerAccount =
