@@ -29,7 +29,6 @@ public class SecurityConfig {
     private final RestAccessDeniedHandler restAccessDeniedHandler;
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        System.out.println("========== SECURITY LOADED ==========");
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
@@ -68,8 +67,18 @@ public class SecurityConfig {
                         .accessDeniedHandler(restAccessDeniedHandler)
                 )
                 .oauth2Login(oauth -> oauth
+                        .userInfoEndpoint(userInfo ->
+                                userInfo.userService(customOAuth2UserService)
+                        )
                         .successHandler(oAuth2SuccessHandler)
-                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                        .failureHandler((request, response, exception) -> {
+
+                            exception.printStackTrace();
+
+                            response.sendRedirect(
+                                    "http://localhost:5173/login?error=oauth_failed"
+                            );
+                        })
                 )
                 .addFilterBefore(
                         jwtAuthFilter,

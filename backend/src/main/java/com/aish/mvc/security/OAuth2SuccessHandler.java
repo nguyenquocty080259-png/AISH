@@ -53,14 +53,10 @@ public class OAuth2SuccessHandler
 
         String email = oauthUser.getAttribute("email");
 
-        if(email == null || email.isBlank()) {
-
-            response.sendRedirect(
-                    frontendBaseUrl + "/login?error=no_email"
-            );
-
-            return;
+        if (email != null) {
+            email = email.trim().toLowerCase();
         }
+
 
         AuthProviders provider =
                 AuthProviders.valueOf(
@@ -73,10 +69,16 @@ public class OAuth2SuccessHandler
                         email
                 );
 
-        // LOGIN LẠI
-        if(socialAccount.isPresent()) {
+        // Tìm account đúng provider
+        Optional<AuthAccount> providerAccount =
+                accountRepo.findByProviderAndIdentifier(
+                        provider,
+                        email
+                );
 
-            AuthUser existingUser = socialAccount.get().getUser();
+        if (providerAccount.isPresent()) {
+
+            AuthUser existingUser = providerAccount.get().getUser();
 
             if (existingUser.getStatus() == UserStatus.BANNED) {
                 response.sendRedirect(frontendBaseUrl + "/login?error=banned");
@@ -88,35 +90,45 @@ public class OAuth2SuccessHandler
                 return;
             }
 
-            String jwt =
-                    jwtUtil.generateToken(email, existingUser.getRole().getRoleName());
+            String jwt = jwtUtil.generateToken(
+                    email,
+                    existingUser.getRole().getRoleName()
+            );
 
             response.sendRedirect(
-                    frontendBaseUrl + "/oauth-success?token="
-                            + jwt
+                    frontendBaseUrl + "/oauth-success?token=" + jwt
             );
 
             return;
         }
 
-        // EMAIL ĐÃ ĐĂNG KÝ LOCAL
-        Optional<AuthAccount> localAccount =
-                accountRepo.findByProviderAndIdentifier(
-                        AuthProviders.LOCAL,
-                        email
-                );
+        // Email đã tồn tại nhưng bằng provider khác
+        Optional<AuthAccount> existingAccount =
+                accountRepo.findByIdentifier(email);
 
-        if(localAccount.isPresent()) {
+        if (existingAccount.isPresent()) {
 
-            String msg =
-                    URLEncoder.encode(
-                            "Gmail của bạn đã được đăng ký. Hãy đăng nhập bằng Log In.",
-                            StandardCharsets.UTF_8
-                    );
+            String providerMessage;
+
+            switch (existingAccount.get().getProvider()) {
+
+                case LOCAL ->
+                        providerMessage = "This email was registered using Email & Password.";
+
+                case GOOGLE ->
+                        providerMessage = "This account already exists. Please sign in with Google.";
+
+                case GITHUB ->
+                        providerMessage = "This account was registered using GitHub.";
+
+                default ->
+                        providerMessage = "This account already exists.";
+            }
 
             response.sendRedirect(
-                    frontendBaseUrl + "/login?error="
-                            + msg
+                    frontendBaseUrl +
+                            "/login?error=" +
+                            URLEncoder.encode(providerMessage, StandardCharsets.UTF_8)
             );
 
             return;
