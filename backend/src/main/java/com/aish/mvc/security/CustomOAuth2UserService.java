@@ -32,7 +32,6 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     private final OAuth2UserService<OAuth2UserRequest, OAuth2User> delegate;
     private final RestTemplate restTemplate;
 
-    @Autowired
     public CustomOAuth2UserService() {
         this(new DefaultOAuth2UserService(), new RestTemplate());
     }
