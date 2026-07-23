@@ -10,7 +10,11 @@ import lombok.Data;
 public class LoginRequest {
 
     @NotBlank(message = "Email không được để trống")
-    @Email(message = "Email khong hop le")
+    @Email(message = "Email không hợp lệ")
+    @Pattern(
+            regexp = "^[A-Za-z0-9._%+-]+@(gmail|yahoo|outlook|hotmail|aish)\\.(local|com|vn)$",
+            message = "Email theo đúng định dạng"
+    )
     private String email;
 
     @NotBlank(message = "Mật khẩu không được để trống")

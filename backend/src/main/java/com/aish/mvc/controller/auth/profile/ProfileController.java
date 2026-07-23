@@ -26,6 +26,7 @@ public class ProfileController {
 
     @PutMapping("/me")
     public ResponseEntity<ProfileResponse> updateMyProfile(
+            @Valid
             @RequestBody UpdateProfileRequest request
     ) {
 
