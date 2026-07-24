@@ -6,6 +6,7 @@ import com.aish.mvc.entity.enums.UserStatus;
 import com.aish.mvc.repository.auth.*;
 import com.aish.mvc.service.auth.JwtUtil;
 import com.aish.mvc.service.auth.UsernameGenerator;
+import com.aish.mvc.util.AuthProviderMessageUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -114,29 +115,15 @@ public class OAuth2SuccessHandler
 
         if (existingAccount.isPresent()) {
 
-            String providerMessage;
-
-            switch (existingAccount.get().getProvider()) {
-
-                case LOCAL ->
-                        providerMessage = "Địa chỉ email này được đăng ký bằng Email & Mật khẩu.";
-
-                case GOOGLE ->
-                        providerMessage = "Tài khoản này đã tồn tại. Vui lòng đăng nhập bằng tài khoản Google.";
-
-                case GITHUB ->
-                        providerMessage = "Tài khoản này được đăng ký bằng GitHub.";
-
-                default ->
-                        providerMessage = "Tài khoản này đã tồn tại.";
-            }
+            String providerMessage = AuthProviderMessageUtil.getProviderMessage(
+                    existingAccount.get().getProvider()
+            );
 
             response.sendRedirect(
                     frontendBaseUrl +
                             "/login?error=" +
                             URLEncoder.encode(providerMessage, StandardCharsets.UTF_8)
             );
-
             return;
         }
 
