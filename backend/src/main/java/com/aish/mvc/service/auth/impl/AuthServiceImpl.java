@@ -14,6 +14,7 @@ import com.aish.mvc.repository.auth.AuthUserRepository;
 import com.aish.mvc.service.auth.AuthService;
 import com.aish.mvc.service.auth.EmailService;
 import com.aish.mvc.service.auth.JwtUtil;
+import com.aish.mvc.util.AuthProviderMessageUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +22,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
+
+import static com.aish.mvc.entity.enums.AuthProvider.GITHUB;
+import static com.aish.mvc.entity.enums.AuthProvider.GOOGLE;
 
 @Service
 @RequiredArgsConstructor
@@ -98,8 +103,32 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse login(LoginRequest request) {
-        AuthAccount account = accountRepo.findByProviderAndIdentifier(AuthProviders.LOCAL, request.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản."));
+        Optional<AuthAccount> localAccount =
+                accountRepo.findByProviderAndIdentifier(
+                        AuthProviders.LOCAL,
+                        request.getEmail()
+                );
+
+        if (localAccount.isEmpty()) {
+
+            Optional<AuthAccount> existingAccount =
+                    accountRepo.findByIdentifier(request.getEmail());
+
+            if (existingAccount.isPresent()) {
+                throw new IllegalArgumentException(
+                        AuthProviderMessageUtil.getProviderMessage(
+                                existingAccount.get().getProvider()
+                        )
+                );
+            }
+
+            // Email hoàn toàn không tồn tại trong hệ thống
+            throw new IllegalArgumentException("Không tìm thấy tài khoản.");
+        }
+
+
+        AuthAccount account = localAccount.get();
+
         if (!Boolean.TRUE.equals(account.getIsVerified())) {
             throw new IllegalArgumentException("Vui lòng xác minh email trước khi đăng nhập.");
         }
