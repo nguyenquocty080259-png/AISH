@@ -46,7 +46,7 @@ export default function OtpPage() {
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
       </div>
       <h1 className="text-3xl font-bold tracking-tight text-app">Xác minh email</h1>
-      <p className="mt-2 text-secondary">Mã OTP gồm 6 số đã được gửi tới <strong className="text-app">{email}</strong>. Mã có hiệu lực trong 2 phút.</p>
+      <p className="mt-2 text-secondary">Mã OTP gồm 6 số đã được gửi tới <strong className="text-app">{email}</strong>. Mã có hiệu lực trong 1 phút.</p>
 
       <form className="mt-8" onSubmit={handleVerify}>
         <label className="text-sm font-semibold text-secondary">Mã OTP</label>
