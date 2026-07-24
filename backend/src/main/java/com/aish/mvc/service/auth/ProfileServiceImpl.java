@@ -57,7 +57,7 @@ public class ProfileServiceImpl implements ProfileService {
         AuthUserProfile profile = authUserProfileRepository.findByUserId(user.getId())
                 .orElseGet(() -> usernameGenerator.createProfileForUser(user));
 
-        return mapToResponse(user, profile);
+        return mapToResponse(account, user, profile);
     }
 
     @Override
@@ -115,7 +115,7 @@ public class ProfileServiceImpl implements ProfileService {
 
         authUserProfileRepository.save(profile);
 
-        return mapToResponse(user, profile);
+        return mapToResponse(account, user, profile);
     }
 
     // Onboarding là partial-update: chỉ field khác blank trong request mới được ghi đè, không
@@ -162,7 +162,7 @@ public class ProfileServiceImpl implements ProfileService {
 
         authUserProfileRepository.save(profile);
 
-        return mapToResponse(user, profile);
+        return mapToResponse(account, user, profile);
     }
 
     @Override
@@ -295,11 +295,14 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     private ProfileResponse mapToResponse(
+            AuthAccount account,
             AuthUser user,
             AuthUserProfile profile
     ) {
 
         ProfileResponse response = new ProfileResponse();
+
+        response.setEmail(account.getIdentifier());
 
         response.setUserId(user.getId());
 

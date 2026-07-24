@@ -3,10 +3,12 @@ import StorageUsageBar from "../../components/ui/StorageUsageBar";
 import "./profile.css";
 import { useRef } from "react";
 import { FaCamera } from "react-icons/fa";
+import { MdEmail } from "react-icons/md";
 
 const FIELD_LABELS = {
   fullName: "Họ và tên",
   username: "Tên người dùng",
+  email: "Email",
   bio: "Giới thiệu",
   dob: "Ngày sinh",
   gender: "Giới tính",
@@ -109,6 +111,8 @@ export default function ProfilePage() {
           )}
         </div>
 
+        
+
         {!editing && (
           <button className="profile-edit-btn" onClick={startEditing}>
             Chỉnh sửa hồ sơ
@@ -121,7 +125,7 @@ export default function ProfilePage() {
           {profile.bio && <p className="profile-bio">{profile.bio}</p>}
           <div className="profile-grid">
             {Object.keys(FIELD_LABELS)
-              .filter((field) => field !== "fullName" && field !== "bio")
+              .filter((field) => field !== "username")
               .map((field) => (
                 <div className="profile-grid__item" key={field}>
                   <span className="profile-grid__label">
@@ -185,12 +189,17 @@ export default function ProfilePage() {
                   </span>
                 </>
               ) : (
-                <input
-                  type="text"
-                  value={form[field] ?? ""}
-                  onChange={(e) => handleFieldChange(field, e.target.value)}
-                />
-              )}
+              <input
+                type={field === "email" ? "email" : "text"}
+                value={form[field] ?? ""}
+                readOnly={field === "email"}
+                onChange={
+                  field === "email"
+                    ? undefined
+                    : (e) => handleFieldChange(field, e.target.value)
+                }
+              />
+            )}
             </label>
           ))}
 
