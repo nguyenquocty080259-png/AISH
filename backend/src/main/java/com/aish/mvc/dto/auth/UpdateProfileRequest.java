@@ -21,6 +21,8 @@ public class UpdateProfileRequest {
 
     private String avatarUrl;
 
+    private String email;
+
     private String bio;
     @NotNull(message = "Ngày sinh không được để trống")
     @Past(message = "Ngày sinh phải là một ngày trong quá khứ")

@@ -63,7 +63,10 @@ export function useProfilePage() {
   }, []);
 
   const startEditing = () => {
-    setForm(toFormValues(profile));
+    setForm({
+    ...toFormValues(profile),
+    email: profile.email,
+    });
     setEditing(true);
   };
 
@@ -108,13 +111,13 @@ export function useProfilePage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const payload = {
-        ...form,
-        trashRetentionDays:
-          form.trashRetentionDays === "" || form.trashRetentionDays == null
+      const { email, ...payload } = form;
+
+        payload.trashRetentionDays =
+          payload.trashRetentionDays === "" || payload.trashRetentionDays == null
             ? null
-            : Number(form.trashRetentionDays),
-      };
+            : Number(payload.trashRetentionDays);
+
       const updated = await profileApi.updateMyProfile(payload);
       setProfile(updated);
       setEditing(false);

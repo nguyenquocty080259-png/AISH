@@ -106,9 +106,9 @@ export default function OnboardingPage() {
                       onChange={(e) => handleFieldChange(field, e.target.value)}
                     >
                       <option value="">-- Chọn --</option>
-                      <option value="MALE">Nam</option>
-                      <option value="FEMALE">Nữ</option>
-                      <option value="OTHER">Khác</option>
+                      <option value="Nam">Nam</option>
+                      <option value="Nữ">Nữ</option>
+                      <option value="Khác">Khác</option>
                     </select>
                   ) : (
                     <input

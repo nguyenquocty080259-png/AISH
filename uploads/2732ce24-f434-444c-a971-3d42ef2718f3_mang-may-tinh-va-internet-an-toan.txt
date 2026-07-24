@@ -1,0 +1,14 @@
+Mạng máy tính và Internet an toàn
+
+I. KIẾN THỨC TRỌNG TÂM — Mạng máy tính kết nối các thiết bị để trao đổi dữ liệu và dùng chung tài nguyên. Internet là mạng liên kết toàn cầu hoạt động dựa trên bộ giao thức TCP/IP; tên miền được DNS chuyển thành địa chỉ IP.
+
+II. PHÂN TÍCH VÀ MỞ RỘNG — Dữ liệu truyền qua mạng theo các gói và đi qua nhiều thiết bị trung gian. Những dịch vụ phổ biến gồm web, thư điện tử, lưu trữ đám mây; HTTPS bổ sung mã hóa và xác thực cho giao tiếp web.
+
+III. VẬN DỤNG — Để sử dụng Internet an toàn cần dùng mật khẩu dài và riêng biệt, bật xác thực nhiều lớp, cập nhật phần mềm, kiểm tra tên miền trước khi đăng nhập và không mở tệp hoặc liên kết đáng ngờ.
+
+IV. VÍ DỤ CÓ HƯỚNG DẪN — Xét một tình huống tiêu biểu của bài “Mạng máy tính và Internet an toàn”. Trước hết xác định dữ kiện, khái niệm hoặc quy tắc liên quan; tiếp theo lựa chọn phương pháp, trình bày từng bước và kiểm tra điều kiện áp dụng. Sau khi có kết quả, đối chiếu lại với yêu cầu, giải thích ý nghĩa và chỉ ra lỗi sai thường gặp. Cách làm này giúp học sinh không chỉ ghi nhớ đáp án mà còn hình thành quy trình giải quyết vấn đề có thể dùng cho các câu hỏi tương tự.
+
+V. BÀI TẬP LUYỆN TẬP — Bài 1: trình bày lại nội dung cốt lõi bằng sơ đồ hoặc bảng so sánh. Bài 2: giải một trường hợp cơ bản và giải thích từng bước. Bài 3: thay đổi một dữ kiện của ví dụ để dự đoán kết quả mới. Bài 4: tìm và sửa một lời giải hoặc nhận định sai. Bài 5: liên hệ kiến thức với một hiện tượng trong học tập hoặc đời sống. Học sinh nên làm độc lập trước, sau đó trao đổi cách giải và tự chấm theo tiêu chí đúng kiến thức, đủ lập luận, rõ trình bày.
+
+VI. TỔNG KẾT VÀ TỰ HỌC — Sau bài học, học sinh cần tự trả lời được ba câu hỏi: kiến thức nào là nền tảng, dấu hiệu nào cho biết nên áp dụng kiến thức đó, và làm thế nào kiểm tra kết quả. Hãy lập một trang ghi chú gồm từ khóa, công thức hoặc luận điểm chính, một ví dụ mẫu và một lỗi dễ mắc. Ôn lại sau một ngày và một tuần, đồng thời tự tạo thêm câu hỏi vận dụng để củng cố khả năng nhớ lâu và sử dụng kiến thức linh hoạt.
+

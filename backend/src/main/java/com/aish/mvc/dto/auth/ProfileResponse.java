@@ -26,6 +26,8 @@ public class ProfileResponse {
 
     private String username;
 
+    private String email;
+
     private String bio;
 
     @NotNull(message = "Ngày sinh không được để trống")
