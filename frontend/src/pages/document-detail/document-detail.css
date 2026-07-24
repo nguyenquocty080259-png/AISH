@@ -702,6 +702,60 @@
     justify-content: flex-end;
 }
 
+.detail-share__recipients {
+    margin-top: var(--spacing-md);
+    border-top: 1px solid var(--color-border);
+    padding-top: var(--spacing-md);
+}
+
+.detail-share__recipients-title {
+    font-size: var(--body-sm);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    margin: 0 0 var(--spacing-sm);
+}
+
+.detail-share__recipients-empty {
+    font-size: var(--body-sm);
+    color: var(--color-text-secondary);
+    margin: 0;
+}
+
+.detail-share__recipients-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.detail-share__recipient {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+}
+
+.detail-share__recipient-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.detail-share__recipient-email {
+    font-size: var(--body-sm);
+    color: var(--color-text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.detail-share__recipient-perm {
+    font-size: var(--body-sm);
+    color: var(--color-text-secondary);
+}
+
 .detail-share__link {
     display: flex;
     gap: var(--spacing-sm);
