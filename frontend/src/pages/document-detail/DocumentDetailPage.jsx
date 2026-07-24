@@ -56,6 +56,9 @@ export default function DocumentDetailPage() {
     openShareModal,
     closeShareModal,
     handleShare,
+    shareRecipients,
+    loadingRecipients,
+    handleRevokeShare,
     documentDetailPath,
     handleDownload,
     handleIngest,
@@ -434,6 +437,9 @@ export default function DocumentDetailPage() {
           documentDetailPath={documentDetailPath}
           onShare={handleShare}
           onClose={closeShareModal}
+          recipients={shareRecipients}
+          loadingRecipients={loadingRecipients}
+          onRevoke={handleRevokeShare}
         />
       )}
     </div>

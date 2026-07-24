@@ -1,5 +1,6 @@
 package com.aish.mvc.config;
 
+import com.aish.mvc.entity.enums.NotificationType;
 import com.aish.mvc.service.auth.UsernameGenerator;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -12,8 +13,10 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -22,12 +25,17 @@ public class SchemaPatchRunner implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(SchemaPatchRunner.class);
 
-    private static final String NOTIFICATION_TYPE_CONSTRAINT_PATCH = """
-            ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_type_check;
-            ALTER TABLE notifications ADD CONSTRAINT notifications_type_check
-              CHECK (type IN ('REPORT_CREATED', 'REPORT_RESOLVED', 'DOCUMENT_SCREENED',
-                              'COMMENT_UNDER_REVIEW', 'COMMENT_REVIEWED', 'METADATA_MISMATCH'));
-            """;
+    // Danh sách giá trị hợp lệ SINH TỪ enum NotificationType lúc runtime (KHÔNG hardcode), để khi
+    // thêm enum mới sau này constraint không bị drift lại. Tên enum là định danh an toàn (chỉ chữ
+    // hoa/gạch dưới) nên nối chuỗi trực tiếp không có rủi ro SQL injection.
+    private static String notificationTypeConstraintPatch() {
+        String allowedValues = Arrays.stream(NotificationType.values())
+                .map(type -> "'" + type.name() + "'")
+                .collect(Collectors.joining(", "));
+        return "ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_type_check;"
+                + " ALTER TABLE notifications ADD CONSTRAINT notifications_type_check"
+                + " CHECK (type IN (" + allowedValues + "));";
+    }
 
     private static final String AI_USAGE_MESSAGE_FK_PATCH = """
             DO $$
@@ -101,7 +109,7 @@ public class SchemaPatchRunner implements ApplicationRunner {
         // Hibernate 6 creates enum check constraints when a table is first created, but ddl-auto=update
         // never refreshes them. Extend the constraint's allowed list whenever NotificationType gains a value.
         try {
-            jdbcTemplate.execute(NOTIFICATION_TYPE_CONSTRAINT_PATCH);
+            jdbcTemplate.execute(notificationTypeConstraintPatch());
             log.info("Applied notifications_type_check startup schema patch.");
         } catch (Exception exception) {
             log.warn("Could not apply notifications_type_check startup schema patch; startup will continue: {}",
