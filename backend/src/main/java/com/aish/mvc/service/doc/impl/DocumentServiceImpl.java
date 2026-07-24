@@ -435,6 +435,16 @@ public class DocumentServiceImpl implements DocumentService {
     public DocFile getFileByDocumentId(Long documentId) {
         DocDocument doc = docDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài liệu"));
+        // Tải file là một kênh lấy NỘI DUNG như xem trước — phải áp cùng luật truy cập với
+        // getFileForPreview(): chủ sở hữu / PUBLIC / được chia sẻ. Nếu không, người vừa bị GỠ
+        // chia sẻ vẫn tải được nội dung (rò rỉ, phá vỡ cách ly của tính năng chia sẻ).
+        Long currentUserId = getCurrentUser().getId();
+        boolean isOwner = doc.getUser().getId().equals(currentUserId);
+        boolean isPublic = doc.getVisibility() == DocumentVisibility.PUBLIC;
+        boolean isShared = documentShareService.hasShareAccess(documentId, currentUserId);
+        if (!isOwner && !isPublic && !isShared) {
+            throw new ForbiddenException("Bạn không có quyền tải tài liệu này!");
+        }
         return pickPrimaryFile(doc);
     }
 

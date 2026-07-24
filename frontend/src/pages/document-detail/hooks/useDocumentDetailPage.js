@@ -92,6 +92,9 @@ export function useDocumentDetailPage() {
   // Modal chia sẻ
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [sharing, setSharing] = useState(false);
+  // Danh sách người đang được chia sẻ (chỉ chủ sở hữu) — hiển thị trong modal để gỡ từng người.
+  const [shareRecipients, setShareRecipients] = useState([]);
+  const [loadingRecipients, setLoadingRecipients] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -437,18 +440,35 @@ export function useDocumentDetailPage() {
     }
   };
 
-  const openShareModal = () => setShareModalOpen(true);
+  const loadShareRecipients = async () => {
+    setLoadingRecipients(true);
+    try {
+      const data = await shareApi.getShareRecipients(id);
+      setShareRecipients(Array.isArray(data) ? data : []);
+    } catch (err) {
+      showError(err.message);
+      setShareRecipients([]);
+    } finally {
+      setLoadingRecipients(false);
+    }
+  };
+
+  const openShareModal = () => {
+    setShareModalOpen(true);
+    loadShareRecipients();
+  };
   const closeShareModal = () => setShareModalOpen(false);
 
-  // payload: { mode, userIds?, permission? }. Trả về { shareMode, shareToken } hoặc null nếu lỗi
+  // payload: { mode, email?, permission? }. Trả về { shareMode, shareToken } hoặc null nếu lỗi
   // (để ShareModal hiển thị link khi mode = ANYONE_WITH_LINK). Sau khi chia sẻ, reload để cập
-  // nhật visibility (SHARED) trên UI.
+  // nhật visibility (SHARED) trên UI và làm mới danh sách người được chia sẻ.
   const handleShare = async (payload) => {
     setSharing(true);
     try {
       const res = await shareApi.shareDocument(id, payload);
       if (payload.mode === "RESTRICTED") {
-        showSuccess("Đã chia sẻ tài liệu với những người được chọn.");
+        showSuccess("Đã chia sẻ tài liệu.");
+        await loadShareRecipients();
       } else if (payload.mode === "ANYONE_WITH_LINK") {
         showSuccess("Đã bật chia sẻ qua liên kết.");
       } else {
@@ -461,6 +481,17 @@ export function useDocumentDetailPage() {
       return null;
     } finally {
       setSharing(false);
+    }
+  };
+
+  // Gỡ chia sẻ 1 người (hard delete row). Sau khi gỡ, làm mới danh sách trong modal.
+  const handleRevokeShare = async (userId) => {
+    try {
+      await shareApi.revokeShare(id, userId);
+      showSuccess("Đã gỡ chia sẻ.");
+      await loadShareRecipients();
+    } catch (err) {
+      showError(err.message);
     }
   };
 
@@ -498,6 +529,9 @@ export function useDocumentDetailPage() {
     openShareModal,
     closeShareModal,
     handleShare,
+    shareRecipients,
+    loadingRecipients,
+    handleRevokeShare,
     documentDetailPath: buildRoute(ROUTES.DOCUMENT_DETAIL, { id }),
     handleDownload,
     handleIngest,

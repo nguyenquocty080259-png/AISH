@@ -4,6 +4,7 @@ import com.aish.mvc.dto.doc.AppealRequestDTO;
 import com.aish.mvc.dto.doc.CommentBlockedResponseDTO;
 import com.aish.mvc.dto.doc.DocumentResponseDTO;
 import com.aish.mvc.dto.doc.ModerationAppealResponseDTO;
+import com.aish.mvc.dto.doc.DocumentShareRecipientDTO;
 import com.aish.mvc.dto.doc.ShareRequestDTO;
 import com.aish.mvc.dto.doc.ShareResponseDTO;
 import com.aish.mvc.dto.doc.SharedWithMeItemDTO;
@@ -215,6 +216,12 @@ public class DocumentController {
     @GetMapping("/shared-with-me")
     public ResponseEntity<List<SharedWithMeItemDTO>> sharedWithMe() {
         return ResponseEntity.ok(documentShareService.listSharedWithMe());
+    }
+
+    // Danh sách người đang được chia sẻ tài liệu này — CHỈ chủ sở hữu gọi được.
+    @GetMapping("/{id}/shares")
+    public ResponseEntity<List<DocumentShareRecipientDTO>> shareRecipients(@PathVariable Long id) {
+        return ResponseEntity.ok(documentShareService.listShareRecipients(id));
     }
 
     // Gỡ quyền chia sẻ của 1 user cụ thể — chỉ chủ sở hữu.

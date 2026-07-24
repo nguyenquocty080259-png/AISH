@@ -1,5 +1,6 @@
 package com.aish.mvc.config;
 
+import com.aish.mvc.entity.enums.NotificationType;
 import com.aish.mvc.service.auth.UsernameGenerator;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.ApplicationArguments;
@@ -18,6 +19,23 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class SchemaPatchRunnerTest {
+
+    // Bản vá constraint phải liệt kê MỌI giá trị NotificationType (sinh từ enum, không hardcode)
+    // để không drift lại khi thêm loại thông báo mới. DOCUMENT_SHARED là loại từng bị bỏ sót.
+    @Test
+    void notificationTypeConstraintPatchListsEveryEnumValue() {
+        JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
+        UsernameGenerator usernameGenerator = mock(UsernameGenerator.class);
+        when(jdbcTemplate.queryForList(contains("WHERE p.username IS NULL"))).thenReturn(List.of());
+        SchemaPatchRunner runner = new SchemaPatchRunner(jdbcTemplate, usernameGenerator);
+
+        runner.run(mock(ApplicationArguments.class));
+
+        for (NotificationType type : NotificationType.values()) {
+            verify(jdbcTemplate).execute(contains("'" + type.name() + "'"));
+        }
+        verify(jdbcTemplate).execute(contains("DROP CONSTRAINT IF EXISTS notifications_type_check"));
+    }
 
     @Test
     void backfillsUsernameForEveryProfileWithNullUsername() {

@@ -18,6 +18,11 @@ public interface AuthAccountRepository extends JpaRepository<AuthAccount, Long> 
 
     Optional<AuthAccount> findByIdentifier(String identifier);
 
+    // READ-ONLY: resolve 1 email -> account bất kể hoa/thường (email local KHÔNG được normalize
+    // lúc đăng ký, nên cần so khớp không phân biệt hoa/thường). Trả List để không vỡ nếu vì lệch
+    // hoa/thường mà tồn tại nhiều bản ghi; tầng service tự chọn tài khoản phù hợp.
+    List<AuthAccount> findByIdentifierIgnoreCase(String identifier);
+
     @Query("""
             SELECT a
             FROM AuthAccount a
