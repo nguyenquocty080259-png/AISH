@@ -1,5 +1,6 @@
 package com.aish.mvc.service.doc;
 
+import com.aish.mvc.dto.doc.DocumentShareRecipientDTO;
 import com.aish.mvc.dto.doc.ShareRequestDTO;
 import com.aish.mvc.dto.doc.ShareResponseDTO;
 import com.aish.mvc.dto.doc.SharedWithMeItemDTO;
@@ -17,6 +18,9 @@ public interface DocumentShareService {
 
     // Danh sách tài liệu được chia sẻ với người dùng hiện tại (còn khả dụng).
     List<SharedWithMeItemDTO> listSharedWithMe();
+
+    // CHỈ Author/Owner: danh sách người đang được chia sẻ tài liệu (RESTRICTED) + quyền của họ.
+    List<DocumentShareRecipientDTO> listShareRecipients(Long documentId);
 
     // Dùng bởi DocumentAccessPort: user có được xem tài liệu qua share không.
     boolean hasShareAccess(Long documentId, Long userId);

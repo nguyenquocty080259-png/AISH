@@ -4,43 +4,60 @@ import Button from "../../../components/ui/Button";
 import { useToast } from "../../../hooks/useToast";
 
 // Modal chia sẻ tài liệu cho chủ sở hữu.
-// - RESTRICTED: mời user cụ thể theo ID (V1 chưa có endpoint tìm user nên nhập ID, cách nhau dấu phẩy).
+// - RESTRICTED: mời người dùng theo EMAIL (người nhận phải đã có tài khoản HiveMind) + chọn quyền,
+//   kèm danh sách người đang được chia sẻ và nút Gỡ tại từng dòng.
 // - ANYONE_WITH_LINK: bật link chia sẻ, hiển thị link để copy.
 // - NONE: tắt link chia sẻ.
 // Quyền V1: VIEWER (xem/tải/hỏi AI) hoặc COMMENTER (thêm bình luận). EDITOR để dành V2.
-export default function ShareModal({ open, onClose, onShare, sharing, documentDetailPath }) {
+export default function ShareModal({
+  open,
+  onClose,
+  onShare,
+  sharing,
+  documentDetailPath,
+  recipients = [],
+  loadingRecipients = false,
+  onRevoke,
+}) {
   const { showSuccess, showError } = useToast();
   const [mode, setMode] = useState("RESTRICTED");
-  const [userIdsText, setUserIdsText] = useState("");
+  const [email, setEmail] = useState("");
   const [permission, setPermission] = useState("COMMENTER");
   const [shareLink, setShareLink] = useState("");
+  const [revokingId, setRevokingId] = useState(null);
 
   const shareUrl = shareLink
     ? `${window.location.origin}${documentDetailPath}`
     : "";
 
-  const parseUserIds = () =>
-    userIdsText
-      .split(",")
-      .map((x) => Number(x.trim()))
-      .filter((x) => Number.isInteger(x) && x > 0);
+  const permissionLabel = (p) => (p === "COMMENTER" ? "Bình luận" : "Xem");
 
   const submit = async (e) => {
     e.preventDefault();
     setShareLink("");
 
     if (mode === "RESTRICTED") {
-      const userIds = parseUserIds();
-      if (userIds.length === 0) {
-        showError("Nhập ít nhất một ID người dùng hợp lệ (cách nhau dấu phẩy).");
+      const trimmed = email.trim();
+      if (!trimmed) {
+        showError("Nhập email người nhận (đã có tài khoản HiveMind).");
         return;
       }
-      await onShare({ mode, userIds, permission });
+      const res = await onShare({ mode, email: trimmed, permission });
+      if (res) setEmail(""); // chỉ xoá ô nhập khi chia sẻ thành công
     } else if (mode === "ANYONE_WITH_LINK") {
       const res = await onShare({ mode, permission });
       if (res?.shareToken) setShareLink(res.shareToken);
     } else {
       await onShare({ mode: "NONE" });
+    }
+  };
+
+  const handleRevoke = async (userId) => {
+    setRevokingId(userId);
+    try {
+      await onRevoke(userId);
+    } finally {
+      setRevokingId(null);
     }
   };
 
@@ -67,12 +84,12 @@ export default function ShareModal({ open, onClose, onShare, sharing, documentDe
 
         {mode === "RESTRICTED" && (
           <label className="detail-share__field">
-            <span>ID người dùng (cách nhau dấu phẩy)</span>
+            <span>Email người nhận</span>
             <input
-              type="text"
-              placeholder="VD: 12, 34, 56"
-              value={userIdsText}
-              onChange={(e) => setUserIdsText(e.target.value)}
+              type="email"
+              placeholder="VD: ban@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
           </label>
         )}
@@ -93,6 +110,37 @@ export default function ShareModal({ open, onClose, onShare, sharing, documentDe
           </Button>
         </div>
       </form>
+
+      {mode === "RESTRICTED" && (
+        <div className="detail-share__recipients">
+          <p className="detail-share__recipients-title">Đang chia sẻ cho</p>
+          {loadingRecipients ? (
+            <p className="detail-share__recipients-empty">Đang tải...</p>
+          ) : recipients.length === 0 ? (
+            <p className="detail-share__recipients-empty">Chưa chia sẻ cho ai.</p>
+          ) : (
+            <ul className="detail-share__recipients-list">
+              {recipients.map((r) => (
+                <li key={r.userId} className="detail-share__recipient">
+                  <span className="detail-share__recipient-info">
+                    <strong>{r.fullName || r.email || `#${r.userId}`}</strong>
+                    {r.email && <span className="detail-share__recipient-email">{r.email}</span>}
+                    <span className="detail-share__recipient-perm">{permissionLabel(r.permission)}</span>
+                  </span>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={revokingId === r.userId}
+                    onClick={() => handleRevoke(r.userId)}
+                  >
+                    {revokingId === r.userId ? "Đang gỡ..." : "Gỡ"}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {shareLink && mode === "ANYONE_WITH_LINK" && (
         <div className="detail-share__link">
