@@ -19,6 +19,8 @@ public class UpdateProfileRequest {
     )
     private String fullName;
 
+    private String avatarUrl;
+
     private String bio;
     @NotNull(message = "Ngày sinh không được để trống")
     @Past(message = "Ngày sinh phải là một ngày trong quá khứ")
@@ -26,6 +28,10 @@ public class UpdateProfileRequest {
 
     private String gender;
 
+    @Pattern(
+            regexp = "^$|^(0?)(3[2-9]|5[689]|7[06-9]|8[0-689]|9[0-469])[0-9]{7}$",
+            message = "Số điện thoại phải đúng định dạng."
+    )
     private String phoneNumber;
 
     private String university;

@@ -119,16 +119,16 @@ public class OAuth2SuccessHandler
             switch (existingAccount.get().getProvider()) {
 
                 case LOCAL ->
-                        providerMessage = "This email was registered using Email & Password.";
+                        providerMessage = "Địa chỉ email này được đăng ký bằng Email & Mật khẩu.";
 
                 case GOOGLE ->
-                        providerMessage = "This account already exists. Please sign in with Google.";
+                        providerMessage = "Tài khoản này đã tồn tại. Vui lòng đăng nhập bằng tài khoản Google.";
 
                 case GITHUB ->
-                        providerMessage = "This account was registered using GitHub.";
+                        providerMessage = "Tài khoản này được đăng ký bằng GitHub.";
 
                 default ->
-                        providerMessage = "This account already exists.";
+                        providerMessage = "Tài khoản này đã tồn tại.";
             }
 
             response.sendRedirect(

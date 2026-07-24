@@ -48,7 +48,8 @@ public class SecurityConfig {
                                 "/api/auth/verify-forgot-password",
                                 "/api/auth/reset-password",
                                 "/oauth2/**",
-                                "/login/oauth2/**"
+                                "/login/oauth2/**",
+                                "/uploads/**"
                         )
                         .permitAll()
 

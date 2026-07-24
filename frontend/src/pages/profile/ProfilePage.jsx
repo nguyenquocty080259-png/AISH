@@ -1,6 +1,8 @@
 import { useProfilePage } from "./hooks/useProfilePage";
 import StorageUsageBar from "../../components/ui/StorageUsageBar";
 import "./profile.css";
+import { useRef } from "react";
+import { FaCamera } from "react-icons/fa";
 
 const FIELD_LABELS = {
   fullName: "Họ và tên",
@@ -31,17 +33,22 @@ function initials(name) {
 }
 
 export default function ProfilePage() {
+  const fileInputRef = useRef(null);
+  const API_BASE = "http://localhost:8080";
   const {
-    profile,
-    loading,
-    editing,
-    form,
-    saving,
-    startEditing,
-    cancelEditing,
-    handleFieldChange,
-    handleSave,
-    storageUsage,
+      profile,
+      loading,
+      editing,
+      form,
+      saving,
+      startEditing,
+      cancelEditing,
+      handleFieldChange,
+      handleSave,
+      storageUsage,
+
+      avatarPreview,
+      handleAvatarChange,
   } = useProfilePage();
 
   if (loading) {
@@ -52,16 +59,49 @@ export default function ProfilePage() {
     return <div className="profile-page">Không tải được hồ sơ.</div>;
   }
 
+  const avatarSrc =
+  avatarPreview ||
+  (profile?.avatarUrl
+    ? `${API_BASE}${profile.avatarUrl}`
+    : null);
+
   return (
     <div className="profile-page">
       <div className="profile-header">
         <div className="profile-avatar">
-          {profile.avatarUrl ? (
-            <img src={profile.avatarUrl} alt={profile.fullName} />
+          {avatarPreview || profile.avatarUrl ? (
+            <img
+                src={avatarSrc}
+                alt={profile.fullName}
+                className="profile-avatar__image"
+            />
           ) : (
-            <span>{initials(profile.fullName)}</span>
+            <div className="profile-avatar__placeholder">
+              {initials(profile.fullName)}
+            </div>
+          )}
+
+          {editing && (
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/jpg,image/webp"
+                style={{ display: "none" }}
+                onChange={handleAvatarChange}
+              />
+
+              <button
+                type="button"
+                className="profile-avatar__camera"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <FaCamera />
+              </button>
+            </>
           )}
         </div>
+        
         <div>
           <h1 className="profile-name">{profile.fullName || "Chưa cập nhật"}</h1>
           {profile.username && (
@@ -127,9 +167,9 @@ export default function ProfilePage() {
                   onChange={(e) => handleFieldChange(field, e.target.value)}
                 >
                   <option value="">-- Chọn --</option>
-                  <option value="MALE">Nam</option>
-                  <option value="FEMALE">Nữ</option>
-                  <option value="OTHER">Khác</option>
+                  <option value="Nam">Nam</option>
+                  <option value="Nữ">Nữ</option>
+                  <option value="Khác">Khác</option>
                 </select>
               ) : field === "trashRetentionDays" ? (
                 <>
