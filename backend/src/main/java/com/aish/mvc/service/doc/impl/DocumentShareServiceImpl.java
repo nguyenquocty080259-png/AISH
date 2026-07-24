@@ -10,7 +10,6 @@ import com.aish.mvc.entity.auth.AuthUser;
 import com.aish.mvc.entity.doc.DocDocument;
 import com.aish.mvc.entity.doc.DocumentShare;
 import com.aish.mvc.entity.enums.DocumentVisibility;
-import com.aish.mvc.entity.enums.ModerationStatus;
 import com.aish.mvc.entity.enums.NotificationType;
 import com.aish.mvc.entity.enums.SharePermission;
 import com.aish.mvc.entity.enums.ShareMode;
@@ -24,18 +23,21 @@ import com.aish.mvc.repository.doc.DocumentShareRepository;
 import com.aish.mvc.service.doc.DocumentShareService;
 import com.aish.mvc.service.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class DocumentShareServiceImpl implements DocumentShareService {
+
+    private static final Logger log = LoggerFactory.getLogger(DocumentShareServiceImpl.class);
 
     private final DocumentShareRepository documentShareRepository;
     private final DocDocumentRepository docDocumentRepository;
@@ -79,20 +81,15 @@ public class DocumentShareServiceImpl implements DocumentShareService {
             throw new IllegalArgumentException("Quyền EDITOR chưa được hỗ trợ ở phiên bản này.");
         }
 
-        // VALIDATE "PUBLIC": chỉ tài liệu CÔNG KHAI mới được chia sẻ — chặn chia sẻ tài liệu
-        // riêng tư/chưa kiểm duyệt. "Công khai" ở đây KHÔNG thể gác cứng theo visibility == PUBLIC
-        // vì hai lý do trong dữ liệu thật:
-        //   (1) Chia sẻ thành công lại set visibility = SHARED (để gate truy cập theo từng người),
-        //       nên lần chia sẻ thứ hai / re-share sẽ tự mâu thuẫn nếu chỉ chấp nhận PUBLIC.
-        //   (2) Tài liệu public "đời cũ" có visibility = PUBLIC nhưng moderationStatus = null
-        //       (chưa đi qua luồng kiểm duyệt DEC-035), nên gác cứng theo APPROVED cũng chặn nhầm.
-        // Vì vậy: cho chia sẻ nếu tài liệu ĐANG lộ ra ngoài chủ sở hữu (PUBLIC hoặc SHARED) HOẶC
-        // đã từng được duyệt công khai (moderationStatus APPROVED). Chỉ chặn tài liệu PRIVATE chưa
-        // từng được duyệt. Tắt link-share (NONE) là thu hồi nên không cần gác.
-        boolean shareable = doc.getVisibility() == DocumentVisibility.PUBLIC
-                || doc.getVisibility() == DocumentVisibility.SHARED
-                || doc.getModerationStatus() == ModerationStatus.APPROVED;
-        if (request.getMode() != ShareMode.NONE && !shareable) {
+        // VALIDATE "PUBLIC": chỉ tài liệu ĐANG công khai (visibility == PUBLIC) mới được chia sẻ.
+        // Ngữ nghĩa share mới: share KHÔNG đổi visibility, chỉ cấp thêm ĐẶC QUYỀN (hiện ở trang
+        // "Được chia sẻ với tôi", quyền SharePermission, thông báo). Vì tài liệu vốn đã công khai,
+        // share không cấp quyền xem. Do đó điều kiện đúng là gác thẳng theo visibility == PUBLIC:
+        //   - Tài liệu PUBLIC đời cũ (moderationStatus = null) vẫn thỏa vì nhánh PUBLIC đã che.
+        //   - Không còn nhánh SHARED/APPROVED: tài liệu PRIVATE dù đã duyệt cũng KHÔNG được share.
+        // Tắt link-share (NONE) là thu hồi nên không cần gác.
+        if (request.getMode() != ShareMode.NONE
+                && doc.getVisibility() != DocumentVisibility.PUBLIC) {
             throw new IllegalArgumentException(
                     "Chỉ tài liệu công khai mới có thể chia sẻ. Hãy chuyển tài liệu sang công khai trước.");
         }
@@ -122,15 +119,22 @@ public class DocumentShareServiceImpl implements DocumentShareService {
             share.setShareToken(null);
             documentShareRepository.save(share);
 
-            notificationService.createDocumentNotification(
-                    userId,
-                    NotificationType.DOCUMENT_SHARED,
-                    ownerName + " đã chia sẻ tài liệu \"" + doc.getTitle() + "\" với bạn.",
-                    doc.getId());
+            // B3: thông báo chạy transaction riêng (REQUIRES_NEW). Nếu lỗi (vd constraint DB drift)
+            // thì CHỈ log warn — share vẫn thành công, không để notification làm rollback thao tác.
+            try {
+                notificationService.createDocumentNotification(
+                        userId,
+                        NotificationType.DOCUMENT_SHARED,
+                        ownerName + " đã chia sẻ tài liệu \"" + doc.getTitle() + "\" với bạn.",
+                        doc.getId());
+            } catch (Exception ex) {
+                log.warn("Không tạo được thông báo DOCUMENT_SHARED cho user {} (tài liệu {}): {}",
+                        userId, doc.getId(), ex.getMessage());
+            }
         }
 
-        doc.setVisibility(DocumentVisibility.SHARED);
-        docDocumentRepository.save(doc);
+        // B1: share KHÔNG đổi visibility. Tài liệu giữ nguyên PUBLIC — chỉ cấp thêm đặc quyền qua
+        // bảng document_shares. Gỡ chia sẻ chỉ rút đặc quyền; người bị gỡ vẫn xem được vì PUBLIC.
         return new ShareResponseDTO(ShareMode.RESTRICTED.name(), null);
     }
 
@@ -161,19 +165,30 @@ public class DocumentShareServiceImpl implements DocumentShareService {
     }
 
     // Resolve email -> user đã có tài khoản HiveMind. Trim + so khớp không phân biệt hoa/thường.
-    // Email là DUY NHẤT ở tầng ứng dụng (đăng ký local/OAuth đều chặn email trùng), nên gần như
-    // luôn có 0 hoặc 1 kết quả; nếu vì lệch hoa/thường mà có nhiều bản ghi thì ưu tiên tài khoản
-    // ACTIVE + là tài khoản chính để không chọn nhầm bản ghi phụ.
+    // B5: số điện thoại nằm ở auth_user_profiles chứ KHÔNG phải auth_accounts.identifier (identifier
+    // chỉ chứa email của LOCAL/GOOGLE/GITHUB), nhưng vẫn phòng thủ bằng cách chỉ nhận bản ghi có
+    // dạng email (chứa '@'). Nếu email khớp NHIỀU tài khoản khác nhau -> KHÔNG chọn ngầm, từ chối và
+    // ghi log để tránh chia sẻ nhầm tài khoản.
     private AuthUser resolveUserByEmail(String rawEmail) {
         String email = rawEmail.trim();
-        List<AuthAccount> accounts = authAccountRepository.findByIdentifierIgnoreCase(email);
-        return accounts.stream()
+        List<AuthAccount> matches = authAccountRepository.findByIdentifierIgnoreCase(email).stream()
                 .filter(a -> a.getUser() != null)
-                .min(Comparator
-                        .comparing((AuthAccount a) -> a.getUser().getStatus() == UserStatus.ACTIVE ? 0 : 1)
-                        .thenComparing(a -> Boolean.TRUE.equals(a.getIsPrimary()) ? 0 : 1))
-                .map(AuthAccount::getUser)
-                .orElseThrow(() -> new ResourceNotFoundException("Email này chưa có tài khoản HiveMind."));
+                .filter(a -> a.getIdentifier() != null && a.getIdentifier().contains("@"))
+                .toList();
+        if (matches.isEmpty()) {
+            throw new ResourceNotFoundException("Email này chưa có tài khoản HiveMind.");
+        }
+        List<Long> distinctUserIds = matches.stream()
+                .map(a -> a.getUser().getId())
+                .distinct()
+                .toList();
+        if (distinctUserIds.size() > 1) {
+            log.warn("Email {} khớp nhiều tài khoản HiveMind khác nhau (userIds={}); từ chối chia sẻ để tránh chọn nhầm.",
+                    email, distinctUserIds);
+            throw new IllegalStateException(
+                    "Email này khớp nhiều tài khoản. Vui lòng liên hệ quản trị viên để xử lý.");
+        }
+        return matches.get(0).getUser();
     }
 
     private void validateShareTarget(AuthUser target, AuthUser owner) {
@@ -199,8 +214,7 @@ public class DocumentShareServiceImpl implements DocumentShareService {
         link.setShareMode(ShareMode.ANYONE_WITH_LINK);
         documentShareRepository.save(link);
 
-        doc.setVisibility(DocumentVisibility.SHARED);
-        docDocumentRepository.save(doc);
+        // B1: KHÔNG đổi visibility. Tài liệu vốn đã PUBLIC (đã qua gate) nên giữ nguyên.
         return new ShareResponseDTO(ShareMode.ANYONE_WITH_LINK.name(), link.getShareToken());
     }
 
