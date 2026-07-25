@@ -162,7 +162,7 @@
       "backToSignup": "Back to sign up",
       "title": "Verify email",
       "sentPrefix": "A 6-digit OTP code has been sent to",
-      "sentSuffix": "The code is valid for 2 minutes.",
+      "sentSuffix": "The code is valid for 1 minute.",
       "label": "OTP code",
       "submit": "Verify",
       "submitting": "Verifying...",
@@ -181,6 +181,149 @@
       "noEmail": "Could not get an email from your social account. Please use a public email or sign in with another method.",
       "banned": "Your account has been banned.",
       "pending": "Your account is pending approval."
+    }
+  },
+  "guest": {
+    "home": {
+      "badge": "✨ HiveMind · AI Study Hub",
+      "heroTitle": "Study smarter together with a document library and AI",
+      "heroSubtitle": "Transform the way you learn with a smart AI assistant that summarizes knowledge automatically and connects an active student community.",
+      "ctaDashboard": "Go to Dashboard",
+      "ctaStart": "Get started",
+      "explore": "Explore features",
+      "featuresTitle": "Key features",
+      "featuresSubtitle": "Every tool you need to optimize how you absorb knowledge.",
+      "viewMore": "See more ›",
+      "features": [
+        {
+          "title": "Document library",
+          "desc": "Store and manage thousands of study documents in an organized way, by topic and dedicated space."
+        },
+        {
+          "title": "Ask AI HiveMind",
+          "desc": "A smart AI assistant ready to answer questions, summarize content and create practice quizzes from your own documents."
+        },
+        {
+          "title": "Sharing community",
+          "desc": "Connect with like-minded people, share useful documents and discuss together to improve every day."
+        }
+      ],
+      "stepsTitle": "How it works",
+      "stepsSubtitle": "Simplify your study workflow in just 3 quick steps.",
+      "steps": [
+        {
+          "title": "Upload",
+          "desc": "Upload PDF, DOCX files or take notes directly in the system."
+        },
+        {
+          "title": "Categorize",
+          "desc": "Organize documents by subject so they are easy to find again."
+        },
+        {
+          "title": "Share & ask AI",
+          "desc": "Interact with documents via AI chat and invite friends to study together."
+        }
+      ],
+      "stepsDetail": "See the full process →",
+      "ctaTitle": "Ready to get started?",
+      "ctaSubtitle": "Join the HiveMind community and optimize your learning today.",
+      "ctaSignup": "Sign up free"
+    },
+    "features": {
+      "title": "Key features",
+      "subtitle": "Explore a smart learning ecosystem where AI and the community build lasting knowledge together.",
+      "blocks": [
+        {
+          "chip": "Knowledge management",
+          "title": "Smart document library",
+          "desc": "Storage optimized for academics, helping you organize thousands of documents in seconds.",
+          "bullets": [
+            "Upload multiple formats (PDF, DOCX, PPTX) with large capacity.",
+            "Automatic categorization by subject and smart tagging.",
+            "Deep search of content inside every document page."
+          ]
+        },
+        {
+          "chip": "AI assistant",
+          "title": "Ask AI HiveMind",
+          "desc": "An AI companion that understands your documents and answers instantly.",
+          "bullets": [
+            "Ask questions directly based on specific document content.",
+            "Summarize long chapters into concise key points.",
+            "Suggest review questions based on the knowledge in the file."
+          ]
+        },
+        {
+          "chip": "Connect",
+          "title": "Sharing community",
+          "desc": "Learn together and curate the best sources from the community.",
+          "bullets": [
+            "Rate and review documents from trusted users.",
+            "Save public documents to your personal library in one tap.",
+            "Discover carefully curated document collections."
+          ]
+        },
+        {
+          "chip": "Organize",
+          "title": "Storage Spaces",
+          "desc": "Create a dedicated space for each term or topic and study together with friends.",
+          "bullets": [
+            "Create separate spaces for each term or topic.",
+            "Share an entire Space with friends to study together.",
+            "Track reading and study progress in each space."
+          ]
+        }
+      ],
+      "ctaTitle": "Ready to study smarter?",
+      "ctaSubtitle": "Create a free account and start building your knowledge base.",
+      "ctaSignup": "Sign up free"
+    },
+    "howItWorks": {
+      "title": "How HiveMind works",
+      "subtitle": "Optimize your study workflow with the support of artificial intelligence. Simple, effective and designed for modern learners.",
+      "steps": [
+        {
+          "title": "Upload documents",
+          "desc": "Upload any study document format: PDF, DOCX, or lecture images. HiveMind automatically extracts the content and gets it ready to process."
+        },
+        {
+          "title": "Categorize by subject",
+          "desc": "The system suggests a suitable subject for your document. Organize your own knowledge base in the most structured way."
+        },
+        {
+          "title": "Share with the community",
+          "desc": "Connect with the knowledge hive. Share your documents or reference documents from thousands of other learners to broaden your perspective."
+        },
+        {
+          "title": "Ask AI about document content",
+          "desc": "Chat directly with your documents. Ask for summaries, explanations of difficult concepts, or self-test questions."
+        }
+      ],
+      "ctaTitle": "Start your smart learning journey now",
+      "ctaSubtitle": "Just a few simple steps to turn documents into knowledge.",
+      "ctaSignup": "Sign up free"
+    },
+    "about": {
+      "title": "About HiveMind",
+      "subtitle": "An SWP391 course capstone project, building a learning platform combined with artificial intelligence (AI) to optimize managing and learning from documents.",
+      "values": [
+        {
+          "title": "Creative",
+          "desc": "Applying breakthrough AI to change how students approach and process massive amounts of knowledge."
+        },
+        {
+          "title": "Connected",
+          "desc": "Building a shared learning ecosystem where knowledge is shared and amplified without limits."
+        },
+        {
+          "title": "Efficient",
+          "desc": "Saving time on reading and synthesizing so users can focus on thinking and creating."
+        }
+      ],
+      "teamTitle": "Development team",
+      "teamSubtitle": "The dedicated people behind the HiveMind project.",
+      "missionTitle": "Our mission",
+      "missionText": "HiveMind was born from a simple desire to simplify learning in the information age. We believe that with the help of AI, every student can build a smart knowledge “hive”, where every document is organized scientifically and easy to leverage."
     }
   }
 }
