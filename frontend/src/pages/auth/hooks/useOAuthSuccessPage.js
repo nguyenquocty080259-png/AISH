@@ -1,16 +1,16 @@
 import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../../hooks/useAuth";
 import { useToast } from "../../../hooks/useToast";
 import { ROUTES } from "../../../constants/routes";
 import { ROLES } from "../../../constants/roles";
 
-const OAUTH_FAILED_MESSAGE = "Đăng nhập bằng mạng xã hội thất bại, vui lòng thử lại.";
-
 // BE (OAuth2SuccessHandler) redirect về đây với ?token=<jwt> sau khi social login thành
 // công. Chỉ có MỘT token (không có refresh token riêng cho luồng OAuth) - lưu qua
 // loginWithToken rồi để PrivateRoute tự lo tiếp (kể cả bắt onboarding nếu dob=null).
 export function useOAuthSuccessPage() {
+  const { t } = useTranslation();
   const { loginWithToken } = useAuth();
   const { showError } = useToast();
   const navigate = useNavigate();
@@ -23,7 +23,7 @@ export function useOAuthSuccessPage() {
 
     const token = searchParams.get("token");
     if (!token) {
-      showError(OAUTH_FAILED_MESSAGE);
+      showError(t("auth.oauth.failed"));
       navigate(ROUTES.LOGIN, { replace: true });
       return;
     }
@@ -35,8 +35,8 @@ export function useOAuthSuccessPage() {
         });
       })
       .catch(() => {
-        showError(OAUTH_FAILED_MESSAGE);
+        showError(t("auth.oauth.failed"));
         navigate(ROUTES.LOGIN, { replace: true });
       });
-  }, [searchParams, loginWithToken, navigate, showError]);
+  }, [searchParams, loginWithToken, navigate, showError, t]);
 }

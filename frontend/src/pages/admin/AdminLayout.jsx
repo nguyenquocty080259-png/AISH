@@ -1,4 +1,5 @@
 import { Outlet, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
 import { ROUTES } from "../../constants/routes";
@@ -20,48 +21,49 @@ const IconUser = () => <I><circle cx="12" cy="8" r="4" /><path d="M4 21v-1a6 6 0
 const IconSwitch = () => <I><path d="M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3" /><path d="M16 21h3a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-3" /><path d="M12 8l-4 4 4 4" /><path d="M8 12h12" /></I>;
 const IconLogout = () => <I><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></I>;
 
-const ADMIN_NAV_GROUPS = [
-  { label: "Content", items: [
-    { to: ROUTES.ADMIN_DOCUMENTS, label: "Tài liệu", icon: <IconDoc /> },
-    { to: ROUTES.ADMIN_SUBJECTS, label: "Môn học", icon: <IconSubject /> },
-    { to: ROUTES.ADMIN_KEYWORDS, label: "Từ khóa", icon: <IconTag /> },
-  ] },
-  { label: "User", items: [
-    { to: ROUTES.ADMIN_USERS, label: "Người dùng", icon: <IconUsers /> },
-    { to: ROUTES.ADMIN_APPEALS, label: "Khiếu nại", icon: <IconFlag /> },
-    { to: ROUTES.ADMIN_REPORTS, label: "Báo cáo", icon: <IconReport /> },
-  ] },
-  { label: "System", items: [
-    { to: ROUTES.ADMIN_STATS, label: "Thống kê", icon: <IconChart /> },
-    { to: ROUTES.ADMIN_SETTINGS, label: "Cấu hình", icon: <IconSettings /> },
-  ] },
-];
-
 export default function AdminLayout() {
+  const { t } = useTranslation();
   const { logout } = useAuth();
   const { showSuccess } = useToast();
   const navigate = useNavigate();
 
+  const adminNavGroups = useMemo(() => [
+    { label: t("admin.nav.content"), items: [
+      { to: ROUTES.ADMIN_DOCUMENTS, label: t("admin.nav.documents"), icon: <IconDoc /> },
+      { to: ROUTES.ADMIN_SUBJECTS, label: t("admin.nav.subjects"), icon: <IconSubject /> },
+      { to: ROUTES.ADMIN_KEYWORDS, label: t("admin.nav.keywords"), icon: <IconTag /> },
+    ] },
+    { label: t("admin.nav.user"), items: [
+      { to: ROUTES.ADMIN_USERS, label: t("admin.nav.users"), icon: <IconUsers /> },
+      { to: ROUTES.ADMIN_APPEALS, label: t("admin.nav.appeals"), icon: <IconFlag /> },
+      { to: ROUTES.ADMIN_REPORTS, label: t("admin.nav.reports"), icon: <IconReport /> },
+    ] },
+    { label: t("admin.nav.system"), items: [
+      { to: ROUTES.ADMIN_STATS, label: t("admin.nav.stats"), icon: <IconChart /> },
+      { to: ROUTES.ADMIN_SETTINGS, label: t("admin.nav.settings"), icon: <IconSettings /> },
+    ] },
+  ], [t]);
+
   const handleLogout = async () => {
     await logout();
-    showSuccess("Đã đăng xuất.");
+    showSuccess(t("common.loggedOut"));
     navigate(ROUTES.HOME);
   };
 
   const menuItems = useMemo(() => [
-    { icon: <IconUser />, label: "Trang cá nhân", onClick: () => navigate(ROUTES.PROFILE), divideAfter: false },
-    { icon: <IconSwitch />, label: "Xem như User", onClick: () => navigate(ROUTES.DASHBOARD), divideAfter: true },
-    { icon: <IconLogout />, label: "Đăng xuất", onClick: handleLogout },
-  ], [navigate]); // eslint-disable-line react-hooks/exhaustive-deps
+    { icon: <IconUser />, label: t("common.menu.profile"), onClick: () => navigate(ROUTES.PROFILE), divideAfter: false },
+    { icon: <IconSwitch />, label: t("common.menu.viewAsUser"), onClick: () => navigate(ROUTES.DASHBOARD), divideAfter: true },
+    { icon: <IconLogout />, label: t("common.menu.logout"), onClick: handleLogout },
+  ], [navigate, t]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="flex min-h-screen bg-surface">
       <AppSidebar
         brand={{ logoSrc: logo, name: "HiveMind", caption: "ADMIN", homeTo: ROUTES.ADMIN }}
-        navGroups={ADMIN_NAV_GROUPS}
+        navGroups={adminNavGroups}
       />
       <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar left="Chế độ Quản trị" menuItems={menuItems} />
+        <TopBar left={t("admin.adminMode")} menuItems={menuItems} />
         <main className="flex-1"><Outlet /></main>
       </div>
     </div>

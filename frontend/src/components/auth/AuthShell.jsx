@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ROUTES } from "../../constants/routes";
 import logo from "../../assets/images/hivemind-logo.png";
 import heroImg from "../../assets/images/hero-honeycomb.png";
@@ -6,6 +7,7 @@ import heroImg from "../../assets/images/hero-honeycomb.png";
 // Khung split dùng chung cho mọi trang auth (trừ OAuthSuccess). Panel trái = branding
 // tĩnh (logo + hero + tagline thật), ẩn dưới lg. Panel phải = form (children).
 export default function AuthShell({ children }) {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen flex text-app">
       <aside className="hidden lg:flex lg:w-1/2 bg-surface-soft flex-col justify-between p-12">
@@ -20,15 +22,15 @@ export default function AuthShell({ children }) {
             <img src={heroImg} alt="HiveMind" className="w-full rounded-card border border-border shadow-lg" />
           </div>
           <h2 className="mt-10 text-3xl font-bold leading-tight tracking-tight">
-            Nền tảng học tập thông minh cùng AI
+            {t("auth.shell.heroTitle")}
           </h2>
           <p className="mt-4 text-secondary text-base">
-            Tham gia cộng đồng HiveMind để tối ưu hóa việc nghiên cứu và quản lý tài liệu học thuật của bạn.
+            {t("auth.shell.heroSubtitle")}
           </p>
         </div>
 
         <div className="flex items-center gap-4 text-xs font-semibold uppercase tracking-widest text-secondary">
-          <span>Collaborative</span><span>·</span><span>Nurturing</span><span>·</span><span>Organized</span>
+          <span>{t("auth.shell.tagCollaborative")}</span><span>·</span><span>{t("auth.shell.tagNurturing")}</span><span>·</span><span>{t("auth.shell.tagOrganized")}</span>
         </div>
       </aside>
 

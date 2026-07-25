@@ -1,16 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import * as notificationApi from "../../api/notificationApi";
 import { useToast } from "../../hooks/useToast";
 import { ROUTES } from "../../constants/routes";
 import { useAuth } from "../../hooks/useAuth";
 import "./notification-bell.css";
 
-function formatDate(value) {
-  return value ? new Date(value).toLocaleString("vi-VN") : "";
-}
-
 export default function NotificationBell() {
+  const { t, i18n } = useTranslation();
+  const formatDate = (value) =>
+    value ? new Date(value).toLocaleString(i18n.language === "en" ? "en-US" : "vi-VN") : "";
   const { showError } = useToast();
   const { role } = useAuth();
   const navigate = useNavigate();
@@ -90,22 +90,22 @@ export default function NotificationBell() {
   return (
     <div className="notification-bell" ref={rootRef}>
       <button type="button" className="notification-bell__trigger" onClick={toggleDropdown}
-        aria-label={`Thông báo, ${unreadCount} chưa đọc`} aria-expanded={open}>
+        aria-label={t("common.notifications.ariaLabel", { count: unreadCount })} aria-expanded={open}>
         <span aria-hidden="true">🔔</span>
         {unreadCount > 0 && <span className="notification-bell__badge">{unreadCount > 99 ? "99+" : unreadCount}</span>}
       </button>
 
       {open && <div className="notification-bell__dropdown">
         <div className="notification-bell__header">
-          <strong>Thông báo</strong>
+          <strong>{t("common.notifications.title")}</strong>
           <button type="button" onClick={handleMarkAllAsRead}
             disabled={markingAll || unreadCount === 0}>
-            {markingAll ? "Đang xử lý..." : "Đánh dấu tất cả đã đọc"}
+            {markingAll ? t("common.notifications.marking") : t("common.notifications.markAllRead")}
           </button>
         </div>
         <div className="notification-bell__list">
-          {loading ? <p className="notification-bell__empty">Đang tải...</p> :
-            notifications.length === 0 ? <p className="notification-bell__empty">Chưa có thông báo.</p> :
+          {loading ? <p className="notification-bell__empty">{t("common.notifications.loading")}</p> :
+            notifications.length === 0 ? <p className="notification-bell__empty">{t("common.notifications.empty")}</p> :
             notifications.map((notification) =>
               <button type="button" key={notification.id}
                 className={`notification-bell__item${notification.isRead ? "" : " notification-bell__item--unread"}`}

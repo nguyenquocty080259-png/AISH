@@ -1,19 +1,21 @@
 import { useRef } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useOtpPage } from "./hooks/useOtpPage";
 import { ROUTES } from "../../constants/routes";
 import AuthShell from "../../components/auth/AuthShell";
 
 export default function OtpPage() {
+  const { t } = useTranslation();
   const { email, otp, setOtp, submitting, resending, cooldown, handleVerify, handleResend } = useOtpPage();
   const inputsRef = useRef([]);
 
   if (!email) {
     return (
       <AuthShell>
-        <h1 className="text-3xl font-bold tracking-tight text-app">Thiếu thông tin email</h1>
-        <p className="mt-2 text-secondary">Vui lòng đăng ký hoặc đăng nhập lại để nhận mã OTP.</p>
-        <Link to={ROUTES.SIGNUP} className="mt-6 inline-block font-semibold text-primary hover:text-primary-dark">Quay lại đăng ký</Link>
+        <h1 className="text-3xl font-bold tracking-tight text-app">{t("auth.otp.missingEmailTitle")}</h1>
+        <p className="mt-2 text-secondary">{t("auth.otp.missingEmailSubtitle")}</p>
+        <Link to={ROUTES.SIGNUP} className="mt-6 inline-block font-semibold text-primary hover:text-primary-dark">{t("auth.otp.backToSignup")}</Link>
       </AuthShell>
     );
   }
@@ -45,11 +47,11 @@ export default function OtpPage() {
       <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-input bg-surface-soft text-primary">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
       </div>
-      <h1 className="text-3xl font-bold tracking-tight text-app">Xác minh email</h1>
-      <p className="mt-2 text-secondary">Mã OTP gồm 6 số đã được gửi tới <strong className="text-app">{email}</strong>. Mã có hiệu lực trong 2 phút.</p>
+      <h1 className="text-3xl font-bold tracking-tight text-app">{t("auth.otp.title")}</h1>
+      <p className="mt-2 text-secondary">{t("auth.otp.sentPrefix")} <strong className="text-app">{email}</strong>. {t("auth.otp.sentSuffix")}</p>
 
       <form className="mt-8" onSubmit={handleVerify}>
-        <label className="text-sm font-semibold text-secondary">Mã OTP</label>
+        <label className="text-sm font-semibold text-secondary">{t("auth.otp.label")}</label>
         <div className="mt-2 flex justify-between gap-2" onPaste={onPaste}>
           {digits.map((d, i) => (
             <input key={i} ref={(el) => (inputsRef.current[i] = el)} type="text" inputMode="numeric" maxLength={1}
@@ -60,20 +62,20 @@ export default function OtpPage() {
 
         <button type="submit" disabled={submitting || otp.length < 6}
           className="mt-6 w-full rounded-input bg-primary py-3 font-semibold text-white transition-colors hover:bg-primary-dark disabled:opacity-60">
-          {submitting ? "Đang xác minh..." : "Xác minh"}
+          {submitting ? t("auth.otp.submitting") : t("auth.otp.submit")}
         </button>
       </form>
 
       <p className="mt-6 text-center text-sm text-secondary">
-        Không nhận được mã?{" "}
+        {t("auth.otp.notReceived")}{" "}
         <button type="button" disabled={cooldown > 0 || resending} onClick={handleResend}
           className="font-semibold text-primary hover:text-primary-dark disabled:text-secondary">
-          {cooldown > 0 ? `Gửi lại sau ${cooldown}s` : "Gửi lại mã OTP"}
+          {cooldown > 0 ? t("auth.otp.resendIn", { count: cooldown }) : t("auth.otp.resend")}
         </button>
       </p>
 
       <div className="mt-6 border-t border-border pt-6 text-center">
-        <Link to={ROUTES.SIGNUP} className="text-sm font-semibold text-secondary hover:text-primary">← Quay lại trang đăng ký</Link>
+        <Link to={ROUTES.SIGNUP} className="text-sm font-semibold text-secondary hover:text-primary">{t("auth.otp.backToSignupPage")}</Link>
       </div>
     </AuthShell>
   );

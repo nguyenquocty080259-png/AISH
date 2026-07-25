@@ -1,0 +1,186 @@
+{
+  "common": {
+    "account": "Tài khoản",
+    "user": "Người dùng",
+    "loggedOut": "Đã đăng xuất.",
+    "menu": {
+      "profile": "Trang cá nhân",
+      "logout": "Đăng xuất",
+      "viewAsUser": "Xem như User",
+      "backToAdmin": "Về chế độ Admin"
+    },
+    "actions": {
+      "save": "Lưu",
+      "cancel": "Hủy",
+      "close": "Đóng",
+      "delete": "Xóa",
+      "edit": "Sửa",
+      "confirm": "Xác nhận",
+      "back": "Quay lại",
+      "next": "Tiếp tục",
+      "search": "Tìm kiếm",
+      "loading": "Đang tải...",
+      "retry": "Thử lại",
+      "viewAll": "Xem tất cả",
+      "apply": "Áp dụng",
+      "reset": "Đặt lại",
+      "send": "Gửi",
+      "sending": "Đang gửi...",
+      "processing": "Đang xử lý...",
+      "remove": "Gỡ"
+    },
+    "noPermissionView": "Bạn không có quyền xem tài liệu này",
+    "format": {
+      "image": "Ảnh"
+    },
+    "storage": {
+      "usedOf": "đã dùng {{used}} / {{total}}",
+      "local": "Máy chủ (LOCAL)",
+      "cloud": "Cloud (CLOUD)",
+      "trashHint": "Tài liệu trong thùng rác vẫn tính vào dung lượng."
+    },
+    "notifications": {
+      "title": "Thông báo",
+      "ariaLabel": "Thông báo, {{count}} chưa đọc",
+      "markAllRead": "Đánh dấu tất cả đã đọc",
+      "marking": "Đang xử lý...",
+      "loading": "Đang tải...",
+      "empty": "Chưa có thông báo."
+    },
+    "report": {
+      "menuAria": "Mở menu báo cáo",
+      "report": "Báo cáo",
+      "modalTitle": "Báo cáo nội dung",
+      "reasonLabel": "Lý do báo cáo",
+      "reasonPlaceholder": "Mô tả lý do bạn muốn báo cáo...",
+      "emptyReason": "Vui lòng nhập lý do báo cáo.",
+      "success": "Đã gửi báo cáo, cảm ơn bạn."
+    },
+    "recommendation": {
+      "postedBy": "Đăng bởi {{name}}"
+    },
+    "footer": {
+      "copyright": "© 2026 HiveMind"
+    }
+  },
+  "nav": {
+    "home": "Trang chủ",
+    "features": "Tính năng",
+    "howItWorks": "Cách hoạt động",
+    "about": "Giới thiệu",
+    "dashboard": "Trang chủ",
+    "myDocuments": "Tài liệu của tôi",
+    "community": "Cộng đồng",
+    "collections": "Bộ sưu tập",
+    "favorites": "Yêu thích",
+    "sharedWithMe": "Được chia sẻ",
+    "aiHiveMind": "AI HiveMind",
+    "myReports": "Báo cáo của tôi",
+    "trash": "Thùng rác",
+    "addDocument": "Thêm tài liệu"
+  },
+  "admin": {
+    "adminMode": "Chế độ Quản trị",
+    "nav": {
+      "content": "Nội dung",
+      "user": "Người dùng",
+      "system": "Hệ thống",
+      "documents": "Tài liệu",
+      "subjects": "Môn học",
+      "keywords": "Từ khóa",
+      "users": "Người dùng",
+      "appeals": "Khiếu nại",
+      "reports": "Báo cáo",
+      "stats": "Thống kê",
+      "settings": "Cấu hình"
+    }
+  },
+  "auth": {
+    "orDivider": "hoặc",
+    "shell": {
+      "heroTitle": "Nền tảng học tập thông minh cùng AI",
+      "heroSubtitle": "Tham gia cộng đồng HiveMind để tối ưu hóa việc nghiên cứu và quản lý tài liệu học thuật của bạn.",
+      "tagCollaborative": "Cộng tác",
+      "tagNurturing": "Nuôi dưỡng",
+      "tagOrganized": "Ngăn nắp"
+    },
+    "password": {
+      "show": "Hiện mật khẩu",
+      "hide": "Ẩn mật khẩu"
+    },
+    "login": {
+      "title": "Đăng nhập",
+      "subtitle": "Tiếp tục học tập và chia sẻ tài liệu cùng HiveMind.",
+      "email": "Email",
+      "emailPlaceholder": "ban@email.com",
+      "password": "Mật khẩu",
+      "forgotPassword": "Quên mật khẩu?",
+      "submit": "Đăng nhập",
+      "submitting": "Đang đăng nhập...",
+      "noAccount": "Chưa có tài khoản?",
+      "signupNow": "Đăng ký ngay",
+      "unverified": "Email chưa được xác minh, vui lòng xác minh OTP."
+    },
+    "signup": {
+      "title": "Đăng ký",
+      "subtitle": "Tham gia HiveMind để lưu trữ, chia sẻ và trò chuyện với AI HiveMind về tài liệu học tập.",
+      "fullName": "Họ và tên",
+      "fullNamePlaceholder": "Nguyễn Văn A",
+      "password": "Mật khẩu",
+      "passwordHelper": "Tối thiểu 8 ký tự và phải có một kí tự in hoa",
+      "submit": "Đăng ký",
+      "submitting": "Đang đăng ký...",
+      "haveAccount": "Đã có tài khoản?",
+      "login": "Đăng nhập",
+      "success": "Đăng ký thành công, vui lòng kiểm tra email để lấy mã OTP."
+    },
+    "forgot": {
+      "title": "Quên mật khẩu",
+      "subtitle": "Nhập email để nhận mã OTP đặt lại mật khẩu.",
+      "submit": "Gửi mã OTP",
+      "submitting": "Đang gửi...",
+      "backToLogin": "← Quay lại đăng nhập"
+    },
+    "reset": {
+      "title": "Đặt lại mật khẩu",
+      "subtitle": "Tạo mật khẩu mới cho tài khoản.",
+      "newPassword": "Mật khẩu mới",
+      "confirmPassword": "Xác nhận mật khẩu",
+      "requirementsTitle": "Yêu cầu mật khẩu:",
+      "minChars": "Tối thiểu 8 ký tự",
+      "submit": "Lưu mật khẩu",
+      "submitting": "Đang xử lý...",
+      "backToLogin": "← Quay lại trang đăng nhập",
+      "expired": "Phiên đặt lại mật khẩu đã hết hạn. Vui lòng thực hiện lại.",
+      "tooShort": "Mật khẩu phải có ít nhất 8 ký tự.",
+      "mismatch": "Mật khẩu xác nhận không khớp.",
+      "success": "Đổi mật khẩu thành công."
+    },
+    "otp": {
+      "missingEmailTitle": "Thiếu thông tin email",
+      "missingEmailSubtitle": "Vui lòng đăng ký hoặc đăng nhập lại để nhận mã OTP.",
+      "backToSignup": "Quay lại đăng ký",
+      "title": "Xác minh email",
+      "sentPrefix": "Mã OTP gồm 6 số đã được gửi tới",
+      "sentSuffix": "Mã có hiệu lực trong 2 phút.",
+      "label": "Mã OTP",
+      "submit": "Xác minh",
+      "submitting": "Đang xác minh...",
+      "notReceived": "Không nhận được mã?",
+      "resend": "Gửi lại mã OTP",
+      "resendIn": "Gửi lại sau {{count}}s",
+      "backToSignupPage": "← Quay lại trang đăng ký",
+      "verifySuccess": "Xác thực OTP thành công.",
+      "verifyEmailSuccess": "Xác minh email thành công, vui lòng đăng nhập.",
+      "resent": "Đã gửi lại mã OTP."
+    },
+    "oauth": {
+      "signingIn": "Đang đăng nhập...",
+      "preparingSpace": "Vui lòng chờ trong giây lát khi chúng tôi chuẩn bị không gian học tập của bạn.",
+      "failed": "Đăng nhập bằng mạng xã hội thất bại, vui lòng thử lại.",
+      "noEmail": "Không lấy được email từ tài khoản mạng xã hội. Vui lòng dùng email công khai hoặc đăng nhập bằng phương thức khác.",
+      "banned": "Tài khoản của bạn đã bị khóa.",
+      "pending": "Tài khoản của bạn đang chờ phê duyệt."
+    }
+  }
+}

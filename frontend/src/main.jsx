@@ -7,6 +7,8 @@ import "./assets/css/variables.css";
 import "./assets/css/global.css";
 import "./assets/css/toast.css";
 
+import "./i18n";
+
 import App from "./App.jsx";
 
 createRoot(document.getElementById("root")).render(

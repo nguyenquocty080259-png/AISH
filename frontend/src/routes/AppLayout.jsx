@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
 import { ROUTES } from "../constants/routes";
@@ -28,49 +29,50 @@ const IconPlus = () => <I><path d="M12 5v14M5 12h14" /></I>;
 const IconUser = () => <I><circle cx="12" cy="8" r="4" /><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1" /></I>;
 const IconShield = () => <I><path d="M12 3l7 4v5c0 4-3 7-7 9-4-2-7-5-7-9V7l7-4Z" /></I>;
 const IconLogout = () => <I><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></I>;
-const USER_NAV_GROUPS = [{
-  items: [
-    { to: ROUTES.DASHBOARD, label: "Trang chủ", icon: <IconHome /> },
-    { to: ROUTES.DOCUMENTS, label: "Tài liệu của tôi", icon: <IconDoc /> },
-    { to: ROUTES.COMMUNITY, label: "Cộng đồng", icon: <IconUsers /> },
-    { to: ROUTES.SPACES, label: "Bộ sưu tập", icon: <IconCollection /> },
-    { to: ROUTES.FAVORITES, label: "Yêu thích", icon: <IconHeart /> },
-    { to: ROUTES.SHARED_WITH_ME, label: "Được chia sẻ", icon: <IconShare /> },
-    { to: ROUTES.AI_CHAT, label: "AI HiveMind", icon: <IconAi /> },
-  ],
-}, {
-  items: [
-    { to: ROUTES.MY_REPORTS, label: "Báo cáo của tôi", icon: <IconReport /> },
-    { to: ROUTES.TRASH, label: "Thùng rác", icon: <IconTrash /> },
-  ],
-}];
-
 const AUTH_PATHS = [
   ROUTES.LOGIN, ROUTES.SIGNUP, ROUTES.VERIFY_OTP,
   ROUTES.FORGOT_PASSWORD, ROUTES.RESET_PASSWORD, ROUTES.OAUTH_SUCCESS,
 ];
 
 export default function AppLayout() {
+  const { t } = useTranslation();
   const { isAuthenticated, user, role, logout } = useAuth();
   const { pathname } = useLocation();
   const showGuestChrome = !isAuthenticated && !AUTH_PATHS.includes(pathname);
   const navigate = useNavigate();
   const { showSuccess } = useToast();
 
-  const handleLogout = async () => { await logout(); showSuccess("Đã đăng xuất."); navigate(ROUTES.HOME); };
+  const userNavGroups = useMemo(() => [{
+    items: [
+      { to: ROUTES.DASHBOARD, label: t("nav.dashboard"), icon: <IconHome /> },
+      { to: ROUTES.DOCUMENTS, label: t("nav.myDocuments"), icon: <IconDoc /> },
+      { to: ROUTES.COMMUNITY, label: t("nav.community"), icon: <IconUsers /> },
+      { to: ROUTES.SPACES, label: t("nav.collections"), icon: <IconCollection /> },
+      { to: ROUTES.FAVORITES, label: t("nav.favorites"), icon: <IconHeart /> },
+      { to: ROUTES.SHARED_WITH_ME, label: t("nav.sharedWithMe"), icon: <IconShare /> },
+      { to: ROUTES.AI_CHAT, label: t("nav.aiHiveMind"), icon: <IconAi /> },
+    ],
+  }, {
+    items: [
+      { to: ROUTES.MY_REPORTS, label: t("nav.myReports"), icon: <IconReport /> },
+      { to: ROUTES.TRASH, label: t("nav.trash"), icon: <IconTrash /> },
+    ],
+  }], [t]);
+
+  const handleLogout = async () => { await logout(); showSuccess(t("common.loggedOut")); navigate(ROUTES.HOME); };
   const userMenuItems = useMemo(() => [
-    { icon: <IconUser />, label: "Trang cá nhân", onClick: () => navigate(ROUTES.PROFILE), divideAfter: role !== ROLES.ADMIN },
-    ...(role === ROLES.ADMIN ? [{ icon: <IconShield />, label: "Về chế độ Admin", onClick: () => navigate(ROUTES.ADMIN), divideAfter: true }] : []),
-    { icon: <IconLogout />, label: "Đăng xuất", onClick: handleLogout },
-  ], [role, navigate]); // eslint-disable-line react-hooks/exhaustive-deps
+    { icon: <IconUser />, label: t("common.menu.profile"), onClick: () => navigate(ROUTES.PROFILE), divideAfter: role !== ROLES.ADMIN },
+    ...(role === ROLES.ADMIN ? [{ icon: <IconShield />, label: t("common.menu.backToAdmin"), onClick: () => navigate(ROUTES.ADMIN), divideAfter: true }] : []),
+    { icon: <IconLogout />, label: t("common.menu.logout"), onClick: handleLogout },
+  ], [role, navigate, t]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <AiWidgetProvider>
       <div className="app-shell">
         {isAuthenticated && <AppSidebar
           brand={{ logoSrc: logo, name: "HiveMind", caption: "AI STUDY HUB", homeTo: ROUTES.HOME }}
-          navGroups={USER_NAV_GROUPS}
-          bottomAction={{ label: "Thêm tài liệu", to: ROUTES.DOCUMENTS, icon: <IconPlus /> }}
+          navGroups={userNavGroups}
+          bottomAction={{ label: t("nav.addDocument"), to: ROUTES.DOCUMENTS, icon: <IconPlus /> }}
         />}
 
         <div className="app-shell__body">
