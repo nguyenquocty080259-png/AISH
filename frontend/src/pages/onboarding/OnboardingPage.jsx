@@ -1,25 +1,8 @@
+import { useTranslation } from "react-i18next";
 import { useOnboardingPage } from "./hooks/useOnboardingPage";
 import "./onboarding.css";
 
 const today = new Date().toISOString().slice(0, 10);
-
-// Nhãn tiếng Việt giữ nguyên như ProfilePage (FIELD_LABELS) để hai trang nhất quán -
-// không tách import chung vì useProfilePage.js/ProfilePage.jsx nằm ngoài phạm vi sửa của trang này.
-const FIELD_LABELS = {
-  fullName: "Họ và tên",
-  bio: "Giới thiệu",
-  dob: "Ngày sinh",
-  gender: "Giới tính",
-  phoneNumber: "Số điện thoại",
-  university: "Trường",
-  faculty: "Khoa",
-  major: "Ngành",
-  country: "Quốc gia",
-  city: "Thành phố",
-  githubUrl: "GitHub",
-  linkedinUrl: "LinkedIn",
-  websiteUrl: "Website",
-};
 
 const OPTIONAL_FIELD_ORDER = [
   "bio",
@@ -36,13 +19,14 @@ const OPTIONAL_FIELD_ORDER = [
 ];
 
 export default function OnboardingPage() {
+  const { t } = useTranslation();
   const { form, loading, submitting, handleFieldChange, handleSubmit } =
     useOnboardingPage();
 
   if (loading) {
     return (
       <div className="onboarding-page">
-        <div className="onboarding-card">Đang tải hồ sơ...</div>
+        <div className="onboarding-card">{t("onboarding.loading")}</div>
       </div>
     );
   }
@@ -50,10 +34,9 @@ export default function OnboardingPage() {
   return (
     <div className="onboarding-page">
       <div className="onboarding-card onboarding-card--wide">
-        <h1 className="onboarding-card__title">Hoàn tất hồ sơ</h1>
+        <h1 className="onboarding-card__title">{t("onboarding.title")}</h1>
         <p className="onboarding-card__subtitle">
-          Vui lòng cho biết họ tên và ngày sinh để tiếp tục sử dụng hệ thống.
-          Các thông tin khác có thể bỏ qua và bổ sung sau tại trang hồ sơ.
+          {t("onboarding.subtitle")}
         </p>
 
         {/* noValidate: validation cho fullName/dob tự viết bằng tiếng Việt trong
@@ -61,10 +44,10 @@ export default function OnboardingPage() {
             thì handleSubmit không bao giờ chạy tới nhánh hiển thị toast lỗi tiếng Việt. */}
         <form className="onboarding-form" onSubmit={handleSubmit} noValidate>
           <div className="onboarding-section">
-            <h2 className="onboarding-section__title">Thông tin bắt buộc</h2>
+            <h2 className="onboarding-section__title">{t("onboarding.requiredSection")}</h2>
             <div className="onboarding-grid">
               <label className="onboarding-field">
-                {FIELD_LABELS.fullName}
+                {t("common.fields.fullName")}
                 <span className="onboarding-field__required">*</span>
                 <input
                   type="text"
@@ -74,7 +57,7 @@ export default function OnboardingPage() {
               </label>
 
               <label className="onboarding-field">
-                {FIELD_LABELS.dob}
+                {t("common.fields.dob")}
                 <span className="onboarding-field__required">*</span>
                 <input
                   type="date"
@@ -88,12 +71,12 @@ export default function OnboardingPage() {
 
           <div className="onboarding-section">
             <h2 className="onboarding-section__title">
-              Thông tin khác <span className="onboarding-section__hint">(có thể bỏ qua)</span>
+              {t("onboarding.otherSection")} <span className="onboarding-section__hint">{t("onboarding.otherHint")}</span>
             </h2>
             <div className="onboarding-grid">
               {OPTIONAL_FIELD_ORDER.map((field) => (
                 <label className="onboarding-field" key={field}>
-                  {FIELD_LABELS[field]}
+                  {t(`common.fields.${field}`)}
                   {field === "bio" ? (
                     <textarea
                       rows={3}
@@ -105,10 +88,10 @@ export default function OnboardingPage() {
                       value={form[field] ?? ""}
                       onChange={(e) => handleFieldChange(field, e.target.value)}
                     >
-                      <option value="">-- Chọn --</option>
-                      <option value="Nam">Nam</option>
-                      <option value="Nữ">Nữ</option>
-                      <option value="Khác">Khác</option>
+                      <option value="">{t("common.gender.choose")}</option>
+                      <option value="Nam">{t("common.gender.male")}</option>
+                      <option value="Nữ">{t("common.gender.female")}</option>
+                      <option value="Khác">{t("common.gender.other")}</option>
                     </select>
                   ) : (
                     <input
@@ -123,7 +106,7 @@ export default function OnboardingPage() {
           </div>
 
           <button type="submit" className="onboarding-submit" disabled={submitting}>
-            {submitting ? "Đang lưu..." : "Tiếp tục"}
+            {submitting ? t("onboarding.submitting") : t("onboarding.submit")}
           </button>
         </form>
       </div>

@@ -2,27 +2,15 @@ import { useProfilePage } from "./hooks/useProfilePage";
 import StorageUsageBar from "../../components/ui/StorageUsageBar";
 import "./profile.css";
 import { useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { FaCamera } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
 
-const FIELD_LABELS = {
-  fullName: "Họ và tên",
-  username: "Tên người dùng",
-  email: "Email",
-  bio: "Giới thiệu",
-  dob: "Ngày sinh",
-  gender: "Giới tính",
-  phoneNumber: "Số điện thoại",
-  university: "Trường",
-  faculty: "Khoa",
-  major: "Ngành",
-  country: "Quốc gia",
-  city: "Thành phố",
-  githubUrl: "GitHub",
-  linkedinUrl: "LinkedIn",
-  websiteUrl: "Website",
-  trashRetentionDays: "Số ngày giữ tài liệu trong thùng rác",
-};
+const FIELD_ORDER = [
+  "fullName", "username", "email", "bio", "dob", "gender", "phoneNumber",
+  "university", "faculty", "major", "country", "city",
+  "githubUrl", "linkedinUrl", "websiteUrl", "trashRetentionDays",
+];
 
 function initials(name) {
   if (!name) return "?";
@@ -35,6 +23,7 @@ function initials(name) {
 }
 
 export default function ProfilePage() {
+  const { t } = useTranslation();
   const fileInputRef = useRef(null);
   const API_BASE = "http://localhost:8080";
   const {
@@ -54,11 +43,11 @@ export default function ProfilePage() {
   } = useProfilePage();
 
   if (loading) {
-    return <div className="profile-page">Đang tải hồ sơ...</div>;
+    return <div className="profile-page">{t("profile.loading")}</div>;
   }
 
   if (!profile) {
-    return <div className="profile-page">Không tải được hồ sơ.</div>;
+    return <div className="profile-page">{t("profile.loadError")}</div>;
   }
 
   const avatarSrc =
@@ -105,7 +94,7 @@ export default function ProfilePage() {
         </div>
         
         <div>
-          <h1 className="profile-name">{profile.fullName || "Chưa cập nhật"}</h1>
+          <h1 className="profile-name">{profile.fullName || t("profile.notSet")}</h1>
           {profile.username && (
             <p className="profile-username">@{profile.username}</p>
           )}
@@ -115,7 +104,7 @@ export default function ProfilePage() {
 
         {!editing && (
           <button className="profile-edit-btn" onClick={startEditing}>
-            Chỉnh sửa hồ sơ
+            {t("profile.edit")}
           </button>
         )}
       </div>
@@ -124,35 +113,35 @@ export default function ProfilePage() {
         <div className="profile-view">
           {profile.bio && <p className="profile-bio">{profile.bio}</p>}
           <div className="profile-grid">
-            {Object.keys(FIELD_LABELS)
+            {FIELD_ORDER
               .filter((field) => field !== "username")
               .map((field) => (
                 <div className="profile-grid__item" key={field}>
                   <span className="profile-grid__label">
-                    {FIELD_LABELS[field]}
+                    {t(`common.fields.${field}`)}
                   </span>
                   <span className="profile-grid__value">
                     {field === "trashRetentionDays"
                       ? profile[field]
-                        ? `${profile[field]} ngày`
-                        : "Mặc định (30 ngày)"
+                        ? t("profile.daysValue", { count: profile[field] })
+                        : t("profile.trashDefault")
                       : profile[field] || "—"}
                   </span>
                 </div>
               ))}
           </div>
           <div className="profile-storage">
-            <h3 className="profile-storage__title">Dung lượng lưu trữ</h3>
+            <h3 className="profile-storage__title">{t("profile.storageTitle")}</h3>
             <StorageUsageBar usage={storageUsage} />
           </div>
         </div>
       ) : (
         <form className="profile-form" onSubmit={handleSave}>
-          {Object.keys(FIELD_LABELS)
+          {FIELD_ORDER
             .filter((field) => field !== "username")
             .map((field) => (
             <label className="profile-form__field" key={field}>
-              {FIELD_LABELS[field]}
+              {t(`common.fields.${field}`)}
               {field === "bio" ? (
                 <textarea
                   rows={3}
@@ -170,10 +159,10 @@ export default function ProfilePage() {
                   value={form[field] ?? ""}
                   onChange={(e) => handleFieldChange(field, e.target.value)}
                 >
-                  <option value="">-- Chọn --</option>
-                  <option value="Nam">Nam</option>
-                  <option value="Nữ">Nữ</option>
-                  <option value="Khác">Khác</option>
+                  <option value="">{t("common.gender.choose")}</option>
+                  <option value="Nam">{t("common.gender.male")}</option>
+                  <option value="Nữ">{t("common.gender.female")}</option>
+                  <option value="Khác">{t("common.gender.other")}</option>
                 </select>
               ) : field === "trashRetentionDays" ? (
                 <>
@@ -185,7 +174,7 @@ export default function ProfilePage() {
                     onChange={(e) => handleFieldChange(field, e.target.value)}
                   />
                   <span className="profile-form__hint">
-                    Tài liệu trong thùng rác tự xóa vĩnh viễn sau số ngày này (mặc định 30, tối đa 90).
+                    {t("profile.trashHint")}
                   </span>
                 </>
               ) : (
@@ -204,7 +193,7 @@ export default function ProfilePage() {
           ))}
 
           <div className="profile-storage">
-            <h3 className="profile-storage__title">Dung lượng lưu trữ</h3>
+            <h3 className="profile-storage__title">{t("profile.storageTitle")}</h3>
             <StorageUsageBar usage={storageUsage} />
           </div>
 
@@ -215,10 +204,10 @@ export default function ProfilePage() {
               onClick={cancelEditing}
               disabled={saving}
             >
-              Hủy
+              {t("common.actions.cancel")}
             </button>
             <button type="submit" className="profile-form__save" disabled={saving}>
-              {saving ? "Đang lưu..." : "Lưu thay đổi"}
+              {saving ? t("profile.saving") : t("profile.save")}
             </button>
           </div>
         </form>

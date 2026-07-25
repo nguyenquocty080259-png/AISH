@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import * as profileApi from "../../../api/profileApi";
 import { useAuth } from "../../../hooks/useAuth";
 import { useToast } from "../../../hooks/useToast";
@@ -34,6 +35,7 @@ function toFormValues(profile) {
 }
 
 export function useOnboardingPage() {
+  const { t } = useTranslation();
   const { refreshProfile } = useAuth();
   const { showError, showSuccess } = useToast();
   const navigate = useNavigate();
@@ -73,11 +75,11 @@ export function useOnboardingPage() {
     e.preventDefault();
 
     if (!form.fullName?.trim()) {
-      showError("Họ tên không được để trống");
+      showError(t("onboarding.fullNameRequired"));
       return;
     }
     if (!form.dob) {
-      showError("Ngày sinh không được để trống");
+      showError(t("onboarding.dobRequired"));
       return;
     }
 
@@ -95,7 +97,7 @@ export function useOnboardingPage() {
 
       await profileApi.completeOnboarding(payload);
       await refreshProfile();
-      showSuccess("Đã lưu thông tin, chào mừng bạn!");
+      showSuccess(t("onboarding.welcome"));
       const redirectTo = location.state?.from?.pathname ?? ROUTES.DASHBOARD;
       navigate(redirectTo, { replace: true });
     } catch (err) {

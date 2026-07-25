@@ -67,7 +67,32 @@
       "minutesAgo": "{{count}} minutes ago",
       "hoursAgo": "{{count}} hours ago",
       "daysAgo": "{{count}} days ago"
-    }
+    },
+    "fields": {
+      "fullName": "Full name",
+      "username": "Username",
+      "email": "Email",
+      "bio": "Bio",
+      "dob": "Date of birth",
+      "gender": "Gender",
+      "phoneNumber": "Phone number",
+      "university": "University",
+      "faculty": "Faculty",
+      "major": "Major",
+      "country": "Country",
+      "city": "City",
+      "githubUrl": "GitHub",
+      "linkedinUrl": "LinkedIn",
+      "websiteUrl": "Website",
+      "trashRetentionDays": "Days to keep documents in trash"
+    },
+    "gender": {
+      "choose": "-- Choose --",
+      "male": "Male",
+      "female": "Female",
+      "other": "Other"
+    },
+    "genericError": "Something went wrong, please try again."
   },
   "nav": {
     "home": "Home",
@@ -1077,5 +1102,37 @@
     "prev": "← Prev",
     "next": "Next →",
     "pageOf": "Page {{page}} / {{total}}"
+  },
+  "profile": {
+    "loading": "Loading profile...",
+    "loadError": "Could not load profile.",
+    "notSet": "Not set",
+    "edit": "Edit profile",
+    "storageTitle": "Storage usage",
+    "daysValue": "{{count}} days",
+    "trashDefault": "Default (30 days)",
+    "trashHint": "Documents in trash are permanently deleted after this many days (default 30, max 90).",
+    "saving": "Saving...",
+    "save": "Save changes",
+    "avatarUpdated": "Avatar updated.",
+    "profileUpdated": "Profile updated."
+  },
+  "onboarding": {
+    "loading": "Loading profile...",
+    "title": "Complete your profile",
+    "subtitle": "Please provide your full name and date of birth to continue using the system. Other details can be skipped and added later on the profile page.",
+    "requiredSection": "Required information",
+    "otherSection": "Other information",
+    "otherHint": "(optional)",
+    "submitting": "Saving...",
+    "submit": "Continue",
+    "fullNameRequired": "Full name cannot be empty",
+    "dobRequired": "Date of birth cannot be empty",
+    "welcome": "Information saved, welcome!"
+  },
+  "error": {
+    "notFoundTitle": "Page not found",
+    "notFoundDesc": "The page you visited doesn't exist or has been moved.",
+    "backHome": "Back to home"
   }
 }
