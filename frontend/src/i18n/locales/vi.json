@@ -162,7 +162,7 @@
       "backToSignup": "Quay lại đăng ký",
       "title": "Xác minh email",
       "sentPrefix": "Mã OTP gồm 6 số đã được gửi tới",
-      "sentSuffix": "Mã có hiệu lực trong 2 phút.",
+      "sentSuffix": "Mã có hiệu lực trong 1 phút.",
       "label": "Mã OTP",
       "submit": "Xác minh",
       "submitting": "Đang xác minh...",
@@ -181,6 +181,149 @@
       "noEmail": "Không lấy được email từ tài khoản mạng xã hội. Vui lòng dùng email công khai hoặc đăng nhập bằng phương thức khác.",
       "banned": "Tài khoản của bạn đã bị khóa.",
       "pending": "Tài khoản của bạn đang chờ phê duyệt."
+    }
+  },
+  "guest": {
+    "home": {
+      "badge": "✨ HiveMind · AI Study Hub",
+      "heroTitle": "Học nhóm thông minh hơn cùng kho tài liệu và AI",
+      "heroSubtitle": "Biến đổi cách bạn học tập với trợ lý AI thông minh, tự động tóm tắt kiến thức và kết nối cộng đồng sinh viên năng động.",
+      "ctaDashboard": "Vào Dashboard",
+      "ctaStart": "Bắt đầu ngay",
+      "explore": "Khám phá tính năng",
+      "featuresTitle": "Tính năng nổi bật",
+      "featuresSubtitle": "Mọi công cụ bạn cần để tối ưu hóa quá trình tiếp thu kiến thức.",
+      "viewMore": "Xem thêm ›",
+      "features": [
+        {
+          "title": "Kho tài liệu",
+          "desc": "Lưu trữ và quản lý hàng ngàn tài liệu học tập một cách khoa học theo từng chủ đề và không gian riêng biệt."
+        },
+        {
+          "title": "Hỏi AI HiveMind",
+          "desc": "Trợ lý AI thông minh sẵn sàng giải đáp thắc mắc, tóm tắt nội dung và tạo đề thi thử từ tài liệu của chính bạn."
+        },
+        {
+          "title": "Cộng đồng chia sẻ",
+          "desc": "Kết nối với những người cùng đam mê, chia sẻ tài liệu hữu ích và cùng nhau thảo luận để tiến bộ mỗi ngày."
+        }
+      ],
+      "stepsTitle": "Cách hoạt động",
+      "stepsSubtitle": "Đơn giản hóa quy trình học tập của bạn chỉ trong 3 bước nhanh chóng.",
+      "steps": [
+        {
+          "title": "Tải lên",
+          "desc": "Tải file PDF, DOCX hoặc ghi chú trực tiếp vào hệ thống."
+        },
+        {
+          "title": "Phân loại",
+          "desc": "Sắp xếp tài liệu theo môn học để dễ tìm lại."
+        },
+        {
+          "title": "Chia sẻ & hỏi AI",
+          "desc": "Tương tác với tài liệu qua chat AI và mời bạn bè cùng học."
+        }
+      ],
+      "stepsDetail": "Xem chi tiết quy trình →",
+      "ctaTitle": "Sẵn sàng bắt đầu?",
+      "ctaSubtitle": "Tham gia cộng đồng HiveMind và tối ưu việc học của bạn ngay hôm nay.",
+      "ctaSignup": "Đăng ký miễn phí"
+    },
+    "features": {
+      "title": "Tính năng nổi bật",
+      "subtitle": "Khám phá hệ sinh thái học tập thông minh, nơi AI và cộng đồng cùng nhau kiến tạo tri thức bền vững.",
+      "blocks": [
+        {
+          "chip": "Quản lý tri thức",
+          "title": "Kho tài liệu thông minh",
+          "desc": "Hệ thống lưu trữ tối ưu cho học thuật, giúp bạn sắp xếp hàng ngàn tài liệu chỉ trong vài giây.",
+          "bullets": [
+            "Tải lên đa định dạng (PDF, DOCX, PPTX) với dung lượng lớn.",
+            "Tự động phân loại theo môn học và nhãn dán thông minh.",
+            "Tìm kiếm nội dung sâu bên trong từng trang tài liệu."
+          ]
+        },
+        {
+          "chip": "Trợ lý AI",
+          "title": "Hỏi AI HiveMind",
+          "desc": "Trợ lý AI đồng hành, hiểu nội dung tài liệu của bạn và trả lời tức thì.",
+          "bullets": [
+            "Hỏi đáp trực tiếp dựa trên nội dung tài liệu cụ thể.",
+            "Tóm tắt chương dài thành các ý chính cô đọng.",
+            "Gợi ý câu hỏi ôn tập dựa trên kiến thức trong file."
+          ]
+        },
+        {
+          "chip": "Kết nối",
+          "title": "Cộng đồng chia sẻ",
+          "desc": "Học cùng nhau, chọn lọc nguồn tài liệu tốt nhất từ cộng đồng.",
+          "bullets": [
+            "Đánh giá và nhận xét tài liệu từ người dùng uy tín.",
+            "Lưu tài liệu công khai về kho cá nhân chỉ với 1 chạm.",
+            "Khám phá các bộ sưu tập tài liệu được biên soạn kỹ lưỡng."
+          ]
+        },
+        {
+          "chip": "Tổ chức",
+          "title": "Không gian lưu trữ (Spaces)",
+          "desc": "Tạo không gian riêng cho từng kỳ học hoặc chủ đề và cùng bạn bè học tập.",
+          "bullets": [
+            "Tạo không gian riêng biệt cho từng kỳ học hoặc chủ đề.",
+            "Chia sẻ nguyên một Không gian cho bạn bè cùng học.",
+            "Thống kê tiến độ đọc và học trong từng không gian."
+          ]
+        }
+      ],
+      "ctaTitle": "Sẵn sàng để học thông minh hơn?",
+      "ctaSubtitle": "Tạo tài khoản miễn phí và bắt đầu xây dựng kho tri thức của bạn.",
+      "ctaSignup": "Đăng ký miễn phí"
+    },
+    "howItWorks": {
+      "title": "Cách HiveMind hoạt động",
+      "subtitle": "Tối ưu hóa quy trình học tập của bạn với sự hỗ trợ từ trí tuệ nhân tạo. Đơn giản, hiệu quả và được thiết kế cho người học hiện đại.",
+      "steps": [
+        {
+          "title": "Tải tài liệu lên",
+          "desc": "Tải lên mọi định dạng tài liệu học tập: PDF, DOCX, hoặc hình ảnh bài giảng. HiveMind sẽ tự động trích xuất nội dung và sẵn sàng xử lý."
+        },
+        {
+          "title": "Phân loại theo môn học",
+          "desc": "Hệ thống đề xuất môn học phù hợp cho tài liệu của bạn. Tổ chức kho tri thức của riêng bạn một cách khoa học nhất."
+        },
+        {
+          "title": "Chia sẻ với cộng đồng",
+          "desc": "Kết nối với tổ ong tri thức. Chia sẻ tài liệu của bạn hoặc tham khảo tài liệu từ hàng ngàn người học khác để mở rộng góc nhìn."
+        },
+        {
+          "title": "Hỏi AI về nội dung tài liệu",
+          "desc": "Trò chuyện trực tiếp với tài liệu của bạn. Yêu cầu tóm tắt, giải thích khái niệm khó hoặc đặt câu hỏi tự kiểm tra kiến thức."
+        }
+      ],
+      "ctaTitle": "Bắt đầu hành trình học tập thông minh ngay",
+      "ctaSubtitle": "Chỉ vài bước đơn giản để biến tài liệu thành tri thức.",
+      "ctaSignup": "Đăng ký miễn phí"
+    },
+    "about": {
+      "title": "Về HiveMind",
+      "subtitle": "Dự án đồ án môn SWP391, xây dựng nền tảng học tập kết hợp trí tuệ nhân tạo (AI) giúp tối ưu hóa việc quản lý và học hỏi từ tài liệu.",
+      "values": [
+        {
+          "title": "Sáng tạo",
+          "desc": "Ứng dụng AI đột phá để thay đổi cách sinh viên tiếp cận và xử lý khối lượng kiến thức khổng lồ."
+        },
+        {
+          "title": "Kết nối",
+          "desc": "Tạo dựng một hệ sinh thái học tập chung, nơi tri thức được chia sẻ và cộng hưởng không giới hạn."
+        },
+        {
+          "title": "Hiệu quả",
+          "desc": "Tiết kiệm thời gian đọc hiểu và tổng hợp, giúp người dùng tập trung vào việc tư duy và sáng tạo."
+        }
+      ],
+      "teamTitle": "Đội ngũ phát triển",
+      "teamSubtitle": "Những con người tâm huyết đằng sau dự án HiveMind.",
+      "missionTitle": "Sứ mệnh của chúng tôi",
+      "missionText": "HiveMind ra đời từ mong muốn đơn giản hóa việc học tập trong kỷ nguyên thông tin. Chúng tôi tin rằng với sự trợ giúp của AI, mỗi sinh viên đều có thể xây dựng một “tổ ong” tri thức thông minh, nơi mọi tài liệu đều được tổ chức khoa học và dễ dàng khai thác nhất."
     }
   }
 }
