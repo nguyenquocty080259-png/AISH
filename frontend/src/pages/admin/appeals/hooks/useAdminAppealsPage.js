@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import * as adminApi from "../../../../api/adminApi";
 import { useToast } from "../../../../hooks/useToast";
 import { useSearchParams } from "react-router-dom";
 
 export function useAdminAppealsPage() {
+  const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTabState] = useState(
@@ -91,7 +93,7 @@ export function useAdminAppealsPage() {
         return prev.map((a) => (a.appealId === updated.appealId ? updated : a));
       });
 
-      showSuccess(action === "approve" ? "Đã duyệt kháng nghị." : "Đã từ chối kháng nghị.");
+      showSuccess(action === "approve" ? t("admin.appeals.appealApproved") : t("admin.appeals.appealRejected"));
       setDecisionTarget(null);
     } catch (err) {
       showError(err.message);
@@ -106,7 +108,7 @@ export function useAdminAppealsPage() {
       if (approve) await adminApi.approveComment(comment.id);
       else await adminApi.rejectComment(comment.id);
       setComments((previous) => previous.filter((item) => item.id !== comment.id));
-      showSuccess(approve ? "Đã duyệt bình luận." : "Đã từ chối bình luận.");
+      showSuccess(approve ? t("admin.appeals.commentApproved") : t("admin.appeals.commentRejected"));
     } catch (err) {
       showError(err.message);
     } finally {

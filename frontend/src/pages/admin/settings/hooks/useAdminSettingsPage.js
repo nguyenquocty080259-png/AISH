@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import * as adminApi from "../../../../api/adminApi";
 import { useToast } from "../../../../hooks/useToast";
 
@@ -13,6 +14,7 @@ function bytesToGb(bytes) {
 }
 
 export function useAdminSettingsPage() {
+  const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
 
   const [minUploadAge, setMinUploadAge] = useState("");
@@ -57,7 +59,7 @@ export function useAdminSettingsPage() {
     try {
       const data = await adminApi.updateMinUploadAge(Number(value));
       setMinUploadAge(String(data.minUploadAge));
-      showSuccess("Đã lưu cài đặt.");
+      showSuccess(t("admin.settings.saved"));
       return true;
     } catch (err) {
       // 400 (ngoài khoảng 6..100) đến từ GlobalExceptionHandler -> hiện đúng message thật.
@@ -73,13 +75,13 @@ export function useAdminSettingsPage() {
   const validateGbValue = (value, label) => {
     const num = Number(value);
     if (value === "" || Number.isNaN(num)) {
-      return `Giá trị ${label} phải là một số.`;
+      return t("admin.settings.valMustBeNumber", { label });
     }
     if (num <= 0) {
-      return `Giá trị ${label} phải lớn hơn 0.`;
+      return t("admin.settings.valMustBePositive", { label });
     }
     if (num > MAX_LIMIT_GB) {
-      return `Giá trị ${label} không được vượt quá ${MAX_LIMIT_GB} GB.`;
+      return t("admin.settings.valMax", { label, max: MAX_LIMIT_GB });
     }
     return null;
   };
@@ -88,10 +90,10 @@ export function useAdminSettingsPage() {
     const { maxFileLocalGbValue, maxFileCloudGbValue, quotaLocalGbValue, quotaCloudGbValue } = values;
 
     const checks = [
-      [maxFileLocalGbValue, "giới hạn tệp LOCAL"],
-      [maxFileCloudGbValue, "giới hạn tệp CLOUD"],
-      [quotaLocalGbValue, "quota LOCAL"],
-      [quotaCloudGbValue, "quota CLOUD"],
+      [maxFileLocalGbValue, t("admin.settings.labelFileLocal")],
+      [maxFileCloudGbValue, t("admin.settings.labelFileCloud")],
+      [quotaLocalGbValue, t("admin.settings.labelQuotaLocal")],
+      [quotaCloudGbValue, t("admin.settings.labelQuotaCloud")],
     ];
     for (const [value, label] of checks) {
       const error = validateGbValue(value, label);
@@ -101,11 +103,11 @@ export function useAdminSettingsPage() {
       }
     }
     if (Number(maxFileLocalGbValue) > Number(quotaLocalGbValue)) {
-      showError("Giới hạn dung lượng tệp LOCAL không được vượt quá quota LOCAL.");
+      showError(t("admin.settings.fileLocalExceedsQuota"));
       return false;
     }
     if (Number(maxFileCloudGbValue) > Number(quotaCloudGbValue)) {
-      showError("Giới hạn dung lượng tệp CLOUD không được vượt quá quota CLOUD.");
+      showError(t("admin.settings.fileCloudExceedsQuota"));
       return false;
     }
 
@@ -121,7 +123,7 @@ export function useAdminSettingsPage() {
       setMaxFileCloudGb(bytesToGb(data.maxFileCloudBytes));
       setQuotaLocalGb(bytesToGb(data.quotaLocalBytes));
       setQuotaCloudGb(bytesToGb(data.quotaCloudBytes));
-      showSuccess("Đã lưu cài đặt.");
+      showSuccess(t("admin.settings.saved"));
       return true;
     } catch (err) {
       showError(err.message);
@@ -150,12 +152,12 @@ export function useAdminSettingsPage() {
   const saveAllowedFileTypes = async (raw) => {
     const extensions = parseExtensions(raw);
     if (extensions.length === 0) {
-      showError("Danh sách loại tệp được phép không được để trống.");
+      showError(t("admin.settings.fileTypesEmpty"));
       return false;
     }
     const invalid = extensions.find((ext) => !/^[a-z0-9]{1,12}$/.test(ext));
     if (invalid) {
-      showError(`Đuôi tệp '${invalid}' không hợp lệ - chỉ gồm chữ thường/số, tối đa 12 ký tự.`);
+      showError(t("admin.settings.extInvalid", { ext: invalid }));
       return false;
     }
 
@@ -163,7 +165,7 @@ export function useAdminSettingsPage() {
     try {
       const data = await adminApi.updateUploadFileTypes(extensions);
       setAllowedFileTypes((data.allowedExtensions || []).join(", "));
-      showSuccess("Đã lưu cài đặt.");
+      showSuccess(t("admin.settings.saved"));
       return true;
     } catch (err) {
       showError(err.message);

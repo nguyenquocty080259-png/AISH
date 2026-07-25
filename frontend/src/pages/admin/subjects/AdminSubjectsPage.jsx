@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import PageHeader from "../../../components/ui/PageHeader";
 import Button from "../../../components/ui/Button";
 import Modal from "../../../components/ui/Modal";
@@ -7,12 +8,10 @@ import Table from "../../../components/ui/Table";
 import { useAdminSubjectsPage } from "./hooks/useAdminSubjectsPage";
 import "./admin-subjects.css";
 
-function formatDate(iso) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("vi-VN");
-}
-
 export default function AdminSubjectsPage() {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage === "en" ? "en-US" : "vi-VN";
+  const formatDate = (iso) => (iso ? new Date(iso).toLocaleString(locale) : "—");
   const {
     subjects,
     loading,
@@ -63,31 +62,31 @@ export default function AdminSubjectsPage() {
   return (
     <div className="admin-subjects-page">
       <PageHeader
-        title="Quản lý môn học"
-        subtitle="Môn học là danh mục học thuật do Admin quản lý (DEC-030) — mỗi tài liệu cần thuộc ít nhất 1 môn."
+        title={t("admin.subjects.title")}
+        subtitle={t("admin.subjects.subtitle")}
         actions={
           <Button variant="primary" onClick={openCreateModal}>
-            + Thêm môn học
+            {t("admin.subjects.addBtn")}
           </Button>
         }
       />
 
       {loading ? (
-        <p className="admin-subjects-page__loading">Đang tải danh sách môn học...</p>
+        <p className="admin-subjects-page__loading">{t("admin.subjects.loading")}</p>
       ) : subjects.length === 0 ? (
         <EmptyState
           icon="📚"
-          message="Chưa có môn học nào."
-          actionLabel="Thêm môn học"
+          message={t("admin.subjects.empty")}
+          actionLabel={t("admin.subjects.emptyAction")}
           onAction={openCreateModal}
         />
       ) : (
         <Table>
           <Table.Head>
             <Table.Row>
-              <Table.HeaderCell>Tên môn học</Table.HeaderCell>
-              <Table.HeaderCell>Mô tả</Table.HeaderCell>
-              <Table.HeaderCell>Ngày tạo</Table.HeaderCell>
+              <Table.HeaderCell>{t("admin.subjects.colName")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("admin.subjects.colDesc")}</Table.HeaderCell>
+              <Table.HeaderCell>{t("admin.subjects.colCreated")}</Table.HeaderCell>
               <Table.HeaderCell />
             </Table.Row>
           </Table.Head>
@@ -102,10 +101,10 @@ export default function AdminSubjectsPage() {
                 <Table.Cell>
                   <div className="ui-table__actions">
                     <Button variant="secondary" onClick={() => openRenameModal(subject)}>
-                      Đổi tên
+                      {t("admin.subjects.rename")}
                     </Button>
                     <Button variant="danger" onClick={() => openDeleteModal(subject)}>
-                      Xóa
+                      {t("common.actions.delete")}
                     </Button>
                   </div>
                 </Table.Cell>
@@ -115,31 +114,31 @@ export default function AdminSubjectsPage() {
         </Table>
       )}
 
-      <Modal open={createModalOpen} onClose={closeCreateModal} title="Thêm môn học">
+      <Modal open={createModalOpen} onClose={closeCreateModal} title={t("admin.subjects.addTitle")}>
         <form className="admin-subjects-form" onSubmit={submitCreate}>
           <label className="admin-subjects-form__field">
-            Tên môn học
+            {t("admin.subjects.nameLabel")}
             <input type="text" autoFocus value={name} onChange={(e) => setName(e.target.value)} />
           </label>
           <label className="admin-subjects-form__field">
-            Mô tả (tuỳ chọn)
+            {t("admin.subjects.descLabel")}
             <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
           </label>
           <div className="admin-subjects-form__actions">
             <Button type="button" variant="secondary" onClick={closeCreateModal} disabled={creating}>
-              Hủy
+              {t("common.actions.cancel")}
             </Button>
             <Button type="submit" variant="primary" disabled={creating}>
-              {creating ? "Đang thêm..." : "Thêm"}
+              {creating ? t("admin.common.adding") : t("admin.subjects.add")}
             </Button>
           </div>
         </form>
       </Modal>
 
-      <Modal open={!!renameTarget} onClose={closeRenameModal} title="Đổi tên môn học">
+      <Modal open={!!renameTarget} onClose={closeRenameModal} title={t("admin.subjects.renameTitle")}>
         <form className="admin-subjects-form" onSubmit={submitRename}>
           <label className="admin-subjects-form__field">
-            Tên môn học
+            {t("admin.subjects.nameLabel")}
             <input
               type="text"
               autoFocus
@@ -148,7 +147,7 @@ export default function AdminSubjectsPage() {
             />
           </label>
           <label className="admin-subjects-form__field">
-            Mô tả (tuỳ chọn)
+            {t("admin.subjects.descLabel")}
             <textarea
               rows={3}
               value={renameDescription}
@@ -157,26 +156,25 @@ export default function AdminSubjectsPage() {
           </label>
           <div className="admin-subjects-form__actions">
             <Button type="button" variant="secondary" onClick={closeRenameModal} disabled={renaming}>
-              Hủy
+              {t("common.actions.cancel")}
             </Button>
             <Button type="submit" variant="primary" disabled={renaming}>
-              {renaming ? "Đang lưu..." : "Lưu"}
+              {renaming ? t("admin.common.saving") : t("common.actions.save")}
             </Button>
           </div>
         </form>
       </Modal>
 
-      <Modal open={!!deleteTarget} onClose={closeDeleteModal} title="Xóa môn học">
+      <Modal open={!!deleteTarget} onClose={closeDeleteModal} title={t("admin.subjects.deleteTitle")}>
         <p className="admin-subjects-page__confirm-text">
-          Xóa môn học "{deleteTarget?.name}"? Nếu môn học này đang được gán cho bất kỳ tài liệu
-          nào, hệ thống sẽ từ chối xóa để tránh tài liệu bị mất hết môn học (DEC-030).
+          {t("admin.subjects.deleteConfirm", { name: deleteTarget?.name })}
         </p>
         <div className="admin-subjects-form__actions">
           <Button variant="secondary" onClick={closeDeleteModal} disabled={deleting}>
-            Hủy
+            {t("common.actions.cancel")}
           </Button>
           <Button variant="danger" onClick={deleteSubject} disabled={deleting}>
-            {deleting ? "Đang xóa..." : "Xóa"}
+            {deleting ? t("admin.common.deleting") : t("common.actions.delete")}
           </Button>
         </div>
       </Modal>

@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import PageHeader from "../../../components/ui/PageHeader";
 import Button from "../../../components/ui/Button";
 import { useAdminSettingsPage } from "./hooks/useAdminSettingsPage";
 import "./admin-settings.css";
 
 export default function AdminSettingsPage() {
+  const { t } = useTranslation();
   const {
     minUploadAge,
     loading,
@@ -80,18 +82,18 @@ export default function AdminSettingsPage() {
   return (
     <div className="admin-settings-page">
       <PageHeader
-        title="Cài đặt"
-        subtitle="Cấu hình các tham số vận hành chung của hệ thống."
+        title={t("admin.settings.title")}
+        subtitle={t("admin.settings.subtitle")}
       />
 
       {loading ? (
-        <p className="admin-settings-page__loading">Đang tải cài đặt...</p>
+        <p className="admin-settings-page__loading">{t("admin.settings.loading")}</p>
       ) : (
         <>
           <form className="admin-settings-form" onSubmit={submit}>
-            <h2 className="admin-settings-form__title">Độ tuổi tải tài liệu lên</h2>
+            <h2 className="admin-settings-form__title">{t("admin.settings.ageTitle")}</h2>
             <label className="admin-settings-form__field">
-              Tuổi tối thiểu để tải tài liệu lên
+              {t("admin.settings.ageLabel")}
               <input
                 type="number"
                 min={6}
@@ -100,24 +102,23 @@ export default function AdminSettingsPage() {
                 onChange={(e) => setValue(e.target.value)}
               />
               <span className="admin-settings-form__hint">
-                Người dùng chưa đủ tuổi này (tính từ ngày sinh trong hồ sơ) sẽ không thể tải tài
-                liệu lên. Quản trị viên không bị áp dụng giới hạn này.
+                {t("admin.settings.ageHint")}
               </span>
             </label>
 
             <div className="admin-settings-form__actions">
               <Button type="submit" variant="primary" disabled={saving || value === ""}>
-                {saving ? "Đang lưu..." : "Lưu"}
+                {saving ? t("admin.common.saving") : t("common.actions.save")}
               </Button>
             </div>
           </form>
 
           <form className="admin-settings-form" onSubmit={submitLimits}>
-            <h2 className="admin-settings-form__title">Giới hạn dung lượng tải lên</h2>
+            <h2 className="admin-settings-form__title">{t("admin.settings.limitsTitle")}</h2>
 
-            <p className="admin-settings-form__section-label">Mỗi tệp (áp dụng cho từng lần tải lên)</p>
+            <p className="admin-settings-form__section-label">{t("admin.settings.perFileLabel")}</p>
             <label className="admin-settings-form__field">
-              Máy chủ (LOCAL, GB / tệp)
+              {t("admin.settings.maxLocal")}
               <input
                 type="number"
                 min={0}
@@ -128,7 +129,7 @@ export default function AdminSettingsPage() {
               />
             </label>
             <label className="admin-settings-form__field">
-              Cloud (CLOUD, GB / tệp)
+              {t("admin.settings.maxCloud")}
               <input
                 type="number"
                 min={0}
@@ -139,9 +140,9 @@ export default function AdminSettingsPage() {
               />
             </label>
 
-            <p className="admin-settings-form__section-label">Tổng dung lượng mỗi người dùng (quota, chung cho mọi user)</p>
+            <p className="admin-settings-form__section-label">{t("admin.settings.quotaLabel")}</p>
             <label className="admin-settings-form__field">
-              Máy chủ (LOCAL, GB / người dùng)
+              {t("admin.settings.quotaLocal")}
               <input
                 type="number"
                 min={0}
@@ -152,7 +153,7 @@ export default function AdminSettingsPage() {
               />
             </label>
             <label className="admin-settings-form__field">
-              Cloud (CLOUD, GB / người dùng)
+              {t("admin.settings.quotaCloud")}
               <input
                 type="number"
                 min={0}
@@ -162,9 +163,7 @@ export default function AdminSettingsPage() {
                 onChange={(e) => setQuotaCloud(e.target.value)}
               />
               <span className="admin-settings-form__hint">
-                Nhập số GB thập phân (vd. 1, 0.5), tối đa 2 GB cho mỗi giá trị. Giới hạn mỗi tệp
-                không được vượt quá quota tương ứng. Tài liệu trong thùng rác vẫn tính vào quota
-                cho tới khi bị xóa vĩnh viễn. Tài liệu lưu "Cả hai" chiếm quota ở cả hai nơi.
+                {t("admin.settings.quotaHint")}
               </span>
             </label>
 
@@ -174,15 +173,15 @@ export default function AdminSettingsPage() {
                 variant="primary"
                 disabled={savingLimits || !limitsFieldsFilled}
               >
-                {savingLimits ? "Đang lưu..." : "Lưu"}
+                {savingLimits ? t("admin.common.saving") : t("common.actions.save")}
               </Button>
             </div>
           </form>
 
           <form className="admin-settings-form" onSubmit={submitFileTypes}>
-            <h2 className="admin-settings-form__title">Loại tệp được phép tải lên</h2>
+            <h2 className="admin-settings-form__title">{t("admin.settings.fileTypesTitle")}</h2>
             <label className="admin-settings-form__field">
-              Danh sách đuôi tệp (ngăn cách bằng dấu phẩy)
+              {t("admin.settings.fileTypesLabel")}
               <textarea
                 rows={3}
                 value={fileTypes}
@@ -190,10 +189,7 @@ export default function AdminSettingsPage() {
                 placeholder="pdf, docx, png, jpg"
               />
               <span className="admin-settings-form__hint">
-                Chỉ những đuôi tệp trong danh sách này mới được tải lên (áp dụng cho mọi người
-                dùng). Không kèm dấu chấm, mỗi đuôi tối đa 12 ký tự chữ thường/số. Hệ thống còn
-                kiểm tra nội dung thật của tệp để chống đổi đuôi giả. Thay đổi có hiệu lực ngay,
-                không cần khởi động lại.
+                {t("admin.settings.fileTypesHint")}
               </span>
             </label>
 
@@ -203,7 +199,7 @@ export default function AdminSettingsPage() {
                 variant="primary"
                 disabled={savingFileTypes || fileTypes.trim() === ""}
               >
-                {savingFileTypes ? "Đang lưu..." : "Lưu"}
+                {savingFileTypes ? t("admin.common.saving") : t("common.actions.save")}
               </Button>
             </div>
           </form>

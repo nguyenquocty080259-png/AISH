@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import PageHeader from "../../../components/ui/PageHeader";
 import Badge from "../../../components/ui/Badge";
 import Button from "../../../components/ui/Button";
@@ -9,17 +10,15 @@ import { useAdminAppealsPage } from "./hooks/useAdminAppealsPage";
 import "./admin-appeals.css";
 
 const STATUS_BADGE = {
-  APPEAL_PENDING: { intent: "warning", label: "Đang chờ" },
-  APPEAL_APPROVED: { intent: "success", label: "Đã duyệt" },
-  APPEAL_REJECTED: { intent: "error", label: "Đã từ chối" },
+  APPEAL_PENDING: { intent: "warning", labelKey: "admin.appeals.statusPending" },
+  APPEAL_APPROVED: { intent: "success", labelKey: "admin.appeals.statusApproved" },
+  APPEAL_REJECTED: { intent: "error", labelKey: "admin.appeals.statusRejected" },
 };
 
-function formatDate(iso) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("vi-VN");
-}
-
 export default function AdminAppealsPage() {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage === "en" ? "en-US" : "vi-VN";
+  const formatDate = (iso) => (iso ? new Date(iso).toLocaleString(locale) : "—");
   const {
     activeTab,
     setActiveTab,
@@ -43,23 +42,23 @@ export default function AdminAppealsPage() {
   return (
     <div className="admin-appeals-page">
       <PageHeader
-        title="Kháng nghị và bình luận"
-        subtitle="Xử lý kháng nghị tài liệu và các bình luận đang chờ kiểm duyệt."
+        title={t("admin.appeals.title")}
+        subtitle={t("admin.appeals.subtitle")}
         actions={activeTab === "appeals" ? (
           <select
             className="admin-appeals-page__filter"
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
           >
-            <option value="">Tất cả</option>
-            <option value="APPEAL_PENDING">Đang chờ</option>
-            <option value="APPEAL_APPROVED">Đã duyệt</option>
-            <option value="APPEAL_REJECTED">Đã từ chối</option>
+            <option value="">{t("admin.appeals.filterAll")}</option>
+            <option value="APPEAL_PENDING">{t("admin.appeals.statusPending")}</option>
+            <option value="APPEAL_APPROVED">{t("admin.appeals.statusApproved")}</option>
+            <option value="APPEAL_REJECTED">{t("admin.appeals.statusRejected")}</option>
           </select>
         ) : null}
       />
 
-      <div className="admin-appeals-tabs" role="tablist" aria-label="Loại nội dung cần xử lý">
+      <div className="admin-appeals-tabs" role="tablist" aria-label={t("admin.appeals.tabsAria")}>
         <button
           type="button"
           role="tab"
@@ -67,7 +66,7 @@ export default function AdminAppealsPage() {
           className={activeTab === "appeals" ? "admin-appeals-tabs__item admin-appeals-tabs__item--active" : "admin-appeals-tabs__item"}
           onClick={() => setActiveTab("appeals")}
         >
-          Kháng nghị tài liệu
+          {t("admin.appeals.tabAppeals")}
         </button>
         <button
           type="button"
@@ -76,24 +75,24 @@ export default function AdminAppealsPage() {
           className={activeTab === "comments" ? "admin-appeals-tabs__item admin-appeals-tabs__item--active" : "admin-appeals-tabs__item"}
           onClick={() => setActiveTab("comments")}
         >
-          Bình luận
+          {t("admin.appeals.tabComments")}
         </button>
       </div>
 
       {activeTab === "appeals" && (
         loading ? (
-          <p className="admin-appeals-page__loading">Đang tải danh sách kháng nghị...</p>
+          <p className="admin-appeals-page__loading">{t("admin.appeals.loadingAppeals")}</p>
         ) : appeals.length === 0 ? (
-          <EmptyState icon="📭" message="Không có kháng nghị nào." />
+          <EmptyState icon="📭" message={t("admin.appeals.emptyAppeals")} />
         ) : (
           <Table>
             <Table.Head>
               <Table.Row>
-                <Table.HeaderCell>Tài liệu</Table.HeaderCell>
-                <Table.HeaderCell>Lý do kháng nghị</Table.HeaderCell>
-                <Table.HeaderCell>Người gửi</Table.HeaderCell>
-                <Table.HeaderCell>Trạng thái</Table.HeaderCell>
-                <Table.HeaderCell>Ngày gửi</Table.HeaderCell>
+                <Table.HeaderCell>{t("admin.appeals.colDocument")}</Table.HeaderCell>
+                <Table.HeaderCell>{t("admin.appeals.colReason")}</Table.HeaderCell>
+                <Table.HeaderCell>{t("admin.appeals.colSender")}</Table.HeaderCell>
+                <Table.HeaderCell>{t("admin.appeals.colStatus")}</Table.HeaderCell>
+                <Table.HeaderCell>{t("admin.appeals.colDate")}</Table.HeaderCell>
                 <Table.HeaderCell />
               </Table.Row>
             </Table.Head>
@@ -106,13 +105,13 @@ export default function AdminAppealsPage() {
                     <Table.Cell>{appeal.document?.title}</Table.Cell>
                     <Table.Cell className="ui-table__truncate">{appeal.reason}</Table.Cell>
                     <Table.Cell>{appeal.appellantName}</Table.Cell>
-                    <Table.Cell><Badge intent={badge.intent}>{badge.label}</Badge></Table.Cell>
+                    <Table.Cell><Badge intent={badge.intent}>{t(badge.labelKey)}</Badge></Table.Cell>
                     <Table.Cell>{formatDate(appeal.createdAt)}</Table.Cell>
                     <Table.Cell>
                       {isPending && (
                         <div className="ui-table__actions">
-                          <Button variant="secondary" onClick={() => openDecisionModal(appeal, "approve")}>Duyệt</Button>
-                          <Button variant="danger" onClick={() => openDecisionModal(appeal, "reject")}>Từ chối</Button>
+                          <Button variant="secondary" onClick={() => openDecisionModal(appeal, "approve")}>{t("admin.appeals.approve")}</Button>
+                          <Button variant="danger" onClick={() => openDecisionModal(appeal, "reject")}>{t("admin.appeals.reject")}</Button>
                         </div>
                       )}
                     </Table.Cell>
@@ -126,18 +125,18 @@ export default function AdminAppealsPage() {
 
       {activeTab === "comments" && (
         commentsLoading ? (
-          <p className="admin-appeals-page__loading">Đang tải bình luận chờ duyệt...</p>
+          <p className="admin-appeals-page__loading">{t("admin.appeals.loadingComments")}</p>
         ) : comments.length === 0 ? (
-          <EmptyState icon="💬" message="Không có bình luận nào đang chờ duyệt." />
+          <EmptyState icon="💬" message={t("admin.appeals.emptyComments")} />
         ) : (
           <Table>
             <Table.Head>
               <Table.Row>
-                <Table.HeaderCell>Nội dung</Table.HeaderCell>
-                <Table.HeaderCell>Người gửi</Table.HeaderCell>
-                <Table.HeaderCell>Tài liệu</Table.HeaderCell>
-                <Table.HeaderCell>Lý do</Table.HeaderCell>
-                <Table.HeaderCell>Ngày gửi</Table.HeaderCell>
+                <Table.HeaderCell>{t("admin.appeals.colContent")}</Table.HeaderCell>
+                <Table.HeaderCell>{t("admin.appeals.colSender")}</Table.HeaderCell>
+                <Table.HeaderCell>{t("admin.appeals.colDoc")}</Table.HeaderCell>
+                <Table.HeaderCell>{t("admin.appeals.colReasonShort")}</Table.HeaderCell>
+                <Table.HeaderCell>{t("admin.appeals.colDate")}</Table.HeaderCell>
                 <Table.HeaderCell />
               </Table.Row>
             </Table.Head>
@@ -155,7 +154,7 @@ export default function AdminAppealsPage() {
                       <p>{comment.moderationReason || "—"}</p>
                       {comment.disputeNote && (
                         <p className="admin-appeals-page__dispute-note">
-                          Khiếu nại: {comment.disputeNote}
+                          {t("admin.appeals.disputeNote", { note: comment.disputeNote })}
                         </p>
                       )}
                     </Table.Cell>
@@ -163,10 +162,10 @@ export default function AdminAppealsPage() {
                     <Table.Cell>
                       <div className="ui-table__actions">
                         <Button variant="secondary" disabled={pending} onClick={() => reviewComment(comment, true)}>
-                          {pending ? "Đang xử lý..." : "Duyệt"}
+                          {pending ? t("admin.common.processing") : t("admin.appeals.approve")}
                         </Button>
                         <Button variant="danger" disabled={pending} onClick={() => reviewComment(comment, false)}>
-                          Từ chối
+                          {t("admin.appeals.reject")}
                         </Button>
                       </div>
                     </Table.Cell>
@@ -181,26 +180,25 @@ export default function AdminAppealsPage() {
       <Modal
         open={!!decisionTarget}
         onClose={closeDecisionModal}
-        title={decisionTarget?.action === "approve" ? "Duyệt kháng nghị" : "Từ chối kháng nghị"}
+        title={decisionTarget?.action === "approve" ? t("admin.appeals.approveTitle") : t("admin.appeals.rejectTitle")}
       >
         <p className="admin-appeals-page__confirm-text">
-          Tài liệu "{decisionTarget?.appeal?.document?.title}" —{" "}
           {decisionTarget?.action === "approve"
-            ? "duyệt sẽ chuyển tài liệu về công khai."
-            : "từ chối sẽ giữ nguyên trạng thái hiện tại của tài liệu."}
+            ? t("admin.appeals.approveText", { title: decisionTarget?.appeal?.document?.title })
+            : t("admin.appeals.rejectText", { title: decisionTarget?.appeal?.document?.title })}
         </p>
         <label className="admin-appeals-page__note-field">
-          Ghi chú (tuỳ chọn)
+          {t("admin.appeals.noteLabel")}
           <textarea rows={3} value={note} onChange={(event) => setNote(event.target.value)} />
         </label>
         <div className="admin-appeals-page__modal-actions">
-          <Button variant="secondary" onClick={closeDecisionModal} disabled={submitting}>Hủy</Button>
+          <Button variant="secondary" onClick={closeDecisionModal} disabled={submitting}>{t("common.actions.cancel")}</Button>
           <Button
             variant={decisionTarget?.action === "approve" ? "primary" : "danger"}
             onClick={submitDecision}
             disabled={submitting}
           >
-            {submitting ? "Đang xử lý..." : decisionTarget?.action === "approve" ? "Xác nhận duyệt" : "Xác nhận từ chối"}
+            {submitting ? t("admin.common.processing") : decisionTarget?.action === "approve" ? t("admin.appeals.confirmApprove") : t("admin.appeals.confirmReject")}
           </Button>
         </div>
       </Modal>

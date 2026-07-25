@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import * as adminApi from "../../../../api/adminApi";
 import { useToast } from "../../../../hooks/useToast";
 
 export function useAdminReportsPage() {
+  const { t } = useTranslation();
   const { showError, showSuccess } = useToast();
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,7 +32,7 @@ export function useAdminReportsPage() {
   };
   const closeResolveModal = () => { if (!submitting) setResolveTarget(null); };
   const submitResolve = async () => {
-    if (!resolveTarget || !actionTaken) return showError("Vui lòng chọn hành động xử lý.");
+    if (!resolveTarget || !actionTaken) return showError(t("admin.reports.chooseActionError"));
     setSubmitting(true);
     try {
       const updated = await adminApi.resolveReport(resolveTarget.id, {
@@ -40,7 +42,7 @@ export function useAdminReportsPage() {
         ? current.filter((report) => report.id !== updated.id)
         : current.map((report) => report.id === updated.id ? updated : report));
       setResolveTarget(null);
-      showSuccess("Đã xử lý báo cáo.");
+      showSuccess(t("admin.reports.resolved"));
     } catch (error) {
       showError(error.message);
     } finally {

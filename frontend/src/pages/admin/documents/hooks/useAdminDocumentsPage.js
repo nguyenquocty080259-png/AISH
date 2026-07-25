@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import * as adminApi from "../../../../api/adminApi";
 import * as documentApi from "../../../../api/documentApi";
 import * as subjectApi from "../../../../api/subjectApi";
 import { useToast } from "../../../../hooks/useToast";
 
 export function useAdminDocumentsPage() {
+  const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const needsReview = searchParams.get("needsReview") === "true";
@@ -63,7 +65,7 @@ export function useAdminDocumentsPage() {
     try {
       if (action === "approve") await adminApi.approveDocumentReview(doc.id);
       else await adminApi.removeDocumentReview(doc.id);
-      showSuccess(action === "approve" ? "Đã duyệt tài liệu." : "Đã gỡ tài liệu khỏi công khai.");
+      showSuccess(action === "approve" ? t("admin.documents.docApproved") : t("admin.documents.docRemovedPublic"));
       await load(page);
     } catch (err) {
       showError(err.message);
@@ -80,7 +82,7 @@ export function useAdminDocumentsPage() {
     setRemoving(true);
     try {
       await adminApi.removeDocument(removeTarget.id);
-      showSuccess("Đã gỡ tài liệu vi phạm.");
+      showSuccess(t("admin.documents.docRemovedViolation"));
       setRemoveTarget(null);
       // Phân trang ở server -> tải lại đúng trang hiện tại thay vì tự suy state,
       // tránh lệch offset khi 1 dòng vừa biến mất khỏi trang cuối.
@@ -117,7 +119,7 @@ export function useAdminDocumentsPage() {
     setEditing(true);
     try {
       await adminApi.updateDocument(editTarget.id, data);
-      showSuccess("Đã cập nhật tài liệu.");
+      showSuccess(t("admin.documents.docUpdated"));
       setEditTarget(null);
       await load(page);
     } catch (err) {
@@ -132,7 +134,7 @@ export function useAdminDocumentsPage() {
     setRestoringId(doc.id);
     try {
       await adminApi.restoreDocument(doc.id);
-      showSuccess("Đã khôi phục tài liệu.");
+      showSuccess(t("admin.documents.docRestored"));
       await load(page);
     } catch (err) {
       showError(err.message);

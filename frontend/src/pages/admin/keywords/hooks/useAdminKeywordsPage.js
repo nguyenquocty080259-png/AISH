@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import * as adminApi from "../../../../api/adminApi";
 import { useToast } from "../../../../hooks/useToast";
 
 export const KEYWORD_TYPES = [
-  { value: "AI_CHAT", label: "AI Chat" },
-  { value: "COMMENT", label: "Bình luận" },
-  { value: "NAMING", label: "Đặt tên" },
-  { value: "DOCUMENT_CONTENT", label: "Nội dung tài liệu" },
+  { value: "AI_CHAT", labelKey: "admin.keywords.typeAiChat" },
+  { value: "COMMENT", labelKey: "admin.keywords.typeComment" },
+  { value: "NAMING", labelKey: "admin.keywords.typeNaming" },
+  { value: "DOCUMENT_CONTENT", labelKey: "admin.keywords.typeDocContent" },
 ];
 
 export function useAdminKeywordsPage() {
+  const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
   const [activeType, setActiveType] = useState(KEYWORD_TYPES[0].value);
   const [keywords, setKeywords] = useState([]);
@@ -51,7 +53,7 @@ export function useAdminKeywordsPage() {
     try {
       const created = await adminApi.createModerationKeyword({ keyword, type: activeType });
       setKeywords((previous) => [created, ...previous]);
-      showSuccess("Đã thêm từ khóa.");
+      showSuccess(t("admin.keywords.added"));
       return true;
     } catch (error) {
       showError(error.message);
@@ -80,12 +82,12 @@ export function useAdminKeywordsPage() {
     updateKeyword(
       item.id,
       { active: !item.active },
-      item.active ? "Đã tắt từ khóa." : "Đã bật từ khóa."
+      item.active ? t("admin.keywords.turnedOff") : t("admin.keywords.turnedOn")
     );
 
   const saveEdit = async (keyword) => {
     if (!editTarget) return false;
-    const saved = await updateKeyword(editTarget.id, { keyword }, "Đã cập nhật từ khóa.");
+    const saved = await updateKeyword(editTarget.id, { keyword }, t("admin.keywords.updated"));
     if (saved) setEditTarget(null);
     return saved;
   };
@@ -98,7 +100,7 @@ export function useAdminKeywordsPage() {
       await adminApi.deleteModerationKeyword(id);
       setKeywords((previous) => previous.filter((item) => item.id !== id));
       setDeleteTarget(null);
-      showSuccess("Đã xóa từ khóa.");
+      showSuccess(t("admin.keywords.deleted"));
     } catch (error) {
       showError(error.message);
     } finally {

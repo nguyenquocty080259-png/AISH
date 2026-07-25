@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import * as subjectApi from "../../../../api/subjectApi";
 import { useToast } from "../../../../hooks/useToast";
 
 export function useAdminSubjectsPage() {
+  const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
 
   const [subjects, setSubjects] = useState([]);
@@ -46,7 +48,7 @@ export function useAdminSubjectsPage() {
       const created = await subjectApi.create({ name, description });
       // Backend là findOrCreate -> trùng tên trả về subject CŨ đã có, không tạo bản mới.
       setSubjects((prev) => (prev.some((s) => s.id === created.id) ? prev : [...prev, created]));
-      showSuccess("Đã thêm môn học.");
+      showSuccess(t("admin.subjects.added"));
       setCreateModalOpen(false);
     } catch (err) {
       showError(err.message);
@@ -64,7 +66,7 @@ export function useAdminSubjectsPage() {
     try {
       const updated = await subjectApi.update(renameTarget.id, { name, description });
       setSubjects((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
-      showSuccess("Đã cập nhật môn học.");
+      showSuccess(t("admin.subjects.updated"));
       setRenameTarget(null);
     } catch (err) {
       // 400 (tên rỗng) / 409 (trùng tên) đến từ GlobalExceptionHandler -> hiện đúng message thật.
@@ -83,7 +85,7 @@ export function useAdminSubjectsPage() {
     try {
       await subjectApi.remove(deleteTarget.id);
       setSubjects((prev) => prev.filter((s) => s.id !== deleteTarget.id));
-      showSuccess("Đã xóa môn học.");
+      showSuccess(t("admin.subjects.deleted"));
       setDeleteTarget(null);
     } catch (err) {
       // DEC-030: 409 "đang được gán cho tài liệu" phải hiện nguyên văn, không nuốt lỗi.
