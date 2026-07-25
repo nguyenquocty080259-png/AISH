@@ -3,6 +3,7 @@ import * as profileApi from "../../../api/profileApi";
 import * as documentApi from "../../../api/documentApi";
 import { useToast } from "../../../hooks/useToast";
 
+
 const EDITABLE_FIELDS = [
   "fullName",
   "bio",
@@ -38,6 +39,7 @@ export function useProfilePage() {
   const [saving, setSaving] = useState(false);
   // null = chưa tải xong / lỗi -> StorageUsageBar tự ẩn, không phải lỗi hiển thị (fail-open).
   const [storageUsage, setStorageUsage] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -61,7 +63,10 @@ export function useProfilePage() {
   }, []);
 
   const startEditing = () => {
-    setForm(toFormValues(profile));
+    setForm({
+    ...toFormValues(profile),
+    email: profile.email,
+    });
     setEditing(true);
   };
 
@@ -71,17 +76,48 @@ export function useProfilePage() {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleAvatarChange = async (event) => {
+      const file = event.target.files?.[0];
+
+      if (!file) return;
+
+      const previewUrl = URL.createObjectURL(file);
+
+      setAvatarPreview(previewUrl);
+
+      try {
+        const response = await profileApi.uploadAvatar(file);
+
+        setProfile((prev) => ({
+          ...prev,
+          avatarUrl: response.avatarUrl,
+        }));
+
+        showSuccess("Đã cập nhật ảnh đại diện.");
+
+      } catch (err) {
+        showError(err.message);
+
+      } finally {
+        URL.revokeObjectURL(previewUrl);
+        setAvatarPreview(null);
+
+        // Cho phép chọn lại cùng một file
+        event.target.value = "";
+      }
+    };
+  
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
-      const payload = {
-        ...form,
-        trashRetentionDays:
-          form.trashRetentionDays === "" || form.trashRetentionDays == null
+      const { email, ...payload } = form;
+
+        payload.trashRetentionDays =
+          payload.trashRetentionDays === "" || payload.trashRetentionDays == null
             ? null
-            : Number(form.trashRetentionDays),
-      };
+            : Number(payload.trashRetentionDays);
+
       const updated = await profileApi.updateMyProfile(payload);
       setProfile(updated);
       setEditing(false);
@@ -103,6 +139,10 @@ export function useProfilePage() {
     cancelEditing,
     handleFieldChange,
     handleSave,
+
+    avatarPreview,
+    handleAvatarChange,
+
     storageUsage,
-  };
+};
 }

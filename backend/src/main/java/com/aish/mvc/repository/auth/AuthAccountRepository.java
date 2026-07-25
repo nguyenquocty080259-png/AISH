@@ -45,8 +45,6 @@ public interface AuthAccountRepository extends JpaRepository<AuthAccount, Long> 
 
     Optional<AuthAccount> findByUserAndProvider(AuthUser user, AuthProviders provider);
 
-    boolean existsByProviderAndIdentifier(AuthProviders provider, String identifier);
-
     // Dùng bởi DbSeedRunner để tìm/dọn tài khoản seed theo domain email quy ước (@seed.aish.local).
     List<AuthAccount> findByIdentifierEndingWithIgnoreCase(String suffix);
 

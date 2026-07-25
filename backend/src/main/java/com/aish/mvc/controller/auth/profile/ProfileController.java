@@ -8,6 +8,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/profile")
@@ -32,6 +35,17 @@ public class ProfileController {
 
         return ResponseEntity.ok(
                 profileService.updateMyProfile(request)
+        );
+    }
+
+    @PostMapping("/avatar")
+    public ResponseEntity<Map<String, String>> uploadAvatar(
+            @RequestParam("file") MultipartFile file) {
+
+        String avatarUrl = profileService.uploadAvatar(file);
+
+        return ResponseEntity.ok(
+                Map.of("avatarUrl", avatarUrl)
         );
     }
 

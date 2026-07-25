@@ -29,6 +29,10 @@ public class OnboardingRequest {
 
     private String gender;
 
+    @Pattern(
+            regexp = "/^(0?)(3[2-9]|5[6|8|9]|7[0|6-9]|8[0-6|8|9]|9[0-4|6-9])[0-9]{7}$/",
+            message = "Số điện thọai phải đúng định dạng"
+    )
     private String phoneNumber;
 
     private String university;
