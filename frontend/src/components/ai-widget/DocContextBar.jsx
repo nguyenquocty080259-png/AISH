@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useAiWidget } from "../../context/AiWidgetContext";
 
 const styles = {
@@ -59,6 +60,7 @@ const styles = {
 };
 
 export default function DocContextBar() {
+  const { t } = useTranslation();
   const {
     routeDocumentId,
     currentDocTitle,
@@ -74,7 +76,7 @@ export default function DocContextBar() {
   return (
     <div style={styles.bar}>
       <div style={styles.row}>
-        <span style={styles.label}>Hỏi về: {currentDocTitle}</span>
+        <span style={styles.label}>{t("aiWidget.askAbout", { title: currentDocTitle })}</span>
         <button
           type="button"
           style={{
@@ -84,7 +86,7 @@ export default function DocContextBar() {
           }}
           onClick={() => setDocContextEnabled((enabled) => !enabled)}
           aria-pressed={docContextEnabled && !toggleDisabled}
-          title={docContextEnabled ? "Tắt hỏi theo tài liệu" : "Bật hỏi theo tài liệu"}
+          title={docContextEnabled ? t("aiWidget.toggleOn") : t("aiWidget.toggleOff")}
           disabled={toggleDisabled}
         >
           <span
@@ -103,7 +105,7 @@ export default function DocContextBar() {
       </div>
       {toggleDisabled && (
         <span style={styles.warning}>
-          Tài liệu chưa được nạp cho AI — vào trang chi tiết để nạp
+          {t("aiWidget.notIngestedWarning")}
         </span>
       )}
     </div>

@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ROUTES, buildRoute } from "../../../constants/routes";
 
 // DEC-028: UI phải phân biệt rõ RAG (trả lời từ tài liệu) và GENERAL (kiến thức chung),
-// không để người dùng nhầm là AI luôn đọc tài liệu của họ.
-const MODE_DESCRIPTIONS = {
-  RAG: "Trả lời từ tài liệu của bạn",
-  GENERAL: "Trả lời từ kiến thức chung, không từ tài liệu của bạn",
+// không để người dùng nhầm là AI luôn đọc tài liệu của họ. Nhãn hiển thị lấy qua i18n.
+const MODE_KEYS = {
+  RAG: "aiChat.modeRag",
+  GENERAL: "aiChat.modeGeneral",
 };
 
 // Cầu nối citation -> viewer: truyền qua query param (page, highlight) thay vì route state,
@@ -27,6 +28,7 @@ export default function ChatMessage({
   citations = [],
   relatedDocs = [],
 }) {
+  const { t } = useTranslation();
   const isUser = role === "user";
   const hasCitations = mode === "RAG" && citations.length > 0;
   const hasRelated = relatedDocs.length > 0;
@@ -35,7 +37,7 @@ export default function ChatMessage({
     <div className={`chat-message ${isUser ? "chat-message--user" : "chat-message--ai"}`}>
       {!isUser && mode && (
         <span className={`chat-message__mode chat-message__mode--${mode.toLowerCase()}`}>
-          {MODE_DESCRIPTIONS[mode] || mode}
+          {MODE_KEYS[mode] ? t(MODE_KEYS[mode]) : mode}
         </span>
       )}
 
@@ -43,7 +45,7 @@ export default function ChatMessage({
 
       {hasCitations && (
         <div className="chat-citations">
-          <span className="chat-citations__title">Nguồn trích dẫn</span>
+          <span className="chat-citations__title">{t("aiChat.citationsTitle")}</span>
           {citations.map((c, i) =>
             c.documentId != null ? (
               <Link
@@ -52,7 +54,7 @@ export default function ChatMessage({
                 rel="noreferrer"
                 className="chat-citation"
                 key={`${c.documentId}-${c.page}-${i}`}
-                title="Mở tài liệu và chuyển tới đoạn trích này"
+                title={t("aiChat.citationOpenHint")}
               >
                 <div className="chat-citation__head">
                   <span className="chat-citation__doc">{c.title}</span>
@@ -60,7 +62,7 @@ export default function ChatMessage({
                     <span className="chat-citation__author">{c.author}</span>
                   )}
                   {c.page != null && (
-                    <span className="chat-citation__page">Trang {c.page}</span>
+                    <span className="chat-citation__page">{t("aiChat.page", { page: c.page })}</span>
                   )}
                 </div>
                 <p className="chat-citation__snippet">{c.snippet}</p>
@@ -70,7 +72,7 @@ export default function ChatMessage({
                 <div className="chat-citation__head">
                   <span className="chat-citation__doc">{c.title}</span>
                   {c.page != null && (
-                    <span className="chat-citation__page">Trang {c.page}</span>
+                    <span className="chat-citation__page">{t("aiChat.page", { page: c.page })}</span>
                   )}
                 </div>
                 <p className="chat-citation__snippet">{c.snippet}</p>
@@ -84,7 +86,7 @@ export default function ChatMessage({
           Backend hiện luôn trả [] ở MVP nên đây là hiển thị dự phòng, chưa có shape cuối cùng. */}
       {hasRelated && (
         <div className="chat-related">
-          <span className="chat-related__title">Tài liệu liên quan</span>
+          <span className="chat-related__title">{t("aiChat.relatedTitle")}</span>
           {relatedDocs.map((d, i) => (
             <span className="chat-related__item" key={i}>
               {d?.title || d?.documentTitle || String(d)}

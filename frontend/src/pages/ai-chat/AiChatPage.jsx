@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAiChatPage } from "./hooks/useAiChatPage";
 import ChatMessage from "./components/ChatMessage";
 import ChatInput from "./components/ChatInput";
@@ -8,6 +9,7 @@ import { ROUTES, buildRoute } from "../../constants/routes";
 import "./ai-chat.css";
 
 export default function AiChatPage() {
+  const { t } = useTranslation();
   const {
     contextDoc,
     activeDocumentId,
@@ -37,22 +39,22 @@ export default function AiChatPage() {
 
   const renderEmptyState = () => {
     if (loadingMessages) {
-      return "Đang tải lịch sử trò chuyện...";
+      return t("aiChat.loadingHistory");
     }
 
     if (isUnsupportedFormat) {
-      return "AI HiveMind không đọc được nội dung của tài liệu này, nên không thể trả lời câu hỏi về tài liệu.";
+      return t("aiChat.unsupportedEmpty");
     }
 
     if (activeDocumentId) {
-      return "Đặt câu hỏi liên quan tới tài liệu này để AI HiveMind hỗ trợ bạn.";
+      return t("aiChat.askAboutDoc");
     }
 
     if (isAuthenticated && conversations.length === 0) {
-      return "Bắt đầu cuộc trò chuyện đầu tiên với AI HiveMind.";
+      return t("aiChat.firstConversation");
     }
 
-    return "Hỏi AI HiveMind bất cứ điều gì về HiveMind hoặc kiến thức học tập.";
+    return t("aiChat.askAnything");
   };
 
   return (
@@ -73,7 +75,7 @@ export default function AiChatPage() {
         <button
           type="button"
           className="chat-sidebar__backdrop"
-          aria-label="Đóng lịch sử trò chuyện"
+          aria-label={t("aiChat.closeSidebar")}
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -83,7 +85,7 @@ export default function AiChatPage() {
           <button
             type="button"
             className="chat-page__menu-btn"
-            aria-label="Mở lịch sử trò chuyện"
+            aria-label={t("aiChat.openSidebar")}
             onClick={() => setSidebarOpen(true)}
           >
             ☰
@@ -97,10 +99,12 @@ export default function AiChatPage() {
                 })}
                 className="chat-page__context"
               >
-                Đang hỏi về:{" "}
-                {activeDocumentTitle ||
-                  contextDoc?.title ||
-                  `tài liệu #${activeDocumentId}`}
+                {t("aiChat.askingAbout", {
+                  title:
+                    activeDocumentTitle ||
+                    contextDoc?.title ||
+                    t("aiChat.docFallback", { id: activeDocumentId }),
+                })}
               </Link>
             )}
           </div>
@@ -122,16 +126,14 @@ export default function AiChatPage() {
               />
             ))}
           {sending && (
-            <ChatMessage role="ai" text="AI HiveMind đang soạn câu trả lời..." />
+            <ChatMessage role="ai" text={t("aiChat.composing")} />
           )}
           <div ref={bottomRef} />
         </div>
 
         {isUnsupportedFormat ? (
           <p className="chat-unsupported-notice">
-            AI HiveMind không đọc được nội dung của tài liệu này (định dạng file
-            không được hỗ trợ), nên không thể trả lời câu hỏi về tài liệu này.
-            Bạn vẫn có thể xem hoặc tải tài liệu như bình thường.
+            {t("aiChat.unsupportedNotice")}
           </p>
         ) : (
           <ChatInput

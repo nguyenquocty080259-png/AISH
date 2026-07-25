@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { useLocation } from "react-router-dom";
+import i18n from "../i18n";
 import * as aiChatApi from "../api/aiChatApi";
 import * as documentApi from "../api/documentApi";
 import { useAuth } from "../hooks/useAuth";
@@ -17,7 +18,7 @@ const AiWidgetContext = createContext(null);
 const createGreeting = () => ({
   id: "ai-greeting",
   role: "ai",
-  text: "Xin chào  Tôi có thể giúp gì cho bạn?",
+  text: i18n.t("aiWidget.greeting"),
 });
 
 const mapHistoryMessage = (message) => ({
@@ -58,7 +59,7 @@ export function AiWidgetProvider({ children }) {
   }, [routeDocumentId]);
 
   const currentDoc = routeDocumentId ? docCache[routeDocumentId] : null;
-  const currentDocTitle = currentDoc?.title || "tài liệu này";
+  const currentDocTitle = currentDoc?.title || i18n.t("aiWidget.docContextDefault");
   const currentDocReady =
     Boolean(routeDocumentId) &&
     currentDoc?.aiSupported !== false &&
@@ -80,14 +81,14 @@ export function AiWidgetProvider({ children }) {
         if (cancelled) return;
         setDocCache((prev) => ({
           ...prev,
-          [routeDocumentId]: doc || { title: "tài liệu này" },
+          [routeDocumentId]: doc || { title: i18n.t("aiWidget.docContextDefault") },
         }));
       })
       .catch(() => {
         if (cancelled) return;
         setDocCache((prev) => ({
           ...prev,
-          [routeDocumentId]: { title: "tài liệu này", aiSupported: false },
+          [routeDocumentId]: { title: i18n.t("aiWidget.docContextDefault"), aiSupported: false },
         }));
       });
 
@@ -256,7 +257,7 @@ export function AiWidgetProvider({ children }) {
       const aiMessage = {
         id: `ai-${Date.now()}`,
         role: "ai",
-        text: response.answer || "Tôi chưa có câu trả lời phù hợp.",
+        text: response.answer || i18n.t("aiWidget.noAnswer"),
         mode: response.mode,
       };
 
@@ -274,7 +275,7 @@ export function AiWidgetProvider({ children }) {
       const errorMessage = {
         id: `ai-error-${Date.now()}`,
         role: "ai",
-        text: "Xin lỗi, có lỗi xảy ra...",
+        text: i18n.t("aiWidget.error"),
         isError: true,
       };
 

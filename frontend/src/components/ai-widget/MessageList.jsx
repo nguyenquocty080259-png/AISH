@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import MessageBubble from "./MessageBubble";
 import TypingIndicator from "./TypingIndicator";
 
@@ -18,6 +19,7 @@ const styles = {
 };
 
 export default function MessageList({ messages, isTyping, isHistoryLoading }) {
+  const { t } = useTranslation();
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -29,7 +31,7 @@ export default function MessageList({ messages, isTyping, isHistoryLoading }) {
       {messages.map((message) => (
         <MessageBubble key={message.id} message={message} />
       ))}
-      {isHistoryLoading && <p style={styles.loading}>Đang tải lịch sử chat...</p>}
+      {isHistoryLoading && <p style={styles.loading}>{t("aiWidget.loadingHistory")}</p>}
       {isTyping && <TypingIndicator />}
       <div ref={bottomRef} />
     </div>

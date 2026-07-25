@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const styles = {
   form: {
@@ -33,6 +34,7 @@ const styles = {
 };
 
 export default function ChatInput({ onSend, disabled }) {
+  const { t } = useTranslation();
   const [value, setValue] = useState("");
 
   const submit = () => {
@@ -62,7 +64,7 @@ export default function ChatInput({ onSend, disabled }) {
         value={value}
         onChange={(event) => setValue(event.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Hỏi AI HiveMind..."
+        placeholder={t("aiWidget.inputPlaceholder")}
         disabled={disabled}
       />
       <button type="submit" style={styles.button} disabled={disabled || !value.trim()}>

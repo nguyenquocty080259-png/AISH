@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useCommunityPage } from "./useCommunityPage";
 import { ROUTES, buildRoute } from "../../constants/routes";
 import DocumentThumb from "../../components/ui/DocumentThumb";
 
 export default function CommunityPage() {
+  const { t } = useTranslation();
   const {
     items, loading, keyword, setKeyword, sortBy, setSortBy,
     subjectId, setSubjectId, minRating, setMinRating, subjects,
@@ -14,40 +16,40 @@ export default function CommunityPage() {
 
   return (
     <div className="px-6 lg:px-8 py-6 text-app">
-      <h1 className="mb-6 text-2xl font-bold">Cộng đồng</h1>
+      <h1 className="mb-6 text-2xl font-bold">{t("community.title")}</h1>
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <div className="relative min-w-[220px] flex-1">
           <svg className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-secondary" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
-          <input type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="Tìm tài liệu công khai..."
+          <input type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder={t("community.searchPlaceholder")}
             className="w-full rounded-pill border border-border bg-surface py-2.5 pl-11 pr-4 text-sm text-app outline-none focus:border-primary" />
         </div>
         <select value={subjectId} onChange={(e) => setSubjectId(e.target.value)} className={selectCls}>
-          <option value="">Tất cả môn học</option>
+          <option value="">{t("community.allSubjects")}</option>
           {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
         <select value={minRating} onChange={(e) => setMinRating(e.target.value)} className={selectCls}>
-          <option value="">Mọi đánh giá</option>
-          <option value="4">★ 4 trở lên</option>
-          <option value="3">★ 3 trở lên</option>
-          <option value="2">★ 2 trở lên</option>
-          <option value="1">★ 1 trở lên</option>
+          <option value="">{t("community.anyRating")}</option>
+          <option value="4">{t("community.rating4")}</option>
+          <option value="3">{t("community.rating3")}</option>
+          <option value="2">{t("community.rating2")}</option>
+          <option value="1">{t("community.rating1")}</option>
         </select>
         <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className={selectCls}>
-          <option value="newest">Mới nhất</option>
-          <option value="downloads">Tải nhiều</option>
-          <option value="rating">Đánh giá cao</option>
+          <option value="newest">{t("community.sortNewest")}</option>
+          <option value="downloads">{t("community.sortDownloads")}</option>
+          <option value="rating">{t("community.sortRating")}</option>
         </select>
         <button type="button" onClick={resetFilters}
           className="rounded-pill border border-border bg-surface px-4 py-2.5 text-sm font-medium text-secondary transition-colors hover:border-primary hover:text-primary">
-          Xoá lọc
+          {t("community.resetFilter")}
         </button>
       </div>
 
       {loading ? (
-        <p className="py-16 text-center text-secondary">Đang tải...</p>
+        <p className="py-16 text-center text-secondary">{t("community.loading")}</p>
       ) : items.length === 0 ? (
-        <p className="py-16 text-center text-secondary">Không có tài liệu nào khớp bộ lọc.</p>
+        <p className="py-16 text-center text-secondary">{t("community.empty")}</p>
       ) : (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {items.map((doc) => {
@@ -80,10 +82,10 @@ export default function CommunityPage() {
       {totalPages > 1 && (
         <div className="mt-8 flex items-center justify-center gap-4 text-sm">
           <button disabled={page <= 0} onClick={() => setPage((p) => p - 1)}
-            className="rounded-input border border-border px-4 py-2 text-secondary transition-colors hover:border-primary hover:text-primary disabled:opacity-50">← Trước</button>
-          <span className="text-secondary">Trang {page + 1} / {totalPages}</span>
+            className="rounded-input border border-border px-4 py-2 text-secondary transition-colors hover:border-primary hover:text-primary disabled:opacity-50">{t("community.prev")}</button>
+          <span className="text-secondary">{t("community.pageOf", { page: page + 1, total: totalPages })}</span>
           <button disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}
-            className="rounded-input border border-border px-4 py-2 text-secondary transition-colors hover:border-primary hover:text-primary disabled:opacity-50">Sau →</button>
+            className="rounded-input border border-border px-4 py-2 text-secondary transition-colors hover:border-primary hover:text-primary disabled:opacity-50">{t("community.next")}</button>
         </div>
       )}
     </div>
