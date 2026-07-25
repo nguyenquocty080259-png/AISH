@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import * as authApi from "../../../api/authApi";
 import { useToast } from "../../../hooks/useToast";
 import { ROUTES } from "../../../constants/routes";
@@ -7,6 +8,8 @@ import { ROUTES } from "../../../constants/routes";
 const RESEND_COOLDOWN_SECONDS = 60;
 
 export function useOtpPage() {
+
+  const { t } = useTranslation();
 
   const { state } = useLocation();
 
@@ -44,7 +47,7 @@ export function useOtpPage() {
           otp,
         });
         showSuccess(
-          "Xác thực OTP thành công."
+          t("auth.otp.verifySuccess")
         );
         navigate(
           ROUTES.RESET_PASSWORD,
@@ -62,7 +65,7 @@ export function useOtpPage() {
         otp
       });
       showSuccess(
-        "Xác minh email thành công, vui lòng đăng nhập."
+        t("auth.otp.verifyEmailSuccess")
       );
       navigate(
         ROUTES.LOGIN
@@ -92,7 +95,7 @@ export function useOtpPage() {
         });
       }
       showSuccess(
-        "Đã gửi lại mã OTP."
+        t("auth.otp.resent")
       );
       setCooldown(
         RESEND_COOLDOWN_SECONDS

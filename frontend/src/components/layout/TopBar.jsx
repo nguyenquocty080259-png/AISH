@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../hooks/useAuth";
 import NotificationBell from "../notifications/NotificationBell";
+import LanguageSwitcher from "../common/LanguageSwitcher";
 import "./top-bar.css";
 
 // Props:
@@ -16,6 +18,7 @@ function initials(name) {
 }
 
 export default function TopBar({ left = null, menuItems }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
@@ -30,6 +33,7 @@ export default function TopBar({ left = null, menuItems }) {
     <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-4 border-b border-border bg-surface px-6">
       <div className="text-sm text-secondary">{left}</div>
       <div className="flex items-center gap-4">
+        <LanguageSwitcher />
         <div className="topbar-bell">
           <NotificationBell />
         </div>
@@ -45,8 +49,8 @@ export default function TopBar({ left = null, menuItems }) {
           {open && (
             <div className="absolute right-0 top-full z-50 mt-2 w-60 rounded-card border border-border bg-surface py-2 shadow-lg">
               <div className="px-4 py-2">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-secondary">Tài khoản</p>
-                <p className="mt-0.5 truncate font-semibold text-app">{user?.fullName ?? "Người dùng"}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-secondary">{t("common.account")}</p>
+                <p className="mt-0.5 truncate font-semibold text-app">{user?.fullName ?? t("common.user")}</p>
               </div>
               {menuItems.map((mi, i) => {
                 const prev = menuItems[i - 1];

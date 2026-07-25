@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import Card from "../ui/Card";
 import Badge from "../ui/Badge";
 import "./RecommendationCard.css";
@@ -6,6 +7,7 @@ import "./RecommendationCard.css";
 // trang "Yêu thích". RecommendedDocumentDTO hiện KHÔNG có storageType -> badge storage
 // chỉ hiện nếu field có mặt. actions: node tuỳ chọn (vd nút un-favorite) hiện góc trên phải.
 export default function RecommendationCard({ item, onClick, actions }) {
+  const { t } = useTranslation();
   return (
     <Card clickable onClick={onClick} className="recommendation-card">
       <div className="recommendation-card__header">
@@ -28,7 +30,7 @@ export default function RecommendationCard({ item, onClick, actions }) {
         <p className="recommendation-card__subjects">{item.subjectNames.join(", ")}</p>
       )}
       {item.ownerName && (
-        <p className="recommendation-card__owner">Đăng bởi {item.ownerName}</p>
+        <p className="recommendation-card__owner">{t("common.recommendation.postedBy", { name: item.ownerName })}</p>
       )}
     </Card>
   );

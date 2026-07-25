@@ -1,7 +1,9 @@
+import { useTranslation } from "react-i18next";
 import { useOAuthSuccessPage } from "./hooks/useOAuthSuccessPage";
 import logo from "../../assets/images/hivemind-logo.png";
 
 export default function OAuthSuccessPage() {
+  const { t } = useTranslation();
   useOAuthSuccessPage();
 
   return (
@@ -13,8 +15,8 @@ export default function OAuthSuccessPage() {
         <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.2" strokeWidth="4" />
         <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
       </svg>
-      <h1 className="mt-6 text-2xl font-bold tracking-tight">Đang đăng nhập...</h1>
-      <p className="mt-2 max-w-sm text-secondary">Vui lòng chờ trong giây lát khi chúng tôi chuẩn bị không gian học tập của bạn.</p>
+      <h1 className="mt-6 text-2xl font-bold tracking-tight">{t("auth.oauth.signingIn")}</h1>
+      <p className="mt-2 max-w-sm text-secondary">{t("auth.oauth.preparingSpace")}</p>
     </div>
   );
 }

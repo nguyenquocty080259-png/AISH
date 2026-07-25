@@ -1,0 +1,186 @@
+{
+  "common": {
+    "account": "Account",
+    "user": "User",
+    "loggedOut": "Signed out.",
+    "menu": {
+      "profile": "Profile",
+      "logout": "Sign out",
+      "viewAsUser": "View as User",
+      "backToAdmin": "Back to Admin"
+    },
+    "actions": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "close": "Close",
+      "delete": "Delete",
+      "edit": "Edit",
+      "confirm": "Confirm",
+      "back": "Back",
+      "next": "Next",
+      "search": "Search",
+      "loading": "Loading...",
+      "retry": "Retry",
+      "viewAll": "View all",
+      "apply": "Apply",
+      "reset": "Reset",
+      "send": "Send",
+      "sending": "Sending...",
+      "processing": "Processing...",
+      "remove": "Remove"
+    },
+    "noPermissionView": "You don't have permission to view this document",
+    "format": {
+      "image": "Image"
+    },
+    "storage": {
+      "usedOf": "used {{used}} / {{total}}",
+      "local": "Server (LOCAL)",
+      "cloud": "Cloud (CLOUD)",
+      "trashHint": "Documents in trash still count toward your storage."
+    },
+    "notifications": {
+      "title": "Notifications",
+      "ariaLabel": "Notifications, {{count}} unread",
+      "markAllRead": "Mark all as read",
+      "marking": "Processing...",
+      "loading": "Loading...",
+      "empty": "No notifications yet."
+    },
+    "report": {
+      "menuAria": "Open report menu",
+      "report": "Report",
+      "modalTitle": "Report content",
+      "reasonLabel": "Reason for reporting",
+      "reasonPlaceholder": "Describe why you want to report this...",
+      "emptyReason": "Please enter a reason for reporting.",
+      "success": "Report sent, thank you."
+    },
+    "recommendation": {
+      "postedBy": "Posted by {{name}}"
+    },
+    "footer": {
+      "copyright": "© 2026 HiveMind"
+    }
+  },
+  "nav": {
+    "home": "Home",
+    "features": "Features",
+    "howItWorks": "How it works",
+    "about": "About",
+    "dashboard": "Home",
+    "myDocuments": "My documents",
+    "community": "Community",
+    "collections": "Collections",
+    "favorites": "Favorites",
+    "sharedWithMe": "Shared with me",
+    "aiHiveMind": "AI HiveMind",
+    "myReports": "My reports",
+    "trash": "Trash",
+    "addDocument": "Add document"
+  },
+  "admin": {
+    "adminMode": "Admin Mode",
+    "nav": {
+      "content": "Content",
+      "user": "User",
+      "system": "System",
+      "documents": "Documents",
+      "subjects": "Subjects",
+      "keywords": "Keywords",
+      "users": "Users",
+      "appeals": "Appeals",
+      "reports": "Reports",
+      "stats": "Statistics",
+      "settings": "Settings"
+    }
+  },
+  "auth": {
+    "orDivider": "or",
+    "shell": {
+      "heroTitle": "Smart AI-powered learning platform",
+      "heroSubtitle": "Join the HiveMind community to optimize your research and manage your academic documents.",
+      "tagCollaborative": "Collaborative",
+      "tagNurturing": "Nurturing",
+      "tagOrganized": "Organized"
+    },
+    "password": {
+      "show": "Show password",
+      "hide": "Hide password"
+    },
+    "login": {
+      "title": "Sign in",
+      "subtitle": "Keep learning and sharing documents with HiveMind.",
+      "email": "Email",
+      "emailPlaceholder": "you@email.com",
+      "password": "Password",
+      "forgotPassword": "Forgot password?",
+      "submit": "Sign in",
+      "submitting": "Signing in...",
+      "noAccount": "Don't have an account?",
+      "signupNow": "Sign up now",
+      "unverified": "Email not verified yet, please verify your OTP."
+    },
+    "signup": {
+      "title": "Sign up",
+      "subtitle": "Join HiveMind to store, share and chat with AI HiveMind about your study materials.",
+      "fullName": "Full name",
+      "fullNamePlaceholder": "John Doe",
+      "password": "Password",
+      "passwordHelper": "At least 8 characters and must contain one uppercase letter",
+      "submit": "Sign up",
+      "submitting": "Signing up...",
+      "haveAccount": "Already have an account?",
+      "login": "Sign in",
+      "success": "Sign-up successful, please check your email for the OTP code."
+    },
+    "forgot": {
+      "title": "Forgot password",
+      "subtitle": "Enter your email to receive an OTP to reset your password.",
+      "submit": "Send OTP",
+      "submitting": "Sending...",
+      "backToLogin": "← Back to sign in"
+    },
+    "reset": {
+      "title": "Reset password",
+      "subtitle": "Create a new password for your account.",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm password",
+      "requirementsTitle": "Password requirements:",
+      "minChars": "At least 8 characters",
+      "submit": "Save password",
+      "submitting": "Processing...",
+      "backToLogin": "← Back to sign in page",
+      "expired": "Your password reset session has expired. Please try again.",
+      "tooShort": "Password must be at least 8 characters.",
+      "mismatch": "Password confirmation does not match.",
+      "success": "Password changed successfully."
+    },
+    "otp": {
+      "missingEmailTitle": "Missing email information",
+      "missingEmailSubtitle": "Please sign up or sign in again to receive the OTP code.",
+      "backToSignup": "Back to sign up",
+      "title": "Verify email",
+      "sentPrefix": "A 6-digit OTP code has been sent to",
+      "sentSuffix": "The code is valid for 2 minutes.",
+      "label": "OTP code",
+      "submit": "Verify",
+      "submitting": "Verifying...",
+      "notReceived": "Didn't receive the code?",
+      "resend": "Resend OTP code",
+      "resendIn": "Resend in {{count}}s",
+      "backToSignupPage": "← Back to sign up page",
+      "verifySuccess": "OTP verified successfully.",
+      "verifyEmailSuccess": "Email verified successfully, please sign in.",
+      "resent": "OTP code resent."
+    },
+    "oauth": {
+      "signingIn": "Signing in...",
+      "preparingSpace": "Please wait a moment while we prepare your study space.",
+      "failed": "Social sign-in failed, please try again.",
+      "noEmail": "Could not get an email from your social account. Please use a public email or sign in with another method.",
+      "banned": "Your account has been banned.",
+      "pending": "Your account is pending approval."
+    }
+  }
+}

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import Badge from "./Badge";
 import "./FormatBadge.css";
 
@@ -10,13 +11,13 @@ const EXTENSION_LABELS = {
   pptx: "PPTX",
   ppt: "PPT",
   txt: "TXT",
-  png: "ảnh",
-  jpg: "ảnh",
-  jpeg: "ảnh",
-  gif: "ảnh",
-  webp: "ảnh",
-  bmp: "ảnh",
-  svg: "ảnh",
+  png: "IMAGE",
+  jpg: "IMAGE",
+  jpeg: "IMAGE",
+  gif: "IMAGE",
+  webp: "IMAGE",
+  bmp: "IMAGE",
+  svg: "IMAGE",
 };
 
 function extensionOf(fileName) {
@@ -33,7 +34,7 @@ export function resolveFormatLabel(fileType, fileName) {
   const type = (fileType || "").toLowerCase();
   const ext = extensionOf(fileName);
 
-  if (type.includes("image")) return "ảnh";
+  if (type.includes("image")) return "IMAGE";
   if (type.includes("pdf")) return "PDF";
   if (type.includes("wordprocessingml")) return "DOCX";
   if (type.includes("spreadsheetml")) return "XLSX";

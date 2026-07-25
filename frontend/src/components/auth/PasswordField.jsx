@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 // Input mật khẩu có nút ẩn/hiện (thuần FE). Nếu không truyền label thì caller tự render label.
 export default function PasswordField({ id, label, value, onChange, placeholder, helper, minLength, required = true }) {
+  const { t } = useTranslation();
   const [show, setShow] = useState(false);
   return (
     <div className="flex flex-col gap-1.5">
@@ -20,7 +22,7 @@ export default function PasswordField({ id, label, value, onChange, placeholder,
         <button
           type="button"
           onClick={() => setShow((s) => !s)}
-          aria-label={show ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+          aria-label={show ? t("auth.password.hide") : t("auth.password.show")}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary hover:text-primary"
         >
           {show ? (
