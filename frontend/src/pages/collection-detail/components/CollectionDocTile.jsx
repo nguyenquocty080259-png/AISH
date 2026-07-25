@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Card from "../../../components/ui/Card";
 import Badge from "../../../components/ui/Badge";
 import Button from "../../../components/ui/Button";
@@ -7,6 +8,7 @@ import { ROUTES, buildRoute } from "../../../constants/routes";
 // Local tile for this page only — My Documents' DocumentCard is page-specific and not
 // worth refactoring into a shared component for this single reuse (kept scope minimal).
 export default function CollectionDocTile({ item, onRemove, removing }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const handleRemoveClick = (e) => {
@@ -20,10 +22,10 @@ export default function CollectionDocTile({ item, onRemove, removing }) {
     return (
       <Card className="collection-doc-tile collection-doc-tile--unavailable">
         <p className="collection-doc-tile__unavailable-text">
-          Tài liệu này không còn khả dụng
+          {t("collectionDetail.unavailable")}
         </p>
         <Button variant="ghost" onClick={handleRemoveClick} disabled={removing}>
-          {removing ? "Đang gỡ..." : "Gỡ khỏi collection"}
+          {removing ? t("collectionDetail.removing") : t("collectionDetail.removeFromCollection")}
         </Button>
       </Card>
     );
@@ -42,7 +44,7 @@ export default function CollectionDocTile({ item, onRemove, removing }) {
         {doc.storageType && <Badge intent="info">{doc.storageType}</Badge>}
       </div>
       <Button variant="ghost" onClick={handleRemoveClick} disabled={removing}>
-        {removing ? "Đang gỡ..." : "Gỡ khỏi collection"}
+        {removing ? t("collectionDetail.removing") : t("collectionDetail.removeFromCollection")}
       </Button>
     </Card>
   );

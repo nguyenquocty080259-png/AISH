@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import * as collectionApi from "../../../api/collectionApi";
 import { useToast } from "../../../hooks/useToast";
 
 export function useCollectionsPage() {
+  const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
 
   const [collections, setCollections] = useState([]);
@@ -45,7 +47,7 @@ export function useCollectionsPage() {
     try {
       const created = await collectionApi.createCollection(name);
       setCollections((prev) => [created, ...prev]);
-      showSuccess("Đã tạo collection mới.");
+      showSuccess(t("collections.created"));
       setCreateModalOpen(false);
     } catch (err) {
       showError(err.message);
@@ -63,7 +65,7 @@ export function useCollectionsPage() {
     try {
       const updated = await collectionApi.renameCollection(renameTarget.id, name);
       setCollections((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
-      showSuccess("Đã đổi tên collection.");
+      showSuccess(t("collections.renamed"));
       setRenameTarget(null);
     } catch (err) {
       showError(err.message);
@@ -81,7 +83,7 @@ export function useCollectionsPage() {
     try {
       await collectionApi.deleteCollection(deleteTarget.id);
       setCollections((prev) => prev.filter((c) => c.id !== deleteTarget.id));
-      showSuccess("Đã xóa collection.");
+      showSuccess(t("collections.deleted"));
       setDeleteTarget(null);
     } catch (err) {
       showError(err.message);

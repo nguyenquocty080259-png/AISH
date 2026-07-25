@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useDocumentPage } from "./hooks/useDocumentPage";
 import SearchBar from "./components/SearchBar";
 import FilterBar from "./components/FilterBar";
@@ -8,6 +9,7 @@ import StorageUsageBar from "../../components/ui/StorageUsageBar";
 import "./document.css";
 
 export default function DocumentPage() {
+  const { t } = useTranslation();
   const {
     loading,
     documents,
@@ -32,9 +34,9 @@ export default function DocumentPage() {
   return (
     <div className="doc-page">
       <div className="doc-page__header">
-        <h1 className="doc-page__title">Tài liệu</h1>
+        <h1 className="doc-page__title">{t("documents.title")}</h1>
         <button className="doc-page__upload-btn" onClick={() => setIsUploadOpen(true)}>
-          + Tải lên tài liệu
+          {t("documents.upload")}
         </button>
       </div>
 
@@ -51,9 +53,9 @@ export default function DocumentPage() {
       </div>
 
       {loading ? (
-        <p className="doc-empty">Đang tải danh sách tài liệu...</p>
+        <p className="doc-empty">{t("documents.loading")}</p>
       ) : documents.length === 0 ? (
-        <p className="doc-empty">Không tìm thấy tài liệu phù hợp.</p>
+        <p className="doc-empty">{t("documents.empty")}</p>
       ) : (
         <div className="doc-grid">
           {documents.map((doc) => (

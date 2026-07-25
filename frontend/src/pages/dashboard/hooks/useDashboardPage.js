@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../../hooks/useAuth";
 import { useToast } from "../../../hooks/useToast";
 import { ROUTES } from "../../../constants/routes";
@@ -8,6 +9,7 @@ import * as recentlyViewedApi from "../../../api/recentlyViewedApi";
 import * as aiApi from "../../../api/aiApi";
 
 export function useDashboardPage() {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const { showSuccess, showError } = useToast();
   const navigate = useNavigate();
@@ -45,7 +47,7 @@ export function useDashboardPage() {
 
   const handleLogout = async () => {
     await logout();
-    showSuccess("Đã đăng xuất.");
+    showSuccess(t("common.loggedOut"));
     navigate(ROUTES.HOME);
   };
 

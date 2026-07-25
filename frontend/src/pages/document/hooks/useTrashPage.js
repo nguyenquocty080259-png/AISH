@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import * as documentApi from "../../../api/documentApi";
 import { useToast } from "../../../hooks/useToast";
 
 export function useTrashPage() {
+  const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,7 +29,7 @@ export function useTrashPage() {
   const handleRestore = async (id) => {
     try {
       await documentApi.restoreDocument(id);
-      showSuccess("Đã khôi phục tài liệu.");
+      showSuccess(t("trash.restored"));
       await load();
     } catch (err) {
       showError(err.message);
@@ -35,10 +37,10 @@ export function useTrashPage() {
   };
 
   const handlePermanentDelete = async (id) => {
-    if (!window.confirm("Xóa vĩnh viễn tài liệu này? Không thể khôi phục lại.")) return;
+    if (!window.confirm(t("trash.confirmPermanent"))) return;
     try {
       await documentApi.permanentDelete(id);
-      showSuccess("Đã xóa vĩnh viễn.");
+      showSuccess(t("trash.permanentDeleted"));
       await load();
     } catch (err) {
       showError(err.message);

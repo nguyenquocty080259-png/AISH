@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import PageHeader from "../../components/ui/PageHeader";
 import EmptyState from "../../components/ui/EmptyState";
 import RecommendationCard from "../../components/recommendations/RecommendationCard";
@@ -5,16 +6,17 @@ import { useFavoritesPage } from "./hooks/useFavoritesPage";
 import "./favorites.css";
 
 export default function FavoritesPage() {
+  const { t } = useTranslation();
   const { favorites, loading, unfavorite, goToDocument } = useFavoritesPage();
 
   return (
     <div className="favorites-page">
-      <PageHeader title="Yêu thích" subtitle="Tài liệu bạn đã đánh dấu yêu thích." />
+      <PageHeader title={t("favorites.title")} subtitle={t("favorites.subtitle")} />
 
       {loading ? (
-        <p className="favorites-page__loading">Đang tải...</p>
+        <p className="favorites-page__loading">{t("favorites.loading")}</p>
       ) : favorites.length === 0 ? (
-        <EmptyState icon="⭐" message="Chưa có tài liệu yêu thích." />
+        <EmptyState icon="⭐" message={t("favorites.empty")} />
       ) : (
         <div className="favorites-grid">
           {favorites.map((doc) => (
@@ -27,8 +29,8 @@ export default function FavoritesPage() {
                   type="button"
                   className="favorites-page__unfav"
                   onClick={() => unfavorite(doc.id)}
-                  aria-label="Bỏ yêu thích"
-                  title="Bỏ yêu thích"
+                  aria-label={t("favorites.unfavorite")}
+                  title={t("favorites.unfavorite")}
                 >
                   ♥
                 </button>
