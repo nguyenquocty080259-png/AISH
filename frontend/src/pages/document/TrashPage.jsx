@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useTrashPage } from "./hooks/useTrashPage";
 import { ROUTES } from "../../constants/routes";
 import "./document.css";
@@ -14,25 +15,26 @@ function daysLeft(deletedAt) {
 }
 
 export default function TrashPage() {
+  const { t } = useTranslation();
   const { documents, loading, handleRestore, handlePermanentDelete } = useTrashPage();
 
   return (
     <div className="doc-page">
       <div className="doc-page__header">
-        <h1 className="doc-page__title">Thùng rác</h1>
+        <h1 className="doc-page__title">{t("trash.title")}</h1>
         <Link to={ROUTES.DOCUMENTS} className="doc-page__upload-btn">
-          ← Về tài liệu
+          {t("trash.back")}
         </Link>
       </div>
 
       <p style={{ color: "#888", marginBottom: 16 }}>
-        Tài liệu trong thùng rác sẽ tự động bị xóa vĩnh viễn sau {DAYS_TO_DELETE} ngày.
+        {t("trash.autoDeleteNote", { days: DAYS_TO_DELETE })}
       </p>
 
       {loading ? (
-        <p className="doc-empty">Đang tải...</p>
+        <p className="doc-empty">{t("trash.loading")}</p>
       ) : documents.length === 0 ? (
-        <p className="doc-empty">Thùng rác trống.</p>
+        <p className="doc-empty">{t("trash.empty")}</p>
       ) : (
         <div className="doc-grid">
           {documents.map((doc) => {
@@ -43,7 +45,7 @@ export default function TrashPage() {
                 <p style={{ color: "#888", fontSize: 13 }}>{doc.fileName}</p>
                 {left != null && (
                   <p style={{ color: left <= 5 ? "#e11" : "#888", fontSize: 13 }}>
-                    {left > 0 ? `Còn ${left} ngày` : "Sắp bị xóa"}
+                    {left > 0 ? t("trash.daysLeft", { count: left }) : t("trash.soonDelete")}
                   </p>
                 )}
                 <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
@@ -51,13 +53,13 @@ export default function TrashPage() {
                     className="detail-btn detail-btn--primary"
                     onClick={() => handleRestore(doc.id)}
                   >
-                    Khôi phục
+                    {t("trash.restore")}
                   </button>
                   <button
                     className="detail-btn detail-btn--danger"
                     onClick={() => handlePermanentDelete(doc.id)}
                   >
-                    Xóa vĩnh viễn
+                    {t("trash.permanentDelete")}
                   </button>
                 </div>
               </div>

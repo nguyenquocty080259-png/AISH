@@ -1,9 +1,11 @@
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Card from "../../../components/ui/Card";
 import Button from "../../../components/ui/Button";
 import { ROUTES, buildRoute } from "../../../constants/routes";
 
 export default function CollectionCard({ collection, onRename, onDelete }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const goToDetail = () => {
@@ -19,14 +21,14 @@ export default function CollectionCard({ collection, onRename, onDelete }) {
     <Card clickable className="collection-card" onClick={goToDetail}>
       <h3 className="collection-card__name">{collection.name}</h3>
       <p className="collection-card__count">
-        {collection.documentCount ?? 0} tài liệu
+        {t("collections.docCount", { count: collection.documentCount ?? 0 })}
       </p>
       <div className="collection-card__actions">
         <Button variant="ghost" onClick={stop(onRename)}>
-          Đổi tên
+          {t("collections.rename")}
         </Button>
         <Button variant="ghost" onClick={stop(onDelete)}>
-          Xóa
+          {t("collections.delete")}
         </Button>
       </div>
     </Card>

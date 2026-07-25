@@ -1,11 +1,12 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { formatBytes } from "../../../components/ui/StorageUsageBar";
 
-// Trả về thông báo lỗi tiếng Việt nếu file vượt giới hạn 1 tệp HOẶC vượt quota còn lại cho
+// Trả về thông báo lỗi (đã dịch) nếu file vượt giới hạn 1 tệp HOẶC vượt quota còn lại cho
 // storage đã chọn, null nếu ổn. storageUsage null (chưa tải được / lỗi) -> fail-open, không
 // chặn gì ở FE (BE vẫn là chốt chặn thật - xem DocumentServiceImpl.enforceUploadSizeLimit/
 // enforceUploadQuota).
-function checkSizeLimit(file, storage, storageUsage) {
+function checkSizeLimit(file, storage, storageUsage, t) {
   if (!file || !storageUsage) return null;
   const {
     usedLocalBytes, usedCloudBytes,
@@ -15,37 +16,37 @@ function checkSizeLimit(file, storage, storageUsage) {
 
   if (storage === "LOCAL" || storage === "BOTH") {
     if (maxFileLocalBytes != null && file.size > maxFileLocalBytes) {
-      return `Tệp ${formatBytes(file.size)} vượt giới hạn ${formatBytes(maxFileLocalBytes)} cho nơi lưu Máy chủ.`;
+      return t("documents.upload_modal.sizeLocal", { file: formatBytes(file.size), limit: formatBytes(maxFileLocalBytes) });
     }
     const remainingLocal = quotaLocalBytes - usedLocalBytes;
     if (quotaLocalBytes != null && file.size > remainingLocal) {
-      return `Dung lượng còn lại ${formatBytes(Math.max(remainingLocal, 0))} không đủ cho tệp ${formatBytes(file.size)} ở nơi lưu Máy chủ.`;
+      return t("documents.upload_modal.quotaLocal", { remaining: formatBytes(Math.max(remainingLocal, 0)), file: formatBytes(file.size) });
     }
   }
   if (storage === "CLOUD" || storage === "BOTH") {
     if (maxFileCloudBytes != null && file.size > maxFileCloudBytes) {
-      return `Tệp ${formatBytes(file.size)} vượt giới hạn ${formatBytes(maxFileCloudBytes)} cho nơi lưu Cloud.`;
+      return t("documents.upload_modal.sizeCloud", { file: formatBytes(file.size), limit: formatBytes(maxFileCloudBytes) });
     }
     const remainingCloud = quotaCloudBytes - usedCloudBytes;
     if (quotaCloudBytes != null && file.size > remainingCloud) {
-      return `Dung lượng còn lại ${formatBytes(Math.max(remainingCloud, 0))} không đủ cho tệp ${formatBytes(file.size)} ở nơi lưu Cloud.`;
+      return t("documents.upload_modal.quotaCloud", { remaining: formatBytes(Math.max(remainingCloud, 0)), file: formatBytes(file.size) });
     }
   }
   return null;
 }
 
 // Text "Còn lại: ..." cho nơi lưu đang chọn, hiển thị trước khi user chọn file.
-function remainingSpaceText(storage, storageUsage) {
+function remainingSpaceText(storage, storageUsage, t) {
   if (!storageUsage) return null;
   const { usedLocalBytes, usedCloudBytes, quotaLocalBytes, quotaCloudBytes } = storageUsage;
   const parts = [];
   if (storage === "LOCAL" || storage === "BOTH") {
-    parts.push(`Máy chủ: ${formatBytes(Math.max(quotaLocalBytes - usedLocalBytes, 0))}`);
+    parts.push(t("documents.upload_modal.remainingLocal", { size: formatBytes(Math.max(quotaLocalBytes - usedLocalBytes, 0)) }));
   }
   if (storage === "CLOUD" || storage === "BOTH") {
-    parts.push(`Cloud: ${formatBytes(Math.max(quotaCloudBytes - usedCloudBytes, 0))}`);
+    parts.push(t("documents.upload_modal.remainingCloud", { size: formatBytes(Math.max(quotaCloudBytes - usedCloudBytes, 0)) }));
   }
-  return "Còn lại - " + parts.join(", ");
+  return t("documents.upload_modal.remainingPrefix") + parts.join(", ");
 }
 
 // Đuôi tệp của 1 tên file, viết thường, không kèm dấu chấm ("bao-cao.PDF" -> "pdf"). "" nếu
@@ -58,18 +59,22 @@ function extensionOf(filename) {
   return name.slice(dot + 1);
 }
 
-// Thông báo lỗi nếu đuôi tệp không thuộc allowlist, null nếu ổn / chưa biết allowlist (fail-open,
-// BE vẫn là chốt chặn cuối - xem UploadFileTypeService).
-function checkFileType(file, allowedFileTypes) {
+// Thông báo lỗi (đã dịch) nếu đuôi tệp không thuộc allowlist, null nếu ổn / chưa biết allowlist
+// (fail-open, BE vẫn là chốt chặn cuối - xem UploadFileTypeService).
+function checkFileType(file, allowedFileTypes, t) {
   if (!file || !allowedFileTypes || allowedFileTypes.length === 0) return null;
   const ext = extensionOf(file.name);
   if (!ext || !allowedFileTypes.includes(ext)) {
-    return `Loại tệp${ext ? " ." + ext : ""} không được phép. Các loại được phép: ${allowedFileTypes.join(", ")}.`;
+    const types = allowedFileTypes.join(", ");
+    return ext
+      ? t("documents.upload_modal.fileTypeWithExt", { ext, types })
+      : t("documents.upload_modal.fileTypeNoExt", { types });
   }
   return null;
 }
 
 export default function UploadModal({ open, subjects, submitting, storageUsage, allowedFileTypes, onClose, onSubmit }) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [subjectIds, setSubjectIds] = useState([]);
@@ -80,14 +85,14 @@ export default function UploadModal({ open, subjects, submitting, storageUsage, 
   const [storage, setStorage] = useState("LOCAL");
 
   const STORAGE_OPTIONS = [
-    { value: "LOCAL", label: "Máy chủ", hint: "Lưu trên server (nhanh, mặc định)" },
-    { value: "CLOUD", label: "Cloud", hint: "Lưu trên Cloudinary" },
-    { value: "BOTH", label: "Cả hai", hint: "Lưu cả server lẫn Cloudinary" },
+    { value: "LOCAL", label: t("documents.upload_modal.storageLocal"), hint: t("documents.upload_modal.storageLocalHint") },
+    { value: "CLOUD", label: t("documents.upload_modal.storageCloud"), hint: t("documents.upload_modal.storageCloudHint") },
+    { value: "BOTH", label: t("documents.upload_modal.storageBoth"), hint: t("documents.upload_modal.storageBothHint") },
   ];
 
-  const sizeError = checkSizeLimit(file, storage, storageUsage);
-  const typeError = checkFileType(file, allowedFileTypes);
-  const remainingText = remainingSpaceText(storage, storageUsage);
+  const sizeError = checkSizeLimit(file, storage, storageUsage, t);
+  const typeError = checkFileType(file, allowedFileTypes, t);
+  const remainingText = remainingSpaceText(storage, storageUsage, t);
   // Thuộc tính accept cho input file - chỉ set khi biết allowlist, để hộp thoại chọn tệp lọc sẵn.
   const acceptAttr =
     allowedFileTypes && allowedFileTypes.length > 0
@@ -123,25 +128,25 @@ export default function UploadModal({ open, subjects, submitting, storageUsage, 
   return (
     <div className="doc-modal__overlay" onClick={onClose}>
       <div className="doc-modal" onClick={(e) => e.stopPropagation()}>
-        <h2 className="doc-modal__title">Tải lên tài liệu</h2>
+        <h2 className="doc-modal__title">{t("documents.upload_modal.title")}</h2>
 
         <form className="doc-modal__form" onSubmit={handleSubmit}>
           <label>
-            Tên tài liệu
+            {t("documents.upload_modal.name")}
             <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} />
           </label>
-          <button type="button" disabled title="Tải lên xong, mở Sửa tài liệu để AI gợi ý"
+          <button type="button" disabled title={t("documents.upload_modal.aiSuggestHint")}
             style={{ opacity: 0.65, cursor: "not-allowed" }} className="doc-modal__submit">
-            AI gợi ý
+            {t("documents.upload_modal.aiSuggest")}
           </button>
-          <p style={{ color: "#777", fontSize: 12 }}>Tải lên xong, mở Sửa tài liệu để AI gợi ý</p>
+          <p style={{ color: "#777", fontSize: 12 }}>{t("documents.upload_modal.aiSuggestHint")}</p>
 
           <label>
-            Mô tả
+            {t("documents.upload_modal.description")}
             <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
           </label>
 
-          <label style={{ fontWeight: 600 }}>Môn học (chọn 1 hoặc nhiều)</label>
+          <label style={{ fontWeight: 600 }}>{t("documents.upload_modal.subjectLabel")}</label>
 
           {subjectIds.length > 0 && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, margin: "6px 0" }}>
@@ -157,7 +162,7 @@ export default function UploadModal({ open, subjects, submitting, storageUsage, 
                       padding: "3px 12px", fontSize: 13, cursor: "pointer",
                       display: "inline-flex", alignItems: "center", gap: 6,
                     }}
-                    title="Bấm để bỏ chọn"
+                    title={t("documents.upload_modal.subjectRemoveHint")}
                   >
                     {s.name} <span style={{ fontWeight: 700 }}>×</span>
                   </span>
@@ -168,7 +173,7 @@ export default function UploadModal({ open, subjects, submitting, storageUsage, 
 
           <input
             type="text"
-            placeholder="Tìm môn học..."
+            placeholder={t("documents.upload_modal.subjectSearch")}
             value={subjectSearch}
             onChange={(e) => setSubjectSearch(e.target.value)}
             style={{ marginBottom: 8 }}
@@ -185,7 +190,7 @@ export default function UploadModal({ open, subjects, submitting, storageUsage, 
           >
             {filteredSubjects.length === 0 && (
               <p style={{ color: "#888", fontSize: 13, margin: 0, padding: 12 }}>
-                Không tìm thấy môn.
+                {t("documents.upload_modal.noSubject")}
               </p>
             )}
             {filteredSubjects.map((s) => {
@@ -225,12 +230,12 @@ export default function UploadModal({ open, subjects, submitting, storageUsage, 
 
           {subjectError && (
             <p style={{ color: "#e11", fontSize: 13, margin: "4px 0 0" }}>
-              Vui lòng chọn ít nhất 1 môn học.
+              {t("documents.upload_modal.subjectRequired")}
             </p>
           )}
 
           <label>
-            File tài liệu
+            {t("documents.upload_modal.fileLabel")}
             <input
               type="file"
               required
@@ -245,13 +250,13 @@ export default function UploadModal({ open, subjects, submitting, storageUsage, 
           </label>
           {allowedFileTypes && allowedFileTypes.length > 0 && (
             <p style={{ color: "#888", fontSize: 12, margin: "2px 0 0" }}>
-              Loại tệp được phép: {allowedFileTypes.join(", ")}.
+              {t("documents.upload_modal.allowedTypes", { types: allowedFileTypes.join(", ") })}
             </p>
           )}
           {typeError && (
             <p style={{ color: "#e11", fontSize: 13, margin: "4px 0 0" }}>{typeError}</p>
           )}
-          <label style={{ fontWeight: 600 }}>Nơi lưu trữ</label>
+          <label style={{ fontWeight: 600 }}>{t("documents.upload_modal.storageLabel")}</label>
           <div style={{ display: "flex", gap: 8 }}>
             {STORAGE_OPTIONS.map((opt) => {
               const active = storage === opt.value;
@@ -290,9 +295,9 @@ export default function UploadModal({ open, subjects, submitting, storageUsage, 
           )}
 
           <div className="doc-modal__actions">
-            <button type="button" onClick={onClose} className="doc-modal__cancel">Hủy</button>
+            <button type="button" onClick={onClose} className="doc-modal__cancel">{t("common.actions.cancel")}</button>
             <button type="submit" disabled={submitting || !!sizeError || !!typeError} className="doc-modal__submit">
-              {submitting ? "Đang tải lên..." : "Tải lên"}
+              {submitting ? t("documents.upload_modal.submitting") : t("documents.upload_modal.submit")}
             </button>
           </div>
         </form>

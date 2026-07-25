@@ -1,10 +1,12 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ROUTES, buildRoute } from "../../../constants/routes";
 import DocumentThumb from "../../../components/ui/DocumentThumb";
 import ReportMenu from "../../../components/report/ReportMenu";
 import ModerationBadge from "./ModerationBadge";
 
 export default function DocumentCard({ doc, onToggleFavorite }) {
+  const { t } = useTranslation();
   return (
     <div className="doc-card">
       <div className="doc-card__top">
@@ -16,7 +18,7 @@ export default function DocumentCard({ doc, onToggleFavorite }) {
           type="button"
           className={`doc-card__fav ${doc.favorited ? "doc-card__fav--active" : ""}`}
           onClick={() => onToggleFavorite(doc.id)}
-          aria-label="Yêu thích"
+          aria-label={t("documents.favorite")}
         >
           {doc.favorited ? "♥" : "♡"}
         </button>

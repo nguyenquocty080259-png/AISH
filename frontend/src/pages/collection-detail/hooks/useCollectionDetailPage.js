@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import * as collectionApi from "../../../api/collectionApi";
 import * as documentApi from "../../../api/documentApi";
 import { useToast } from "../../../hooks/useToast";
@@ -15,6 +16,7 @@ function normalizeForSearch(text) {
 }
 
 export function useCollectionDetailPage() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const { showSuccess, showError } = useToast();
@@ -68,7 +70,7 @@ export function useCollectionDetailPage() {
     try {
       const updated = await collectionApi.renameCollection(id, name);
       setCollection((prev) => (prev ? { ...prev, name: updated.name } : prev));
-      showSuccess("Đã đổi tên collection.");
+      showSuccess(t("collectionDetail.renamed"));
       setRenameModalOpen(false);
     } catch (err) {
       showError(err.message);
@@ -84,7 +86,7 @@ export function useCollectionDetailPage() {
     setDeleting(true);
     try {
       await collectionApi.deleteCollection(id);
-      showSuccess("Đã xóa collection.");
+      showSuccess(t("collectionDetail.deleted"));
       navigate(ROUTES.SPACES);
     } catch (err) {
       showError(err.message);
@@ -99,7 +101,7 @@ export function useCollectionDetailPage() {
       setCollection((prev) =>
         prev ? { ...prev, items: prev.items.filter((item) => item.documentId !== docId) } : prev
       );
-      showSuccess("Đã gỡ tài liệu khỏi collection.");
+      showSuccess(t("collectionDetail.removed"));
     } catch (err) {
       showError(err.message);
     } finally {
@@ -178,7 +180,7 @@ export function useCollectionDetailPage() {
     setAddingDocs(true);
     try {
       await collectionApi.addDocuments(id, selectedDocIds);
-      showSuccess("Đã thêm tài liệu vào collection.");
+      showSuccess(t("collectionDetail.added"));
       setAddDocsModalOpen(false);
       await load();
     } catch (err) {

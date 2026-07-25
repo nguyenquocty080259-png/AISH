@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import PageHeader from "../../components/ui/PageHeader";
 import Button from "../../components/ui/Button";
 import Modal from "../../components/ui/Modal";
@@ -11,6 +12,7 @@ import { ROUTES } from "../../constants/routes";
 import "./collection-detail.css";
 
 export default function CollectionDetailPage() {
+  const { t } = useTranslation();
   const {
     collection,
     items,
@@ -59,32 +61,32 @@ export default function CollectionDetailPage() {
   };
 
   if (loading) {
-    return <div className="collection-detail-page">Đang tải collection...</div>;
+    return <div className="collection-detail-page">{t("collectionDetail.loadingPage")}</div>;
   }
 
   if (!collection) {
-    return <div className="collection-detail-page">Không tìm thấy collection.</div>;
+    return <div className="collection-detail-page">{t("collectionDetail.notFound")}</div>;
   }
 
   return (
     <div className="collection-detail-page">
       <Link to={ROUTES.SPACES} className="collection-detail-page__back">
-        ‹ Quay lại Spaces
+        {t("collectionDetail.back")}
       </Link>
 
       <PageHeader
         title={collection.name}
-        subtitle={`${items.length} tài liệu`}
+        subtitle={t("collectionDetail.docCount", { count: items.length })}
         actions={
           <>
             <Button variant="primary" onClick={openAddDocsModal}>
-              + Thêm tài liệu
+              {t("collectionDetail.addDoc")}
             </Button>
             <Button variant="secondary" onClick={openRenameModal}>
-              Đổi tên
+              {t("collectionDetail.rename")}
             </Button>
             <Button variant="danger" onClick={openDeleteModal}>
-              Xóa collection
+              {t("collectionDetail.deleteCollection")}
             </Button>
           </>
         }
@@ -93,8 +95,8 @@ export default function CollectionDetailPage() {
       {items.length === 0 ? (
         <EmptyState
           icon="🗂️"
-          message="Chưa có tài liệu nào trong collection này."
-          actionLabel="Thêm tài liệu"
+          message={t("collectionDetail.emptyMessage")}
+          actionLabel={t("collectionDetail.emptyAction")}
           onAction={openAddDocsModal}
         />
       ) : (
@@ -110,10 +112,10 @@ export default function CollectionDetailPage() {
         </div>
       )}
 
-      <Modal open={renameModalOpen} onClose={closeRenameModal} title="Đổi tên collection">
+      <Modal open={renameModalOpen} onClose={closeRenameModal} title={t("collectionDetail.renameTitle")}>
         <form className="collection-detail-form" onSubmit={submitRename}>
           <label className="collection-detail-form__field">
-            Tên collection
+            {t("collectionDetail.nameLabel")}
             <input
               type="text"
               autoFocus
@@ -123,35 +125,35 @@ export default function CollectionDetailPage() {
           </label>
           <div className="collection-detail-form__actions">
             <Button type="button" variant="secondary" onClick={closeRenameModal} disabled={renaming}>
-              Hủy
+              {t("common.actions.cancel")}
             </Button>
             <Button type="submit" variant="primary" disabled={renaming}>
-              {renaming ? "Đang lưu..." : "Lưu"}
+              {renaming ? t("collectionDetail.saving") : t("collectionDetail.save")}
             </Button>
           </div>
         </form>
       </Modal>
 
-      <Modal open={deleteModalOpen} onClose={closeDeleteModal} title="Xóa collection">
+      <Modal open={deleteModalOpen} onClose={closeDeleteModal} title={t("collectionDetail.deleteTitle")}>
         <p className="collection-detail-confirm__text">
-          Xóa collection "{collection.name}"? Tài liệu bên trong sẽ không bị xóa.
+          {t("collectionDetail.deleteConfirm", { name: collection.name })}
         </p>
         <div className="collection-detail-form__actions">
           <Button variant="secondary" onClick={closeDeleteModal} disabled={deleting}>
-            Hủy
+            {t("common.actions.cancel")}
           </Button>
           <Button variant="danger" onClick={deleteCollection} disabled={deleting}>
-            {deleting ? "Đang xóa..." : "Xóa"}
+            {deleting ? t("collectionDetail.deleting") : t("common.actions.delete")}
           </Button>
         </div>
       </Modal>
 
-      <Modal open={addDocsModalOpen} onClose={closeAddDocsModal} title="Thêm tài liệu vào collection">
+      <Modal open={addDocsModalOpen} onClose={closeAddDocsModal} title={t("collectionDetail.addModalTitle")}>
         {loadingAvailableDocs ? (
-          <p className="collection-detail-add__loading">Đang tải danh sách tài liệu...</p>
+          <p className="collection-detail-add__loading">{t("collectionDetail.addLoading")}</p>
         ) : availableDocs.length === 0 ? (
           <p className="collection-detail-add__loading">
-            Không còn tài liệu nào khác để thêm vào collection này.
+            {t("collectionDetail.noOtherDocs")}
           </p>
         ) : (
           <>
@@ -159,7 +161,7 @@ export default function CollectionDetailPage() {
               <input
                 type="text"
                 className="collection-detail-add__search"
-                placeholder="Tìm tài liệu theo tên..."
+                placeholder={t("collectionDetail.searchByName")}
                 value={docQuery}
                 onChange={(e) => setDocQuery(e.target.value)}
               />
@@ -170,7 +172,7 @@ export default function CollectionDetailPage() {
                     className={storageFilter === "ALL" ? "is-active" : ""}
                     onClick={() => setStorageFilter("ALL")}
                   >
-                    Tất cả
+                    {t("collectionDetail.filterAll")}
                   </button>
                   <button
                     type="button"
@@ -194,7 +196,7 @@ export default function CollectionDetailPage() {
                     setSubjectFilter(e.target.value === "ALL" ? "ALL" : Number(e.target.value))
                   }
                 >
-                  <option value="ALL">Tất cả môn</option>
+                  <option value="ALL">{t("collectionDetail.filterAllSubjects")}</option>
                   {subjectOptions.map((s) => (
                     <option key={s.id} value={s.id}>
                       {s.name}
@@ -205,7 +207,7 @@ export default function CollectionDetailPage() {
             </div>
 
             {filteredAvailableDocs.length === 0 ? (
-              <p className="collection-detail-add__loading">Không tìm thấy tài liệu phù hợp.</p>
+              <p className="collection-detail-add__loading">{t("collectionDetail.noMatch")}</p>
             ) : (
               <ul className="collection-detail-add__list">
                 {filteredAvailableDocs.map((doc) => (
@@ -227,19 +229,19 @@ export default function CollectionDetailPage() {
         )}
 
         <p className="collection-detail-add__note">
-          Thêm vào collection chỉ là tham chiếu — tài liệu vẫn còn nguyên trong My Documents.
+          {t("collectionDetail.addNote")}
         </p>
 
         <div className="collection-detail-form__actions">
           <Button variant="secondary" onClick={closeAddDocsModal} disabled={addingDocs}>
-            Hủy
+            {t("common.actions.cancel")}
           </Button>
           <Button
             variant="primary"
             onClick={handleAddDocuments}
             disabled={addingDocs || selectedDocIds.length === 0}
           >
-            {addingDocs ? "Đang thêm..." : `Thêm (${selectedDocIds.length})`}
+            {addingDocs ? t("collectionDetail.adding") : t("collectionDetail.addWithCount", { count: selectedDocIds.length })}
           </Button>
         </div>
       </Modal>

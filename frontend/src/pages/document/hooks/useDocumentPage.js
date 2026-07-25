@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import * as documentApi from "../../../api/documentApi";
 import * as subjectApi from "../../../api/subjectApi";
 import { useToast } from "../../../hooks/useToast";
@@ -7,6 +8,7 @@ import { useDebounce } from "../../../hooks/useDebounce";
 const PAGE_SIZE = 8;
 
 export function useDocumentPage() {
+  const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
 
   const [documents, setDocuments] = useState([]);
@@ -124,10 +126,11 @@ export function useDocumentPage() {
       formData.append("file", file);
 
       await documentApi.upload(formData);
-      const label =
-        storage === "BOTH" ? " (lưu cả server và cloud)" :
-        storage === "CLOUD" ? " (lưu trên cloud)" : "";
-      showSuccess("Tải lên tài liệu thành công." + label);
+      const msg =
+        storage === "BOTH" ? t("documents.upload_modal.uploadSuccessBoth") :
+        storage === "CLOUD" ? t("documents.upload_modal.uploadSuccessCloud") :
+        t("documents.upload_modal.uploadSuccess");
+      showSuccess(msg);
       setIsUploadOpen(false);
       await loadAll();
     } catch (err) {

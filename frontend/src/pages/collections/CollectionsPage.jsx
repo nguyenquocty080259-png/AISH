@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import PageHeader from "../../components/ui/PageHeader";
 import EmptyState from "../../components/ui/EmptyState";
 import Modal from "../../components/ui/Modal";
@@ -8,6 +9,7 @@ import { useCollectionsPage } from "./hooks/useCollectionsPage";
 import "./collections.css";
 
 export default function CollectionsPage() {
+  const { t } = useTranslation();
   const {
     collections,
     loading,
@@ -54,21 +56,21 @@ export default function CollectionsPage() {
   return (
     <div className="collections-page">
       <PageHeader
-        title="Spaces"
+        title={t("collections.spacesTitle")}
         actions={
           <Button variant="primary" onClick={openCreateModal}>
-            + Tạo collection mới
+            {t("collections.createNew")}
           </Button>
         }
       />
 
       {loading ? (
-        <p className="collections-page__loading">Đang tải...</p>
+        <p className="collections-page__loading">{t("collections.loading")}</p>
       ) : collections.length === 0 ? (
         <EmptyState
           icon="🗂️"
-          message="Chưa có collection nào."
-          actionLabel="Tạo collection mới"
+          message={t("collections.empty")}
+          actionLabel={t("collections.emptyAction")}
           onAction={openCreateModal}
         />
       ) : (
@@ -84,10 +86,10 @@ export default function CollectionsPage() {
         </div>
       )}
 
-      <Modal open={createModalOpen} onClose={closeCreateModal} title="Tạo collection mới">
+      <Modal open={createModalOpen} onClose={closeCreateModal} title={t("collections.createTitle")}>
         <form className="collections-form" onSubmit={submitCreate}>
           <label className="collections-form__field">
-            Tên collection
+            {t("collections.nameLabel")}
             <input
               type="text"
               autoFocus
@@ -97,19 +99,19 @@ export default function CollectionsPage() {
           </label>
           <div className="collections-form__actions">
             <Button type="button" variant="secondary" onClick={closeCreateModal} disabled={creating}>
-              Hủy
+              {t("common.actions.cancel")}
             </Button>
             <Button type="submit" variant="primary" disabled={creating}>
-              {creating ? "Đang tạo..." : "Tạo"}
+              {creating ? t("collections.creating") : t("collections.create")}
             </Button>
           </div>
         </form>
       </Modal>
 
-      <Modal open={!!renameTarget} onClose={closeRenameModal} title="Đổi tên collection">
+      <Modal open={!!renameTarget} onClose={closeRenameModal} title={t("collections.renameTitle")}>
         <form className="collections-form" onSubmit={submitRename}>
           <label className="collections-form__field">
-            Tên collection
+            {t("collections.nameLabel")}
             <input
               type="text"
               autoFocus
@@ -119,25 +121,25 @@ export default function CollectionsPage() {
           </label>
           <div className="collections-form__actions">
             <Button type="button" variant="secondary" onClick={closeRenameModal} disabled={renaming}>
-              Hủy
+              {t("common.actions.cancel")}
             </Button>
             <Button type="submit" variant="primary" disabled={renaming}>
-              {renaming ? "Đang lưu..." : "Lưu"}
+              {renaming ? t("collections.saving") : t("collections.save")}
             </Button>
           </div>
         </form>
       </Modal>
 
-      <Modal open={!!deleteTarget} onClose={closeDeleteModal} title="Xóa collection">
+      <Modal open={!!deleteTarget} onClose={closeDeleteModal} title={t("collections.deleteTitle")}>
         <p className="collections-confirm__text">
-          Xóa collection "{deleteTarget?.name}"? Tài liệu bên trong sẽ không bị xóa.
+          {t("collections.deleteConfirm", { name: deleteTarget?.name })}
         </p>
         <div className="collections-form__actions">
           <Button variant="secondary" onClick={closeDeleteModal} disabled={deleting}>
-            Hủy
+            {t("common.actions.cancel")}
           </Button>
           <Button variant="danger" onClick={handleDeleteConfirm} disabled={deleting}>
-            {deleting ? "Đang xóa..." : "Xóa"}
+            {deleting ? t("collections.deleting") : t("collections.delete")}
           </Button>
         </div>
       </Modal>
