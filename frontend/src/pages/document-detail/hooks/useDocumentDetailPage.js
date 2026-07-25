@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import * as documentApi from "../../../api/documentApi";
 import * as aiApi from "../../../api/aiApi";
 import * as collectionApi from "../../../api/collectionApi";
@@ -43,6 +44,7 @@ export function resolveViewerKind(fileType, fileName) {
 const RAW_BLOB_KINDS = new Set(["image", "pdf", "other"]);
 
 export function useDocumentDetailPage() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -163,7 +165,7 @@ export function useDocumentDetailPage() {
   const handleRate = async (star) => {
     try {
       await documentApi.rateDocument(id, star);
-      showSuccess("Đã ghi nhận đánh giá của bạn.");
+      showSuccess(t("docDetail.toasts.rated"));
       await load();
     } catch (err) {
       showError(err.message);
@@ -197,7 +199,7 @@ export function useDocumentDetailPage() {
     if (!content.trim()) return false;
     try {
       await documentApi.updateComment(commentId, content.trim());
-      showSuccess("Đã cập nhật bình luận.");
+      showSuccess(t("docDetail.toasts.commentUpdated"));
       await load();
       return true;
     } catch (err) {
@@ -230,7 +232,7 @@ export function useDocumentDetailPage() {
           blockedComment.commentId, blockedComment.content, options);
       }
       setBlockedComment(null);
-      showSuccess("Đã gửi bình luận để quản trị viên xem xét.");
+      showSuccess(t("docDetail.toasts.commentPendingReview"));
       await load();
       return true;
     } catch (err) {
@@ -244,7 +246,7 @@ export function useDocumentDetailPage() {
   const handleDeleteComment = async (commentId) => {
     try {
       await documentApi.deleteComment(commentId);
-      showSuccess("Đã xoá bình luận.");
+      showSuccess(t("docDetail.toasts.commentDeleted"));
       await load();
     } catch (err) {
       showError(err.message);
@@ -270,7 +272,7 @@ export function useDocumentDetailPage() {
     setEditSubmitting(true);
     try {
       await documentApi.updateDocument(id, data);
-      showSuccess("Đã cập nhật tài liệu.");
+      showSuccess(t("docDetail.toasts.docUpdated"));
       setEditModalOpen(false);
       await load();
     } catch (err) {
@@ -298,7 +300,7 @@ export function useDocumentDetailPage() {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      showError(err.message || "Không thể tải file.");
+      showError(err.message || t("docDetail.toasts.downloadError"));
     } finally {
       setDownloading(false);
     }
@@ -312,13 +314,13 @@ export function useDocumentDetailPage() {
       const res = await aiApi.ingest(id);
       if (res.status === "INGESTED") {
         setIngested(true);
-        showSuccess(res.message || "Đã chuẩn bị tài liệu cho AI chat.");
+        showSuccess(res.message || t("docDetail.toasts.ingestSuccess"));
       } else {
-        showError(res.message || "Không thể chuẩn bị tài liệu này cho AI.");
+        showError(res.message || t("docDetail.toasts.ingestFail"));
       }
       await load();
     } catch (err) {
-      showError(err.message || "Không thể chuẩn bị tài liệu cho AI, vui lòng thử lại.");
+      showError(err.message || t("docDetail.toasts.ingestError"));
     } finally {
       setIngesting(false);
     }
@@ -330,15 +332,15 @@ export function useDocumentDetailPage() {
       const updated = await documentApi.toggleVisibility(id);
       if (updated && typeof updated === "object" && "visibility" in updated) {
         if (updated.visibility === "PUBLIC") {
-          showSuccess("Đã công khai tài liệu. AI kiểm duyệt: đạt.");
+          showSuccess(t("docDetail.toasts.madePublic"));
         } else if (updated.moderationStatus === "REJECTED") {
           showError(
-            "AI chưa cho công khai: " +
-              (updated.moderationReason || "nội dung cần Admin xem xét.") +
-              " Bạn có thể gửi kháng cáo."
+            t("docDetail.toasts.publicRejected", {
+              reason: updated.moderationReason || t("docDetail.toasts.publicRejectedReason"),
+            })
           );
         } else {
-          showSuccess("Đã chuyển tài liệu về riêng tư.");
+          showSuccess(t("docDetail.toasts.madePrivate"));
         }
       }
       await load();
@@ -349,7 +351,7 @@ export function useDocumentDetailPage() {
   const handleDelete = async () => {
     try {
       await documentApi.deleteDocument(id);
-      showSuccess("Đã xoá tài liệu.");
+      showSuccess(t("docDetail.toasts.docDeleted"));
       navigate(ROUTES.DOCUMENTS);
     } catch (err) {
       showError(err.message);
@@ -416,7 +418,7 @@ export function useDocumentDetailPage() {
       await Promise.all(
         selectedCollectionIds.map((cid) => collectionApi.addDocuments(cid, [Number(id)]))
       );
-      showSuccess("Đã thêm vào collection.");
+      showSuccess(t("docDetail.toasts.addedToCollection"));
       setAddToCollectionModalOpen(false);
     } catch (err) {
       showError(err.message);
@@ -431,7 +433,7 @@ export function useDocumentDetailPage() {
       const created = await collectionApi.createCollection(name);
       await collectionApi.addDocuments(created.id, [Number(id)]);
       setMyCollections((prev) => [created, ...prev]);
-      showSuccess(`Đã tạo "${created.name}" và thêm tài liệu vào đó.`);
+      showSuccess(t("docDetail.toasts.createdAndAdded", { name: created.name }));
       setAddToCollectionModalOpen(false);
     } catch (err) {
       showError(err.message);
@@ -467,12 +469,12 @@ export function useDocumentDetailPage() {
     try {
       const res = await shareApi.shareDocument(id, payload);
       if (payload.mode === "RESTRICTED") {
-        showSuccess("Đã chia sẻ tài liệu.");
+        showSuccess(t("docDetail.toasts.shared"));
         await loadShareRecipients();
       } else if (payload.mode === "ANYONE_WITH_LINK") {
-        showSuccess("Đã bật chia sẻ qua liên kết.");
+        showSuccess(t("docDetail.toasts.linkShareOn"));
       } else {
-        showSuccess("Đã tắt chia sẻ qua liên kết.");
+        showSuccess(t("docDetail.toasts.linkShareOff"));
       }
       await load();
       return res;
@@ -488,7 +490,7 @@ export function useDocumentDetailPage() {
   const handleRevokeShare = async (userId) => {
     try {
       await shareApi.revokeShare(id, userId);
-      showSuccess("Đã gỡ chia sẻ.");
+      showSuccess(t("docDetail.toasts.shareRevoked"));
       await loadShareRecipients();
     } catch (err) {
       showError(err.message);

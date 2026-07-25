@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import * as documentApi from "../../../api/documentApi";
 
 // Rút gọn + chuẩn hoá snippet trước khi tìm trong text trích xuất — cùng logic với
@@ -15,6 +16,7 @@ function buildSearchNeedle(rawSnippet) {
 // lỗi (T2). Nguồn dữ liệu là /preview-text (best-effort, POI/Tika phía backend) thay vì blob
 // gốc như TextFileViewer.
 export default function ExtractedTextViewer({ documentId, highlightText }) {
+  const { t } = useTranslation();
   // undefined = đang tải, null = BE trả 204 (không trích được gì), string = có nội dung.
   const [content, setContent] = useState(undefined);
   const [error, setError] = useState(false);
@@ -46,17 +48,17 @@ export default function ExtractedTextViewer({ documentId, highlightText }) {
   }, [content]);
 
   if (error) {
-    return <div className="txt-viewer txt-viewer--error">Không tải được nội dung file.</div>;
+    return <div className="txt-viewer txt-viewer--error">{t("docDetail.viewers.txtError")}</div>;
   }
 
   if (content === undefined) {
-    return <div className="txt-viewer txt-viewer--loading">Đang tải nội dung...</div>;
+    return <div className="txt-viewer txt-viewer--loading">{t("docDetail.viewers.txtLoading")}</div>;
   }
 
   if (!content) {
     return (
       <div className="txt-viewer txt-viewer--empty">
-        Không trích xuất được nội dung để xem trước — hãy tải file để xem.
+        {t("docDetail.viewers.extractEmpty")}
       </div>
     );
   }

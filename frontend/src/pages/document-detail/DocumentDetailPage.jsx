@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useDocumentDetailPage, resolveViewerKind } from "./hooks/useDocumentDetailPage";
 import RatingStars from "./components/RatingStars";
 import CommentSection from "./components/CommentSection";
@@ -22,6 +23,7 @@ import { ROUTES } from "../../constants/routes";
 import "./document-detail.css";
 
 export default function DocumentDetailPage() {
+  const { t } = useTranslation();
   const {
     doc,
     loading,
@@ -97,11 +99,11 @@ export default function DocumentDetailPage() {
   };
 
   if (loading) {
-    return <div className="detail-page">Đang tải tài liệu...</div>;
+    return <div className="detail-page">{t("docDetail.loadingDoc")}</div>;
   }
 
   if (!doc) {
-    return <div className="detail-page">Không tìm thấy tài liệu.</div>;
+    return <div className="detail-page">{t("docDetail.notFound")}</div>;
   }
 
   const aiReady = doc.aiSupported !== false && doc.ingestStatus === "INGESTED";
@@ -109,7 +111,7 @@ export default function DocumentDetailPage() {
   return (
     <div className="detail-page">
       <Link to={ROUTES.DOCUMENTS} className="detail-page__back">
-        ‹ Quay lại danh sách tài liệu
+        {t("docDetail.back")}
       </Link>
 
       <div className="detail-header">
@@ -117,7 +119,7 @@ export default function DocumentDetailPage() {
         <button
           className={`detail-fav ${doc.favorited ? "detail-fav--active" : ""}`}
           onClick={handleToggleFavorite}
-          aria-label="Yêu thích"
+          aria-label={t("docDetail.favorite")}
         >
           {doc.favorited ? "♥" : "♡"}
         </button>
@@ -126,11 +128,11 @@ export default function DocumentDetailPage() {
       <FormatBadge fileType={doc.fileType} fileName={doc.fileName} />
 
       <div className="detail-meta">
-        <span>Người đăng: {doc.ownerName}</span>
-        {doc.subjectNames?.length > 0 && <span>Môn: {doc.subjectNames.join(", ")}</span>}
-        <span>Lượt tải: {doc.downloadCount ?? 0}</span>
-        <span>Yêu thích: {doc.favoriteCount ?? 0}</span>
-        <span>Trạng thái: {doc.visibility === "PUBLIC" ? "Công khai" : "Riêng tư"}</span>
+        <span>{t("docDetail.metaOwner", { name: doc.ownerName })}</span>
+        {doc.subjectNames?.length > 0 && <span>{t("docDetail.metaSubject", { names: doc.subjectNames.join(", ") })}</span>}
+        <span>{t("docDetail.metaDownloads", { count: doc.downloadCount ?? 0 })}</span>
+        <span>{t("docDetail.metaFavorites", { count: doc.favoriteCount ?? 0 })}</span>
+        <span>{t("docDetail.metaStatus", { status: doc.visibility === "PUBLIC" ? t("docDetail.visibilityPublic") : t("docDetail.visibilityPrivate") })}</span>
       </div>
       <ModerationBadge doc={doc} />
 
@@ -152,19 +154,19 @@ export default function DocumentDetailPage() {
                 <div style={{ margin: "16px 0" }}>
                   {showCitationCallout && (
                     <div className="detail-citation-callout">
-                      <span className="detail-citation-callout__label">Đoạn trích được chọn</span>
+                      <span className="detail-citation-callout__label">{t("docDetail.citationLabel")}</span>
                       <p>&ldquo;{highlightSnippet}&rdquo;</p>
                       <span className="detail-citation-callout__hint">
                         {viewerKind === "docx" || viewerKind === "xlsx" || viewerKind === "pptx"
-                          ? "Định dạng này chưa hỗ trợ tô sáng theo trang — xem nội dung bên dưới để tìm đoạn trích trên."
-                          : "Định dạng này chưa hỗ trợ tô sáng trực tiếp trong trình xem — hãy mở file bên dưới để tìm đoạn trích trên."}
+                          ? t("docDetail.citationHintPaged")
+                          : t("docDetail.citationHintViewer")}
                       </span>
                     </div>
                   )}
 
                   {viewerKind === "image" &&
                     (previewBlobError ? (
-                      <div className="detail-preview__load-error">Không tải được ảnh.</div>
+                      <div className="detail-preview__load-error">{t("docDetail.imgLoadError")}</div>
                     ) : previewBlobUrl ? (
                       <img
                         src={previewBlobUrl}
@@ -172,12 +174,12 @@ export default function DocumentDetailPage() {
                         style={{ maxWidth: "100%", maxHeight: "80vh", borderRadius: 8 }}
                       />
                     ) : (
-                      <div className="detail-preview__loading">Đang tải ảnh...</div>
+                      <div className="detail-preview__loading">{t("docDetail.imgLoading")}</div>
                     ))}
 
                   {viewerKind === "pdf" &&
                     (previewBlobError ? (
-                      <div className="detail-preview__load-error">Không tải được PDF.</div>
+                      <div className="detail-preview__load-error">{t("docDetail.pdfLoadError")}</div>
                     ) : previewBlobUrl ? (
                       <PdfViewer
                         fileUrl={previewBlobUrl}
@@ -185,7 +187,7 @@ export default function DocumentDetailPage() {
                         highlightText={highlightSnippet}
                       />
                     ) : (
-                      <div className="detail-preview__loading">Đang tải PDF...</div>
+                      <div className="detail-preview__loading">{t("docDetail.pdfLoading")}</div>
                     ))}
 
                   {viewerKind === "txt" && (
@@ -204,13 +206,13 @@ export default function DocumentDetailPage() {
 
                   {viewerKind === "other" &&
                     (previewBlobError ? (
-                      <div className="detail-preview__load-error">Không mở được file.</div>
+                      <div className="detail-preview__load-error">{t("docDetail.fileOpenError")}</div>
                     ) : previewBlobUrl ? (
                       <a href={previewBlobUrl} target="_blank" rel="noreferrer">
-                        Mở file trong tab mới
+                        {t("docDetail.openInNewTab")}
                       </a>
                     ) : (
-                      <div className="detail-preview__loading">Đang chuẩn bị file...</div>
+                      <div className="detail-preview__loading">{t("docDetail.filePreparing")}</div>
                     ))}
                 </div>
               );
@@ -224,9 +226,9 @@ export default function DocumentDetailPage() {
                 className="detail-preview__gate-btn"
                 onClick={() => setPreviewUnlocked(true)}
               >
-                🔓 Xem đầy đủ
+                {t("docDetail.unlockFull")}
               </button>
-              <span className="detail-preview__gate-hint">Bấm để xem rõ toàn bộ tài liệu</span>
+              <span className="detail-preview__gate-hint">{t("docDetail.unlockHint")}</span>
             </div>
           )}
         </div>
@@ -246,7 +248,7 @@ export default function DocumentDetailPage() {
           onClick={handleDownload}
           disabled={downloading}
         >
-          {downloading ? "Đang tải..." : "⬇ Tải file"}
+          {downloading ? t("docDetail.downloading") : t("docDetail.download")}
         </button>
         <button
           className="detail-btn"
@@ -254,11 +256,11 @@ export default function DocumentDetailPage() {
           disabled={!aiReady}
         >
           {!aiReady
-            ? "🤖 AI không đọc được tệp này"
-            : "🤖 Hỏi AI về tài liệu này"}
+            ? t("docDetail.aiCantRead")
+            : t("docDetail.askAi")}
         </button>
         <button className="detail-btn" onClick={openAddToCollectionModal}>
-          🗂️ Thêm vào collection
+          {t("docDetail.addToCollection")}
         </button>
 
         {isLikelyOwner && (
@@ -279,16 +281,16 @@ export default function DocumentDetailPage() {
             </button>
             )}
             <button className="detail-btn" onClick={openEditModal}>
-              ✏️ Sửa tài liệu
+              {t("docDetail.edit")}
             </button>
             <button className="detail-btn" onClick={openShareModal}>
-              🔗 Chia sẻ
+              {t("docDetail.share")}
             </button>
             <button className="detail-btn" onClick={handleToggleVisibility}>
-              Đổi sang {doc.visibility === "PUBLIC" ? "riêng tư" : "công khai"}
+              {t("docDetail.changeVisibility", { target: doc.visibility === "PUBLIC" ? t("docDetail.toPrivate") : t("docDetail.toPublic") })}
             </button>
             <button className="detail-btn detail-btn--danger" onClick={handleDelete}>
-              Xoá tài liệu
+              {t("docDetail.deleteDoc")}
             </button>
           </>
         )}
@@ -302,14 +304,14 @@ export default function DocumentDetailPage() {
           className={`detail-tabs__tab ${activeTab === "comments" ? "detail-tabs__tab--active" : ""}`}
           onClick={() => selectTab("comments")}
         >
-          Bình luận
+          {t("docDetail.tabComments")}
         </button>
         <button
           type="button"
           className={`detail-tabs__tab ${activeTab === "related" ? "detail-tabs__tab--active" : ""}`}
           onClick={() => selectTab("related")}
         >
-          Liên quan
+          {t("docDetail.tabRelated")}
         </button>
       </div>
 
@@ -331,9 +333,9 @@ export default function DocumentDetailPage() {
 
       {activeTab === "related" &&
         (loadingRelated ? (
-          <p className="detail-comments__empty">Đang tải tài liệu liên quan...</p>
+          <p className="detail-comments__empty">{t("docDetail.loadingRelated")}</p>
         ) : relatedDocs.length === 0 ? (
-          <EmptyState icon="🔎" message="Chưa có tài liệu liên quan." />
+          <EmptyState icon="🔎" message={t("docDetail.noRelated")} />
         ) : (
           <div className="detail-related-grid">
             {relatedDocs.map((item) => (
@@ -349,27 +351,27 @@ export default function DocumentDetailPage() {
       <Modal
         open={addToCollectionModalOpen}
         onClose={closeAddToCollectionModal}
-        title="Thêm vào collection"
+        title={t("docDetail.addColTitle")}
       >
         <p className="detail-add-collection__note">
-          Thêm vào collection chỉ là tham chiếu — tài liệu vẫn ở nguyên trong My Documents.
+          {t("docDetail.addColNote")}
         </p>
 
         {loadingCollections ? (
-          <p className="detail-add-collection__loading">Đang tải danh sách collection...</p>
+          <p className="detail-add-collection__loading">{t("docDetail.addColLoading")}</p>
         ) : myCollections.length === 0 ? (
-          <p className="detail-add-collection__loading">Bạn chưa có collection nào.</p>
+          <p className="detail-add-collection__loading">{t("docDetail.addColEmpty")}</p>
         ) : (
           <>
             <input
               type="text"
               className="detail-add-collection__search"
-              placeholder="Tìm collection..."
+              placeholder={t("docDetail.addColSearch")}
               value={collectionQuery}
               onChange={(e) => setCollectionQuery(e.target.value)}
             />
             {filteredCollections.length === 0 ? (
-              <p className="detail-add-collection__loading">Không tìm thấy collection nào.</p>
+              <p className="detail-add-collection__loading">{t("docDetail.addColNoMatch")}</p>
             ) : (
               <ul className="detail-add-collection__list">
                 {filteredCollections.map((c) => (
@@ -383,7 +385,7 @@ export default function DocumentDetailPage() {
                       {c.name}
                     </label>
                     <span className="detail-add-collection__count">
-                      {c.documentCount ?? 0} tài liệu
+                      {t("docDetail.addColDocCount", { count: c.documentCount ?? 0 })}
                     </span>
                   </li>
                 ))}
@@ -399,22 +401,22 @@ export default function DocumentDetailPage() {
               onClick={handleAddToCollections}
               disabled={addingToCollections || selectedCollectionIds.length === 0}
             >
-              {addingToCollections ? "Đang thêm..." : `Thêm (${selectedCollectionIds.length})`}
+              {addingToCollections ? t("docDetail.adding") : t("docDetail.addWithCount", { count: selectedCollectionIds.length })}
             </Button>
           </div>
         )}
 
-        <div className="detail-add-collection__divider">Hoặc tạo collection mới</div>
+        <div className="detail-add-collection__divider">{t("docDetail.orCreateNew")}</div>
 
         <form className="detail-add-collection__create-form" onSubmit={submitCreateCollection}>
           <input
             type="text"
-            placeholder="Tên collection mới"
+            placeholder={t("docDetail.newColName")}
             value={newCollectionName}
             onChange={(e) => setNewCollectionName(e.target.value)}
           />
           <Button type="submit" variant="secondary" disabled={creatingCollection}>
-            {creatingCollection ? "Đang tạo..." : "Tạo và thêm"}
+            {creatingCollection ? t("docDetail.creating") : t("docDetail.createAndAdd")}
           </Button>
         </form>
       </Modal>

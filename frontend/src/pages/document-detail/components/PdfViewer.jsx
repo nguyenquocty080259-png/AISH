@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -50,6 +51,7 @@ function highlightMatchInTextLayer(container, needle) {
 }
 
 export default function PdfViewer({ fileUrl, initialPage, highlightText }) {
+  const { t } = useTranslation();
   const containerRef = useRef(null);
   const pageRefs = useRef({});
   const scrolledRef = useRef(false);
@@ -92,9 +94,9 @@ export default function PdfViewer({ fileUrl, initialPage, highlightText }) {
   if (error) {
     return (
       <div style={{ padding: 24, textAlign: "center", color: "#888" }}>
-        Không tải được PDF.{" "}
+        {t("docDetail.viewers.pdfError")}{" "}
         <a href={fileUrl} target="_blank" rel="noreferrer">
-          Mở trong tab mới
+          {t("docDetail.viewers.openNewTab")}
         </a>
       </div>
     );
@@ -119,7 +121,7 @@ export default function PdfViewer({ fileUrl, initialPage, highlightText }) {
         file={fileUrl}
         onLoadSuccess={({ numPages }) => setNumPages(numPages)}
         onLoadError={() => setError(true)}
-        loading={<div style={{ padding: 24, color: "#888" }}>Đang tải PDF...</div>}
+        loading={<div style={{ padding: 24, color: "#888" }}>{t("docDetail.viewers.loadingPdf")}</div>}
       >
         {Array.from({ length: numPages }, (_, i) => (
           <div

@@ -1,4 +1,7 @@
+import { useTranslation } from "react-i18next";
+
 export default function RatingStars({ average, onRate }) {
+  const { t } = useTranslation();
   const stars = [1, 2, 3, 4, 5];
   return (
     <div className="detail-rating">
@@ -9,14 +12,14 @@ export default function RatingStars({ average, onRate }) {
             type="button"
             className="detail-rating__star"
             onClick={() => onRate(star)}
-            title={`Đánh giá ${star} sao`}
+            title={t("docDetail.ratingStarTitle", { star })}
           >
             ★
           </button>
         ))}
       </div>
       <span className="detail-rating__avg">
-        Trung bình: {average?.toFixed?.(1) ?? "Chưa có đánh giá"}
+        {t("docDetail.ratingAverage", { value: average?.toFixed?.(1) ?? t("docDetail.ratingNone") })}
       </span>
     </div>
   );

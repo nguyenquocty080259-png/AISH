@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import * as aiApi from "../../../api/aiApi";
 
 // Modal sửa metadata: title, description, subjects. Prefill từ doc hiện tại.
 export default function EditDocumentModal({ open, doc, subjects, submitting, onClose, onSubmit }) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState(doc?.title ?? "");
   const [description, setDescription] = useState(doc?.description ?? "");
   const [subjectIds, setSubjectIds] = useState(doc?.subjectIds ?? []);
@@ -36,31 +38,31 @@ export default function EditDocumentModal({ open, doc, subjects, submitting, onC
   const suggest = async () => {
     setSuggesting(true); setSuggestionError("");
     try { const data = await aiApi.suggestMetadata(doc.id); setTitle(data.title ?? ""); setDescription(data.description ?? ""); setSubjectIds(data.subjectIds ?? []); }
-    catch (error) { setSuggestionError(error.response?.data?.message || error.message || "Không thể lấy gợi ý AI."); }
+    catch (error) { setSuggestionError(error.response?.data?.message || error.message || t("docDetail.editModal.aiSuggestError")); }
     finally { setSuggesting(false); }
   };
 
   return (
     <div className="doc-modal__overlay" onClick={onClose}>
       <div className="doc-modal" onClick={(e) => e.stopPropagation()}>
-        <h2 className="doc-modal__title">Sửa tài liệu</h2>
+        <h2 className="doc-modal__title">{t("docDetail.editModal.title")}</h2>
 
         <form className="doc-modal__form" onSubmit={handleSubmit}>
           <label>
-            Tên tài liệu
+            {t("docDetail.editModal.name")}
             <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} />
           </label>
           <button type="button" onClick={suggest} disabled={suggesting || submitting} className="doc-modal__submit">
-            {suggesting ? "Đang gợi ý..." : "AI gợi ý"}
+            {suggesting ? t("docDetail.editModal.suggesting") : t("docDetail.editModal.aiSuggest")}
           </button>
           {suggestionError && <p style={{ color: "#e11", fontSize: 13 }}>{suggestionError}</p>}
 
           <label>
-            Mô tả
+            {t("docDetail.editModal.description")}
             <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
           </label>
 
-          <label style={{ fontWeight: 600 }}>Môn học (chọn 1 hoặc nhiều)</label>
+          <label style={{ fontWeight: 600 }}>{t("docDetail.editModal.subjectLabel")}</label>
 
           {subjectIds.length > 0 && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, margin: "6px 0" }}>
@@ -76,7 +78,7 @@ export default function EditDocumentModal({ open, doc, subjects, submitting, onC
                       padding: "3px 12px", fontSize: 13, cursor: "pointer",
                       display: "inline-flex", alignItems: "center", gap: 6,
                     }}
-                    title="Bấm để bỏ chọn"
+                    title={t("docDetail.editModal.subjectRemoveHint")}
                   >
                     {s.name} <span style={{ fontWeight: 700 }}>×</span>
                   </span>
@@ -87,7 +89,7 @@ export default function EditDocumentModal({ open, doc, subjects, submitting, onC
 
           <input
             type="text"
-            placeholder="Tìm môn học..."
+            placeholder={t("docDetail.editModal.subjectSearch")}
             value={subjectSearch}
             onChange={(e) => setSubjectSearch(e.target.value)}
             style={{ marginBottom: 8 }}
@@ -104,7 +106,7 @@ export default function EditDocumentModal({ open, doc, subjects, submitting, onC
           >
             {filteredSubjects.length === 0 && (
               <p style={{ color: "#888", fontSize: 13, margin: 0, padding: 12 }}>
-                Không tìm thấy môn.
+                {t("docDetail.editModal.noSubject")}
               </p>
             )}
             {filteredSubjects.map((s) => {
@@ -138,14 +140,14 @@ export default function EditDocumentModal({ open, doc, subjects, submitting, onC
 
           {subjectError && (
             <p style={{ color: "#e11", fontSize: 13, margin: "4px 0 0" }}>
-              Vui lòng chọn ít nhất 1 môn học.
+              {t("docDetail.editModal.subjectRequired")}
             </p>
           )}
 
           <div className="doc-modal__actions">
-            <button type="button" onClick={onClose} className="doc-modal__cancel">Hủy</button>
+            <button type="button" onClick={onClose} className="doc-modal__cancel">{t("common.actions.cancel")}</button>
             <button type="submit" disabled={submitting} className="doc-modal__submit">
-              {submitting ? "Đang lưu..." : "Lưu"}
+              {submitting ? t("docDetail.editModal.saving") : t("docDetail.editModal.save")}
             </button>
           </div>
         </form>

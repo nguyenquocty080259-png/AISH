@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import * as documentApi from "../../../api/documentApi";
 
 // Rút gọn + chuẩn hoá snippet trước khi tìm trong nội dung file — snippet lưu ở AI có thể
@@ -12,6 +13,7 @@ function buildSearchNeedle(rawSnippet) {
 }
 
 export default function TextFileViewer({ documentId, highlightText }) {
+  const { t } = useTranslation();
   const [content, setContent] = useState(null);
   const [error, setError] = useState(false);
   const markRef = useRef(null);
@@ -42,12 +44,12 @@ export default function TextFileViewer({ documentId, highlightText }) {
 
   if (error) {
     return (
-      <div className="txt-viewer txt-viewer--error">Không tải được nội dung file.</div>
+      <div className="txt-viewer txt-viewer--error">{t("docDetail.viewers.txtError")}</div>
     );
   }
 
   if (content === null) {
-    return <div className="txt-viewer txt-viewer--loading">Đang tải nội dung...</div>;
+    return <div className="txt-viewer txt-viewer--loading">{t("docDetail.viewers.txtLoading")}</div>;
   }
 
   const needle = buildSearchNeedle(highlightText);

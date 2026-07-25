@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import * as XLSX from "@e965/xlsx";
 import * as documentApi from "../../../api/documentApi";
 
@@ -27,20 +28,25 @@ function parseWorkbook(buffer) {
   });
 }
 
-function truncationNotice(sheet) {
+function truncationNotice(sheet, t, locale) {
   if (!sheet.truncatedRows && !sheet.truncatedCols) return null;
 
-  const fmt = (n) => n.toLocaleString("vi-VN");
+  const fmt = (n) => n.toLocaleString(locale);
   if (sheet.truncatedRows && !sheet.truncatedCols) {
-    return `Đang hiển thị ${fmt(MAX_ROWS)}/${fmt(sheet.totalRows)} dòng — tải file để xem đầy đủ.`;
+    return t("docDetail.viewers.xlsxTruncRows", { shown: fmt(MAX_ROWS), total: fmt(sheet.totalRows) });
   }
   if (sheet.truncatedCols && !sheet.truncatedRows) {
-    return `Đang hiển thị ${fmt(MAX_COLS)}/${fmt(sheet.totalCols)} cột — tải file để xem đầy đủ.`;
+    return t("docDetail.viewers.xlsxTruncCols", { shown: fmt(MAX_COLS), total: fmt(sheet.totalCols) });
   }
-  return `Đang hiển thị ${fmt(MAX_ROWS)}/${fmt(sheet.totalRows)} dòng, ${fmt(MAX_COLS)}/${fmt(sheet.totalCols)} cột — tải file để xem đầy đủ.`;
+  return t("docDetail.viewers.xlsxTruncBoth", {
+    rowsShown: fmt(MAX_ROWS), rowsTotal: fmt(sheet.totalRows),
+    colsShown: fmt(MAX_COLS), colsTotal: fmt(sheet.totalCols),
+  });
 }
 
 export default function XlsxViewer({ documentId }) {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage === "en" ? "en-US" : "vi-VN";
   const [sheets, setSheets] = useState(null);
   const [activeSheet, setActiveSheet] = useState(0);
   const [error, setError] = useState(false);
@@ -68,19 +74,19 @@ export default function XlsxViewer({ documentId }) {
   }, [documentId]);
 
   if (error) {
-    return <div className="xlsx-viewer xlsx-viewer--error">Không đọc được file bảng tính.</div>;
+    return <div className="xlsx-viewer xlsx-viewer--error">{t("docDetail.viewers.xlsxError")}</div>;
   }
 
   if (sheets === null) {
-    return <div className="xlsx-viewer xlsx-viewer--loading">Đang tải bảng tính...</div>;
+    return <div className="xlsx-viewer xlsx-viewer--loading">{t("docDetail.viewers.xlsxLoading")}</div>;
   }
 
   if (sheets.length === 0) {
-    return <div className="xlsx-viewer xlsx-viewer--empty">File không có sheet nào.</div>;
+    return <div className="xlsx-viewer xlsx-viewer--empty">{t("docDetail.viewers.xlsxNoSheet")}</div>;
   }
 
   const sheet = sheets[activeSheet] ?? sheets[0];
-  const notice = truncationNotice(sheet);
+  const notice = truncationNotice(sheet, t, locale);
   const colCount = Math.min(sheet.totalCols, MAX_COLS);
 
   return (
@@ -101,7 +107,7 @@ export default function XlsxViewer({ documentId }) {
       {notice && <div className="xlsx-viewer__notice">{notice}</div>}
 
       {sheet.rows.length === 0 ? (
-        <div className="xlsx-viewer__empty">Sheet này không có dữ liệu.</div>
+        <div className="xlsx-viewer__empty">{t("docDetail.viewers.xlsxSheetEmpty")}</div>
       ) : (
         <div className="xlsx-viewer__table-wrap">
           <table className="xlsx-viewer__table">
