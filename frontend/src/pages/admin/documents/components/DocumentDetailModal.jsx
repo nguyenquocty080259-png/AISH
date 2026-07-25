@@ -1,10 +1,6 @@
+import { useTranslation } from "react-i18next";
 import Modal from "../../../../components/ui/Modal";
 import Button from "../../../../components/ui/Button";
-
-function formatDate(iso) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("vi-VN");
-}
 
 function Row({ label, children }) {
   return (
@@ -17,34 +13,37 @@ function Row({ label, children }) {
 
 // Modal xem chi tiết tài liệu — chỉ đọc, không có ô chỉnh sửa nào.
 export default function DocumentDetailModal({ open, doc, loading, onClose }) {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage === "en" ? "en-US" : "vi-VN";
+  const formatDate = (iso) => (iso ? new Date(iso).toLocaleString(locale) : "—");
   return (
-    <Modal open={open} onClose={onClose} title="Chi tiết tài liệu">
+    <Modal open={open} onClose={onClose} title={t("admin.documents.detailTitle")}>
       {loading ? (
-        <p className="admin-documents-page__loading">Đang tải chi tiết tài liệu...</p>
+        <p className="admin-documents-page__loading">{t("admin.documents.detailLoading")}</p>
       ) : doc ? (
         <div className="admin-documents-page__detail">
-          <Row label="Tiêu đề">{doc.title || "—"}</Row>
-          <Row label="Mô tả">{doc.description || "—"}</Row>
-          <Row label="Chủ sở hữu">{doc.ownerName || "—"}</Row>
-          <Row label="Môn học">{doc.subjectNames?.length ? doc.subjectNames.join(", ") : "—"}</Row>
-          <Row label="Hiển thị">{doc.visibility || "—"}</Row>
-          <Row label="Kiểm duyệt">
+          <Row label={t("admin.documents.dTitle")}>{doc.title || "—"}</Row>
+          <Row label={t("admin.documents.dDesc")}>{doc.description || "—"}</Row>
+          <Row label={t("admin.documents.dOwner")}>{doc.ownerName || "—"}</Row>
+          <Row label={t("admin.documents.dSubjects")}>{doc.subjectNames?.length ? doc.subjectNames.join(", ") : "—"}</Row>
+          <Row label={t("admin.documents.dVisibility")}>{doc.visibility || "—"}</Row>
+          <Row label={t("admin.documents.dModeration")}>
             {doc.moderationStatus || "—"}
             {doc.moderationReason ? ` — ${doc.moderationReason}` : ""}
           </Row>
-          <Row label="Lưu trữ">{doc.storageType || "—"}</Row>
-          <Row label="Tên file">{doc.fileName || "—"}</Row>
-          <Row label="Yêu thích">{doc.favoriteCount ?? 0}</Row>
-          <Row label="Lượt tải">{doc.downloadCount ?? 0}</Row>
-          <Row label="Đánh giá TB">{doc.averageRating != null ? doc.averageRating.toFixed(1) : "—"}</Row>
-          <Row label="Ngày tạo">{formatDate(doc.createdAt)}</Row>
-          {doc.deletedAt && <Row label="Ngày gỡ">{formatDate(doc.deletedAt)}</Row>}
+          <Row label={t("admin.documents.dStorage")}>{doc.storageType || "—"}</Row>
+          <Row label={t("admin.documents.dFileName")}>{doc.fileName || "—"}</Row>
+          <Row label={t("admin.documents.dFavorites")}>{doc.favoriteCount ?? 0}</Row>
+          <Row label={t("admin.documents.dDownloads")}>{doc.downloadCount ?? 0}</Row>
+          <Row label={t("admin.documents.dAvgRating")}>{doc.averageRating != null ? doc.averageRating.toFixed(1) : "—"}</Row>
+          <Row label={t("admin.documents.dCreated")}>{formatDate(doc.createdAt)}</Row>
+          {doc.deletedAt && <Row label={t("admin.documents.dRemovedAt")}>{formatDate(doc.deletedAt)}</Row>}
         </div>
       ) : null}
 
       <div className="admin-documents-page__modal-actions">
         <Button variant="secondary" onClick={onClose}>
-          Đóng
+          {t("common.actions.close")}
         </Button>
       </div>
     </Modal>

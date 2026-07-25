@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { getAiUsage } from "../../api/adminApi";
 
 const panel = {
@@ -15,18 +16,18 @@ const metricGrid = {
   gap: "10px",
 };
 
-function Period({ label, value }) {
+function Period({ label, value, t }) {
   return (
     <div style={{ padding: "12px", borderRadius: "10px", background: "#dbeafe" }}>
       <strong style={{ color: "#1d4ed8" }}>{label}</strong>
       <div style={metricGrid}>
-        <span><b>{value.totalCalls.toLocaleString()}</b><br />lượt gọi</span>
-        <span><b>{value.totalTokens.toLocaleString()}</b><br />tokens</span>
+        <span><b>{value.totalCalls.toLocaleString()}</b><br />{t("admin.aiUsage.calls")}</span>
+        <span><b>{value.totalTokens.toLocaleString()}</b><br />{t("admin.aiUsage.tokens")}</span>
         <span>
           <b>${value.totalCostUsd.toFixed(6)}</b><br />
-          chi phí ước tính
+          {t("admin.aiUsage.estCost")}
           <small style={{ display: "block", color: "#64748b", fontSize: "0.72rem" }}>
-            (theo giá niêm yết Groq — free tier không bị trừ tiền)
+            {t("admin.aiUsage.costNote")}
           </small>
         </span>
       </div>
@@ -35,6 +36,7 @@ function Period({ label, value }) {
 }
 
 export default function AdminAiUsageCard() {
+  const { t } = useTranslation();
   const [usage, setUsage] = useState(null);
   const [error, setError] = useState(false);
 
@@ -43,15 +45,15 @@ export default function AdminAiUsageCard() {
   }, []);
 
   return (
-    <section style={panel} aria-label="Thống kê sử dụng AI">
-      <h2 style={{ margin: "0 0 12px", color: "#1e3a8a", fontSize: "1.1rem" }}>Sử dụng AI & chi phí Groq</h2>
-      {error && <p>Không tải được thống kê sử dụng AI.</p>}
-      {!error && !usage && <p>Đang tải thống kê AI...</p>}
+    <section style={panel} aria-label={t("admin.aiUsage.aria")}>
+      <h2 style={{ margin: "0 0 12px", color: "#1e3a8a", fontSize: "1.1rem" }}>{t("admin.aiUsage.title")}</h2>
+      {error && <p>{t("admin.aiUsage.loadError")}</p>}
+      {!error && !usage && <p>{t("admin.aiUsage.loading")}</p>}
       {usage && (
         <>
           <div style={metricGrid}>
-            <Period label="Hôm nay" value={usage.today} />
-            <Period label="7 ngày gần nhất" value={usage.last7Days} />
+            <Period label={t("admin.aiUsage.today")} value={usage.today} t={t} />
+            <Period label={t("admin.aiUsage.last7Days")} value={usage.last7Days} t={t} />
           </div>
           <div style={{ marginTop: "12px", color: "#334155", fontSize: "0.88rem" }}>
             {(usage.last7Days.byCallType || []).map((item) => (
@@ -60,7 +62,7 @@ export default function AdminAiUsageCard() {
               </div>
             ))}
             <small style={{ display: "block", marginTop: "6px", color: "#64748b", fontSize: "0.76rem" }}>
-              CHAT_GENERAL tính theo response cuối, chưa gộp các vòng tool nội bộ; lượt gọi lỗi giữa chừng không được ghi.
+              {t("admin.aiUsage.footnote")}
             </small>
           </div>
         </>

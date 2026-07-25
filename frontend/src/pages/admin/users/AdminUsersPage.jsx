@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import PageHeader from "../../../components/ui/PageHeader";
 import Button from "../../../components/ui/Button";
 import Modal from "../../../components/ui/Modal";
@@ -9,12 +10,10 @@ import { useAdminUsersPage } from "./hooks/useAdminUsersPage";
 import { useToast } from "../../../hooks/useToast";
 import "./admin-users.css";
 
-function formatDate(iso) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("vi-VN");
-}
-
 export default function AdminUsersPage() {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage === "en" ? "en-US" : "vi-VN";
+  const formatDate = (iso) => (iso ? new Date(iso).toLocaleString(locale) : "—");
   const pageState = useAdminUsersPage();
   const { showSuccess, showError } = useToast();
   const [createForm, setCreateForm] = useState({ fullName: "", email: "", password: "", role: "USER" });
@@ -43,49 +42,49 @@ export default function AdminUsersPage() {
   const copySeedPassword = async (password) => {
     try {
       await navigator.clipboard.writeText(password);
-      showSuccess("Đã sao chép mật khẩu seed.");
+      showSuccess(t("admin.users.pwCopied"));
     } catch {
-      showError("Không thể sao chép mật khẩu. Vui lòng copy thủ công.");
+      showError(t("admin.users.pwCopyError"));
     }
   };
 
   return (
     <div className="admin-users-page">
       <PageHeader
-        title="Quản lý người dùng"
-        subtitle="Tạo tài khoản, đổi vai trò, khóa hoặc mở khóa người dùng."
-        actions={<Button onClick={pageState.openCreateModal}>+ Tạo tài khoản</Button>}
+        title={t("admin.users.title")}
+        subtitle={t("admin.users.subtitle")}
+        actions={<Button onClick={pageState.openCreateModal}>{t("admin.users.createBtn")}</Button>}
       />
 
       <div className="admin-users-toolbar">
         <label className="admin-users-search">
-          <span>Tìm người dùng</span>
+          <span>{t("admin.users.searchLabel")}</span>
           <input
             type="search"
             value={pageState.search}
             onChange={(event) => pageState.setSearch(event.target.value)}
-            placeholder="Họ tên hoặc email"
+            placeholder={t("admin.users.searchPlaceholder")}
           />
         </label>
-        <span className="admin-users-count">{pageState.filteredUserCount} tài khoản</span>
+        <span className="admin-users-count">{t("admin.users.countLabel", { count: pageState.filteredUserCount })}</span>
       </div>
 
       {pageState.loading ? (
-        <p className="admin-users-page__loading">Đang tải danh sách người dùng...</p>
+        <p className="admin-users-page__loading">{t("admin.users.loading")}</p>
       ) : pageState.visibleUsers.length === 0 ? (
-        <EmptyState icon="👤" message="Không tìm thấy người dùng phù hợp." />
+        <EmptyState icon="👤" message={t("admin.users.empty")} />
       ) : (
         <>
           <div className="admin-users-table-wrap">
             <Table>
               <Table.Head>
                 <Table.Row>
-                  <Table.HeaderCell>Họ tên</Table.HeaderCell>
-                  <Table.HeaderCell>Email</Table.HeaderCell>
-                  <Table.HeaderCell>Vai trò</Table.HeaderCell>
-                  <Table.HeaderCell>Trạng thái</Table.HeaderCell>
-                  <Table.HeaderCell>Mật khẩu (seed)</Table.HeaderCell>
-                  <Table.HeaderCell>Đăng nhập gần nhất</Table.HeaderCell>
+                  <Table.HeaderCell>{t("admin.users.colFullName")}</Table.HeaderCell>
+                  <Table.HeaderCell>{t("admin.users.colEmail")}</Table.HeaderCell>
+                  <Table.HeaderCell>{t("admin.users.colRole")}</Table.HeaderCell>
+                  <Table.HeaderCell>{t("admin.users.colStatus")}</Table.HeaderCell>
+                  <Table.HeaderCell>{t("admin.users.colSeedPassword")}</Table.HeaderCell>
+                  <Table.HeaderCell>{t("admin.users.colLastLogin")}</Table.HeaderCell>
                   <Table.HeaderCell />
                 </Table.Row>
               </Table.Head>
@@ -112,9 +111,9 @@ export default function AdminUsersPage() {
                             type="button"
                             className="admin-users-copy"
                             onClick={() => copySeedPassword(user.seedPassword)}
-                            aria-label={`Sao chép mật khẩu của ${user.email}`}
+                            aria-label={t("admin.users.copyPwAria", { email: user.email })}
                           >
-                            Copy
+                            {t("admin.users.copy")}
                           </button>
                         </div>
                       ) : "—"}
@@ -122,13 +121,13 @@ export default function AdminUsersPage() {
                     <Table.Cell>{formatDate(user.lastLoginAt)}</Table.Cell>
                     <Table.Cell>
                       <div className="admin-users-actions">
-                        <Button variant="secondary" onClick={() => pageState.openEditModal(user)}>Đổi vai trò</Button>
+                        <Button variant="secondary" onClick={() => pageState.openEditModal(user)}>{t("admin.users.changeRole")}</Button>
                         <Button
                           variant={user.status === "BANNED" ? "secondary" : "danger"}
                           disabled={pageState.statusUpdatingId === user.id}
                           onClick={() => pageState.toggleUserStatus(user)}
                         >
-                          {user.status === "BANNED" ? "Mở khóa" : "Khóa"}
+                          {user.status === "BANNED" ? t("admin.users.unlock") : t("admin.users.lock")}
                         </Button>
                       </div>
                     </Table.Cell>
@@ -146,23 +145,23 @@ export default function AdminUsersPage() {
         </>
       )}
 
-      <Modal open={pageState.createModalOpen} onClose={pageState.closeCreateModal} title="Tạo tài khoản">
+      <Modal open={pageState.createModalOpen} onClose={pageState.closeCreateModal} title={t("admin.users.createTitle")}>
         <form className="admin-users-form" onSubmit={submitCreate}>
-          <label>Họ tên<input required autoFocus value={createForm.fullName} onChange={(e) => setCreateForm({ ...createForm, fullName: e.target.value })} /></label>
-          <label>Email<input required type="email" value={createForm.email} onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })} /></label>
-          <label>Mật khẩu<input required type="password" minLength={8} value={createForm.password} onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })} /></label>
-          <label>Vai trò<select value={createForm.role} onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}><option value="USER">USER</option><option value="ADMIN">ADMIN</option></select></label>
-          <div className="admin-users-form__actions"><Button variant="secondary" onClick={pageState.closeCreateModal} disabled={pageState.creating}>Hủy</Button><Button type="submit" disabled={pageState.creating}>{pageState.creating ? "Đang tạo..." : "Tạo"}</Button></div>
+          <label>{t("admin.users.fullName")}<input required autoFocus value={createForm.fullName} onChange={(e) => setCreateForm({ ...createForm, fullName: e.target.value })} /></label>
+          <label>{t("admin.users.email")}<input required type="email" value={createForm.email} onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })} /></label>
+          <label>{t("admin.users.password")}<input required type="password" minLength={8} value={createForm.password} onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })} /></label>
+          <label>{t("admin.users.role")}<select value={createForm.role} onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}><option value="USER">USER</option><option value="ADMIN">ADMIN</option></select></label>
+          <div className="admin-users-form__actions"><Button variant="secondary" onClick={pageState.closeCreateModal} disabled={pageState.creating}>{t("common.actions.cancel")}</Button><Button type="submit" disabled={pageState.creating}>{pageState.creating ? t("admin.common.creating") : t("admin.subjects.add")}</Button></div>
         </form>
       </Modal>
 
-      <Modal open={!!pageState.editTarget} onClose={pageState.closeEditModal} title="Đổi vai trò">
+      <Modal open={!!pageState.editTarget} onClose={pageState.closeEditModal} title={t("admin.users.changeRoleTitle")}>
         <form className="admin-users-form" onSubmit={submitRoleChange}>
           <p className="admin-users-form__hint">
-            Đổi vai trò cho {pageState.editTarget?.fullName} ({pageState.editTarget?.email}).
+            {t("admin.users.changeRoleHint", { name: pageState.editTarget?.fullName, email: pageState.editTarget?.email })}
           </p>
-          <label>Vai trò<select autoFocus value={role} onChange={(e) => setRole(e.target.value)}><option value="USER">USER</option><option value="ADMIN">ADMIN</option></select></label>
-          <div className="admin-users-form__actions"><Button variant="secondary" onClick={pageState.closeEditModal} disabled={pageState.updating}>Hủy</Button><Button type="submit" disabled={pageState.updating}>{pageState.updating ? "Đang lưu..." : "Lưu"}</Button></div>
+          <label>{t("admin.users.role")}<select autoFocus value={role} onChange={(e) => setRole(e.target.value)}><option value="USER">USER</option><option value="ADMIN">ADMIN</option></select></label>
+          <div className="admin-users-form__actions"><Button variant="secondary" onClick={pageState.closeEditModal} disabled={pageState.updating}>{t("common.actions.cancel")}</Button><Button type="submit" disabled={pageState.updating}>{pageState.updating ? t("admin.common.saving") : t("common.actions.save")}</Button></div>
         </form>
       </Modal>
     </div>

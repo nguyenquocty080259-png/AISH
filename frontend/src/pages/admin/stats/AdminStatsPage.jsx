@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import PageHeader from "../../../components/ui/PageHeader";
 import Card from "../../../components/ui/Card";
 import Badge from "../../../components/ui/Badge";
@@ -10,14 +11,16 @@ import AdminAiUsageCard from "../../../components/admin/AdminAiUsageCard";
 import "./admin-stats.css";
 
 const STAT_TILES = [
-  { key: "totalUsers", label: "Tổng người dùng" },
-  { key: "totalDocuments", label: "Tổng tài liệu" },
-  { key: "publicDocuments", label: "Tài liệu công khai" },
-  { key: "privateDocuments", label: "Tài liệu riêng tư" },
-  { key: "totalSubjects", label: "Tổng môn học" },
+  { key: "totalUsers", labelKey: "admin.stats.totalUsers" },
+  { key: "totalDocuments", labelKey: "admin.stats.totalDocuments" },
+  { key: "publicDocuments", labelKey: "admin.stats.publicDocuments" },
+  { key: "privateDocuments", labelKey: "admin.stats.privateDocuments" },
+  { key: "totalSubjects", labelKey: "admin.stats.totalSubjects" },
 ];
 
 export default function AdminStatsPage() {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage === "en" ? "en-US" : "vi-VN";
   const {
     stats,
     loading,
@@ -39,9 +42,9 @@ export default function AdminStatsPage() {
   if (loading) {
     return (
       <div className="admin-stats-page">
-        <PageHeader title="Bảng điều khiển Admin" />
+        <PageHeader title={t("admin.stats.title")} />
         <p className="admin-stats-page__loading">
-          Đang tải thống kê...
+          {t("admin.stats.loading")}
         </p>
       </div>
     );
@@ -50,9 +53,9 @@ export default function AdminStatsPage() {
   if (!stats) {
     return (
       <div className="admin-stats-page">
-        <PageHeader title="Bảng điều khiển Admin" />
+        <PageHeader title={t("admin.stats.title")} />
         <p className="admin-stats-page__loading">
-          Không tải được thống kê.
+          {t("admin.stats.loadError")}
         </p>
       </div>
     );
@@ -60,7 +63,7 @@ export default function AdminStatsPage() {
 
   return (
     <div className="admin-stats-page">
-      <PageHeader title="Bảng điều khiển Admin" />
+      <PageHeader title={t("admin.stats.title")} />
 
       <div className="admin-stats-grid">
         {STAT_TILES.map((tile) => (
@@ -75,17 +78,17 @@ export default function AdminStatsPage() {
               }
 
               if (tile.key === "totalDocuments") {
-                loadDocuments(null, "Danh sách tất cả tài liệu");
+                loadDocuments(null, t("admin.stats.allDocsTitle"));
                 return;
               }
 
               if (tile.key === "publicDocuments") {
-                loadDocuments("PUBLIC", "Danh sách tài liệu công khai");
+                loadDocuments("PUBLIC", t("admin.stats.publicDocsTitle"));
                 return;
               }
 
               if (tile.key === "privateDocuments") {
-                loadDocuments("PRIVATE", "Danh sách tài liệu riêng tư");
+                loadDocuments("PRIVATE", t("admin.stats.privateDocsTitle"));
                 return;
               }
             }}
@@ -95,7 +98,7 @@ export default function AdminStatsPage() {
             </p>
 
             <p className="admin-stat-card__label">
-              {tile.label}
+              {t(tile.labelKey)}
             </p>
           </Card>
         ))}
@@ -113,10 +116,10 @@ export default function AdminStatsPage() {
             </p>
 
             <p className="admin-stat-card__label">
-              Kháng nghị đang chờ{" "}
+              {t("admin.stats.pendingAppeals")}{" "}
               {stats.pendingAppeals > 0 && (
                 <Badge intent="warning">
-                  Cần xử lý
+                  {t("admin.stats.needAction")}
                 </Badge>
               )}
             </p>
@@ -126,7 +129,7 @@ export default function AdminStatsPage() {
         <Card className="admin-stat-card">
           <p className="admin-stat-card__value">{stats.docsIngested}</p>
           <p className="admin-stat-card__label">
-            AI đã nạp: {stats.docsIngested} / Chưa nạp: {stats.docsNotIngested} / Không hỗ trợ: {stats.docsUnsupported}
+            {t("admin.stats.aiIngestSummary", { ingested: stats.docsIngested, notIngested: stats.docsNotIngested, unsupported: stats.docsUnsupported })}
           </p>
         </Card>
       </div>
@@ -137,15 +140,15 @@ export default function AdminStatsPage() {
 
       {showUsers && (
         <Card className="admin-users-card">
-          <h3>Danh sách người dùng hệ thống</h3>
+          <h3>{t("admin.stats.usersListTitle")}</h3>
 
           <table className="admin-users-table">
             <thead>
               <tr>
-                <th style={{ width: "50%" }}>Người dùng</th>
-                <th style={{ width: "15%" }}>Vai trò</th>
-                <th style={{ width: "15%" }}>Trạng thái</th>
-                <th style={{ width: "20%" }}>Online</th>
+                <th style={{ width: "50%" }}>{t("admin.stats.colUser")}</th>
+                <th style={{ width: "15%" }}>{t("admin.stats.colRole")}</th>
+                <th style={{ width: "15%" }}>{t("admin.stats.colStatus")}</th>
+                <th style={{ width: "20%" }}>{t("admin.stats.colOnline")}</th>
               </tr>
             </thead>
 
@@ -198,8 +201,8 @@ export default function AdminStatsPage() {
                       }
                     >
                       {user.online
-                        ? "🟢 Online"
-                        : "⚪ Offline"}
+                        ? t("admin.stats.online")
+                        : t("admin.stats.offline")}
                     </span>
                   </td>
                 </tr>
@@ -219,13 +222,13 @@ export default function AdminStatsPage() {
             <thead>
               <tr>
                 <th>#</th>
-                <th>Tiêu đề</th>
-                <th>Người đăng</th>
-                <th>Quyền</th>
-                <th>Kiểm duyệt</th>
-                <th>Lưu trữ</th>
-                <th>AI</th>
-                <th>Ngày tạo</th>
+                <th>{t("admin.stats.colTitle")}</th>
+                <th>{t("admin.stats.colOwner")}</th>
+                <th>{t("admin.stats.colVisibility")}</th>
+                <th>{t("admin.stats.colModeration")}</th>
+                <th>{t("admin.stats.colStorage")}</th>
+                <th>{t("admin.stats.colAi")}</th>
+                <th>{t("admin.stats.colCreated")}</th>
               </tr>
             </thead>
 
@@ -248,7 +251,7 @@ export default function AdminStatsPage() {
                   <td>
                     {new Date(
                       doc.createdAt
-                    ).toLocaleDateString("vi-VN")}
+                    ).toLocaleDateString(locale)}
                   </td>
                 </tr>
               ))}
@@ -256,7 +259,7 @@ export default function AdminStatsPage() {
           </table>
 
           <div className="admin-stats-doc-summary">
-            <span>Tổng: {documentTotalElements} tài liệu</span>
+            <span>{t("admin.stats.totalDocs", { count: documentTotalElements })}</span>
           </div>
           <AdminPagination
             page={documentPage}

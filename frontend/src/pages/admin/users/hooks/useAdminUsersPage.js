@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import * as adminApi from "../../../../api/adminApi";
 import { useToast } from "../../../../hooks/useToast";
 
 const PAGE_SIZE = 8;
 
 export function useAdminUsersPage() {
+  const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +63,7 @@ export function useAdminUsersPage() {
       const created = await adminApi.createUser(payload);
       setUsers((current) => [...current, created]);
       setCreateModalOpen(false);
-      showSuccess("Đã tạo tài khoản.");
+      showSuccess(t("admin.users.created"));
       return true;
     } catch (err) {
       showError(err.message);
@@ -85,7 +87,7 @@ export function useAdminUsersPage() {
       const updated = await adminApi.updateUser(editTarget.id, payload);
       setUsers((current) => current.map((user) => (user.id === updated.id ? updated : user)));
       setEditTarget(null);
-      showSuccess("Đã đổi vai trò.");
+      showSuccess(t("admin.users.roleChanged"));
       return true;
     } catch (err) {
       showError(err.message);
@@ -101,7 +103,7 @@ export function useAdminUsersPage() {
     try {
       const updated = await adminApi.updateUserStatus(user.id, nextStatus);
       setUsers((current) => current.map((item) => (item.id === updated.id ? updated : item)));
-      showSuccess(nextStatus === "BANNED" ? "Đã khóa tài khoản." : "Đã mở khóa tài khoản.");
+      showSuccess(nextStatus === "BANNED" ? t("admin.users.locked") : t("admin.users.unlocked"));
     } catch (err) {
       showError(err.message);
     } finally {

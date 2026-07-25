@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import i18n from "../../../../i18n";
 import * as adminApi from "../../../../api/adminApi";
 
 export function useAdminStatsPage() {
@@ -15,7 +16,7 @@ export function useAdminStatsPage() {
     const [documentVisibility, setDocumentVisibility] = useState(null);
 
     const loadDocuments = (visibility = null,
-        title = "Danh sách tài liệu"
+        title = i18n.t("admin.stats.allDocsTitle")
     ) => {
         setDocumentPage(0);
         setDocumentVisibility(visibility);

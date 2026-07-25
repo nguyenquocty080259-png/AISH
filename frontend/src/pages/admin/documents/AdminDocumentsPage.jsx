@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import PageHeader from "../../../components/ui/PageHeader";
 import Badge from "../../../components/ui/Badge";
 import Button from "../../../components/ui/Button";
@@ -12,27 +13,25 @@ import AdminPagination from "../components/AdminPagination";
 import "./admin-documents.css";
 
 const VISIBILITY_BADGE = {
-  PUBLIC: { intent: "info", label: "Công khai" },
-  PRIVATE: { intent: "neutral", label: "Riêng tư" },
+  PUBLIC: { intent: "info", labelKey: "admin.documents.visPublic" },
+  PRIVATE: { intent: "neutral", labelKey: "admin.documents.visPrivate" },
 };
 
 const STATUS_BADGE = {
-  ACTIVE: { intent: "success", label: "Đang hoạt động" },
-  REMOVED: { intent: "error", label: "Đã gỡ" },
+  ACTIVE: { intent: "success", labelKey: "admin.documents.statusActive" },
+  REMOVED: { intent: "error", labelKey: "admin.documents.statusRemoved" },
 };
 
 const MODERATION_BADGE = {
-  NOT_REQUIRED: { intent: "neutral", label: "Không cần duyệt" },
-  APPROVED: { intent: "success", label: "Đã duyệt" },
-  REJECTED: { intent: "error", label: "Đã từ chối" },
+  NOT_REQUIRED: { intent: "neutral", labelKey: "admin.documents.modNotRequired" },
+  APPROVED: { intent: "success", labelKey: "admin.documents.modApproved" },
+  REJECTED: { intent: "error", labelKey: "admin.documents.modRejected" },
 };
 
-function formatDate(iso) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("vi-VN");
-}
-
 export default function AdminDocumentsPage() {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage === "en" ? "en-US" : "vi-VN";
+  const formatDate = (iso) => (iso ? new Date(iso).toLocaleString(locale) : "—");
   const {
     documents,
     loading,
@@ -66,44 +65,44 @@ export default function AdminDocumentsPage() {
   return (
     <div className="admin-documents-page">
       <PageHeader
-        title="Quản lý tài liệu"
-        subtitle="Gỡ tài liệu vi phạm chính sách (DEC-009: đây là xử lý vi phạm, KHÔNG chuyển quyền sở hữu, KHÔNG chỉnh sửa nội dung)."
+        title={t("admin.documents.title")}
+        subtitle={t("admin.documents.subtitle")}
       />
 
-      <div className="admin-documents-page__filters" role="group" aria-label="Lọc tài liệu">
+      <div className="admin-documents-page__filters" role="group" aria-label={t("admin.documents.filterAria")}>
         <button
           type="button"
           className={!needsReview ? "admin-documents-page__filter--active" : ""}
           onClick={() => changeReviewFilter(false)}
         >
-          Tất cả
+          {t("admin.documents.filterAll")}
         </button>
         <button
           type="button"
           className={needsReview ? "admin-documents-page__filter--active" : ""}
           onClick={() => changeReviewFilter(true)}
         >
-          Cần xem xét
+          {t("admin.documents.filterNeedsReview")}
         </button>
       </div>
 
       {loading ? (
-        <p className="admin-documents-page__loading">Đang tải danh sách tài liệu...</p>
+        <p className="admin-documents-page__loading">{t("admin.documents.loading")}</p>
       ) : documents.length === 0 ? (
-        <EmptyState icon="📄" message="Không có tài liệu nào." />
+        <EmptyState icon="📄" message={t("admin.documents.empty")} />
       ) : (
         <>
           <Table>
             <Table.Head>
               <Table.Row>
-                <Table.HeaderCell>Tài liệu</Table.HeaderCell>
-                <Table.HeaderCell>Chủ sở hữu</Table.HeaderCell>
-                <Table.HeaderCell>Hiển thị</Table.HeaderCell>
-                <Table.HeaderCell>Kiểm duyệt</Table.HeaderCell>
-                <Table.HeaderCell>Lưu trữ</Table.HeaderCell>
-                <Table.HeaderCell>AI</Table.HeaderCell>
-                <Table.HeaderCell>Trạng thái</Table.HeaderCell>
-                <Table.HeaderCell>Ngày tạo</Table.HeaderCell>
+                <Table.HeaderCell>{t("admin.documents.colDocument")}</Table.HeaderCell>
+                <Table.HeaderCell>{t("admin.documents.colOwner")}</Table.HeaderCell>
+                <Table.HeaderCell>{t("admin.documents.colVisibility")}</Table.HeaderCell>
+                <Table.HeaderCell>{t("admin.documents.colModeration")}</Table.HeaderCell>
+                <Table.HeaderCell>{t("admin.documents.colStorage")}</Table.HeaderCell>
+                <Table.HeaderCell>{t("admin.documents.colAi")}</Table.HeaderCell>
+                <Table.HeaderCell>{t("admin.documents.colStatus")}</Table.HeaderCell>
+                <Table.HeaderCell>{t("admin.documents.colCreated")}</Table.HeaderCell>
                 <Table.HeaderCell />
               </Table.Row>
             </Table.Head>
@@ -122,32 +121,32 @@ export default function AdminDocumentsPage() {
                     <Table.Cell className="ui-table__truncate">{doc.title}</Table.Cell>
                     <Table.Cell>{doc.ownerName}</Table.Cell>
                     <Table.Cell>
-                      <Badge intent={visibilityBadge.intent}>{visibilityBadge.label}</Badge>
+                      <Badge intent={visibilityBadge.intent}>{t(visibilityBadge.labelKey)}</Badge>
                     </Table.Cell>
                     <Table.Cell>
-                      <Badge intent={moderationBadge.intent}>{moderationBadge.label}</Badge>
+                      <Badge intent={moderationBadge.intent}>{t(moderationBadge.labelKey)}</Badge>
                     </Table.Cell>
                     <Table.Cell>
                       {doc.storageType && <Badge intent="info">{doc.storageType}</Badge>}
                     </Table.Cell>
                     <Table.Cell><IngestStatusBadge status={doc.ingestStatus} /></Table.Cell>
                     <Table.Cell>
-                      <Badge intent={statusBadge.intent}>{statusBadge.label}</Badge>
+                      <Badge intent={statusBadge.intent}>{t(statusBadge.labelKey)}</Badge>
                     </Table.Cell>
                     <Table.Cell>{formatDate(doc.createdAt)}</Table.Cell>
                     <Table.Cell>
                       <div className="flex flex-col items-stretch gap-1.5 w-40">
                         <Button variant="secondary" onClick={() => openDetailModal(doc)}>
-                          Chi tiết
+                          {t("admin.documents.detail")}
                         </Button>
                         <Button variant="secondary" onClick={() => openEditModal(doc)}>
-                          Sửa
+                          {t("common.actions.edit")}
                         </Button>
                         {!isRemoved && (
                           <>
                             {isApproved ? (
                               <Button variant="secondary" disabled>
-                                ✓ Đã duyệt
+                                {t("admin.documents.approvedTag")}
                               </Button>
                             ) : (
                               <Button
@@ -156,14 +155,14 @@ export default function AdminDocumentsPage() {
                                 disabled={isReviewingThis}
                               >
                                 {isReviewingThis && reviewing.action === "approve"
-                                  ? "Đang duyệt..."
-                                  : "Duyệt"}
+                                  ? t("admin.documents.approving")
+                                  : t("admin.documents.approve")}
                               </Button>
                             )}
 
                             {isRejected ? (
                               <Button variant="secondary" disabled>
-                                ✓ Đã gỡ
+                                {t("admin.documents.removedTag")}
                               </Button>
                             ) : (
                               <Button
@@ -172,8 +171,8 @@ export default function AdminDocumentsPage() {
                                 disabled={isReviewingThis}
                               >
                                 {isReviewingThis && reviewing.action === "remove"
-                                  ? "Đang gỡ..."
-                                  : "Gỡ"}
+                                  ? t("admin.documents.removingDoc")
+                                  : t("admin.documents.remove")}
                               </Button>
                             )}
                           </>
@@ -182,19 +181,19 @@ export default function AdminDocumentsPage() {
                         {isRemoved ? (
                           <>
                             <Button variant="secondary" disabled>
-                              ✓ Đã gỡ vi phạm
+                              {t("admin.documents.removedViolationTag")}
                             </Button>
                             <Button
                               variant="primary"
                               onClick={() => restoreDocument(doc)}
                               disabled={restoringId === doc.id}
                             >
-                              {restoringId === doc.id ? "Đang khôi phục..." : "Khôi phục"}
+                              {restoringId === doc.id ? t("admin.documents.restoring") : t("admin.documents.restore")}
                             </Button>
                           </>
                         ) : (
                           <Button variant="danger" onClick={() => openRemoveModal(doc)}>
-                            Gỡ vi phạm
+                            {t("admin.documents.removeViolation")}
                           </Button>
                         )}
                       </div>
@@ -214,18 +213,16 @@ export default function AdminDocumentsPage() {
         </>
       )}
 
-      <Modal open={!!removeTarget} onClose={closeRemoveModal} title="Gỡ tài liệu vi phạm">
+      <Modal open={!!removeTarget} onClose={closeRemoveModal} title={t("admin.documents.removeTitle")}>
         <p className="admin-documents-page__confirm-text">
-          Gỡ tài liệu "{removeTarget?.title}" khỏi hệ thống vì vi phạm chính sách. Đây là hành
-          động xử lý vi phạm — tài liệu KHÔNG chuyển quyền sở hữu cho Admin và nội dung KHÔNG bị
-          chỉnh sửa, chỉ bị gỡ khỏi hiển thị.
+          {t("admin.documents.removeConfirm", { title: removeTarget?.title })}
         </p>
         <div className="admin-documents-page__modal-actions">
           <Button variant="secondary" onClick={closeRemoveModal} disabled={removing}>
-            Hủy
+            {t("common.actions.cancel")}
           </Button>
           <Button variant="danger" onClick={confirmRemove} disabled={removing}>
-            {removing ? "Đang gỡ..." : "Xác nhận gỡ"}
+            {removing ? t("admin.common.removing") : t("admin.documents.confirmRemove")}
           </Button>
         </div>
       </Modal>
