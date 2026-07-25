@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import Modal from "../../../components/ui/Modal";
 import Button from "../../../components/ui/Button";
 import { useToast } from "../../../hooks/useToast";
@@ -19,6 +20,7 @@ export default function ShareModal({
   loadingRecipients = false,
   onRevoke,
 }) {
+  const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
   const [mode, setMode] = useState("RESTRICTED");
   const [email, setEmail] = useState("");
@@ -30,7 +32,7 @@ export default function ShareModal({
     ? `${window.location.origin}${documentDetailPath}`
     : "";
 
-  const permissionLabel = (p) => (p === "COMMENTER" ? "Bình luận" : "Xem");
+  const permissionLabel = (p) => (p === "COMMENTER" ? t("docDetail.share_modal.permCommenter") : t("docDetail.share_modal.permViewer"));
 
   const submit = async (e) => {
     e.preventDefault();
@@ -39,7 +41,7 @@ export default function ShareModal({
     if (mode === "RESTRICTED") {
       const trimmed = email.trim();
       if (!trimmed) {
-        showError("Nhập email người nhận (đã có tài khoản HiveMind).");
+        showError(t("docDetail.share_modal.needEmail"));
         return;
       }
       const res = await onShare({ mode, email: trimmed, permission });
@@ -64,30 +66,30 @@ export default function ShareModal({
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
-      showSuccess("Đã copy liên kết.");
+      showSuccess(t("docDetail.share_modal.copied"));
     } catch {
-      showError("Không copy được liên kết.");
+      showError(t("docDetail.share_modal.copyError"));
     }
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Chia sẻ tài liệu">
+    <Modal open={open} onClose={onClose} title={t("docDetail.share_modal.title")}>
       <form className="detail-share" onSubmit={submit}>
         <label className="detail-share__field">
-          <span>Chế độ chia sẻ</span>
+          <span>{t("docDetail.share_modal.modeLabel")}</span>
           <select value={mode} onChange={(e) => setMode(e.target.value)}>
-            <option value="RESTRICTED">Chỉ người được mời</option>
-            <option value="ANYONE_WITH_LINK">Bất kỳ ai có liên kết</option>
-            <option value="NONE">Tắt chia sẻ qua liên kết</option>
+            <option value="RESTRICTED">{t("docDetail.share_modal.modeRestricted")}</option>
+            <option value="ANYONE_WITH_LINK">{t("docDetail.share_modal.modeAnyone")}</option>
+            <option value="NONE">{t("docDetail.share_modal.modeNone")}</option>
           </select>
         </label>
 
         {mode === "RESTRICTED" && (
           <label className="detail-share__field">
-            <span>Email người nhận</span>
+            <span>{t("docDetail.share_modal.emailLabel")}</span>
             <input
               type="email"
-              placeholder="VD: ban@example.com"
+              placeholder={t("docDetail.share_modal.emailPlaceholder")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -96,28 +98,28 @@ export default function ShareModal({
 
         {mode !== "NONE" && (
           <label className="detail-share__field">
-            <span>Quyền</span>
+            <span>{t("docDetail.share_modal.permLabel")}</span>
             <select value={permission} onChange={(e) => setPermission(e.target.value)}>
-              <option value="VIEWER">Xem (xem, tải, hỏi AI)</option>
-              <option value="COMMENTER">Bình luận (xem + bình luận)</option>
+              <option value="VIEWER">{t("docDetail.share_modal.permViewerOpt")}</option>
+              <option value="COMMENTER">{t("docDetail.share_modal.permCommenterOpt")}</option>
             </select>
           </label>
         )}
 
         <div className="detail-share__actions">
           <Button type="submit" variant="primary" disabled={sharing}>
-            {sharing ? "Đang xử lý..." : "Áp dụng"}
+            {sharing ? t("docDetail.share_modal.processing") : t("docDetail.share_modal.apply")}
           </Button>
         </div>
       </form>
 
       {mode === "RESTRICTED" && (
         <div className="detail-share__recipients">
-          <p className="detail-share__recipients-title">Đang chia sẻ cho</p>
+          <p className="detail-share__recipients-title">{t("docDetail.share_modal.sharingTo")}</p>
           {loadingRecipients ? (
-            <p className="detail-share__recipients-empty">Đang tải...</p>
+            <p className="detail-share__recipients-empty">{t("docDetail.share_modal.loadingRecipients")}</p>
           ) : recipients.length === 0 ? (
-            <p className="detail-share__recipients-empty">Chưa chia sẻ cho ai.</p>
+            <p className="detail-share__recipients-empty">{t("docDetail.share_modal.noRecipients")}</p>
           ) : (
             <ul className="detail-share__recipients-list">
               {recipients.map((r) => (
@@ -133,7 +135,7 @@ export default function ShareModal({
                     disabled={revokingId === r.userId}
                     onClick={() => handleRevoke(r.userId)}
                   >
-                    {revokingId === r.userId ? "Đang gỡ..." : "Gỡ"}
+                    {revokingId === r.userId ? t("docDetail.share_modal.revoking") : t("docDetail.share_modal.revoke")}
                   </Button>
                 </li>
               ))}
@@ -146,7 +148,7 @@ export default function ShareModal({
         <div className="detail-share__link">
           <input type="text" readOnly value={shareUrl} onFocus={(e) => e.target.select()} />
           <Button type="button" variant="secondary" onClick={copyLink}>
-            Copy
+            {t("docDetail.share_modal.copy")}
           </Button>
         </div>
       )}

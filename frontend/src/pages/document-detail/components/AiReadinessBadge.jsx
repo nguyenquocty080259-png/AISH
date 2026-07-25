@@ -28,6 +28,8 @@ const styles = {
   },
 };
 
+import { useTranslation } from "react-i18next";
+
 export default function AiReadinessBadge({
   aiSupported,
   ingestStatus,
@@ -35,10 +37,11 @@ export default function AiReadinessBadge({
   ingesting,
   onIngest,
 }) {
+  const { t } = useTranslation();
   if (aiSupported === false) {
     return (
       <div style={{ ...styles.badge, ...styles.unsupported }}>
-        <p style={styles.text}>AI chưa đọc được định dạng này</p>
+        <p style={styles.text}>{t("docDetail.aiUnsupportedFormat")}</p>
       </div>
     );
   }
@@ -47,8 +50,7 @@ export default function AiReadinessBadge({
     return (
       <div style={{ ...styles.badge, ...styles.unsupported }}>
         <p style={styles.text}>
-          Không trích xuất được nội dung cho AI (file có thể là bản scan/không
-          có lớp chữ)
+          {t("docDetail.aiNoExtract")}
         </p>
       </div>
     );
@@ -57,14 +59,14 @@ export default function AiReadinessBadge({
   if (ingestStatus === "INGESTED") {
     return (
       <div style={{ ...styles.badge, ...styles.ready }}>
-        <p style={styles.text}>✅ Đã sẵn sàng cho AI</p>
+        <p style={styles.text}>{t("docDetail.aiReady")}</p>
       </div>
     );
   }
 
   return (
     <div style={styles.badge}>
-      <p style={styles.text}>⚠️ Chưa nạp cho AI</p>
+      <p style={styles.text}>{t("docDetail.aiNotIngested")}</p>
       {isOwner && (
         <button
           type="button"
@@ -72,7 +74,7 @@ export default function AiReadinessBadge({
           onClick={onIngest}
           disabled={ingesting}
         >
-          {ingesting ? "Đang nạp..." : "Nạp cho AI"}
+          {ingesting ? t("docDetail.aiIngesting") : t("docDetail.aiIngest")}
         </button>
       )}
     </div>
