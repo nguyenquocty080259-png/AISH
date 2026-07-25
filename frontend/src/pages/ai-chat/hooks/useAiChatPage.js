@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import * as aiChatApi from "../../../api/aiChatApi";
 import * as documentApi from "../../../api/documentApi";
 import { useAuth } from "../../../hooks/useAuth";
@@ -15,6 +16,7 @@ function normalizeHistoryMessage(message) {
 }
 
 export function useAiChatPage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const documentId = searchParams.get("documentId") || null;
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -77,7 +79,7 @@ export function useAiChatPage() {
         setActiveConversationId(conversationId);
       } catch (err) {
         showError(
-          err.message || "Không tải được lịch sử trò chuyện, vui lòng thử lại."
+          err.message || t("aiChat.historyError")
         );
       } finally {
         setLoadingMessages(false);
@@ -108,7 +110,7 @@ export function useAiChatPage() {
         return nextConversations;
       } catch (err) {
         showError(
-          err.message || "Không tải được danh sách trò chuyện, vui lòng thử lại."
+          err.message || t("aiChat.listError")
         );
         return [];
       } finally {
@@ -166,7 +168,7 @@ export function useAiChatPage() {
         setConversations((current) => current.filter((conversation) => conversation.id !== id));
         await loadConversations({ keepActiveId: activeConversationId });
       }
-      showSuccess("Đã xóa cuộc trò chuyện.");
+      showSuccess(t("aiChat.convDeleted"));
       return true;
     } catch (error) {
       showError(error.message);
@@ -180,7 +182,7 @@ export function useAiChatPage() {
       setConversations((current) => current.map((conversation) =>
         conversation.id === id ? { ...conversation, ...updated } : conversation));
       await loadConversations({ keepActiveId: activeConversationId });
-      showSuccess("Đã đổi tên cuộc trò chuyện.");
+      showSuccess(t("aiChat.convRenamed"));
       return true;
     } catch (error) {
       showError(error.message);
@@ -239,7 +241,7 @@ export function useAiChatPage() {
     } catch (err) {
       showError(
         err.message ||
-          "AI HiveMind hiện không phản hồi được, vui lòng thử lại."
+          t("aiChat.noResponse")
       );
     } finally {
       setSending(false);

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useAiWidget } from "../../context/AiWidgetContext";
 
 const styles = {
@@ -41,12 +42,13 @@ const styles = {
 };
 
 export default function FloatingButton() {
+  const { t } = useTranslation();
   const { openWidget, unreadCount } = useAiWidget();
 
   return (
     <button
       type="button"
-      aria-label="Mở AI HiveMind"
+      aria-label={t("aiWidget.open")}
       title="AI HiveMind"
       style={styles.button}
       onClick={openWidget}

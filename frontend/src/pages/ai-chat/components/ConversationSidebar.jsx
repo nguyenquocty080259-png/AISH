@@ -1,4 +1,9 @@
-function formatConversationTime(value) {
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import Button from "../../../components/ui/Button";
+import Modal from "../../../components/ui/Modal";
+
+function formatConversationTime(value, t, locale) {
   if (!value) return "";
 
   const date = new Date(value);
@@ -10,12 +15,12 @@ function formatConversationTime(value) {
   const diffHours = Math.floor(diffMinutes / 60);
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffMinutes < 1) return "Vừa xong";
-  if (diffMinutes < 60) return `${diffMinutes} phút trước`;
-  if (diffHours < 24) return `${diffHours} giờ trước`;
-  if (diffDays < 7) return `${diffDays} ngày trước`;
+  if (diffMinutes < 1) return t("common.time.justNow");
+  if (diffMinutes < 60) return t("common.time.minutesAgo", { count: diffMinutes });
+  if (diffHours < 24) return t("common.time.hoursAgo", { count: diffHours });
+  if (diffDays < 7) return t("common.time.daysAgo", { count: diffDays });
 
-  return date.toLocaleDateString("vi-VN", {
+  return date.toLocaleDateString(locale, {
     day: "2-digit",
     month: "2-digit",
   });
@@ -32,6 +37,8 @@ export default function ConversationSidebar({
   onRenameConversation,
   onDeleteConversation,
 }) {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage === "en" ? "en-US" : "vi-VN";
   const [renameTarget, setRenameTarget] = useState(null);
   const [renameTitle, setRenameTitle] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -74,22 +81,22 @@ export default function ConversationSidebar({
           onClick={onNewChat}
           disabled={loading}
         >
-          + Cuộc trò chuyện mới
+          {t("aiChat.newConversation")}
         </button>
       </div>
 
       {!isAuthenticated ? (
         <div className="chat-sidebar__hint">
-          Đăng nhập để lưu lịch sử trò chuyện với AI HiveMind.
+          {t("aiChat.loginToSave")}
         </div>
       ) : loading ? (
-        <div className="chat-sidebar__hint">Đang tải lịch sử...</div>
+        <div className="chat-sidebar__hint">{t("aiChat.loadingHistoryShort")}</div>
       ) : conversations.length === 0 ? (
         <div className="chat-sidebar__hint">
-          Chưa có cuộc trò chuyện nào. Hãy bắt đầu một câu hỏi mới.
+          {t("aiChat.noConversations")}
         </div>
       ) : (
-        <div className="chat-sidebar__list" aria-label="Lịch sử trò chuyện">
+        <div className="chat-sidebar__list" aria-label={t("aiChat.historyAria")}>
           {conversations.map((conversation) => {
             const hasDocument = Boolean(conversation.documentId);
 
@@ -112,33 +119,35 @@ export default function ConversationSidebar({
                   {hasDocument && (
                     <span
                       className="chat-sidebar__doc-marker"
-                      aria-label="Cuộc trò chuyện theo tài liệu"
+                      aria-label={t("aiChat.docConvAria")}
                     >
-                      TL
+                      {t("aiChat.docMarker")}
                     </span>
                   )}
                   <span className="chat-sidebar__item-title-text">
-                    {conversation.title || "Cuộc trò chuyện mới"}
+                    {conversation.title || t("aiChat.untitled")}
                   </span>
                 </span>
                 {hasDocument && (
                   <span className="chat-sidebar__doc-title">
                     {conversation.documentTitle ||
-                      `Tài liệu #${conversation.documentId}`}
+                      t("aiChat.docFallbackHash", { id: conversation.documentId })}
                   </span>
                 )}
                 <span className="chat-sidebar__item-time">
                   {formatConversationTime(
-                    conversation.updatedAt || conversation.createdAt
+                    conversation.updatedAt || conversation.createdAt,
+                    t,
+                    locale
                   )}
                 </span>
                 <span style={{ display: "flex", gap: 4, marginTop: 4 }}>
-                  <button type="button" aria-label="Đổi tên cuộc trò chuyện"
+                  <button type="button" aria-label={t("aiChat.renameAria")}
                     style={{ padding: 2, border: 0, background: "transparent", cursor: "pointer" }}
                     onClick={(event) => { event.stopPropagation(); setRenameTarget(conversation); }}>
                     ✏️
                   </button>
-                  <button type="button" aria-label="Xóa cuộc trò chuyện"
+                  <button type="button" aria-label={t("aiChat.deleteAria")}
                     style={{ padding: 2, border: 0, background: "transparent", cursor: "pointer" }}
                     onClick={(event) => { event.stopPropagation(); setDeleteTarget(conversation); }}>
                     🗑️
@@ -151,28 +160,25 @@ export default function ConversationSidebar({
       )}
     </aside>
 
-    <Modal open={!!renameTarget} onClose={() => !submitting && setRenameTarget(null)} title="Đổi tên cuộc trò chuyện">
+    <Modal open={!!renameTarget} onClose={() => !submitting && setRenameTarget(null)} title={t("aiChat.renameTitle")}>
       <form onSubmit={submitRename}>
-        <label style={{ display: "grid", gap: 8 }}>Tên cuộc trò chuyện
+        <label style={{ display: "grid", gap: 8 }}>{t("aiChat.renameLabel")}
           <input autoFocus type="text" value={renameTitle} onChange={(event) => setRenameTitle(event.target.value)} />
         </label>
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 20 }}>
-          <Button variant="secondary" onClick={() => setRenameTarget(null)} disabled={submitting}>Hủy</Button>
-          <Button type="submit" disabled={submitting || !renameTitle.trim()}>{submitting ? "Đang lưu..." : "Lưu"}</Button>
+          <Button variant="secondary" onClick={() => setRenameTarget(null)} disabled={submitting}>{t("common.actions.cancel")}</Button>
+          <Button type="submit" disabled={submitting || !renameTitle.trim()}>{submitting ? t("aiChat.saving") : t("aiChat.save")}</Button>
         </div>
       </form>
     </Modal>
 
-    <Modal open={!!deleteTarget} onClose={() => !submitting && setDeleteTarget(null)} title="Xóa cuộc trò chuyện">
-      <p>Bạn có chắc muốn xóa “{deleteTarget?.title}”? Toàn bộ tin nhắn trong cuộc trò chuyện sẽ bị xóa.</p>
+    <Modal open={!!deleteTarget} onClose={() => !submitting && setDeleteTarget(null)} title={t("aiChat.deleteTitle")}>
+      <p>{t("aiChat.deleteConfirm", { title: deleteTarget?.title })}</p>
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 20 }}>
-        <Button variant="secondary" onClick={() => setDeleteTarget(null)} disabled={submitting}>Hủy</Button>
-        <Button variant="danger" onClick={confirmDelete} disabled={submitting}>{submitting ? "Đang xóa..." : "Xóa"}</Button>
+        <Button variant="secondary" onClick={() => setDeleteTarget(null)} disabled={submitting}>{t("common.actions.cancel")}</Button>
+        <Button variant="danger" onClick={confirmDelete} disabled={submitting}>{submitting ? t("aiChat.deleting") : t("aiChat.delete")}</Button>
       </div>
     </Modal>
     </>
   );
 }
-import { useEffect, useState } from "react";
-import Button from "../../../components/ui/Button";
-import Modal from "../../../components/ui/Modal";

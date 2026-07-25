@@ -1,6 +1,7 @@
+import { useTranslation } from "react-i18next";
 import { useAiWidget } from "../../context/AiWidgetContext";
 
-function formatConversationTime(value) {
+function formatConversationTime(value, t, locale) {
   if (!value) return "";
 
   const date = new Date(value);
@@ -10,12 +11,12 @@ function formatConversationTime(value) {
   const diffHours = Math.floor(diffMinutes / 60);
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffMinutes < 1) return "Vừa xong";
-  if (diffMinutes < 60) return `${diffMinutes} phút trước`;
-  if (diffHours < 24) return `${diffHours} giờ trước`;
-  if (diffDays < 7) return `${diffDays} ngày trước`;
+  if (diffMinutes < 1) return t("common.time.justNow");
+  if (diffMinutes < 60) return t("common.time.minutesAgo", { count: diffMinutes });
+  if (diffHours < 24) return t("common.time.hoursAgo", { count: diffHours });
+  if (diffDays < 7) return t("common.time.daysAgo", { count: diffDays });
 
-  return date.toLocaleDateString("vi-VN", {
+  return date.toLocaleDateString(locale, {
     day: "2-digit",
     month: "2-digit",
   });
@@ -110,6 +111,8 @@ const styles = {
 };
 
 export default function HistoryPanel() {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage === "en" ? "en-US" : "vi-VN";
   const {
     conversations,
     conversationId,
@@ -127,14 +130,14 @@ export default function HistoryPanel() {
           onClick={startNewConversation}
           disabled={isHistoryLoading}
         >
-          + Cuộc trò chuyện mới
+          {t("aiWidget.newConversation")}
         </button>
       </div>
 
       {conversations.length === 0 ? (
-        <div style={styles.hint}>Chưa có cuộc trò chuyện nào.</div>
+        <div style={styles.hint}>{t("aiWidget.noConversations")}</div>
       ) : (
-        <div style={styles.list} aria-label="Lịch sử trò chuyện AI HiveMind">
+        <div style={styles.list} aria-label={t("aiWidget.historyAria")}>
           {conversations.map((conversation) => {
             const hasDocument = Boolean(conversation.documentId);
             const isActive = conversation.id === conversationId;
@@ -151,20 +154,22 @@ export default function HistoryPanel() {
                 disabled={isHistoryLoading}
               >
                 <span style={styles.title}>
-                  {hasDocument && <span style={styles.marker}>TL</span>}
+                  {hasDocument && <span style={styles.marker}>{t("aiWidget.docMarker")}</span>}
                   <span style={styles.titleText}>
-                    {conversation.title || "Cuộc trò chuyện mới"}
+                    {conversation.title || t("aiWidget.untitled")}
                   </span>
                 </span>
                 {hasDocument && (
                   <span style={styles.docTitle}>
                     {conversation.documentTitle ||
-                      `Tài liệu #${conversation.documentId}`}
+                      t("aiWidget.docFallback", { id: conversation.documentId })}
                   </span>
                 )}
                 <span style={styles.time}>
                   {formatConversationTime(
-                    conversation.updatedAt || conversation.createdAt
+                    conversation.updatedAt || conversation.createdAt,
+                    t,
+                    locale
                   )}
                 </span>
               </button>

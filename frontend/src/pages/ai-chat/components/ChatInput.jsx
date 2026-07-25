@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 export default function ChatInput({
   value,
   onChange,
@@ -5,6 +7,7 @@ export default function ChatInput({
   sending,
   disabled = false,
 }) {
+  const { t } = useTranslation();
   const isDisabled = sending || disabled;
 
   return (
@@ -13,11 +16,11 @@ export default function ChatInput({
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Nhập câu hỏi cho AI HiveMind..."
+        placeholder={t("aiChat.inputPlaceholder")}
         disabled={isDisabled}
       />
       <button type="submit" disabled={isDisabled || !value.trim()}>
-        {sending ? "Đang gửi..." : "Gửi"}
+        {sending ? t("aiChat.sending") : t("aiChat.send")}
       </button>
     </form>
   );

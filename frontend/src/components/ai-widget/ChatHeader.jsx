@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useAiWidget } from "../../context/AiWidgetContext";
 
 const styles = {
@@ -55,6 +56,7 @@ const styles = {
 };
 
 export default function ChatHeader() {
+  const { t } = useTranslation();
   const { closeWidget, isAuthenticated, toggleHistoryPanel } = useAiWidget();
 
   return (
@@ -62,7 +64,7 @@ export default function ChatHeader() {
       <div style={styles.avatar}>AI</div>
       <div style={styles.meta}>
         <p style={styles.name}>AI HiveMind</p>
-        <p style={styles.status}>Online</p>
+        <p style={styles.status}>{t("aiWidget.status")}</p>
       </div>
       <div style={styles.actions}>
         {isAuthenticated && (
@@ -70,15 +72,15 @@ export default function ChatHeader() {
             type="button"
             style={styles.action}
             onClick={toggleHistoryPanel}
-            title="Lịch sử trò chuyện"
+            title={t("aiWidget.historyTitle")}
           >
             ≡
           </button>
         )}
-        <button type="button" style={styles.action} onClick={closeWidget} title="Thu nhỏ">
+        <button type="button" style={styles.action} onClick={closeWidget} title={t("aiWidget.minimize")}>
           -
         </button>
-        <button type="button" style={styles.action} onClick={closeWidget} title="Đóng">
+        <button type="button" style={styles.action} onClick={closeWidget} title={t("aiWidget.close")}>
           ×
         </button>
       </div>
