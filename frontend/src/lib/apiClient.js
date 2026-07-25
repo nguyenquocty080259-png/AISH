@@ -1,4 +1,5 @@
 import axios from "axios";
+import i18n from "../i18n";
 import { STORAGE_KEYS } from "../constants/storageKeys";
 
 const apiClient = axios.create({
@@ -28,7 +29,7 @@ apiClient.interceptors.response.use(
     }
 
     const normalizedMessage =
-      backendMessage || error.message || "Đã có lỗi xảy ra, vui lòng thử lại.";
+      backendMessage || error.message || i18n.t("common.genericError");
 
     return Promise.reject({
       status,

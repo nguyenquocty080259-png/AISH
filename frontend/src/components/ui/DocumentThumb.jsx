@@ -4,11 +4,13 @@
 // như cũ, còn lại -> icon. Không phải chủ sở hữu và tài liệu không PUBLIC (403) -> hiển thị dòng
 // chữ thay vì ảnh vỡ.
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { thumbnailUrl } from "../../lib/fileUrl";
 import * as documentApi from "../../api/documentApi";
 import "./doc-thumb.css";
 
 export default function DocumentThumb({ doc }) {
+  const { t } = useTranslation();
   const [blobUrl, setBlobUrl] = useState(null);
   const [kind, setKind] = useState(null); // "thumb" | "image" | "pdf" | null (-> icon)
   const [imgError, setImgError] = useState(false);
@@ -82,7 +84,7 @@ export default function DocumentThumb({ doc }) {
             className="doc-thumb__icon"
             style={{ fontSize: 13, padding: 8, textAlign: "center", lineHeight: 1.3 }}
           >
-            Bạn không có quyền xem tài liệu này
+            {t("common.noPermissionView")}
           </div>
         ) : (kind === "thumb" || kind === "image") && !imgError ? (
           <img

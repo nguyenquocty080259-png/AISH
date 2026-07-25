@@ -67,7 +67,32 @@
       "minutesAgo": "{{count}} phút trước",
       "hoursAgo": "{{count}} giờ trước",
       "daysAgo": "{{count}} ngày trước"
-    }
+    },
+    "fields": {
+      "fullName": "Họ và tên",
+      "username": "Tên người dùng",
+      "email": "Email",
+      "bio": "Giới thiệu",
+      "dob": "Ngày sinh",
+      "gender": "Giới tính",
+      "phoneNumber": "Số điện thoại",
+      "university": "Trường",
+      "faculty": "Khoa",
+      "major": "Ngành",
+      "country": "Quốc gia",
+      "city": "Thành phố",
+      "githubUrl": "GitHub",
+      "linkedinUrl": "LinkedIn",
+      "websiteUrl": "Website",
+      "trashRetentionDays": "Số ngày giữ tài liệu trong thùng rác"
+    },
+    "gender": {
+      "choose": "-- Chọn --",
+      "male": "Nam",
+      "female": "Nữ",
+      "other": "Khác"
+    },
+    "genericError": "Đã có lỗi xảy ra, vui lòng thử lại."
   },
   "nav": {
     "home": "Trang chủ",
@@ -1077,5 +1102,37 @@
     "prev": "← Trước",
     "next": "Sau →",
     "pageOf": "Trang {{page}} / {{total}}"
+  },
+  "profile": {
+    "loading": "Đang tải hồ sơ...",
+    "loadError": "Không tải được hồ sơ.",
+    "notSet": "Chưa cập nhật",
+    "edit": "Chỉnh sửa hồ sơ",
+    "storageTitle": "Dung lượng lưu trữ",
+    "daysValue": "{{count}} ngày",
+    "trashDefault": "Mặc định (30 ngày)",
+    "trashHint": "Tài liệu trong thùng rác tự xóa vĩnh viễn sau số ngày này (mặc định 30, tối đa 90).",
+    "saving": "Đang lưu...",
+    "save": "Lưu thay đổi",
+    "avatarUpdated": "Đã cập nhật ảnh đại diện.",
+    "profileUpdated": "Đã cập nhật hồ sơ."
+  },
+  "onboarding": {
+    "loading": "Đang tải hồ sơ...",
+    "title": "Hoàn tất hồ sơ",
+    "subtitle": "Vui lòng cho biết họ tên và ngày sinh để tiếp tục sử dụng hệ thống. Các thông tin khác có thể bỏ qua và bổ sung sau tại trang hồ sơ.",
+    "requiredSection": "Thông tin bắt buộc",
+    "otherSection": "Thông tin khác",
+    "otherHint": "(có thể bỏ qua)",
+    "submitting": "Đang lưu...",
+    "submit": "Tiếp tục",
+    "fullNameRequired": "Họ tên không được để trống",
+    "dobRequired": "Ngày sinh không được để trống",
+    "welcome": "Đã lưu thông tin, chào mừng bạn!"
+  },
+  "error": {
+    "notFoundTitle": "Không tìm thấy trang",
+    "notFoundDesc": "Trang bạn vừa truy cập không tồn tại hoặc đã bị di chuyển.",
+    "backHome": "Về trang chủ"
   }
 }

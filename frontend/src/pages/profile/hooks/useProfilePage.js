@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import * as profileApi from "../../../api/profileApi";
 import * as documentApi from "../../../api/documentApi";
 import { useToast } from "../../../hooks/useToast";
@@ -30,6 +31,7 @@ function toFormValues(profile) {
 }
 
 export function useProfilePage() {
+  const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
 
   const [profile, setProfile] = useState(null);
@@ -93,7 +95,7 @@ export function useProfilePage() {
           avatarUrl: response.avatarUrl,
         }));
 
-        showSuccess("Đã cập nhật ảnh đại diện.");
+        showSuccess(t("profile.avatarUpdated"));
 
       } catch (err) {
         showError(err.message);
@@ -121,7 +123,7 @@ export function useProfilePage() {
       const updated = await profileApi.updateMyProfile(payload);
       setProfile(updated);
       setEditing(false);
-      showSuccess("Đã cập nhật hồ sơ.");
+      showSuccess(t("profile.profileUpdated"));
     } catch (err) {
       showError(err.message);
     } finally {
