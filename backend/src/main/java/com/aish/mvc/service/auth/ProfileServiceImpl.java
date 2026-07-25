@@ -13,7 +13,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.List;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 
@@ -25,6 +33,17 @@ public class ProfileServiceImpl implements ProfileService {
     private final AuthUserProfileRepository authUserProfileRepository;
     private final AuthUserRepository authUserRepository;
     private final UsernameGenerator usernameGenerator;
+
+    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+    private static final List<String> ALLOWED_TYPES = List.of(
+            "image/jpeg",
+            "image/png",
+            "image/jpg",
+            "image/webp"
+    );
+
+    private static final String AVATAR_UPLOAD_DIR = "uploads/avatars";
 
     @Override
     public ProfileResponse getMyProfile() {
@@ -38,7 +57,7 @@ public class ProfileServiceImpl implements ProfileService {
         AuthUserProfile profile = authUserProfileRepository.findByUserId(user.getId())
                 .orElseGet(() -> usernameGenerator.createProfileForUser(user));
 
-        return mapToResponse(user, profile);
+        return mapToResponse(account, user, profile);
     }
 
     @Override
@@ -96,7 +115,7 @@ public class ProfileServiceImpl implements ProfileService {
 
         authUserProfileRepository.save(profile);
 
-        return mapToResponse(user, profile);
+        return mapToResponse(account, user, profile);
     }
 
     // Onboarding là partial-update: chỉ field khác blank trong request mới được ghi đè, không
@@ -143,9 +162,114 @@ public class ProfileServiceImpl implements ProfileService {
 
         authUserProfileRepository.save(profile);
 
-        return mapToResponse(user, profile);
+        return mapToResponse(account, user, profile);
     }
 
+    @Override
+    public String uploadAvatar(MultipartFile file) {
+
+        // =============================
+        // Validate file
+        // =============================
+
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng chọn ảnh đại diện.");
+        }
+
+        if (file.getSize() > MAX_FILE_SIZE) {
+            throw new IllegalArgumentException("Kích thước ảnh không được vượt quá 5MB.");
+        }
+
+        String contentType = file.getContentType();
+
+        if (contentType == null || !ALLOWED_TYPES.contains(contentType)) {
+            throw new IllegalArgumentException("Chỉ chấp nhận ảnh JPG, JPEG, PNG hoặc WEBP.");
+        }
+
+        // =============================
+        // Lấy user hiện tại
+        // =============================
+
+        String email = getCurrentEmail();
+
+        AuthAccount account = authAccountRepository
+                .findByIdentifier(email)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+
+        AuthUser user = account.getUser();
+
+        try {
+
+            // =============================
+            // Tạo thư mục nếu chưa tồn tại
+            // =============================
+
+            Path uploadDir = Paths.get(AVATAR_UPLOAD_DIR);
+
+            if (!Files.exists(uploadDir)) {
+                Files.createDirectories(uploadDir);
+            }
+
+            // =============================
+            // Sinh tên file
+            // =============================
+
+            String originalFilename = file.getOriginalFilename();
+
+            String extension = "";
+
+            if (originalFilename != null && originalFilename.contains(".")) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
+
+            String filename = UUID.randomUUID() + extension;
+
+            // =============================
+            // Lưu file
+            // =============================
+
+            Path destination = uploadDir.resolve(filename);
+
+            Files.copy(
+                    file.getInputStream(),
+                    destination,
+                    StandardCopyOption.REPLACE_EXISTING
+            );
+
+            // =============================
+            // Xóa avatar cũ (nếu có)
+            // =============================
+
+            if (user.getAvatarUrl() != null && !user.getAvatarUrl().isBlank()) {
+
+                try {
+
+                    String oldFilename = Paths.get(user.getAvatarUrl()).getFileName().toString();
+
+                    Path oldFile = uploadDir.resolve(oldFilename);
+
+                    Files.deleteIfExists(oldFile);
+
+                } catch (Exception ignored) {
+                    // Không ảnh hưởng nếu xóa thất bại
+                }
+
+            }
+            // =============================
+            // Cập nhật DB
+            // =============================
+
+            String avatarUrl = "/uploads/avatars/" + filename;
+
+            user.setAvatarUrl(avatarUrl);
+            authUserRepository.save(user);
+
+            return avatarUrl;
+        } catch (IOException e) {
+
+            throw new RuntimeException("Không thể lưu avatar.", e);
+        }
+    }
     private static boolean isBlank(String value) {
         return value == null || value.isBlank();
     }
@@ -171,11 +295,14 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     private ProfileResponse mapToResponse(
+            AuthAccount account,
             AuthUser user,
             AuthUserProfile profile
     ) {
 
         ProfileResponse response = new ProfileResponse();
+
+        response.setEmail(account.getIdentifier());
 
         response.setUserId(user.getId());
 

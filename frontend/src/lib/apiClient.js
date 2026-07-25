@@ -1,13 +1,10 @@
 import axios from "axios";
 import { STORAGE_KEYS } from "../constants/storageKeys";
 
-// const apiClient = axios.create({
-//   baseURL: import.meta.env.VITE_API_URL,
-// });
-
 const apiClient = axios.create({
     baseURL: "http://localhost:8080/api",
 });
+
 
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);

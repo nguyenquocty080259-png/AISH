@@ -11,3 +11,19 @@ export function updateMyProfile(data) {
 export function completeOnboarding(data) {
   return apiClient.put("/profile/onboarding", data).then((res) => res.data);
 }
+
+export function uploadAvatar(file) {
+  const formData = new FormData();
+
+  formData.append("file", file);
+
+  return apiClient.post(
+    "/profile/avatar",
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  ).then((res) => res.data);
+}
