@@ -1,0 +1,69 @@
+spring.application.name=backend
+
+# ===== Database (PostgreSQL) =====
+spring.datasource.url=jdbc:postgresql://localhost:5432/aish
+spring.datasource.username=YOUR_DB_USERNAME
+spring.datasource.password=YOUR_DB_PASSWORD
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.jdbc.time_zone=UTC
+
+# ===== Server =====
+server.port=8080
+logging.level.org.springframework.security=TRACE
+
+# ===== Mail (SMTP) =====
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=YOUR_EMAIL@gmail.com
+spring.mail.password=YOUR_GMAIL_APP_PASSWORD
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+spring.mail.properties.mail.debug=true
+logging.level.org.springframework.mail=DEBUG
+logging.level.com.sun.mail=DEBUG
+
+# ===== OAuth2 - Google =====
+spring.security.oauth2.client.registration.google.client-id=YOUR_GOOGLE_CLIENT_ID
+spring.security.oauth2.client.registration.google.client-secret=YOUR_GOOGLE_CLIENT_SECRET
+spring.security.oauth2.client.registration.google.scope=email,profile
+
+# ===== OAuth2 - GitHub =====
+spring.security.oauth2.client.registration.github.client-id=YOUR_GITHUB_CLIENT_ID
+spring.security.oauth2.client.registration.github.client-secret=YOUR_GITHUB_CLIENT_SECRET
+spring.security.oauth2.client.registration.github.scope=user:email
+
+# ===== AI - Chat (Groq via OpenAI-compatible client) =====
+spring.ai.openai.api-key=YOUR_GROQ_API_KEY
+spring.ai.openai.base-url=https://api.groq.com/openai
+spring.ai.openai.chat.options.model=llama-3.3-70b-versatile
+
+# ===== AI - Model routing =====
+# Pin chat to OpenAI/Groq and embedding to Gemini so the Google GenAI chat
+# autoconfig and the OpenAI embedding autoconfig (Groq has no embeddings
+# endpoint) both back off instead of registering competing beans.
+spring.ai.model.chat=openai
+spring.ai.model.embedding=google-genai
+spring.ai.model.embedding.text=google-genai
+
+# ===== AI - Embedding (Google Gemini Developer API) =====
+spring.ai.google.genai.embedding.api-key=YOUR_GEMINI_API_KEY
+spring.ai.google.genai.embedding.text.options.model=gemini-embedding-001
+spring.ai.google.genai.embedding.text.options.dimensions=768
+
+# ===== File storage =====
+app.upload.dir=uploads
+
+# ===== Cloudinary =====
+cloudinary.cloud-name=YOUR_CLOUDINARY_CLOUD_NAME
+cloudinary.api-key=YOUR_CLOUDINARY_API_KEY
+cloudinary.api-secret=YOUR_CLOUDINARY_API_SECRET
+
+# ===== Upload limits =====
+spring.servlet.multipart.max-file-size=2GB
+spring.servlet.multipart.max-request-size=2GB
+server.tomcat.max-swallow-size=-1
+
+# ===== App bootstrap =====
+app.seed.db.enabled=true
+app.ingest.auto.enabled=true
