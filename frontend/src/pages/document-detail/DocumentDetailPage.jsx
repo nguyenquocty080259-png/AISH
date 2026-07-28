@@ -41,7 +41,6 @@ export default function DocumentDetailPage() {
     disputeBlockedComment,
     downloading,
     ingesting,
-    ingested,
     handleToggleFavorite,
     handleRate,
     handleAddComment,
@@ -265,21 +264,6 @@ export default function DocumentDetailPage() {
 
         {isLikelyOwner && (
           <>
-            {false && (
-            <button
-              className="detail-btn"
-              onClick={handleIngest}
-              disabled={ingesting || doc.ingestStatus === "UNSUPPORTED_FORMAT"}
-            >
-              {doc.ingestStatus === "UNSUPPORTED_FORMAT"
-                ? "🧠 AI không đọc được tệp này"
-                : ingesting
-                ? "Đang chuẩn bị..."
-                : ingested
-                ? "✓ Đã sẵn sàng cho AI"
-                : "🧠 Chuẩn bị cho AI Chat"}
-            </button>
-            )}
             <button className="detail-btn" onClick={openEditModal}>
               {t("docDetail.edit")}
             </button>
