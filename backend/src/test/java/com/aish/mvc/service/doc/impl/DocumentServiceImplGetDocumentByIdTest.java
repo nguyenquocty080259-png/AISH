@@ -1,5 +1,6 @@
 package com.aish.mvc.service.doc.impl;
 
+import com.aish.mvc.dto.doc.DocumentResponseDTO;
 import com.aish.mvc.entity.auth.AuthAccount;
 import com.aish.mvc.entity.auth.AuthUser;
 import com.aish.mvc.entity.doc.DocDocument;
@@ -17,6 +18,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -104,6 +106,34 @@ class DocumentServiceImplGetDocumentByIdTest {
         assertThrows(ForbiddenException.class, () -> service.getDocumentById(DOCUMENT_ID));
 
         verify(documentMapper, never()).toResponseDTO(any(DocDocument.class));
+    }
+
+    @Test
+    void ownerCanReadOwnPrivateDocument() {
+        DocDocument doc = givenDocument(CURRENT_USER_ID, DocumentVisibility.PRIVATE);
+        DocumentResponseDTO expected = new DocumentResponseDTO();
+        when(documentMapper.toResponseDTO(doc)).thenReturn(expected);
+
+        assertSame(expected, service.getDocumentById(DOCUMENT_ID));
+    }
+
+    @Test
+    void publicDocumentIsReadableByAnyLoggedInUser() {
+        DocDocument doc = givenDocument(OTHER_USER_ID, DocumentVisibility.PUBLIC);
+        DocumentResponseDTO expected = new DocumentResponseDTO();
+        when(documentMapper.toResponseDTO(doc)).thenReturn(expected);
+
+        assertSame(expected, service.getDocumentById(DOCUMENT_ID));
+    }
+
+    @Test
+    void sharedDocumentIsReadableByRecipient() {
+        DocDocument doc = givenDocument(OTHER_USER_ID, DocumentVisibility.SHARED);
+        when(documentShareService.hasShareAccess(DOCUMENT_ID, CURRENT_USER_ID)).thenReturn(true);
+        DocumentResponseDTO expected = new DocumentResponseDTO();
+        when(documentMapper.toResponseDTO(doc)).thenReturn(expected);
+
+        assertSame(expected, service.getDocumentById(DOCUMENT_ID));
     }
 
     @Test
