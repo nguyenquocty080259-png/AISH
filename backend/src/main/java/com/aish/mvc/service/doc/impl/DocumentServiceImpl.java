@@ -605,6 +605,12 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentResponseDTO getDocumentById(Long id) {
         DocDocument doc = docDocumentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
+        // Đã xoá mềm (đang ở thùng rác) -> coi như không tồn tại với MỌI người, kể cả chủ sở
+        // hữu, giống DocumentAccessPortImpl.isAvailableTo(). Kiểm tra trước cả check quyền để
+        // không lộ ra rằng id đó từng tồn tại (403 "cấm" khác hẳn 404 "không có").
+        if (doc.getDeletedAt() != null) {
+            throw new ResourceNotFoundException("Tài liệu không tồn tại!");
+        }
         // Chi tiết tài liệu cũng là một kênh lấy NỘI DUNG (mô tả, bình luận, tên tệp) nên phải
         // áp đúng luật truy cập của getFileForPreview()/getFileByDocumentId(): chủ sở hữu /
         // PUBLIC / được chia sẻ. Thiếu chốt này thì bất kỳ user đã đăng nhập nào cũng đọc được
