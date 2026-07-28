@@ -110,6 +110,8 @@ public class EngagementServiceImpl implements EngagementService {
     @Override
     @Transactional
     public void toggleFavorite(Long documentId) {
+        requireDocument(documentId);
+        requireReadableDocument(documentId);
         Long uid = getCurrentUser().getId();
         if (favoriteRepository.existsByUserIdAndDocumentId(uid, documentId)) {
             favoriteRepository.deleteByUserIdAndDocumentId(uid, documentId);
