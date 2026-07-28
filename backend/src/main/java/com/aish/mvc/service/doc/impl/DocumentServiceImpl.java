@@ -203,6 +203,25 @@ public class DocumentServiceImpl implements DocumentService {
         return String.format("%.1f KB", bytes / 1024.0);
     }
 
+    // Đổi danh sách id môn học -> tập Subject, dùng chung cho lúc tạo và lúc sửa tài liệu.
+    // Trước đây id không tồn tại bị ifPresent() nuốt im lặng: người dùng chọn 3 môn, chỉ 1 môn
+    // được lưu, không có lỗi nào báo về — dữ liệu sai mà cả hai phía đều tưởng là đã lưu đủ.
+    Set<Subject> resolveSubjects(java.util.List<Long> subjectIds) {
+        Set<Subject> subjects = new HashSet<>();
+        java.util.List<Long> missing = new java.util.ArrayList<>();
+        for (Long sid : subjectIds) {
+            if (sid == null) continue;
+            subjectRepository.findById(sid).ifPresentOrElse(subjects::add, () -> missing.add(sid));
+        }
+        if (!missing.isEmpty()) {
+            throw new IllegalArgumentException("Không tìm thấy môn học với id: " + missing);
+        }
+        if (subjects.isEmpty()) {
+            throw new IllegalArgumentException("Tài liệu phải thuộc ít nhất 1 môn học hợp lệ.");
+        }
+        return subjects;
+    }
+
     // Tạo document + gắn nhiều môn học (chưa gắn file)
     private DocDocument buildDocument(String title, String description, java.util.List<Long> subjectIds) {
         String validatedTitle = namingModerationService.validate(title);
@@ -212,14 +231,7 @@ public class DocumentServiceImpl implements DocumentService {
             throw new IllegalArgumentException("Tài liệu phải thuộc ít nhất 1 môn học.");
         }
 
-        Set<Subject> subjects = new HashSet<>();
-        for (Long sid : subjectIds) {
-            if (sid == null) continue;
-            subjectRepository.findById(sid).ifPresent(subjects::add);
-        }
-        if (subjects.isEmpty()) {
-            throw new IllegalArgumentException("Không tìm thấy môn học hợp lệ nào trong danh sách đã chọn.");
-        }
+        Set<Subject> subjects = resolveSubjects(subjectIds);
 
         DocDocument doc = new DocDocument();
         doc.setTitle(validatedTitle);
@@ -314,15 +326,7 @@ public class DocumentServiceImpl implements DocumentService {
 
         // subjectIds == null: giữ nguyên. Nếu gửi thì bắt buộc có >=1 môn hợp lệ (DEC-030).
         if (subjectIds != null) {
-            Set<Subject> subjects = new HashSet<>();
-            for (Long sid : subjectIds) {
-                if (sid == null) continue;
-                subjectRepository.findById(sid).ifPresent(subjects::add);
-            }
-            if (subjects.isEmpty()) {
-                throw new IllegalArgumentException("Tài liệu phải thuộc ít nhất 1 môn học hợp lệ.");
-            }
-            doc.setSubjects(subjects);
+            doc.setSubjects(resolveSubjects(subjectIds));
         }
     }
 
