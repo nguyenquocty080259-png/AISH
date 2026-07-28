@@ -26,6 +26,15 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Dựng DTO tài liệu trả về FE. Không phải mapper thuần: ngoài việc copy trường, nó còn TRUY VẤN
+ * thêm số liệu tương tác (yêu thích, lượt tải, điểm trung bình) và danh sách bình luận cho từng
+ * tài liệu — nên gọi nó trong vòng lặp là nhân số truy vấn lên theo số tài liệu.
+ *
+ * <p>Mapper đọc user đang đăng nhập từ SecurityContext để tính các trường phụ thuộc người xem
+ * ({@code favorited}, và việc có thấy bình luận đang chờ duyệt hay không), nhưng KHÔNG tự kiểm
+ * tra quyền xem tài liệu — người gọi phải chốt quyền trước khi map.
+ */
 @Component
 @RequiredArgsConstructor
 public class DocumentMapper {
@@ -44,11 +53,22 @@ public class DocumentMapper {
                 .getUser();
     }
 
-    // DocFile.resourceType: "local" (upload-server) | "image"/"raw" (Cloudinary) -> LOCAL/CLOUD cho FE (DEC-031).
+    /**
+     * Đổi {@code DocFile.resourceType} sang nhãn nơi lưu cho FE (DEC-031): "local" (upload lên
+     * máy chủ) -> LOCAL; mọi giá trị còn lại đều do Cloudinary đặt ("image", "raw"...) -> CLOUD.
+     */
     public String toStorageType(String resourceType) {
         return DocFile.RESOURCE_TYPE_LOCAL.equalsIgnoreCase(resourceType) ? StorageTarget.LOCAL : StorageTarget.CLOUD;
     }
 
+    /**
+     * DTO đầy đủ cho trang chi tiết và các danh sách tài liệu: metadata, file chính (ưu tiên bản
+     * local), nhãn nơi lưu, thumbnail, môn học, số liệu tương tác và bình luận.
+     *
+     * <p>Bình luận đang chờ duyệt (PENDING_REVIEW) chỉ hiện với admin hoặc chính tác giả của
+     * bình luận đó; người khác không thấy. Tài liệu chưa có file thì {@code aiSupported} là
+     * false và các trường file để trống.
+     */
     public DocumentResponseDTO toResponseDTO(DocDocument doc) {
         AuthUser currentUser = currentUser();
         Long currentUserId = currentUser.getId();
@@ -119,6 +139,10 @@ public class DocumentMapper {
         return dto;
     }
 
+    /**
+     * DTO rút gọn cho bảng quản trị: chỉ metadata và nơi lưu, KHÔNG truy vấn số liệu tương tác
+     * hay bình luận — bảng admin phân trang trên toàn bộ tài liệu nên phải giữ rẻ.
+     */
     public AdminDocumentSummaryDTO toAdminSummaryDTO(DocDocument doc) {
         String storageType = doc.getFiles() != null && !doc.getFiles().isEmpty()
                 ? toStorageType(doc.getFiles().getFirst().getResourceType())
