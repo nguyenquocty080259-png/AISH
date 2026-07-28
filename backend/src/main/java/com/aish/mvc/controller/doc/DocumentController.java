@@ -244,7 +244,7 @@ public class DocumentController {
         try {
             engagementService.logDownload(id);
             Resource resource = resolveResource(docFile);
-            if (resource.exists() || resource.isReadable()) {
+            if (resource.exists() && resource.isReadable()) {
                 return ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + docFile.getFileName() + "\"")
                         .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
@@ -262,7 +262,7 @@ public class DocumentController {
         try {
             DocFile docFile = documentService.getFileForPreview(id);
             Resource resource = resolveResource(docFile);
-            if (resource.exists() || resource.isReadable()) {
+            if (resource.exists() && resource.isReadable()) {
                 String contentType = docFile.getFileType() != null ? docFile.getFileType() : "application/octet-stream";
                 return ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_TYPE, contentType)
