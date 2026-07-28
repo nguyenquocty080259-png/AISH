@@ -335,6 +335,11 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentResponseDTO updateDocument(Long id, String title, String description, java.util.List<Long> subjectIds) {
         DocDocument doc = docDocumentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
+        // Trong thùng rác thì coi như không tồn tại, giống getDocumentById() và
+        // DocumentShareServiceImpl.requireOwnedDocument() — muốn sửa thì khôi phục trước.
+        if (doc.getDeletedAt() != null) {
+            throw new ResourceNotFoundException("Tài liệu không tồn tại!");
+        }
         if (!doc.getUser().getId().equals(getCurrentUser().getId())) {
             throw new ForbiddenException("Bạn không có quyền sửa tài liệu này!");
         }
