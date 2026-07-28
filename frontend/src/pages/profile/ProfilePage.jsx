@@ -12,6 +12,15 @@ const FIELD_ORDER = [
   "githubUrl", "linkedinUrl", "websiteUrl", "trashRetentionDays",
 ];
 
+// Giới tính được lưu nguyên văn tiếng Việt ("Nam"/"Nữ"/"Khác") vì <select> ở form gửi thẳng
+// chuỗi đó lên BE. Map ngược về key i18n lúc HIỂN THỊ (không đổi giá trị lưu, không đụng BE);
+// giá trị lạ từ dữ liệu cũ thì trả về nguyên văn thay vì mất trắng.
+const GENDER_I18N_KEYS = {
+  Nam: "male",
+  "Nữ": "female",
+  "Khác": "other",
+};
+
 function initials(name) {
   if (!name) return "?";
   return name
@@ -41,6 +50,11 @@ export default function ProfilePage() {
       avatarPreview,
       handleAvatarChange,
   } = useProfilePage();
+
+  const displayGender = (value) => {
+    const key = GENDER_I18N_KEYS[value?.trim()];
+    return key ? t(`common.gender.${key}`) : value;
+  };
 
   if (loading) {
     return <div className="profile-page">{t("profile.loading")}</div>;
@@ -125,6 +139,8 @@ export default function ProfilePage() {
                       ? profile[field]
                         ? t("profile.daysValue", { count: profile[field] })
                         : t("profile.trashDefault")
+                      : field === "gender"
+                      ? displayGender(profile[field]) || "—"
                       : profile[field] || "—"}
                   </span>
                 </div>
