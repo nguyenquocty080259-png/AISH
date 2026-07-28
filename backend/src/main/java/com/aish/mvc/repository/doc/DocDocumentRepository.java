@@ -89,7 +89,12 @@ public interface DocDocumentRepository extends JpaRepository<DocDocument, Long> 
     List<DocDocument> findPublicApprovedDocuments(@Param("pub") DocumentVisibility pub,
                                                    @Param("approved") ModerationStatus approved);
 
+    // Nạp kèm `user`: lượt quét chạy ngoài transaction và còn gọi stampMetadataCheck
+    // (@Modifying(clearAutomatically = true)) giữa chừng, nên tới lúc gửi thông báo lệch metadata
+    // thì thực thể đã detached — user lazy sẽ ném LazyInitializationException và bị khối catch
+    // của scheduler nuốt mất, khiến chủ tài liệu không bao giờ nhận được thông báo.
     @Query("SELECT DISTINCT d FROM DocDocument d LEFT JOIN FETCH d.files LEFT JOIN FETCH d.subjects " +
+            "LEFT JOIN FETCH d.user " +
             "WHERE d.deletedAt IS NULL AND d.visibility = :visibility " +
             "AND d.moderationStatus = :moderationStatus AND d.ingestStatus = :ingestStatus " +
             "AND (d.metadataCheckedAt IS NULL OR d.updatedAt > d.metadataCheckedAt) " +
