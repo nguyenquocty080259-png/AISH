@@ -866,8 +866,6 @@
     "fileOpenError": "Could not open file.",
     "openInNewTab": "Open file in a new tab",
     "filePreparing": "Preparing file...",
-    "unlockFull": "🔓 View full",
-    "unlockHint": "Click to view the entire document clearly",
     "downloading": "Downloading...",
     "download": "⬇ Download file",
     "aiCantRead": "🤖 AI can't read this file",

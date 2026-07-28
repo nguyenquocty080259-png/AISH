@@ -866,8 +866,6 @@
     "fileOpenError": "Không mở được file.",
     "openInNewTab": "Mở file trong tab mới",
     "filePreparing": "Đang chuẩn bị file...",
-    "unlockFull": "🔓 Xem đầy đủ",
-    "unlockHint": "Bấm để xem rõ toàn bộ tài liệu",
     "downloading": "Đang tải...",
     "download": "⬇ Tải file",
     "aiCantRead": "🤖 AI không đọc được tệp này",
