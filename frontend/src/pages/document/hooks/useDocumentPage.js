@@ -75,6 +75,13 @@ export function useDocumentPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isUploadOpen]);
 
+  // Đổi từ khoá / môn học là đổi hẳn tập kết quả, nên số trang cũ không còn ý nghĩa: đang ở
+  // trang 3 mà lọc lại thì người dùng rơi vào giữa danh sách mới (hoặc trang cuối bị kẹp lại
+  // bởi Math.min bên dưới) và tưởng là không có kết quả. Luôn về trang 1 khi bộ lọc đổi.
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, subjectFilter]);
+
   // Lọc client: theo tên + mô tả + môn học (môn là mảng subjectIds)
   const filteredDocuments = useMemo(() => {
     return documents.filter((doc) => {
