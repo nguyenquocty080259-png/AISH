@@ -12,6 +12,7 @@ import com.aish.mvc.repository.doc.FavoriteRepository;
 import com.aish.mvc.repository.doc.RatingRepository;
 import com.aish.mvc.repository.doc.ViewHistoryRepository;
 import com.aish.mvc.service.ai.ToxicKeywordFilter;
+import com.aish.mvc.service.doc.DocumentAccessPort;
 import com.aish.mvc.service.notification.NotificationService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +48,7 @@ class EngagementServiceImplRatingTest {
     private final DocDocumentRepository docDocumentRepository = mock(DocDocumentRepository.class);
     private final RatingRepository ratingRepository = mock(RatingRepository.class);
     private final AuthAccountRepository authAccountRepository = mock(AuthAccountRepository.class);
+    private final DocumentAccessPort documentAccessPort = mock(DocumentAccessPort.class);
 
     private EngagementServiceImpl service;
 
@@ -71,7 +73,8 @@ class EngagementServiceImplRatingTest {
                 authAccountRepository,
                 mock(ToxicKeywordFilter.class),
                 mock(NotificationService.class),
-                mock(ApplicationEventPublisher.class));
+                mock(ApplicationEventPublisher.class),
+                documentAccessPort);
     }
 
     @AfterEach

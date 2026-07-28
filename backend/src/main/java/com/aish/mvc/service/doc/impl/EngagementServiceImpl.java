@@ -18,6 +18,7 @@ import com.aish.mvc.repository.doc.DownloadRepository;
 import com.aish.mvc.repository.doc.FavoriteRepository;
 import com.aish.mvc.repository.doc.RatingRepository;
 import com.aish.mvc.repository.doc.ViewHistoryRepository;
+import com.aish.mvc.service.doc.DocumentAccessPort;
 import com.aish.mvc.service.doc.EngagementService;
 import com.aish.mvc.service.doc.CommentModerationRequestedEvent;
 import com.aish.mvc.service.ai.ToxicKeywordFilter;
@@ -56,6 +57,7 @@ public class EngagementServiceImpl implements EngagementService {
     private final ToxicKeywordFilter toxicKeywordFilter;
     private final NotificationService notificationService;
     private final ApplicationEventPublisher eventPublisher;
+    private final DocumentAccessPort documentAccessPort;
 
     private AuthUser getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -69,10 +71,21 @@ public class EngagementServiceImpl implements EngagementService {
                 .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
     }
 
+    // Bình luận / đánh giá / yêu thích đều là thao tác TRÊN nội dung, nên chỉ hợp lệ khi người
+    // dùng thật sự được xem tài liệu đó. Tái dùng DocumentAccessPort — cùng luật availability
+    // (chủ sở hữu / PUBLIC / được chia sẻ, và tài liệu chưa bị xoá mềm) mà Collections và AI
+    // chat đang dùng — thay vì chép lại điều kiện quyền ở đây.
+    private void requireReadableDocument(Long documentId) {
+        if (!documentAccessPort.isAvailableTo(documentId, getCurrentUser().getId())) {
+            throw new ForbiddenException("Bạn không có quyền thao tác trên tài liệu này!");
+        }
+    }
+
     @Override
     @Transactional
     public void addComment(Long documentId, String content, boolean dispute, String disputeNote) {
         DocDocument doc = requireDocument(documentId);
+        requireReadableDocument(documentId);
         String cleaned = validateContent(content);
         boolean keywordHit = toxicKeywordFilter.matches(cleaned, ModerationKeywordType.COMMENT);
         if (keywordHit && !dispute) {
