@@ -26,7 +26,6 @@ public interface DocumentService {
     DocumentResponseDTO uploadDocumentToCloud(String title, String description, java.util.List<Long> subjectIds, MultipartFile file);
 
     // Upload hợp nhất: storage = "LOCAL" | "CLOUD" | "BOTH" (BOTH lưu cả 2 nơi, ưu tiên local khi đọc).
-    // Upload hợp nhất: storage = "LOCAL" | "CLOUD" | "BOTH" (BOTH lưu cả 2 nơi, ưu tiên local khi đọc).
     DocumentResponseDTO uploadDocument(String title, String description, java.util.List<Long> subjectIds, MultipartFile file, String storage);
 
     // Sửa metadata tài liệu (title/description/subjectIds). subjectIds == null -> giữ nguyên.
