@@ -871,6 +871,7 @@
     "downloading": "Downloading...",
     "download": "⬇ Download file",
     "aiCantRead": "🤖 AI can't read this file",
+    "aiNotReady": "🤖 Document not prepared for AI yet",
     "askAi": "🤖 Ask AI about this document",
     "addToCollection": "🗂️ Add to collection",
     "edit": "✏️ Edit document",

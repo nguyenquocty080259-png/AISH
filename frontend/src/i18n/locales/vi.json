@@ -871,6 +871,7 @@
     "downloading": "Đang tải...",
     "download": "⬇ Tải file",
     "aiCantRead": "🤖 AI không đọc được tệp này",
+    "aiNotReady": "🤖 Tài liệu chưa nạp cho AI",
     "askAi": "🤖 Hỏi AI về tài liệu này",
     "addToCollection": "🗂️ Thêm vào collection",
     "edit": "✏️ Sửa tài liệu",
