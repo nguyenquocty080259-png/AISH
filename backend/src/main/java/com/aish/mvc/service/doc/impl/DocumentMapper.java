@@ -17,6 +17,7 @@ import com.aish.mvc.repository.doc.DownloadRepository;
 import com.aish.mvc.repository.doc.FavoriteRepository;
 import com.aish.mvc.repository.doc.RatingRepository;
 import com.aish.mvc.service.doc.DocEmbeddingService;
+import com.aish.mvc.service.doc.StorageTarget;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -44,7 +45,7 @@ public class DocumentMapper {
 
     // DocFile.resourceType: "local" (upload-server) | "image"/"raw" (Cloudinary) -> LOCAL/CLOUD cho FE (DEC-031).
     public String toStorageType(String resourceType) {
-        return DocFile.RESOURCE_TYPE_LOCAL.equalsIgnoreCase(resourceType) ? "LOCAL" : "CLOUD";
+        return DocFile.RESOURCE_TYPE_LOCAL.equalsIgnoreCase(resourceType) ? StorageTarget.LOCAL : StorageTarget.CLOUD;
     }
 
     public DocumentResponseDTO toResponseDTO(DocDocument doc) {
@@ -78,7 +79,7 @@ public class DocumentMapper {
 
             boolean hasLocal = doc.getFiles().stream().anyMatch(f -> DocFile.RESOURCE_TYPE_LOCAL.equalsIgnoreCase(f.getResourceType()));
             boolean hasCloud = doc.getFiles().stream().anyMatch(f -> !DocFile.RESOURCE_TYPE_LOCAL.equalsIgnoreCase(f.getResourceType()));
-            dto.setStorageType(hasLocal && hasCloud ? "BOTH" : (hasLocal ? "LOCAL" : "CLOUD"));
+            dto.setStorageType(hasLocal && hasCloud ? StorageTarget.BOTH : (hasLocal ? StorageTarget.LOCAL : StorageTarget.CLOUD));
 
             // Thumbnail: lấy bản đầu tiên có (2 bản của cùng 1 file thì thumbnail giống nhau).
             dto.setThumbnailUrl(doc.getFiles().stream()

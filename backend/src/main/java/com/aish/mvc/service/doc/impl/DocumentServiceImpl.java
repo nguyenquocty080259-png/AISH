@@ -25,6 +25,7 @@ import com.aish.mvc.service.ai.AiModerationService;
 import com.aish.mvc.service.config.SystemSettingService;
 import com.aish.mvc.service.doc.DocumentService;
 import com.aish.mvc.service.doc.DocumentShareService;
+import com.aish.mvc.service.doc.StorageTarget;
 import com.aish.mvc.service.doc.NamingModerationService;
 import com.aish.mvc.service.doc.DocumentContentKeywordService;
 import com.aish.mvc.service.notification.NotificationService;
@@ -152,7 +153,7 @@ public class DocumentServiceImpl implements DocumentService {
     // BOTH phải vượt qua CẢ HAI giới hạn vì file được lưu ở cả 2 nơi. Package-private để unit
     // test gọi trực tiếp mà không cần dựng lại toàn bộ pipeline buildDocument()/file storage.
     void enforceUploadSizeLimit(long fileSize, String storage) {
-        if ("LOCAL".equals(storage) || "BOTH".equals(storage)) {
+        if (StorageTarget.LOCAL.equals(storage) || StorageTarget.BOTH.equals(storage)) {
             long maxLocal = systemSettingService.getLong(
                     SystemSettingService.MAX_FILE_LOCAL_BYTES_KEY, SystemSettingService.MAX_FILE_LOCAL_BYTES_DEFAULT);
             if (fileSize > maxLocal) {
@@ -161,7 +162,7 @@ public class DocumentServiceImpl implements DocumentService {
                                 + " cho nơi lưu LOCAL.");
             }
         }
-        if ("CLOUD".equals(storage) || "BOTH".equals(storage)) {
+        if (StorageTarget.CLOUD.equals(storage) || StorageTarget.BOTH.equals(storage)) {
             long maxCloud = systemSettingService.getLong(
                     SystemSettingService.MAX_FILE_CLOUD_BYTES_KEY, SystemSettingService.MAX_FILE_CLOUD_BYTES_DEFAULT);
             if (fileSize > maxCloud) {
@@ -178,7 +179,7 @@ public class DocumentServiceImpl implements DocumentService {
     // chủ ý: bytes vẫn còn chiếm disk/Cloudinary tới khi xoá vĩnh viễn. BOTH phải vượt qua CẢ
     // HAI quota, kiểm tra độc lập (không dừng sớm sau khi 1 bên qua). Package-private để test.
     void enforceUploadQuota(long fileSize, String storage, Long userId) {
-        if ("LOCAL".equals(storage) || "BOTH".equals(storage)) {
+        if (StorageTarget.LOCAL.equals(storage) || StorageTarget.BOTH.equals(storage)) {
             long usedLocal = docFileRepository.sumLocalFileSizeByUserId(userId);
             long quotaLocal = systemSettingService.getLong(
                     SystemSettingService.QUOTA_LOCAL_BYTES_KEY, SystemSettingService.QUOTA_LOCAL_BYTES_DEFAULT);
@@ -188,7 +189,7 @@ public class DocumentServiceImpl implements DocumentService {
                                 + " vượt quota " + humanReadableSize(quotaLocal) + " cho nơi lưu LOCAL.");
             }
         }
-        if ("CLOUD".equals(storage) || "BOTH".equals(storage)) {
+        if (StorageTarget.CLOUD.equals(storage) || StorageTarget.BOTH.equals(storage)) {
             long usedCloud = docFileRepository.sumCloudFileSizeByUserId(userId);
             long quotaCloud = systemSettingService.getLong(
                     SystemSettingService.QUOTA_CLOUD_BYTES_KEY, SystemSettingService.QUOTA_CLOUD_BYTES_DEFAULT);
@@ -255,13 +256,13 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     @Transactional
     public DocumentResponseDTO uploadDocumentToServer(String title, String description, java.util.List<Long> subjectIds, MultipartFile file) {
-        return uploadDocument(title, description, subjectIds, file, "LOCAL");
+        return uploadDocument(title, description, subjectIds, file, StorageTarget.LOCAL);
     }
 
     @Override
     @Transactional
     public DocumentResponseDTO uploadDocumentToCloud(String title, String description, java.util.List<Long> subjectIds, MultipartFile file) {
-        return uploadDocument(title, description, subjectIds, file, "CLOUD");
+        return uploadDocument(title, description, subjectIds, file, StorageTarget.CLOUD);
     }
 
     // Upload hợp nhất: storage = "LOCAL" | "CLOUD" | "BOTH".
@@ -272,8 +273,8 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentResponseDTO uploadDocument(String title, String description, java.util.List<Long> subjectIds, MultipartFile file, String storage) {
         enforceMinUploadAge();
 
-        String target = storage == null ? "LOCAL" : storage.trim().toUpperCase();
-        if (!Set.of("LOCAL", "CLOUD", "BOTH").contains(target)) {
+        String target = storage == null ? StorageTarget.LOCAL : storage.trim().toUpperCase();
+        if (!StorageTarget.ALL.contains(target)) {
             throw new IllegalArgumentException("storage phải là LOCAL, CLOUD hoặc BOTH (nhận được: " + storage + ")");
         }
 
@@ -289,7 +290,7 @@ public class DocumentServiceImpl implements DocumentService {
         // Thumbnail sinh 1 lần cho cả 2 bản (best-effort, null nếu định dạng không hỗ trợ).
         String thumbnailUrl = thumbnailService.createThumbnail(file);
 
-        if ("LOCAL".equals(target) || "BOTH".equals(target)) {
+        if (StorageTarget.LOCAL.equals(target) || StorageTarget.BOTH.equals(target)) {
             String storedFileName = fileStorageService.storeFile(file);
             DocFile localFile = DocFile.builder()
                     .fileName(file.getOriginalFilename())
@@ -304,7 +305,7 @@ public class DocumentServiceImpl implements DocumentService {
             docFileRepository.save(localFile);
         }
 
-        if ("CLOUD".equals(target) || "BOTH".equals(target)) {
+        if (StorageTarget.CLOUD.equals(target) || StorageTarget.BOTH.equals(target)) {
             com.aish.mvc.service.stor.CloudUploadResult uploaded = cloudinaryService.upload(file);
             DocFile cloudFile = DocFile.builder()
                     .fileName(file.getOriginalFilename())
