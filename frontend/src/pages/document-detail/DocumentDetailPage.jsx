@@ -105,7 +105,11 @@ export default function DocumentDetailPage() {
     return <div className="detail-page">{t("docDetail.notFound")}</div>;
   }
 
-  const aiReady = doc.aiSupported !== false && doc.ingestStatus === "INGESTED";
+  // Hai lý do rất khác nhau khiến nút Hỏi AI bị tắt: định dạng AI không đọc được (bế tắc thật,
+  // chủ tài liệu cũng không làm gì được) và tệp hỗ trợ nhưng chưa nạp (chỉ cần bấm nạp ở
+  // AiReadinessBadge). Gộp chung một nhãn khiến tài liệu vừa upload bị hiểu nhầm là hỏng.
+  const aiSupported = doc.aiSupported !== false;
+  const aiReady = aiSupported && doc.ingestStatus === "INGESTED";
 
   return (
     <div className="detail-page">
@@ -254,9 +258,11 @@ export default function DocumentDetailPage() {
           onClick={goAskAi}
           disabled={!aiReady}
         >
-          {!aiReady
-            ? t("docDetail.aiCantRead")
-            : t("docDetail.askAi")}
+          {aiReady
+            ? t("docDetail.askAi")
+            : aiSupported
+            ? t("docDetail.aiNotReady")
+            : t("docDetail.aiCantRead")}
         </button>
         <button className="detail-btn" onClick={openAddToCollectionModal}>
           {t("docDetail.addToCollection")}
