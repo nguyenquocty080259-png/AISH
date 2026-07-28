@@ -44,7 +44,7 @@ public class DocumentMapper {
 
     // DocFile.resourceType: "local" (upload-server) | "image"/"raw" (Cloudinary) -> LOCAL/CLOUD cho FE (DEC-031).
     public String toStorageType(String resourceType) {
-        return "local".equalsIgnoreCase(resourceType) ? "LOCAL" : "CLOUD";
+        return DocFile.RESOURCE_TYPE_LOCAL.equalsIgnoreCase(resourceType) ? "LOCAL" : "CLOUD";
     }
 
     public DocumentResponseDTO toResponseDTO(DocDocument doc) {
@@ -69,15 +69,15 @@ public class DocumentMapper {
         if (doc.getFiles() != null && !doc.getFiles().isEmpty()) {
             // Ưu tiên bản local (đọc nhanh, không phụ thuộc Cloudinary) — mode "CẢ HAI" lưu 2 bản.
             DocFile primaryFile = doc.getFiles().stream()
-                    .filter(f -> "local".equalsIgnoreCase(f.getResourceType()))
+                    .filter(f -> DocFile.RESOURCE_TYPE_LOCAL.equalsIgnoreCase(f.getResourceType()))
                     .findFirst()
                     .orElse(doc.getFiles().getFirst());
             dto.setFileName(primaryFile.getFileName());
             dto.setFileUrl(primaryFile.getFileUrl());
             dto.setFileType(primaryFile.getFileType());
 
-            boolean hasLocal = doc.getFiles().stream().anyMatch(f -> "local".equalsIgnoreCase(f.getResourceType()));
-            boolean hasCloud = doc.getFiles().stream().anyMatch(f -> !"local".equalsIgnoreCase(f.getResourceType()));
+            boolean hasLocal = doc.getFiles().stream().anyMatch(f -> DocFile.RESOURCE_TYPE_LOCAL.equalsIgnoreCase(f.getResourceType()));
+            boolean hasCloud = doc.getFiles().stream().anyMatch(f -> !DocFile.RESOURCE_TYPE_LOCAL.equalsIgnoreCase(f.getResourceType()));
             dto.setStorageType(hasLocal && hasCloud ? "BOTH" : (hasLocal ? "LOCAL" : "CLOUD"));
 
             // Thumbnail: lấy bản đầu tiên có (2 bản của cùng 1 file thì thumbnail giống nhau).

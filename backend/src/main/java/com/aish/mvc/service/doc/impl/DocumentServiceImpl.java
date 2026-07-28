@@ -106,7 +106,7 @@ public class DocumentServiceImpl implements DocumentService {
             throw new ResourceNotFoundException("Tài liệu chưa có file!");
         }
         return files.stream()
-                .filter(f -> "local".equalsIgnoreCase(f.getResourceType()))
+                .filter(f -> DocFile.RESOURCE_TYPE_LOCAL.equalsIgnoreCase(f.getResourceType()))
                 .findFirst()
                 .orElse(files.getFirst());
     }
@@ -294,7 +294,7 @@ public class DocumentServiceImpl implements DocumentService {
             DocFile localFile = DocFile.builder()
                     .fileName(file.getOriginalFilename())
                     .fileUrl(storedFileName)
-                    .resourceType("local")
+                    .resourceType(DocFile.RESOURCE_TYPE_LOCAL)
                     .fileType(file.getContentType())
                     .fileSize(file.getSize())
                     .thumbnailUrl(thumbnailUrl)
@@ -428,7 +428,7 @@ public class DocumentServiceImpl implements DocumentService {
 
         if (doc.getFiles() != null) {
             for (DocFile f : doc.getFiles()) {
-                if ("local".equals(f.getResourceType())) {
+                if (DocFile.RESOURCE_TYPE_LOCAL.equals(f.getResourceType())) {
                     fileStorageService.deleteFile(f.getFileUrl());
                 } else if (f.getPublicId() != null) {
                     try { cloudinaryService.delete(f.getPublicId(), f.getResourceType()); }

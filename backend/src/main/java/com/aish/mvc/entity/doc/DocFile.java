@@ -14,6 +14,11 @@ import java.time.LocalDateTime;
 @Builder
 public class DocFile {
 
+    // Giá trị resourceType của bản lưu trên đĩa máy chủ. Các giá trị còn lại ("image", "raw",
+    // "video"...) do Cloudinary đặt, nên luật "có phải bản local không" ở khắp nơi đều là so
+    // sánh với đúng chuỗi này — để literal rải rác thì gõ sai một chỗ là im lặng đọc nhầm bản.
+    public static final String RESOURCE_TYPE_LOCAL = "local";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
