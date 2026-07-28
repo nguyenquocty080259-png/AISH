@@ -605,6 +605,17 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentResponseDTO getDocumentById(Long id) {
         DocDocument doc = docDocumentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
+        // Chi tiết tài liệu cũng là một kênh lấy NỘI DUNG (mô tả, bình luận, tên tệp) nên phải
+        // áp đúng luật truy cập của getFileForPreview()/getFileByDocumentId(): chủ sở hữu /
+        // PUBLIC / được chia sẻ. Thiếu chốt này thì bất kỳ user đã đăng nhập nào cũng đọc được
+        // metadata tài liệu PRIVATE của người khác chỉ bằng cách đoán id.
+        Long currentUserId = getCurrentUser().getId();
+        boolean isOwner = doc.getUser().getId().equals(currentUserId);
+        boolean isPublic = doc.getVisibility() == DocumentVisibility.PUBLIC;
+        boolean isShared = documentShareService.hasShareAccess(id, currentUserId);
+        if (!isOwner && !isPublic && !isShared) {
+            throw new ForbiddenException("Bạn không có quyền xem tài liệu này!");
+        }
         return documentMapper.toResponseDTO(doc);
     }
 
