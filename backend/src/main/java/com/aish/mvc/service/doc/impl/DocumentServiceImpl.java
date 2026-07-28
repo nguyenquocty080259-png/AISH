@@ -25,6 +25,7 @@ import com.aish.mvc.service.ai.AiModerationService;
 import com.aish.mvc.service.config.SystemSettingService;
 import com.aish.mvc.service.doc.DocumentService;
 import com.aish.mvc.service.doc.DocumentShareService;
+import com.aish.mvc.service.doc.RoleNames;
 import com.aish.mvc.service.doc.StorageTarget;
 import com.aish.mvc.service.doc.NamingModerationService;
 import com.aish.mvc.service.doc.DocumentContentKeywordService;
@@ -128,7 +129,7 @@ public class DocumentServiceImpl implements DocumentService {
     private void enforceMinUploadAge() {
         AuthUser currentUser = getCurrentUser();
         boolean isAdmin = currentUser.getRole() != null
-                && "ADMIN".equals(currentUser.getRole().getRoleName());
+                && RoleNames.ADMIN.equals(currentUser.getRole().getRoleName());
         if (isAdmin) return;
 
         LocalDate dob = authUserProfileRepository.findByUserId(currentUser.getId())
@@ -601,7 +602,7 @@ public class DocumentServiceImpl implements DocumentService {
         try {
             String message = "Tài liệu \"" + document.getTitle()
                     + "\" đã được sàng lọc: " + outcome;
-            authUserRepository.findByRole_RoleNameAndStatus("ADMIN", UserStatus.ACTIVE)
+            authUserRepository.findByRole_RoleNameAndStatus(RoleNames.ADMIN, UserStatus.ACTIVE)
                     .forEach(admin -> notificationService.createDocumentNotification(
                             admin.getId(),
                             NotificationType.DOCUMENT_SCREENED,
@@ -617,7 +618,7 @@ public class DocumentServiceImpl implements DocumentService {
         try {
             notificationService.createDocumentNotification(document.getUser().getId(), NotificationType.METADATA_MISMATCH,
                     "Tiêu đề/môn học của '" + document.getTitle() + "' có vẻ chưa khớp nội dung — bạn nên chỉnh lại.", document.getId());
-            authUserRepository.findByRole_RoleNameAndStatus("ADMIN", UserStatus.ACTIVE).forEach(admin ->
+            authUserRepository.findByRole_RoleNameAndStatus(RoleNames.ADMIN, UserStatus.ACTIVE).forEach(admin ->
                     notificationService.createDocumentNotification(admin.getId(), NotificationType.METADATA_MISMATCH,
                             "Metadata tài liệu '" + document.getTitle() + "' có dấu hiệu chưa khớp nội dung: " + reason, document.getId()));
         } catch (Exception exception) {

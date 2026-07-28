@@ -17,6 +17,7 @@ import com.aish.mvc.repository.doc.DownloadRepository;
 import com.aish.mvc.repository.doc.FavoriteRepository;
 import com.aish.mvc.repository.doc.RatingRepository;
 import com.aish.mvc.service.doc.DocEmbeddingService;
+import com.aish.mvc.service.doc.RoleNames;
 import com.aish.mvc.service.doc.StorageTarget;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -52,7 +53,7 @@ public class DocumentMapper {
         AuthUser currentUser = currentUser();
         Long currentUserId = currentUser.getId();
         boolean isAdmin = currentUser.getRole() != null
-                && "ADMIN".equals(currentUser.getRole().getRoleName());
+                && RoleNames.ADMIN.equals(currentUser.getRole().getRoleName());
         DocumentResponseDTO dto = new DocumentResponseDTO();
         dto.setId(doc.getId());
         dto.setTitle(doc.getTitle());
