@@ -1,4 +1,5 @@
 import { useProfilePage } from "./hooks/useProfilePage";
+import { API_ORIGIN } from "../../constants/apiConfig";
 import StorageUsageBar from "../../components/ui/StorageUsageBar";
 import "./profile.css";
 import { useRef } from "react";
@@ -34,7 +35,6 @@ function initials(name) {
 export default function ProfilePage() {
   const { t } = useTranslation();
   const fileInputRef = useRef(null);
-  const API_BASE = "http://localhost:8080";
   const {
       profile,
       loading,
@@ -67,7 +67,7 @@ export default function ProfilePage() {
   const avatarSrc =
   avatarPreview ||
   (profile?.avatarUrl
-    ? `${API_BASE}${profile.avatarUrl}`
+    ? `${API_ORIGIN}${profile.avatarUrl}`
     : null);
 
   return (
