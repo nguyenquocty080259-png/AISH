@@ -138,6 +138,32 @@ class EngagementServiceImplAccessTest {
     }
 
     @Test
+    void favoritingDocumentNotYetFavoritedCreatesTheRecord() {
+        when(documentAccessPort.isAvailableTo(DOCUMENT_ID, CURRENT_USER_ID)).thenReturn(true);
+        when(favoriteRepository.existsByUserIdAndDocumentId(CURRENT_USER_ID, DOCUMENT_ID))
+                .thenReturn(false);
+
+        service.toggleFavorite(DOCUMENT_ID);
+
+        verify(favoriteRepository).save(any(Favorite.class));
+        verify(favoriteRepository, never()).deleteByUserIdAndDocumentId(CURRENT_USER_ID, DOCUMENT_ID);
+    }
+
+    @Test
+    void favoritingAgainRemovesTheRecord() {
+        // Cùng một endpoint bật/tắt: đã yêu thích rồi thì gọi lại là bỏ yêu thích, không tạo
+        // thêm bản ghi thứ hai.
+        when(documentAccessPort.isAvailableTo(DOCUMENT_ID, CURRENT_USER_ID)).thenReturn(true);
+        when(favoriteRepository.existsByUserIdAndDocumentId(CURRENT_USER_ID, DOCUMENT_ID))
+                .thenReturn(true);
+
+        service.toggleFavorite(DOCUMENT_ID);
+
+        verify(favoriteRepository).deleteByUserIdAndDocumentId(CURRENT_USER_ID, DOCUMENT_ID);
+        verify(favoriteRepository, never()).save(any(Favorite.class));
+    }
+
+    @Test
     void commentIsSavedWhenDocumentIsReadable() {
         when(documentAccessPort.isAvailableTo(DOCUMENT_ID, CURRENT_USER_ID)).thenReturn(true);
         when(commentRepository.save(any(Comment.class))).thenAnswer(call -> call.getArgument(0));
