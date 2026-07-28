@@ -593,9 +593,17 @@ public class DocumentServiceImpl implements DocumentService {
         LocalDateTime metadataCheckedAt = LocalDateTime.now();
         docDocumentRepository.stampMetadataCheck(savedDocument.getId(),
                 result.isMetadataMismatch() ? "LECH" : "KHOP", metadataCheckedAt);
-        notifyAdminsDocumentScreened(savedDocument, result.getDecision().name());
 
-        return documentMapper.toResponseDTO(savedDocument);
+        // stampMetadataCheck là @Modifying(clearAutomatically = true): nó XOÁ SẠCH persistence
+        // context, nên savedDocument (và proxy lazy `user` của nó) thành detached ngay giữa
+        // transaction này. Chạm vào doc.getUser() sau đó — DocumentMapper làm đúng thế để lấy
+        // ownerName — sẽ ném LazyInitializationException và endpoint trả 500. Nạp lại thực thể
+        // để mọi thứ phía dưới làm việc với bản còn gắn với session.
+        DocDocument screenedDocument = docDocumentRepository.findById(savedDocument.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
+        notifyAdminsDocumentScreened(screenedDocument, result.getDecision().name());
+
+        return documentMapper.toResponseDTO(screenedDocument);
     }
 
     private void notifyAdminsDocumentScreened(DocDocument document, String outcome) {
