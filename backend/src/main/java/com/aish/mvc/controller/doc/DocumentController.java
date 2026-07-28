@@ -242,9 +242,12 @@ public class DocumentController {
     public ResponseEntity<Resource> downloadFile(@PathVariable Long id) {
         DocFile docFile = documentService.getFileByDocumentId(id);
         try {
-            engagementService.logDownload(id);
             Resource resource = resolveResource(docFile);
             if (resource.exists() && resource.isReadable()) {
+                // Ghi nhận lượt tải SAU khi chắc chắn có file thật để trả về: trước đây log
+                // chạy trước nên cả request kết thúc bằng 404 (file mất trên đĩa) hay 500 vẫn
+                // cộng vào downloadCount — số liệu và bảng xếp hạng "tải nhiều nhất" bị thổi lên.
+                engagementService.logDownload(id);
                 return ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + docFile.getFileName() + "\"")
                         .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
