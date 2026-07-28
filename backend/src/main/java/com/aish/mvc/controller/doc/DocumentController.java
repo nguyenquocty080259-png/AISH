@@ -311,7 +311,7 @@ public class DocumentController {
             }
 
             Resource resource = new UrlResource(path.toUri());
-            if (resource.exists() || resource.isReadable()) {
+            if (resource.exists() && resource.isReadable()) {
                 return ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_TYPE, "image/png")
                         .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + path.getFileName() + "\"")
