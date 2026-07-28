@@ -66,7 +66,6 @@ public class DocumentMapper {
         dto.setDeletedAt(doc.getDeletedAt());
 
         if (doc.getUser() != null) dto.setOwnerName(doc.getUser().getFullName());
-        if (doc.getUser() != null) dto.setOwnerName(doc.getUser().getFullName());
         if (doc.getFiles() != null && !doc.getFiles().isEmpty()) {
             // Ưu tiên bản local (đọc nhanh, không phụ thuộc Cloudinary) — mode "CẢ HAI" lưu 2 bản.
             DocFile primaryFile = doc.getFiles().stream()
