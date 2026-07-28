@@ -93,10 +93,17 @@ public class DocumentServiceImpl implements DocumentService {
     // Mode "CẢ HAI" có 2 bản (local + cloud) — luôn ưu tiên bản local vì đọc nhanh
     // và không dính hạn chế deliver của Cloudinary (PDF trên account free bị 401).
     private static DocFile pickPrimaryFile(DocDocument doc) {
-        return doc.getFiles().stream()
+        // Guard nằm TRONG helper: getFirst() trên list rỗng ném NoSuchElementException (-> 500
+        // "lỗi không mong muốn"), và mọi lối vào đều phải nhận cùng một câu trả lời 404 rõ ràng
+        // thay vì phụ thuộc việc người gọi có nhớ tự kiểm tra hay không.
+        List<DocFile> files = doc.getFiles();
+        if (files == null || files.isEmpty()) {
+            throw new ResourceNotFoundException("Tài liệu chưa có file!");
+        }
+        return files.stream()
                 .filter(f -> "local".equalsIgnoreCase(f.getResourceType()))
                 .findFirst()
-                .orElse(doc.getFiles().getFirst());
+                .orElse(files.getFirst());
     }
 
     // getAllDocuments (My Documents - chỉ của mình, chưa xóa):
@@ -460,9 +467,6 @@ public class DocumentServiceImpl implements DocumentService {
         boolean isShared = documentShareService.hasShareAccess(id, currentUserId);
         if (!isOwner && !isPublic && !isShared) {
             throw new ForbiddenException("Bạn không có quyền xem trước tài liệu này!");
-        }
-        if (doc.getFiles() == null || doc.getFiles().isEmpty()) {
-            throw new ResourceNotFoundException("Tài liệu chưa có file!");
         }
         return pickPrimaryFile(doc);
     }
