@@ -6,6 +6,7 @@ import com.aish.mvc.entity.auth.AuthUser;
 import com.aish.mvc.entity.doc.DocDocument;
 import com.aish.mvc.entity.enums.DocumentVisibility;
 import com.aish.mvc.exception.ForbiddenException;
+import com.aish.mvc.exception.ResourceNotFoundException;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.repository.doc.DocDocumentRepository;
 import com.aish.mvc.service.doc.DocumentShareService;
@@ -16,6 +17,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -105,6 +107,27 @@ class DocumentServiceImplGetDocumentByIdTest {
 
         assertThrows(ForbiddenException.class, () -> service.getDocumentById(DOCUMENT_ID));
 
+        verify(documentMapper, never()).toResponseDTO(any(DocDocument.class));
+    }
+
+    @Test
+    void softDeletedDocumentIsNotFoundEvenForOwner() {
+        // Trong thùng rác -> 404 cho MỌI người: chủ sở hữu khôi phục qua /restore chứ không
+        // mở lại trang chi tiết, nên không có luồng hợp lệ nào cần đọc tài liệu đã xoá mềm.
+        DocDocument doc = givenDocument(CURRENT_USER_ID, DocumentVisibility.PRIVATE);
+        doc.setDeletedAt(LocalDateTime.now());
+
+        assertThrows(ResourceNotFoundException.class, () -> service.getDocumentById(DOCUMENT_ID));
+    }
+
+    @Test
+    void softDeletedPublicDocumentIsNotFound() {
+        // PUBLIC + đã xoá mềm: check "đã xoá" phải chạy TRƯỚC check quyền, nếu không tài liệu
+        // vừa bị gỡ vẫn đọc được bình thường.
+        DocDocument doc = givenDocument(OTHER_USER_ID, DocumentVisibility.PUBLIC);
+        doc.setDeletedAt(LocalDateTime.now());
+
+        assertThrows(ResourceNotFoundException.class, () -> service.getDocumentById(DOCUMENT_ID));
         verify(documentMapper, never()).toResponseDTO(any(DocDocument.class));
     }
 
