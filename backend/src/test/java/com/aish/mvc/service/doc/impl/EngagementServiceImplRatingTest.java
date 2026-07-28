@@ -85,6 +85,7 @@ class EngagementServiceImplRatingTest {
     private void givenExistingDocument() {
         when(docDocumentRepository.findById(DOCUMENT_ID))
                 .thenReturn(Optional.of(DocDocument.builder().id(DOCUMENT_ID).build()));
+        when(documentAccessPort.isAvailableTo(DOCUMENT_ID, CURRENT_USER_ID)).thenReturn(true);
         when(ratingRepository.findByUserIdAndDocument_Id(CURRENT_USER_ID, DOCUMENT_ID))
                 .thenReturn(Optional.empty());
     }

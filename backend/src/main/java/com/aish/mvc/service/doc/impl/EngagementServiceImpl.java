@@ -131,6 +131,7 @@ public class EngagementServiceImpl implements EngagementService {
                     "Điểm đánh giá phải là số nguyên từ " + MIN_RATING + " đến " + MAX_RATING + ".");
         }
         DocDocument doc = requireDocument(documentId);
+        requireReadableDocument(documentId);
         Long uid = getCurrentUser().getId();
         Rating rating = ratingRepository.findByUserIdAndDocument_Id(uid, documentId)
                 .orElseGet(() -> Rating.builder()
