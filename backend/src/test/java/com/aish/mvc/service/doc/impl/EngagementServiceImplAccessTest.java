@@ -4,6 +4,7 @@ import com.aish.mvc.entity.auth.AuthAccount;
 import com.aish.mvc.entity.auth.AuthUser;
 import com.aish.mvc.entity.doc.Comment;
 import com.aish.mvc.entity.doc.DocDocument;
+import com.aish.mvc.entity.doc.Rating;
 import com.aish.mvc.exception.ForbiddenException;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.repository.doc.CommentRepository;
@@ -45,6 +46,7 @@ class EngagementServiceImplAccessTest {
 
     private final DocDocumentRepository docDocumentRepository = mock(DocDocumentRepository.class);
     private final CommentRepository commentRepository = mock(CommentRepository.class);
+    private final RatingRepository ratingRepository = mock(RatingRepository.class);
     private final DocumentAccessPort documentAccessPort = mock(DocumentAccessPort.class);
     private final ToxicKeywordFilter toxicKeywordFilter = mock(ToxicKeywordFilter.class);
     private final AuthAccountRepository authAccountRepository = mock(AuthAccountRepository.class);
@@ -68,7 +70,7 @@ class EngagementServiceImplAccessTest {
                 docDocumentRepository,
                 commentRepository,
                 mock(FavoriteRepository.class),
-                mock(RatingRepository.class),
+                ratingRepository,
                 mock(DownloadRepository.class),
                 mock(ViewHistoryRepository.class),
                 authAccountRepository,
@@ -91,6 +93,26 @@ class EngagementServiceImplAccessTest {
                 () -> service.addComment(DOCUMENT_ID, "Tài liệu hữu ích", false, null));
 
         verify(commentRepository, never()).save(any(Comment.class));
+    }
+
+    @Test
+    void ratingDocumentWithoutReadAccessIsForbidden() {
+        when(documentAccessPort.isAvailableTo(DOCUMENT_ID, CURRENT_USER_ID)).thenReturn(false);
+
+        assertThrows(ForbiddenException.class, () -> service.rateDocument(DOCUMENT_ID, 5));
+
+        verify(ratingRepository, never()).save(any(Rating.class));
+    }
+
+    @Test
+    void ratingIsSavedWhenDocumentIsReadable() {
+        when(documentAccessPort.isAvailableTo(DOCUMENT_ID, CURRENT_USER_ID)).thenReturn(true);
+        when(ratingRepository.findByUserIdAndDocument_Id(CURRENT_USER_ID, DOCUMENT_ID))
+                .thenReturn(Optional.empty());
+
+        service.rateDocument(DOCUMENT_ID, 5);
+
+        verify(ratingRepository).save(any(Rating.class));
     }
 
     @Test
