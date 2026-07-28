@@ -88,7 +88,6 @@ export default function DocumentDetailPage() {
   } = useDocumentDetailPage();
 
   const [newCollectionName, setNewCollectionName] = useState("");
- const [previewUnlocked, setPreviewUnlocked] = useState(true);
 
   const submitCreateCollection = (e) => {
     e.preventDefault();
@@ -142,7 +141,7 @@ export default function DocumentDetailPage() {
       <p className="detail-desc">{doc.description}</p>
 
       {doc.fileUrl && (
-        <div className={`detail-preview ${previewUnlocked ? "detail-preview--open" : "detail-preview--locked"}`}>
+        <div className="detail-preview detail-preview--open">
           <div className="detail-preview__content">
             {(() => {
               const viewerKind = resolveViewerKind(doc.fileType, doc.fileName);
@@ -221,19 +220,6 @@ export default function DocumentDetailPage() {
               );
             })()}
           </div>
-
-          {!previewUnlocked && (
-            <div className="detail-preview__gate">
-              <button
-                type="button"
-                className="detail-preview__gate-btn"
-                onClick={() => setPreviewUnlocked(true)}
-              >
-                {t("docDetail.unlockFull")}
-              </button>
-              <span className="detail-preview__gate-hint">{t("docDetail.unlockHint")}</span>
-            </div>
-          )}
         </div>
       )}
 
