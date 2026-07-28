@@ -4,8 +4,10 @@ import com.aish.mvc.entity.auth.AuthAccount;
 import com.aish.mvc.entity.auth.AuthUser;
 import com.aish.mvc.entity.doc.Comment;
 import com.aish.mvc.entity.doc.DocDocument;
+import com.aish.mvc.entity.doc.Favorite;
 import com.aish.mvc.entity.doc.Rating;
 import com.aish.mvc.exception.ForbiddenException;
+import com.aish.mvc.exception.ResourceNotFoundException;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.repository.doc.CommentRepository;
 import com.aish.mvc.repository.doc.DocDocumentRepository;
@@ -47,6 +49,7 @@ class EngagementServiceImplAccessTest {
     private final DocDocumentRepository docDocumentRepository = mock(DocDocumentRepository.class);
     private final CommentRepository commentRepository = mock(CommentRepository.class);
     private final RatingRepository ratingRepository = mock(RatingRepository.class);
+    private final FavoriteRepository favoriteRepository = mock(FavoriteRepository.class);
     private final DocumentAccessPort documentAccessPort = mock(DocumentAccessPort.class);
     private final ToxicKeywordFilter toxicKeywordFilter = mock(ToxicKeywordFilter.class);
     private final AuthAccountRepository authAccountRepository = mock(AuthAccountRepository.class);
@@ -69,7 +72,7 @@ class EngagementServiceImplAccessTest {
         service = new EngagementServiceImpl(
                 docDocumentRepository,
                 commentRepository,
-                mock(FavoriteRepository.class),
+                favoriteRepository,
                 ratingRepository,
                 mock(DownloadRepository.class),
                 mock(ViewHistoryRepository.class),
@@ -113,6 +116,25 @@ class EngagementServiceImplAccessTest {
         service.rateDocument(DOCUMENT_ID, 5);
 
         verify(ratingRepository).save(any(Rating.class));
+    }
+
+    @Test
+    void favoritingDocumentWithoutReadAccessIsForbidden() {
+        when(documentAccessPort.isAvailableTo(DOCUMENT_ID, CURRENT_USER_ID)).thenReturn(false);
+
+        assertThrows(ForbiddenException.class, () -> service.toggleFavorite(DOCUMENT_ID));
+
+        verify(favoriteRepository, never()).save(any(Favorite.class));
+    }
+
+    @Test
+    void favoritingUnknownDocumentIsNotFound() {
+        // Trước đây không kiểm tra gì: id không tồn tại vẫn tạo được bản ghi favorite mồ côi.
+        when(docDocumentRepository.findById(404L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> service.toggleFavorite(404L));
+
+        verify(favoriteRepository, never()).save(any(Favorite.class));
     }
 
     @Test
