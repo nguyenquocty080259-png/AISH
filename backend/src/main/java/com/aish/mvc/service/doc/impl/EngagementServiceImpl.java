@@ -40,6 +40,12 @@ public class EngagementServiceImpl implements EngagementService {
     private static final String KEYWORD_REASON =
             "Bình luận chứa từ khóa không phù hợp theo quy tắc kiểm duyệt.";
 
+    // Thang sao hiển thị ở FE (RatingStars) là 1-5; BE phải tự chốt lại vì client nào cũng
+    // gọi thẳng API được, và điểm rác chảy vào averageRating của cả tài liệu lẫn bộ lọc
+    // "điểm tối thiểu" ở trang Cộng đồng.
+    private static final int MIN_RATING = 1;
+    private static final int MAX_RATING = 5;
+
     private final DocDocumentRepository docDocumentRepository;
     private final CommentRepository commentRepository;
     private final FavoriteRepository favoriteRepository;
@@ -107,6 +113,10 @@ public class EngagementServiceImpl implements EngagementService {
     @Override
     @Transactional
     public void rateDocument(Long documentId, Integer star) {
+        if (star == null || star < MIN_RATING || star > MAX_RATING) {
+            throw new IllegalArgumentException(
+                    "Điểm đánh giá phải là số nguyên từ " + MIN_RATING + " đến " + MAX_RATING + ".");
+        }
         DocDocument doc = requireDocument(documentId);
         Long uid = getCurrentUser().getId();
         Rating rating = ratingRepository.findByUserIdAndDocument_Id(uid, documentId)
