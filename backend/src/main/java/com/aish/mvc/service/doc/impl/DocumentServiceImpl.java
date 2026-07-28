@@ -55,6 +55,11 @@ public class DocumentServiceImpl implements DocumentService {
 
     private static final Logger log = LoggerFactory.getLogger(DocumentServiceImpl.class);
 
+    // Phân trang trang Cộng đồng: mặc định khớp với lưới 12 thẻ của FE, trần chặn request cố ý
+    // xin cả kho tài liệu trong một lần gọi.
+    static final int DEFAULT_COMMUNITY_PAGE_SIZE = 12;
+    static final int MAX_COMMUNITY_PAGE_SIZE = 50;
+
     @Autowired private DocDocumentRepository docDocumentRepository;
     @Autowired private DocFileRepository docFileRepository;
     @Autowired private FileStorageService fileStorageService;
@@ -484,7 +489,11 @@ public class DocumentServiceImpl implements DocumentService {
     // getCommunityDocuments - đổi đầu method:
     public CommunityPageResponseDTO getCommunityDocuments(String keyword, Long subjectId, Double minRating, String sortBy, int page, int size) {
         if (page < 0) page = 0;
-        if (size <= 0) size = 12;
+        if (size <= 0) size = DEFAULT_COMMUNITY_PAGE_SIZE;
+        // Trần kích thước trang: mọi tài liệu PUBLIC đều được nạp và map (mapper còn đếm
+        // favorite/download/rating + tải bình luận cho TỪNG tài liệu), nên ?size=1000000 là một
+        // request rẻ tiền kéo theo hàng nghìn truy vấn. Client thật chỉ dùng 12.
+        if (size > MAX_COMMUNITY_PAGE_SIZE) size = MAX_COMMUNITY_PAGE_SIZE;
 
         String kw = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
         List<DocDocument> all = docDocumentRepository.findCommunityDocuments(DocumentVisibility.PUBLIC, kw, subjectId);
