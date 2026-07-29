@@ -97,6 +97,15 @@ public class DocumentServiceImpl implements DocumentService {
                 .getUser();
     }
 
+    // ADMIN được xem chi tiết / xem trước / tải NỘI DUNG mọi tài liệu (kể cả PRIVATE của người
+    // khác) để phục vụ kiểm duyệt — cùng kiểu miễn trừ theo role đã dùng ở các luồng khác trong
+    // service này (enforceMinUploadAge, DocumentMapper). CHỈ đọc role để nhận diện admin; luật
+    // truy cập của user thường (chủ sở hữu / PUBLIC / được chia sẻ) giữ nguyên, không nới ra.
+    private boolean isAdmin(AuthUser user) {
+        return user.getRole() != null
+                && RoleNames.ADMIN.equals(user.getRole().getRoleName());
+    }
+
     // Mode "CẢ HAI" có 2 bản (local + cloud) — luôn ưu tiên bản local vì đọc nhanh
     // và không dính hạn chế deliver của Cloudinary (PDF trên account free bị 401).
     private static DocFile pickPrimaryFile(DocDocument doc) {
@@ -462,11 +471,12 @@ public class DocumentServiceImpl implements DocumentService {
         // Tải file là một kênh lấy NỘI DUNG như xem trước — phải áp cùng luật truy cập với
         // getFileForPreview(): chủ sở hữu / PUBLIC / được chia sẻ. Nếu không, người vừa bị GỠ
         // chia sẻ vẫn tải được nội dung (rò rỉ, phá vỡ cách ly của tính năng chia sẻ).
-        Long currentUserId = getCurrentUser().getId();
+        AuthUser currentUser = getCurrentUser();
+        Long currentUserId = currentUser.getId();
         boolean isOwner = doc.getUser().getId().equals(currentUserId);
         boolean isPublic = doc.getVisibility() == DocumentVisibility.PUBLIC;
         boolean isShared = documentShareService.hasShareAccess(documentId, currentUserId);
-        if (!isOwner && !isPublic && !isShared) {
+        if (!isOwner && !isPublic && !isShared && !isAdmin(currentUser)) {
             throw new ForbiddenException("Bạn không có quyền tải tài liệu này!");
         }
         return pickPrimaryFile(doc);
@@ -477,12 +487,13 @@ public class DocumentServiceImpl implements DocumentService {
     public DocFile getFileForPreview(Long id) {
         DocDocument doc = docDocumentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
-        Long currentUserId = getCurrentUser().getId();
+        AuthUser currentUser = getCurrentUser();
+        Long currentUserId = currentUser.getId();
         boolean isOwner = doc.getUser().getId().equals(currentUserId);
         boolean isPublic = doc.getVisibility() == DocumentVisibility.PUBLIC;
         // Người được chia sẻ (RESTRICTED theo userId, hoặc ANYONE_WITH_LINK) cũng được xem trước.
         boolean isShared = documentShareService.hasShareAccess(id, currentUserId);
-        if (!isOwner && !isPublic && !isShared) {
+        if (!isOwner && !isPublic && !isShared && !isAdmin(currentUser)) {
             throw new ForbiddenException("Bạn không có quyền xem trước tài liệu này!");
         }
         return pickPrimaryFile(doc);
@@ -649,11 +660,12 @@ public class DocumentServiceImpl implements DocumentService {
         // áp đúng luật truy cập của getFileForPreview()/getFileByDocumentId(): chủ sở hữu /
         // PUBLIC / được chia sẻ. Thiếu chốt này thì bất kỳ user đã đăng nhập nào cũng đọc được
         // metadata tài liệu PRIVATE của người khác chỉ bằng cách đoán id.
-        Long currentUserId = getCurrentUser().getId();
+        AuthUser currentUser = getCurrentUser();
+        Long currentUserId = currentUser.getId();
         boolean isOwner = doc.getUser().getId().equals(currentUserId);
         boolean isPublic = doc.getVisibility() == DocumentVisibility.PUBLIC;
         boolean isShared = documentShareService.hasShareAccess(id, currentUserId);
-        if (!isOwner && !isPublic && !isShared) {
+        if (!isOwner && !isPublic && !isShared && !isAdmin(currentUser)) {
             throw new ForbiddenException("Bạn không có quyền xem tài liệu này!");
         }
         return documentMapper.toResponseDTO(doc);

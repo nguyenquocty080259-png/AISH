@@ -2,6 +2,7 @@ package com.aish.mvc.service.doc.impl;
 
 import com.aish.mvc.dto.doc.DocumentResponseDTO;
 import com.aish.mvc.entity.auth.AuthAccount;
+import com.aish.mvc.entity.auth.AuthRole;
 import com.aish.mvc.entity.auth.AuthUser;
 import com.aish.mvc.entity.doc.DocDocument;
 import com.aish.mvc.entity.enums.DocumentVisibility;
@@ -10,6 +11,7 @@ import com.aish.mvc.exception.ResourceNotFoundException;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.repository.doc.DocDocumentRepository;
 import com.aish.mvc.service.doc.DocumentShareService;
+import com.aish.mvc.service.doc.RoleNames;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -76,6 +78,16 @@ class DocumentServiceImplGetDocumentByIdTest {
     private static AuthAccount account(Long userId) {
         AuthAccount authAccount = new AuthAccount();
         authAccount.setUser(user(userId));
+        return authAccount;
+    }
+
+    private static AuthAccount adminAccount(Long userId) {
+        AuthRole adminRole = new AuthRole();
+        adminRole.setRoleName(RoleNames.ADMIN);
+        AuthUser adminUser = user(userId);
+        adminUser.setRole(adminRole);
+        AuthAccount authAccount = new AuthAccount();
+        authAccount.setUser(adminUser);
         return authAccount;
     }
 
@@ -153,6 +165,21 @@ class DocumentServiceImplGetDocumentByIdTest {
     void sharedDocumentIsReadableByRecipient() {
         DocDocument doc = givenDocument(OTHER_USER_ID, DocumentVisibility.SHARED);
         when(documentShareService.hasShareAccess(DOCUMENT_ID, CURRENT_USER_ID)).thenReturn(true);
+        DocumentResponseDTO expected = new DocumentResponseDTO();
+        when(documentMapper.toResponseDTO(doc)).thenReturn(expected);
+
+        assertSame(expected, service.getDocumentById(DOCUMENT_ID));
+    }
+
+    @Test
+    void adminCanReadOthersPrivateDocument() {
+        // ADMIN kiểm duyệt được xem chi tiết tài liệu PRIVATE của người khác dù không phải chủ
+        // sở hữu và không được chia sẻ — chốt chặn thường (owner/PUBLIC/shared) được bỏ qua theo
+        // role admin, KHÔNG nới cho user thường.
+        when(authAccountRepository.findByIdentifier(CURRENT_USER_EMAIL))
+                .thenReturn(Optional.of(adminAccount(CURRENT_USER_ID)));
+        DocDocument doc = givenDocument(OTHER_USER_ID, DocumentVisibility.PRIVATE);
+        when(documentShareService.hasShareAccess(DOCUMENT_ID, CURRENT_USER_ID)).thenReturn(false);
         DocumentResponseDTO expected = new DocumentResponseDTO();
         when(documentMapper.toResponseDTO(doc)).thenReturn(expected);
 
