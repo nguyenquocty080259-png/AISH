@@ -22,7 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
 @ConditionalOnProperty(name = "app.seed.db.enabled", havingValue = "true")
 public class DbSeedUserRunner implements CommandLineRunner {
 
-    private static final String SEED_DOMAIN = "@seed.aish.local";
+    // Domain phải khớp định dạng email mà form đăng nhập chấp nhận (một trong các host
+    // gmail/yahoo/outlook/hotmail/aish + .local/.com/.vn, KHÔNG có subdomain). Dùng thẳng
+    // @aish.local thay cho @seed.aish.local (subdomain) để tài khoản seed đăng nhập được.
+    private static final String SEED_DOMAIN = "@aish.local";
     private static final int SEED_USER_COUNT = 5;
 
     private final AuthRoleRepository roleRepository;

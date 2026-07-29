@@ -32,7 +32,7 @@ final class VietnameseNameBank {
         return surname + " " + middle + " " + givenName;
     }
 
-    // vd. "Nguyễn Văn An" (index 0) -> "nguyenvanan1@seed.aish.local"
+    // vd. "Nguyễn Văn An" (index 0) -> "nguyenvanan1@aish.local"
     static String emailFor(int index, String fullName, String domain) {
         String slug = SlugUtil.slugify(fullName).replace("-", "");
         return slug + (index + 1) + domain;
