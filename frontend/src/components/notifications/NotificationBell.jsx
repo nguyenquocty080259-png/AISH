@@ -7,6 +7,9 @@ import { useAuth } from "../../hooks/useAuth";
 import { resolveRoute } from "../../utils/notificationRoute";
 import "./notification-bell.css";
 
+// Chu kỳ poll badge unread-count, ~30-60s.
+const UNREAD_POLL_MS = 45000;
+
 export default function NotificationBell() {
   const { t, i18n } = useTranslation();
   const formatDate = (value) =>
@@ -24,10 +27,16 @@ export default function NotificationBell() {
 
   useEffect(() => {
     let active = true;
+    const fetchUnreadCount = () => {
+      notificationApi.getUnreadCount()
+        .then((data) => active && setUnreadCount(Number(data?.count) || 0))
+        .catch(() => {});
+    };
     notificationApi.getUnreadCount()
       .then((data) => active && setUnreadCount(Number(data?.count) || 0))
       .catch((error) => active && showError(error.message));
-    return () => { active = false; };
+    const intervalId = setInterval(fetchUnreadCount, UNREAD_POLL_MS);
+    return () => { active = false; clearInterval(intervalId); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
