@@ -139,7 +139,7 @@
     },
     "aiUsage": {
       "aria": "Thống kê sử dụng AI",
-      "title": "Sử dụng AI & chi phí Groq",
+      "title": "Sử dụng AI",
       "loadError": "Không tải được thống kê sử dụng AI.",
       "loading": "Đang tải thống kê AI...",
       "today": "Hôm nay",

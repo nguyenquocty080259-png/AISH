@@ -139,7 +139,7 @@
     },
     "aiUsage": {
       "aria": "AI usage statistics",
-      "title": "AI usage & Groq cost",
+      "title": "AI usage",
       "loadError": "Could not load AI usage statistics.",
       "loading": "Loading AI statistics...",
       "today": "Today",
