@@ -23,7 +23,7 @@ const IconCollection = () => <I><path d="M4 4h16v14l-8-4-8 4z" /></I>;
 const IconHeart = () => <I><path d="M12 21s-7-4.5-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z" /></I>;
 const IconShare = () => <I><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" /></I>;
 const IconAi = () => <I><path d="M12 3v3M12 18v3M3 12h3M18 12h3" /><circle cx="12" cy="12" r="4" /></I>;
-const IconReport = () => <I><path d="M4 20V10M10 20V4M16 20v-6M2 20h20" /></I>;
+const IconBell = () => <I><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></I>;
 const IconTrash = () => <I><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" /></I>;
 const IconPlus = () => <I><path d="M12 5v14M5 12h14" /></I>;
 const IconUser = () => <I><circle cx="12" cy="8" r="4" /><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1" /></I>;
@@ -54,7 +54,7 @@ export default function AppLayout() {
     ],
   }, {
     items: [
-      { to: ROUTES.MY_REPORTS, label: t("nav.myReports"), icon: <IconReport /> },
+      { to: ROUTES.INTERACTIONS, label: t("nav.interactions"), icon: <IconBell /> },
       { to: ROUTES.TRASH, label: t("nav.trash"), icon: <IconTrash /> },
     ],
   }], [t]);

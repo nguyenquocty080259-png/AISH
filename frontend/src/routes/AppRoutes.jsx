@@ -29,7 +29,7 @@ import SharedWithMePage from "../pages/shared-with-me/SharedWithMePage";
 import ProfilePage from "../pages/profile/ProfilePage";
 import OnboardingPage from "../pages/onboarding/OnboardingPage";
 import AiChatPage from "../pages/ai-chat/AiChatPage";
-import MyReportsPage from "../pages/my-reports/MyReportsPage";
+import InteractionsPage from "../pages/interactions/InteractionsPage";
 import AdminLayout from "../pages/admin/AdminLayout";
 import AdminStatsPage from "../pages/admin/stats/AdminStatsPage";
 import AdminAppealsPage from "../pages/admin/appeals/AdminAppealsPage";
@@ -72,7 +72,11 @@ export default function AppRoutes() {
           <Route path={ROUTES.FAVORITES} element={<FavoritesPage />} />
           <Route path={ROUTES.SHARED_WITH_ME} element={<SharedWithMePage />} />
           <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
-          <Route path={ROUTES.MY_REPORTS} element={<MyReportsPage />} />
+          <Route path={ROUTES.INTERACTIONS} element={<InteractionsPage />} />
+          <Route
+            path={ROUTES.MY_REPORTS}
+            element={<Navigate to={`${ROUTES.INTERACTIONS}?tab=reports`} replace />}
+          />
         </Route>
 
       </Route>

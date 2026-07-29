@@ -23,6 +23,7 @@ export const ROUTES = {
   FAVORITES: "/favorites",
   SHARED_WITH_ME: "/shared-with-me",
   MY_REPORTS: "/reports/mine",
+  INTERACTIONS: "/interactions",
   ADMIN: "/admin",
   ADMIN_STATS: "/admin/stats",
   ADMIN_APPEALS: "/admin/appeals",
