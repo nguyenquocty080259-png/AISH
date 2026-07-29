@@ -1,11 +1,53 @@
 import { useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import * as notificationApi from "../../api/notificationApi";
 import { useToast } from "../../hooks/useToast";
-import { ROUTES } from "../../constants/routes";
+import { ROUTES, buildRoute } from "../../constants/routes";
 import { useAuth } from "../../hooks/useAuth";
 import "./notification-bell.css";
+
+const DOCUMENT_LINK_TYPES = new Set([
+  "DOC_APPROVED",
+  "DOC_REJECTED",
+  "APPEAL_APPROVED",
+  "APPEAL_REJECTED",
+  "COMMENT_ON_MY_DOC",
+  "RATING_ON_MY_DOC",
+  "DOCUMENT_SHARED",
+]);
+
+function resolveRoute(notification, isAdmin) {
+  const { type, relatedDocumentId, relatedCommentId, relatedCaseType } = notification;
+
+  if (DOCUMENT_LINK_TYPES.has(type)) {
+    return relatedDocumentId ? buildRoute(ROUTES.DOCUMENT_DETAIL, { id: relatedDocumentId }) : null;
+  }
+
+  if (type === "DOCUMENT_SCREENED" || type === "METADATA_MISMATCH") {
+    if (isAdmin) return `${ROUTES.ADMIN_DOCUMENTS}?needsReview=true`;
+    return relatedDocumentId ? buildRoute(ROUTES.DOCUMENT_DETAIL, { id: relatedDocumentId }) : null;
+  }
+
+  if (type === "COMMENT_UNDER_REVIEW" || type === "COMMENT_REVIEWED") {
+    if (isAdmin) return `${ROUTES.ADMIN_APPEALS}?tab=comments`;
+    return relatedDocumentId
+      ? `${buildRoute(ROUTES.DOCUMENT_DETAIL, { id: relatedDocumentId })}?comment=${relatedCommentId}`
+      : null;
+  }
+
+  if (type === "REPORT_CREATED" || type === "REPORT_RESOLVED") {
+    return isAdmin ? ROUTES.ADMIN_REPORTS : ROUTES.MY_REPORTS;
+  }
+
+  if (type === "CASE_REPLY") {
+    if (relatedCaseType === "REPORT") return isAdmin ? ROUTES.ADMIN_REPORTS : ROUTES.MY_REPORTS;
+    if (relatedCaseType === "APPEAL") return isAdmin ? ROUTES.ADMIN_APPEALS : null;
+    return null;
+  }
+
+  return null;
+}
 
 export default function NotificationBell() {
   const { t, i18n } = useTranslation();
@@ -13,8 +55,8 @@ export default function NotificationBell() {
     value ? new Date(value).toLocaleString(i18n.language === "en" ? "en-US" : "vi-VN") : "";
   const { showError } = useToast();
   const { role } = useAuth();
+  const isAdmin = role === "ADMIN";
   const navigate = useNavigate();
-  const location = useLocation();
   const rootRef = useRef(null);
   const [open, setOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -60,15 +102,8 @@ export default function NotificationBell() {
         setNotifications((current) => current.map((item) => item.id === updated.id ? updated : item));
         setUnreadCount((count) => Math.max(0, count - 1));
       }
-      if ((notification.type === "DOCUMENT_SCREENED" || notification.type === "METADATA_MISMATCH") && notification.relatedDocumentId) {
-        navigate(`${ROUTES.ADMIN_DOCUMENTS}?needsReview=true`);
-      } else if (notification.relatedCommentId) {
-        if (role === "ADMIN" || location.pathname.startsWith("/admin")) {
-          navigate(`${ROUTES.ADMIN_APPEALS}?tab=comments`);
-        } else if (notification.relatedDocumentId) {
-          navigate(`/documents/${notification.relatedDocumentId}?comment=${notification.relatedCommentId}`);
-        }
-      }
+      const path = resolveRoute(notification, isAdmin);
+      if (path) navigate(path);
     } catch (error) {
       showError(error.message);
     }
