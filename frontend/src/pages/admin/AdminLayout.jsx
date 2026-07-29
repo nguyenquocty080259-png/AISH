@@ -5,8 +5,9 @@ import { useToast } from "../../hooks/useToast";
 import { ROUTES } from "../../constants/routes";
 import AppSidebar from "../../components/layout/AppSidebar";
 import TopBar from "../../components/layout/TopBar";
+import * as interactionApi from "../../api/interactionApi";
 import logo from "../../assets/images/hivemind-logo.png";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 function I({ children }) { return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{children}</svg>; }
 const IconDoc = () => <I><path d="M6 2h8l4 4v16H6z" /><path d="M14 2v4h4" /></I>;
@@ -27,6 +28,15 @@ export default function AdminLayout() {
   const { showSuccess } = useToast();
   const navigate = useNavigate();
 
+  const [summary, setSummary] = useState(null);
+  useEffect(() => {
+    let active = true;
+    interactionApi.getInteractionSummary()
+      .then((data) => active && setSummary(data))
+      .catch(() => active && setSummary(null));
+    return () => { active = false; };
+  }, []);
+
   const adminNavGroups = useMemo(() => [
     { label: t("admin.nav.content"), items: [
       { to: ROUTES.ADMIN_DOCUMENTS, label: t("admin.nav.documents"), icon: <IconDoc /> },
@@ -35,14 +45,14 @@ export default function AdminLayout() {
     ] },
     { label: t("admin.nav.user"), items: [
       { to: ROUTES.ADMIN_USERS, label: t("admin.nav.users"), icon: <IconUsers /> },
-      { to: ROUTES.ADMIN_APPEALS, label: t("admin.nav.appeals"), icon: <IconFlag /> },
-      { to: ROUTES.ADMIN_REPORTS, label: t("admin.nav.reports"), icon: <IconReport /> },
+      { to: ROUTES.ADMIN_APPEALS, label: t("admin.nav.appeals"), icon: <IconFlag />, badge: summary?.adminPendingAppeals ?? 0 },
+      { to: ROUTES.ADMIN_REPORTS, label: t("admin.nav.reports"), icon: <IconReport />, badge: summary?.adminPendingReports ?? 0 },
     ] },
     { label: t("admin.nav.system"), items: [
       { to: ROUTES.ADMIN_STATS, label: t("admin.nav.stats"), icon: <IconChart /> },
       { to: ROUTES.ADMIN_SETTINGS, label: t("admin.nav.settings"), icon: <IconSettings /> },
     ] },
-  ], [t]);
+  ], [t, summary]);
 
   const handleLogout = async () => {
     await logout();
