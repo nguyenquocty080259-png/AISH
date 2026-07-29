@@ -842,6 +842,19 @@
     "statusResolved": "Đã xử lý",
     "statusDismissed": "Đã bỏ qua"
   },
+  "caseThread": {
+    "title": "Trao đổi",
+    "open": "Trao đổi",
+    "loading": "Đang tải cuộc trao đổi...",
+    "empty": "Chưa có tin nhắn nào.",
+    "placeholder": "Nhập nội dung trao đổi...",
+    "send": "Gửi",
+    "sending": "Đang gửi...",
+    "loadError": "Không tải được cuộc trao đổi.",
+    "sendError": "Không gửi được tin nhắn.",
+    "roleAdmin": "Admin",
+    "roleUser": "Người dùng"
+  },
   "docDetail": {
     "loadingDoc": "Đang tải tài liệu...",
     "notFound": "Không tìm thấy tài liệu.",

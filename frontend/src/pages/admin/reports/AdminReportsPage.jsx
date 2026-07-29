@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import Badge from "../../../components/ui/Badge";
 import Button from "../../../components/ui/Button";
@@ -5,6 +6,7 @@ import EmptyState from "../../../components/ui/EmptyState";
 import Modal from "../../../components/ui/Modal";
 import PageHeader from "../../../components/ui/PageHeader";
 import Table from "../../../components/ui/Table";
+import CaseThread from "../../../components/interaction/CaseThread";
 import { useAdminReportsPage } from "./hooks/useAdminReportsPage";
 
 const STATUS_BADGE = {
@@ -24,6 +26,7 @@ export default function AdminReportsPage() {
   const locale = i18n.resolvedLanguage === "en" ? "en-US" : "vi-VN";
   const formatDate = (value) => (value ? new Date(value).toLocaleString(locale) : "—");
   const page = useAdminReportsPage();
+  const [threadReport, setThreadReport] = useState(null);
   const actions = ["DOCUMENT", "COMMENT"].includes(page.resolveTarget?.targetType)
     ? ["REMOVE_CONTENT", "WARN_USER", "LOCK_ACCOUNT", "DISMISSED"]
     : ["WARN_USER", "LOCK_ACCOUNT", "DISMISSED"];
@@ -52,6 +55,7 @@ export default function AdminReportsPage() {
             <Table.Cell><Badge intent={badge.intent}>{t(badge.labelKey)}</Badge></Table.Cell>
             <Table.Cell>{formatDate(report.createdAt)}</Table.Cell><Table.Cell>
               {report.status === "PENDING" && <Button variant="secondary" onClick={() => page.openResolveModal(report)}>{t("admin.reports.resolve")}</Button>}
+              <Button variant="ghost" onClick={() => setThreadReport(report)}>{t("caseThread.open")}</Button>
             </Table.Cell></Table.Row>;
         })}</Table.Body>
       </Table>}
@@ -73,6 +77,9 @@ export default function AdminReportsPage() {
         <Button onClick={page.submitResolve} disabled={page.submitting || !page.actionTaken}>
           {page.submitting ? t("admin.common.processing") : t("admin.reports.confirm")}</Button>
       </div>
+    </Modal>
+    <Modal open={!!threadReport} onClose={() => setThreadReport(null)} title={t("caseThread.title")}>
+      {threadReport && <CaseThread caseType="report" caseId={threadReport.id} />}
     </Modal>
   </div>;
 }

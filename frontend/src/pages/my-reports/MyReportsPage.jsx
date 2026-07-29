@@ -1,8 +1,12 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import Badge from "../../components/ui/Badge";
+import Button from "../../components/ui/Button";
 import EmptyState from "../../components/ui/EmptyState";
+import Modal from "../../components/ui/Modal";
 import PageHeader from "../../components/ui/PageHeader";
 import Table from "../../components/ui/Table";
+import CaseThread from "../../components/interaction/CaseThread";
 import { useMyReportsPage } from "./hooks/useMyReportsPage";
 
 const STATUS_BADGE = {
@@ -16,6 +20,7 @@ export default function MyReportsPage() {
   const { reports, loading } = useMyReportsPage();
   const locale = i18n.resolvedLanguage === "en" ? "en-US" : "vi-VN";
   const formatDate = (value) => (value ? new Date(value).toLocaleString(locale) : "—");
+  const [threadReport, setThreadReport] = useState(null);
   return (
     <div style={{ padding: "var(--spacing-xl)", maxWidth: "var(--container-width)", margin: "0 auto" }}>
       <PageHeader title={t("myReports.title")} subtitle={t("myReports.subtitle")} />
@@ -26,6 +31,7 @@ export default function MyReportsPage() {
             <Table.HeaderCell>{t("myReports.colTarget")}</Table.HeaderCell><Table.HeaderCell>{t("myReports.colId")}</Table.HeaderCell>
             <Table.HeaderCell>{t("myReports.colReason")}</Table.HeaderCell><Table.HeaderCell>{t("myReports.colStatus")}</Table.HeaderCell>
             <Table.HeaderCell>{t("myReports.colAdminResponse")}</Table.HeaderCell><Table.HeaderCell>{t("myReports.colDate")}</Table.HeaderCell>
+            <Table.HeaderCell />
           </Table.Row></Table.Head>
           <Table.Body>{reports.map((report) => {
             const badge = STATUS_BADGE[report.status] ?? STATUS_BADGE.PENDING;
@@ -35,9 +41,13 @@ export default function MyReportsPage() {
               <Table.Cell><Badge intent={badge.intent}>{t(badge.labelKey)}</Badge></Table.Cell>
               <Table.Cell>{report.adminResponse || "—"}</Table.Cell>
               <Table.Cell>{formatDate(report.createdAt)}</Table.Cell>
+              <Table.Cell><Button variant="ghost" onClick={() => setThreadReport(report)}>{t("caseThread.open")}</Button></Table.Cell>
             </Table.Row>;
           })}</Table.Body>
         </Table>}
+      <Modal open={!!threadReport} onClose={() => setThreadReport(null)} title={t("caseThread.title")}>
+        {threadReport && <CaseThread caseType="report" caseId={threadReport.id} />}
+      </Modal>
     </div>
   );
 }

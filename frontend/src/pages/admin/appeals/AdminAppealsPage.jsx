@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import PageHeader from "../../../components/ui/PageHeader";
@@ -6,6 +7,7 @@ import Button from "../../../components/ui/Button";
 import Modal from "../../../components/ui/Modal";
 import EmptyState from "../../../components/ui/EmptyState";
 import Table from "../../../components/ui/Table";
+import CaseThread from "../../../components/interaction/CaseThread";
 import { useAdminAppealsPage } from "./hooks/useAdminAppealsPage";
 import "./admin-appeals.css";
 
@@ -38,6 +40,7 @@ export default function AdminAppealsPage() {
     commentPendingIds,
     reviewComment,
   } = useAdminAppealsPage();
+  const [threadAppeal, setThreadAppeal] = useState(null);
 
   return (
     <div className="admin-appeals-page">
@@ -108,12 +111,15 @@ export default function AdminAppealsPage() {
                     <Table.Cell><Badge intent={badge.intent}>{t(badge.labelKey)}</Badge></Table.Cell>
                     <Table.Cell>{formatDate(appeal.createdAt)}</Table.Cell>
                     <Table.Cell>
-                      {isPending && (
-                        <div className="ui-table__actions">
-                          <Button variant="secondary" onClick={() => openDecisionModal(appeal, "approve")}>{t("admin.appeals.approve")}</Button>
-                          <Button variant="danger" onClick={() => openDecisionModal(appeal, "reject")}>{t("admin.appeals.reject")}</Button>
-                        </div>
-                      )}
+                      <div className="ui-table__actions">
+                        {isPending && (
+                          <>
+                            <Button variant="secondary" onClick={() => openDecisionModal(appeal, "approve")}>{t("admin.appeals.approve")}</Button>
+                            <Button variant="danger" onClick={() => openDecisionModal(appeal, "reject")}>{t("admin.appeals.reject")}</Button>
+                          </>
+                        )}
+                        <Button variant="ghost" onClick={() => setThreadAppeal(appeal)}>{t("caseThread.open")}</Button>
+                      </div>
                     </Table.Cell>
                   </Table.Row>
                 );
@@ -201,6 +207,10 @@ export default function AdminAppealsPage() {
             {submitting ? t("admin.common.processing") : decisionTarget?.action === "approve" ? t("admin.appeals.confirmApprove") : t("admin.appeals.confirmReject")}
           </Button>
         </div>
+      </Modal>
+
+      <Modal open={!!threadAppeal} onClose={() => setThreadAppeal(null)} title={t("caseThread.title")}>
+        {threadAppeal && <CaseThread caseType="appeal" caseId={threadAppeal.appealId} />}
       </Modal>
     </div>
   );

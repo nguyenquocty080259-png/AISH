@@ -842,6 +842,19 @@
     "statusResolved": "Resolved",
     "statusDismissed": "Dismissed"
   },
+  "caseThread": {
+    "title": "Discussion",
+    "open": "Discuss",
+    "loading": "Loading discussion...",
+    "empty": "No messages yet.",
+    "placeholder": "Type your message...",
+    "send": "Send",
+    "sending": "Sending...",
+    "loadError": "Could not load the discussion.",
+    "sendError": "Could not send the message.",
+    "roleAdmin": "Admin",
+    "roleUser": "User"
+  },
   "docDetail": {
     "loadingDoc": "Loading document...",
     "notFound": "Document not found.",
