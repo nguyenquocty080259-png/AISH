@@ -146,8 +146,6 @@
       "last7Days": "7 ngày gần nhất",
       "calls": "lượt gọi",
       "tokens": "tokens",
-      "estCost": "chi phí ước tính",
-      "costNote": "(theo giá niêm yết Groq — free tier không bị trừ tiền)",
       "footnote": "CHAT_GENERAL tính theo response cuối, chưa gộp các vòng tool nội bộ; lượt gọi lỗi giữa chừng không được ghi."
     },
     "stats": {

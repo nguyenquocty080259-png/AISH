@@ -23,13 +23,6 @@ function Period({ label, value, t }) {
       <div style={metricGrid}>
         <span><b>{value.totalCalls.toLocaleString()}</b><br />{t("admin.aiUsage.calls")}</span>
         <span><b>{value.totalTokens.toLocaleString()}</b><br />{t("admin.aiUsage.tokens")}</span>
-        <span>
-          <b>${value.totalCostUsd.toFixed(6)}</b><br />
-          {t("admin.aiUsage.estCost")}
-          <small style={{ display: "block", color: "#64748b", fontSize: "0.72rem" }}>
-            {t("admin.aiUsage.costNote")}
-          </small>
-        </span>
       </div>
     </div>
   );
@@ -58,7 +51,7 @@ export default function AdminAiUsageCard() {
           <div style={{ marginTop: "12px", color: "#334155", fontSize: "0.88rem" }}>
             {(usage.last7Days.byCallType || []).map((item) => (
               <div key={item.callType}>
-                <b>{item.callType}</b>: {item.totalCalls.toLocaleString()} calls · {item.totalTokens.toLocaleString()} tokens · ${item.totalCostUsd.toFixed(6)}
+                <b>{item.callType}</b>: {item.totalCalls.toLocaleString()} calls · {item.totalTokens.toLocaleString()} tokens
               </div>
             ))}
             <small style={{ display: "block", marginTop: "6px", color: "#64748b", fontSize: "0.76rem" }}>

@@ -146,8 +146,6 @@
       "last7Days": "Last 7 days",
       "calls": "calls",
       "tokens": "tokens",
-      "estCost": "estimated cost",
-      "costNote": "(based on Groq list price — free tier is not charged)",
       "footnote": "CHAT_GENERAL is counted by the final response, internal tool rounds are not aggregated; calls that error mid-way are not recorded."
     },
     "stats": {
