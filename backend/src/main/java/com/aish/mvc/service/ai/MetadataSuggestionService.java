@@ -43,10 +43,10 @@ public class MetadataSuggestionService {
         AuthAccount account = currentAccount();
         boolean admin = account.getUser().getRole() != null && "ADMIN".equals(account.getUser().getRole().getRoleName());
         if (!admin && !doc.getUser().getId().equals(account.getUser().getId()))
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền với tài liệu này.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "error.ai.docForbidden");
         String content = contentSignalService.buildContentSignal(doc);
         if (doc.getIngestStatus() != IngestStatus.INGESTED || content.isBlank())
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tài liệu chưa có nội dung đã ingest để gợi ý.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "error.ai.notIngested");
         List<Subject> subjects = subjectRepository.findAll();
         String subjectLines = subjects.stream().map(s -> s.getId() + ": " + s.getName()).reduce("", (a, b) -> a + b + "\n");
         String promptText = "[DATA DOCUMENT]\n" + content + "\n\n[DATA SUBJECTS]\n" + subjectLines;
@@ -59,16 +59,16 @@ public class MetadataSuggestionService {
             aiUsageTracker.log("METADATA_SUGGESTION", chatResponse, null);
             return parse(raw, subjects);
         } catch (ResponseStatusException e) { throw e; }
-        catch (Exception e) { throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI hiện không thể tạo gợi ý. Vui lòng thử lại sau."); }
+        catch (Exception e) { throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "error.ai.suggestUnavailable"); }
     }
 
     MetadataSuggestionDTO parse(String raw, List<Subject> subjects) {
         Matcher matcher = JSON.matcher(raw == null ? "" : raw);
-        if (!matcher.find()) throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI trả về gợi ý không hợp lệ.");
+        if (!matcher.find()) throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "error.ai.suggestInvalid");
         String json = matcher.group();
         String title = value(json, "title");
         String description = value(json, "description");
-        if (title == null || description == null) throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI trả về gợi ý không hợp lệ.");
+        if (title == null || description == null) throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "error.ai.suggestInvalid");
         title = title.trim();
         if (title.length() > 255) title = title.substring(0, 255);
         List<Long> allowed = subjects.stream().map(Subject::getId).toList();

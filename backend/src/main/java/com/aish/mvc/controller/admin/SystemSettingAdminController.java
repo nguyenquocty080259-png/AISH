@@ -42,7 +42,7 @@ public class SystemSettingAdminController {
     public ResponseEntity<MinUploadAgeDTO> updateMinUploadAge(@RequestBody MinUploadAgeDTO request) {
         Integer value = request.getMinUploadAge();
         if (value == null || value < 6 || value > 100) {
-            throw new IllegalArgumentException("Tuổi tối thiểu để tải tài liệu lên phải từ 6 đến 100.");
+            throw new IllegalArgumentException("error.settings.minAgeRange");
         }
         systemSettingService.setValue(SystemSettingService.MIN_UPLOAD_AGE_KEY, String.valueOf(value));
         return ResponseEntity.ok(new MinUploadAgeDTO(value));
@@ -95,7 +95,7 @@ public class SystemSettingAdminController {
                 request.getAllowedExtensions() == null ? "" : String.join(",", request.getAllowedExtensions()));
 
         if (normalized.isEmpty()) {
-            throw new IllegalArgumentException("Danh sách loại tệp được phép không được để trống.");
+            throw new IllegalArgumentException("error.settings.fileTypesRequired");
         }
         for (String ext : normalized) {
             if (!ext.matches("[a-z0-9]{1,12}")) {

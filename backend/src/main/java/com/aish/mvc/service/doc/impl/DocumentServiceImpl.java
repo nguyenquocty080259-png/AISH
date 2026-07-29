@@ -114,7 +114,7 @@ public class DocumentServiceImpl implements DocumentService {
         // thay vì phụ thuộc việc người gọi có nhớ tự kiểm tra hay không.
         List<DocFile> files = doc.getFiles();
         if (files == null || files.isEmpty()) {
-            throw new ResourceNotFoundException("Tài liệu chưa có file!");
+            throw new ResourceNotFoundException("error.document.noFile");
         }
         return files.stream()
                 .filter(f -> DocFile.RESOURCE_TYPE_LOCAL.equalsIgnoreCase(f.getResourceType()))
@@ -146,7 +146,7 @@ public class DocumentServiceImpl implements DocumentService {
                 .orElse(null);
         if (dob == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Bạn cần cập nhật ngày sinh trong Hồ sơ trước khi tải tài liệu lên.");
+                    "error.document.dobRequired");
         }
 
         int age = Period.between(dob, LocalDate.now()).getYears();
@@ -233,7 +233,7 @@ public class DocumentServiceImpl implements DocumentService {
             throw new IllegalArgumentException("Không tìm thấy môn học với id: " + missing);
         }
         if (subjects.isEmpty()) {
-            throw new IllegalArgumentException("Tài liệu phải thuộc ít nhất 1 môn học hợp lệ.");
+            throw new IllegalArgumentException("error.document.subjectRequiredValid");
         }
         return subjects;
     }
@@ -244,7 +244,7 @@ public class DocumentServiceImpl implements DocumentService {
         // DEC-030: mỗi tài liệu phải thuộc >=1 môn học — chặn TRƯỚC khi tạo document/lưu file,
         // để không tạo ra document/file mồ côi khi validation fail.
         if (subjectIds == null || subjectIds.isEmpty()) {
-            throw new IllegalArgumentException("Tài liệu phải thuộc ít nhất 1 môn học.");
+            throw new IllegalArgumentException("error.document.subjectRequired");
         }
 
         Set<Subject> subjects = resolveSubjects(subjectIds);
@@ -350,14 +350,14 @@ public class DocumentServiceImpl implements DocumentService {
     @Transactional
     public DocumentResponseDTO updateDocument(Long id, String title, String description, java.util.List<Long> subjectIds) {
         DocDocument doc = docDocumentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("error.document.notFound"));
         // Trong thùng rác thì coi như không tồn tại, giống getDocumentById() và
         // DocumentShareServiceImpl.requireOwnedDocument() — muốn sửa thì khôi phục trước.
         if (doc.getDeletedAt() != null) {
-            throw new ResourceNotFoundException("Tài liệu không tồn tại!");
+            throw new ResourceNotFoundException("error.document.notFound");
         }
         if (!doc.getUser().getId().equals(getCurrentUser().getId())) {
-            throw new ForbiddenException("Bạn không có quyền sửa tài liệu này!");
+            throw new ForbiddenException("error.document.editForbidden");
         }
 
         String validatedTitle = title == null ? null : namingModerationService.validate(title);
@@ -398,9 +398,9 @@ public class DocumentServiceImpl implements DocumentService {
     @Transactional
     public void deleteDocument(Long id) {
         DocDocument doc = docDocumentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("error.document.notFound"));
         if (!doc.getUser().getId().equals(getCurrentUser().getId())) {
-            throw new ForbiddenException("Bạn không có quyền xoá tài liệu này!");
+            throw new ForbiddenException("error.document.deleteForbidden");
         }
         doc.setDeletedAt(LocalDateTime.now());
         docDocumentRepository.save(doc);
@@ -420,9 +420,9 @@ public class DocumentServiceImpl implements DocumentService {
     @Transactional
     public void restoreDocument(Long id) {
         DocDocument doc = docDocumentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("error.document.notFound"));
         if (!doc.getUser().getId().equals(getCurrentUser().getId())) {
-            throw new ForbiddenException("Bạn không có quyền khôi phục tài liệu này!");
+            throw new ForbiddenException("error.document.restoreForbidden");
         }
         doc.setDeletedAt(null);
         docDocumentRepository.save(doc);
@@ -432,9 +432,9 @@ public class DocumentServiceImpl implements DocumentService {
     @Transactional
     public void permanentDeleteDocument(Long id) {
         DocDocument doc = docDocumentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("error.document.notFound"));
         if (!doc.getUser().getId().equals(getCurrentUser().getId())) {
-            throw new ForbiddenException("Bạn không có quyền xoá vĩnh viễn tài liệu này!");
+            throw new ForbiddenException("error.document.permanentDeleteForbidden");
         }
 
         if (doc.getFiles() != null) {
@@ -467,7 +467,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Transactional(readOnly = true)
     public DocFile getFileByDocumentId(Long documentId) {
         DocDocument doc = docDocumentRepository.findById(documentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài liệu"));
+                .orElseThrow(() -> new ResourceNotFoundException("error.document.notFound"));
         // Tải file là một kênh lấy NỘI DUNG như xem trước — phải áp cùng luật truy cập với
         // getFileForPreview(): chủ sở hữu / PUBLIC / được chia sẻ. Nếu không, người vừa bị GỠ
         // chia sẻ vẫn tải được nội dung (rò rỉ, phá vỡ cách ly của tính năng chia sẻ).
@@ -477,7 +477,7 @@ public class DocumentServiceImpl implements DocumentService {
         boolean isPublic = doc.getVisibility() == DocumentVisibility.PUBLIC;
         boolean isShared = documentShareService.hasShareAccess(documentId, currentUserId);
         if (!isOwner && !isPublic && !isShared && !isAdmin(currentUser)) {
-            throw new ForbiddenException("Bạn không có quyền tải tài liệu này!");
+            throw new ForbiddenException("error.document.downloadForbidden");
         }
         return pickPrimaryFile(doc);
     }
@@ -486,7 +486,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Transactional(readOnly = true)
     public DocFile getFileForPreview(Long id) {
         DocDocument doc = docDocumentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("error.document.notFound"));
         AuthUser currentUser = getCurrentUser();
         Long currentUserId = currentUser.getId();
         boolean isOwner = doc.getUser().getId().equals(currentUserId);
@@ -494,7 +494,7 @@ public class DocumentServiceImpl implements DocumentService {
         // Người được chia sẻ (RESTRICTED theo userId, hoặc ANYONE_WITH_LINK) cũng được xem trước.
         boolean isShared = documentShareService.hasShareAccess(id, currentUserId);
         if (!isOwner && !isPublic && !isShared && !isAdmin(currentUser)) {
-            throw new ForbiddenException("Bạn không có quyền xem trước tài liệu này!");
+            throw new ForbiddenException("error.document.previewForbidden");
         }
         return pickPrimaryFile(doc);
     }
@@ -551,9 +551,9 @@ public class DocumentServiceImpl implements DocumentService {
     @Transactional
     public DocumentResponseDTO toggleVisibility(Long documentId) {
         DocDocument doc = docDocumentRepository.findById(documentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("error.document.notFound"));
         if (!doc.getUser().getId().equals(getCurrentUser().getId())) {
-            throw new ForbiddenException("Bạn không có quyền đổi tài liệu này!");
+            throw new ForbiddenException("error.document.toggleVisibilityForbidden");
         }
 
         boolean goingPublic = doc.getVisibility() != DocumentVisibility.PUBLIC;
@@ -611,7 +611,7 @@ public class DocumentServiceImpl implements DocumentService {
         // ownerName — sẽ ném LazyInitializationException và endpoint trả 500. Nạp lại thực thể
         // để mọi thứ phía dưới làm việc với bản còn gắn với session.
         DocDocument screenedDocument = docDocumentRepository.findById(savedDocument.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("error.document.notFound"));
         notifyAdminsDocumentScreened(screenedDocument, result.getDecision().name());
 
         return documentMapper.toResponseDTO(screenedDocument);
@@ -649,12 +649,12 @@ public class DocumentServiceImpl implements DocumentService {
     @Transactional(readOnly = true)
     public DocumentResponseDTO getDocumentById(Long id) {
         DocDocument doc = docDocumentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("error.document.notFound"));
         // Đã xoá mềm (đang ở thùng rác) -> coi như không tồn tại với MỌI người, kể cả chủ sở
         // hữu, giống DocumentAccessPortImpl.isAvailableTo(). Kiểm tra trước cả check quyền để
         // không lộ ra rằng id đó từng tồn tại (403 "cấm" khác hẳn 404 "không có").
         if (doc.getDeletedAt() != null) {
-            throw new ResourceNotFoundException("Tài liệu không tồn tại!");
+            throw new ResourceNotFoundException("error.document.notFound");
         }
         // Chi tiết tài liệu cũng là một kênh lấy NỘI DUNG (mô tả, bình luận, tên tệp) nên phải
         // áp đúng luật truy cập của getFileForPreview()/getFileByDocumentId(): chủ sở hữu /
@@ -666,7 +666,7 @@ public class DocumentServiceImpl implements DocumentService {
         boolean isPublic = doc.getVisibility() == DocumentVisibility.PUBLIC;
         boolean isShared = documentShareService.hasShareAccess(id, currentUserId);
         if (!isOwner && !isPublic && !isShared && !isAdmin(currentUser)) {
-            throw new ForbiddenException("Bạn không có quyền xem tài liệu này!");
+            throw new ForbiddenException("error.document.viewForbidden");
         }
         return documentMapper.toResponseDTO(doc);
     }
@@ -725,7 +725,7 @@ public class DocumentServiceImpl implements DocumentService {
         // không bị đổi. Không kiểm tra ownership ở đây vì quyền admin đã được xác thực
         // ở tầng route (/api/admin/** -> hasRole("ADMIN")).
         DocDocument doc = docDocumentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("error.document.notFound"));
         doc.setDeletedAt(LocalDateTime.now());
         docDocumentRepository.save(doc);
     }
@@ -737,7 +737,7 @@ public class DocumentServiceImpl implements DocumentService {
         // không bị đổi. Không kiểm tra ownership ở đây vì quyền admin đã được xác thực
         // ở tầng route (/api/admin/** -> hasRole("ADMIN")).
         DocDocument doc = docDocumentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("error.document.notFound"));
         applyDocumentUpdate(doc, title, description, subjectIds);
         return documentMapper.toResponseDTO(docDocumentRepository.save(doc));
     }
@@ -749,7 +749,7 @@ public class DocumentServiceImpl implements DocumentService {
         // không bị đổi. Không kiểm tra ownership ở đây vì quyền admin đã được xác thực
         // ở tầng route (/api/admin/** -> hasRole("ADMIN")).
         DocDocument doc = docDocumentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("error.document.notFound"));
         doc.setDeletedAt(null);
         docDocumentRepository.save(doc);
     }

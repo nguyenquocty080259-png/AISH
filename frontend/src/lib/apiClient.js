@@ -12,6 +12,9 @@ apiClient.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  // Báo cho backend biết ngôn ngữ đang chọn để trả message lỗi (ngoài auth) theo VI/EN.
+  const language = i18n.language?.startsWith("en") ? "en" : "vi";
+  config.headers["Accept-Language"] = language;
   return config;
 });
 

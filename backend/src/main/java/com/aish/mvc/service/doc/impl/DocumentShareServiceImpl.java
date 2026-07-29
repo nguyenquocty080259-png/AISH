@@ -56,12 +56,12 @@ public class DocumentShareServiceImpl implements DocumentShareService {
     // Chỉ Author/Owner được thao tác share/revoke; tài liệu đã xóa mềm không share được.
     private DocDocument requireOwnedDocument(Long documentId, AuthUser owner) {
         DocDocument doc = docDocumentRepository.findById(documentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
+                .orElseThrow(() -> new ResourceNotFoundException("error.document.notFound"));
         if (doc.getDeletedAt() != null) {
-            throw new ResourceNotFoundException("Tài liệu không tồn tại!");
+            throw new ResourceNotFoundException("error.document.notFound");
         }
         if (!doc.getUser().getId().equals(owner.getId())) {
-            throw new ForbiddenException("Chỉ chủ sở hữu mới được chia sẻ tài liệu này!");
+            throw new ForbiddenException("error.share.notOwner");
         }
         return doc;
     }
@@ -73,12 +73,12 @@ public class DocumentShareServiceImpl implements DocumentShareService {
         DocDocument doc = requireOwnedDocument(documentId, owner);
 
         if (request == null || request.getMode() == null) {
-            throw new IllegalArgumentException("Thiếu chế độ chia sẻ (mode).");
+            throw new IllegalArgumentException("error.share.modeRequired");
         }
         SharePermission permission = request.getPermission() == null
                 ? SharePermission.VIEWER : request.getPermission();
         if (permission == SharePermission.EDITOR) {
-            throw new IllegalArgumentException("Quyền EDITOR chưa được hỗ trợ ở phiên bản này.");
+            throw new IllegalArgumentException("error.share.editorUnsupported");
         }
 
         // VALIDATE "PUBLIC": chỉ tài liệu ĐANG công khai (visibility == PUBLIC) mới được chia sẻ.
@@ -91,7 +91,7 @@ public class DocumentShareServiceImpl implements DocumentShareService {
         if (request.getMode() != ShareMode.NONE
                 && doc.getVisibility() != DocumentVisibility.PUBLIC) {
             throw new IllegalArgumentException(
-                    "Chỉ tài liệu công khai mới có thể chia sẻ. Hãy chuyển tài liệu sang công khai trước.");
+                    "error.share.publicOnly");
         }
 
         return switch (request.getMode()) {
@@ -157,11 +157,11 @@ public class DocumentShareServiceImpl implements DocumentShareService {
                 if (!ids.contains(userId)) ids.add(userId);
             }
             if (ids.isEmpty()) {
-                throw new IllegalArgumentException("Cần chọn ít nhất một người để chia sẻ.");
+                throw new IllegalArgumentException("error.share.recipientRequired");
             }
             return ids;
         }
-        throw new IllegalArgumentException("Cần nhập email người nhận để chia sẻ.");
+        throw new IllegalArgumentException("error.share.emailRequired");
     }
 
     // Resolve email -> user đã có tài khoản HiveMind. Trim + so khớp không phân biệt hoa/thường.
@@ -176,7 +176,7 @@ public class DocumentShareServiceImpl implements DocumentShareService {
                 .filter(a -> a.getIdentifier() != null && a.getIdentifier().contains("@"))
                 .toList();
         if (matches.isEmpty()) {
-            throw new ResourceNotFoundException("Email này chưa có tài khoản HiveMind.");
+            throw new ResourceNotFoundException("error.share.accountNotFound");
         }
         List<Long> distinctUserIds = matches.stream()
                 .map(a -> a.getUser().getId())
@@ -193,10 +193,10 @@ public class DocumentShareServiceImpl implements DocumentShareService {
 
     private void validateShareTarget(AuthUser target, AuthUser owner) {
         if (target.getId().equals(owner.getId())) {
-            throw new IllegalArgumentException("Bạn không thể tự chia sẻ tài liệu cho chính mình.");
+            throw new IllegalArgumentException("error.share.selfShare");
         }
         if (target.getStatus() == UserStatus.BANNED) {
-            throw new IllegalArgumentException("Tài khoản này đã bị khóa, không thể chia sẻ.");
+            throw new IllegalArgumentException("error.share.recipientBanned");
         }
     }
 

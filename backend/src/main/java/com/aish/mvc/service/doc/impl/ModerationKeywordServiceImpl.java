@@ -56,7 +56,7 @@ public class ModerationKeywordServiceImpl implements ModerationKeywordService {
                         HttpStatus.NOT_FOUND, "Không tìm thấy từ khóa kiểm duyệt."));
 
         if (request.getKeyword() == null && request.getActive() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cần cung cấp nội dung cần cập nhật.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "error.keyword.updateContentRequired");
         }
 
         if (request.getKeyword() != null) {
@@ -93,7 +93,7 @@ public class ModerationKeywordServiceImpl implements ModerationKeywordService {
     private String normalizeAndValidate(String keyword) {
         String normalized = keyword == null ? "" : keyword.trim().toLowerCase(Locale.ROOT);
         if (normalized.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Từ khóa không được để trống.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "error.keyword.blank");
         }
         return normalized;
     }

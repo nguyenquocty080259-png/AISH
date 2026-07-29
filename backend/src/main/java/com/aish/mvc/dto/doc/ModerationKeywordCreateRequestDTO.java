@@ -13,10 +13,10 @@ import lombok.Setter;
 @NoArgsConstructor
 public class ModerationKeywordCreateRequestDTO {
 
-    @NotBlank(message = "Từ khóa không được để trống.")
-    @Size(max = 255, message = "Từ khóa không được dài quá 255 ký tự.")
+    @NotBlank(message = "{validation.keyword.blank}")
+    @Size(max = 255, message = "{validation.keyword.tooLong}")
     private String keyword;
 
-    @NotNull(message = "Loại từ khóa là bắt buộc.")
+    @NotNull(message = "{validation.keyword.typeRequired}")
     private ModerationKeywordType type;
 }

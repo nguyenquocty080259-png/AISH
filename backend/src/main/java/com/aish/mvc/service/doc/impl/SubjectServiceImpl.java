@@ -38,12 +38,12 @@ public class SubjectServiceImpl implements SubjectService {
 
         String cleaned = name == null ? "" : name.trim();
         if (cleaned.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên môn học không được để trống!");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "error.subject.nameRequired");
         }
         subjectRepository.findByName(cleaned)
                 .filter(existing -> !existing.getId().equals(id))
                 .ifPresent(existing -> {
-                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Đã tồn tại môn học với tên này!");
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "error.subject.duplicate");
                 });
 
         subject.setName(cleaned);

@@ -10,7 +10,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class ModerationKeywordUpdateRequestDTO {
 
-    @Size(max = 255, message = "Từ khóa không được dài quá 255 ký tự.")
+    @Size(max = 255, message = "{validation.keyword.tooLong}")
     private String keyword;
 
     private Boolean active;

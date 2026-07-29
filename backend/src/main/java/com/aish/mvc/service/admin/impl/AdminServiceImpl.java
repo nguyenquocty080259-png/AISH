@@ -336,7 +336,7 @@ public class AdminServiceImpl implements AdminService {
         ModerationAppeal appeal = moderationAppealRepository.findById(appealId)
                 .orElseThrow(() -> new ResourceNotFoundException("Kháng cáo không tồn tại!"));
         if (appeal.getStatus() != AppealStatus.APPEAL_PENDING) {
-            throw new IllegalStateException("Kháng cáo này đã được xử lý rồi.");
+            throw new IllegalStateException("error.admin.appealAlreadyHandled");
         }
         return appeal;
     }
@@ -345,7 +345,7 @@ public class AdminServiceImpl implements AdminService {
         DocDocument document = docDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
         if (document.getDeletedAt() != null) {
-            throw new ResourceNotFoundException("Tài liệu đã bị xóa.");
+            throw new ResourceNotFoundException("error.admin.documentDeleted");
         }
         return document;
     }
@@ -354,7 +354,7 @@ public class AdminServiceImpl implements AdminService {
         Comment comment = commentRepository.findWithUserAndDocumentById(commentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bình luận không tồn tại!"));
         if (comment.getStatus() != CommentStatus.PENDING_REVIEW) {
-            throw new IllegalStateException("Bình luận này không còn chờ duyệt.");
+            throw new IllegalStateException("error.admin.commentNotPending");
         }
 
         comment.setStatus(approved ? CommentStatus.VISIBLE : CommentStatus.REJECTED);

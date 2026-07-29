@@ -40,21 +40,21 @@ public class ModerationAppealServiceImpl implements ModerationAppealService {
 
         AuthUser currentUser = getCurrentUser();
         if (!doc.getUser().getId().equals(currentUser.getId())) {
-            throw new ForbiddenException("Bạn không có quyền kháng cáo tài liệu này!");
+            throw new ForbiddenException("error.appeal.forbidden");
         }
 
         if (doc.getModerationStatus() != ModerationStatus.REJECTED) {
-            throw new IllegalStateException("Chỉ có thể kháng cáo tài liệu đã bị từ chối (REJECTED).");
+            throw new IllegalStateException("error.appeal.onlyRejected");
         }
 
         if (reason == null || reason.isBlank()) {
-            throw new IllegalArgumentException("Lý do kháng cáo không được để trống.");
+            throw new IllegalArgumentException("error.appeal.reasonRequired");
         }
 
         // Guard chống trùng: chặn ngay lúc TẠO thay vì lọc lại ở hàng chờ Admin — 1 tài liệu
         // chỉ có tối đa 1 appeal đang PENDING, tránh nhiều dòng trùng nhau trong queue.
         if (moderationAppealRepository.existsByDocument_IdAndStatus(documentId, AppealStatus.APPEAL_PENDING)) {
-            throw new IllegalStateException("Tài liệu này đã có một kháng cáo đang chờ Admin xử lý.");
+            throw new IllegalStateException("error.appeal.alreadyPending");
         }
 
         ModerationAppeal appeal = ModerationAppeal.builder()

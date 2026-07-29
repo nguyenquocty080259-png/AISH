@@ -52,7 +52,7 @@ public class CollectionServiceImpl implements CollectionService {
         AuthUser user = getCurrentUser();
         String cleaned = namingModerationService.validate(name);
         if (collectionRepository.existsByUser_IdAndName(user.getId(), cleaned)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Bạn đã có bộ sưu tập trùng tên!");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "error.collection.duplicateName");
         }
         Collection c = new Collection();
         c.setName(cleaned);
@@ -96,7 +96,7 @@ public class CollectionServiceImpl implements CollectionService {
         Collection c = getOwnedCollection(id, uid);
         String cleaned = namingModerationService.validate(name);
         if (!cleaned.equals(c.getName()) && collectionRepository.existsByUser_IdAndName(uid, cleaned)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Bạn đã có bộ sưu tập trùng tên!");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "error.collection.duplicateName");
         }
         c.setName(cleaned);
         Collection saved = collectionRepository.save(c);

@@ -148,14 +148,14 @@ public class ReportServiceImpl implements ReportService {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new ResourceNotFoundException("Report không tồn tại."));
         if (report.getStatus() != ReportStatus.PENDING) {
-            throw new IllegalStateException("Report này đã được xử lý; chỉ report PENDING mới có thể xử lý.");
+            throw new IllegalStateException("error.report.alreadyProcessed");
         }
         return report;
     }
 
     private ReportAction parseActionTaken(String actionTakenRaw) {
         if (actionTakenRaw == null || actionTakenRaw.isBlank()) {
-            throw new IllegalArgumentException("actionTaken là bắt buộc.");
+            throw new IllegalArgumentException("error.report.actionRequired");
         }
         try {
             return ReportAction.valueOf(actionTakenRaw.trim().toUpperCase(Locale.ROOT));
@@ -225,7 +225,7 @@ public class ReportServiceImpl implements ReportService {
 
     private ReportTargetType parseTargetType(String targetType) {
         if (targetType == null || targetType.isBlank()) {
-            throw new IllegalArgumentException("targetType không được để trống.");
+            throw new IllegalArgumentException("error.report.targetTypeRequired");
         }
 
         final ReportTargetType parsedTargetType;
@@ -236,14 +236,14 @@ public class ReportServiceImpl implements ReportService {
         }
 
         if (parsedTargetType == ReportTargetType.AI_MESSAGE) {
-            throw new IllegalArgumentException("User không được report AI_MESSAGE; loại report này chỉ do hệ thống tạo.");
+            throw new IllegalArgumentException("error.report.aiMessageForbidden");
         }
         return parsedTargetType;
     }
 
     private void validateTargetExists(ReportTargetType targetType, Long targetId) {
         if (targetId == null) {
-            throw new IllegalArgumentException("targetId không được để trống.");
+            throw new IllegalArgumentException("error.report.targetIdRequired");
         }
 
         boolean exists = switch (targetType) {

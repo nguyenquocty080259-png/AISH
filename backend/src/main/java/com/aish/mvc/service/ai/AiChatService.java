@@ -149,7 +149,7 @@ public class AiChatService {
             Long currentUserId) {
         if (request.getDocumentId() != null) {
             if (!documentAccessPort.isAvailableTo(request.getDocumentId(), currentUserId)) {
-                throw new RuntimeException("Bạn không có quyền hỏi AI về tài liệu này!");
+                throw new RuntimeException("error.ai.askForbidden");
             }
             return new DocumentResolution(request.getDocumentId(), false);
         }

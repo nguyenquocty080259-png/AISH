@@ -77,7 +77,7 @@ public class EngagementServiceImpl implements EngagementService {
     // chat đang dùng — thay vì chép lại điều kiện quyền ở đây.
     private void requireReadableDocument(Long documentId) {
         if (!documentAccessPort.isAvailableTo(documentId, getCurrentUser().getId())) {
-            throw new ForbiddenException("Bạn không có quyền thao tác trên tài liệu này!");
+            throw new ForbiddenException("error.engagement.docForbidden");
         }
     }
 
@@ -175,7 +175,7 @@ public class EngagementServiceImpl implements EngagementService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bình luận không tồn tại!"));
         if (!comment.getUser().getId().equals(getCurrentUser().getId())) {
-            throw new ForbiddenException("Bạn không có quyền sửa bình luận này!");
+            throw new ForbiddenException("error.comment.editForbidden");
         }
         String cleaned = validateContent(content);
         boolean keywordHit = toxicKeywordFilter.matches(cleaned, ModerationKeywordType.COMMENT);
@@ -203,7 +203,7 @@ public class EngagementServiceImpl implements EngagementService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bình luận không tồn tại!"));
         if (!comment.getUser().getId().equals(getCurrentUser().getId())) {
-            throw new ForbiddenException("Bạn không có quyền xoá bình luận này!");
+            throw new ForbiddenException("error.comment.deleteForbidden");
         }
         commentRepository.delete(comment);
     }
@@ -211,7 +211,7 @@ public class EngagementServiceImpl implements EngagementService {
     private String validateContent(String content) {
         String cleaned = content == null ? "" : content.trim();
         if (cleaned.isBlank()) {
-            throw new IllegalArgumentException("Nội dung bình luận không được để trống.");
+            throw new IllegalArgumentException("error.comment.empty");
         }
         return cleaned;
     }
@@ -219,7 +219,7 @@ public class EngagementServiceImpl implements EngagementService {
     private String validateDisputeNote(String disputeNote) {
         String cleaned = disputeNote == null ? "" : disputeNote.trim();
         if (cleaned.isBlank()) {
-            throw new IllegalArgumentException("Vui lòng nhập lý do khiếu nại.");
+            throw new IllegalArgumentException("error.complaint.reasonRequired");
         }
         return cleaned;
     }

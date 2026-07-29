@@ -69,7 +69,7 @@ public class AiModerationServiceImpl implements AiModerationService {
     private ModerationResultDTO callDocumentModeration(DocDocument doc, String callType) {
         String content = contentSignalService.buildContentSignal(doc);
         if (content == null || content.isBlank()) {
-            throw new IllegalStateException("Tài liệu chưa có nội dung để kiểm duyệt.");
+            throw new IllegalStateException("error.ai.noContentToModerate");
         }
         String fileName = doc.getFiles() == null || doc.getFiles().isEmpty()
                 ? "" : doc.getFiles().getFirst().getFileName();

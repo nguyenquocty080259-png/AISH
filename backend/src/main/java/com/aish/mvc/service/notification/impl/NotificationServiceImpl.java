@@ -114,7 +114,7 @@ public class NotificationServiceImpl implements NotificationService {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Thông báo không tồn tại."));
         if (!notification.getRecipientUserId().equals(currentUser.getId())) {
-            throw new ForbiddenException("Bạn không có quyền đánh dấu thông báo của người khác là đã đọc.");
+            throw new ForbiddenException("error.notification.markOthersForbidden");
         }
         notification.setIsRead(true);
         return toResponseDTO(notificationRepository.save(notification));

@@ -18,10 +18,10 @@ public class NamingModerationService {
         if (cleaned.length() < 3
                 || cleaned.chars().allMatch(Character::isDigit)
                 || isSingleRepeatedCharacter(cleaned)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên không hợp lệ.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "error.naming.invalid");
         }
         if (toxicKeywordFilter.matches(cleaned, ModerationKeywordType.NAMING)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên chứa từ không phù hợp.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "error.naming.badWord");
         }
         return cleaned;
     }

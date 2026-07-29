@@ -36,6 +36,7 @@ class NamingModerationServiceTest {
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
                 () -> service.validate("xyzt-name collection"));
-        assertEquals("Tên chứa từ không phù hợp.", exception.getReason());
+        // Service ném KEY i18n; GlobalExceptionHandler mới tra ra chuỗi theo Accept-Language.
+        assertEquals("error.naming.badWord", exception.getReason());
     }
 }

@@ -4,6 +4,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +18,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 /**
@@ -30,6 +33,23 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    private final MessageSource messageSource;
+
+    public GlobalExceptionHandler(MessageSource messageSource) {
+        this.messageSource = messageSource;
+    }
+
+    // Coi message như một KEY trong messages*.properties và tra theo ngôn ngữ Accept-Language.
+    // Nếu không phải key (chuỗi literal chưa rút, gồm cả các message auth chưa i18n) thì trả về
+    // nguyên văn nhờ dùng chính nó làm defaultMessage -> không có key nào bị lộ raw, không đụng auth.
+    private String resolveMessage(String message) {
+        if (message == null) {
+            return null;
+        }
+        Locale locale = LocaleContextHolder.getLocale();
+        return messageSource.getMessage(message, null, message, locale);
+    }
 
     @ExceptionHandler({ AccessDeniedException.class, ForbiddenException.class })
     public ResponseEntity<ErrorResponse> handleForbidden(RuntimeException ex, HttpServletRequest request) {
@@ -47,7 +67,7 @@ public class GlobalExceptionHandler {
         String message = ex.getBindingResult().getFieldErrors().stream()
                 .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
                 .collect(Collectors.joining("; "));
-        return build(HttpStatus.BAD_REQUEST, message.isBlank() ? "Dữ liệu không hợp lệ." : message, request);
+        return build(HttpStatus.BAD_REQUEST, message.isBlank() ? "error.common.invalidData" : message, request);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -55,7 +75,7 @@ public class GlobalExceptionHandler {
         String message = ex.getConstraintViolations().stream()
                 .map(cv -> cv.getPropertyPath() + ": " + cv.getMessage())
                 .collect(Collectors.joining("; "));
-        return build(HttpStatus.BAD_REQUEST, message.isBlank() ? "Dữ liệu không hợp lệ." : message, request);
+        return build(HttpStatus.BAD_REQUEST, message.isBlank() ? "error.common.invalidData" : message, request);
     }
 
     // Không phải @Valid, nhưng cùng lớp "client gửi sai/thiếu điều kiện" -> cũng 400,
@@ -78,7 +98,7 @@ public class GlobalExceptionHandler {
     // Race hoặc constraint trùng (vd. username unique) rơi xuống đây thay vì 500 chung chung.
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex, HttpServletRequest request) {
-        return build(HttpStatus.CONFLICT, "Dữ liệu bị trùng, vui lòng thử lại.", request);
+        return build(HttpStatus.CONFLICT, "error.common.duplicateData", request);
     }
 
     // Chặn cứng ở tầng Tomcat/multipart (spring.servlet.multipart.max-*) trước khi request tới
@@ -87,7 +107,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceeded(
             MaxUploadSizeExceededException ex, HttpServletRequest request) {
-        return build(HttpStatus.PAYLOAD_TOO_LARGE, "Tệp tải lên vượt quá dung lượng tối đa cho phép.", request);
+        return build(HttpStatus.PAYLOAD_TOO_LARGE, "error.common.maxUploadSize", request);
     }
 
     @ExceptionHandler(AuthenticationException.class)
@@ -98,12 +118,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex, HttpServletRequest request) {
         log.error("Lỗi không mong muốn tại {}: {}", request.getRequestURI(), ex.getMessage(), ex);
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra, vui lòng thử lại sau.", request);
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "error.common.unexpected", request);
     }
 
     private ResponseEntity<ErrorResponse> build(HttpStatus status, String message, HttpServletRequest request) {
         ErrorResponse body = new ErrorResponse(
-                LocalDateTime.now(), status.value(), status.getReasonPhrase(), message, request.getRequestURI());
+                LocalDateTime.now(), status.value(), status.getReasonPhrase(), resolveMessage(message), request.getRequestURI());
         return ResponseEntity.status(status).body(body);
     }
 }

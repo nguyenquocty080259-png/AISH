@@ -130,7 +130,7 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
         Long currentUserId = getCurrentUserId();
         boolean isOwner = doc.getUser().getId().equals(currentUserId);
         if (!isOwner && !isAdmin()) {
-            throw new RuntimeException("Bạn không có quyền nạp (ingest) tài liệu này!");
+            throw new RuntimeException("error.ai.ingestForbidden");
         }
 
         // Caller thứ hai đã chờ lock phải đọc lại trạng thái từ DB sau khi caller trước hoàn tất.
