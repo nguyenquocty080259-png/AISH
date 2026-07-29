@@ -2,7 +2,7 @@ import { NavLink, Link } from "react-router-dom";
 
 // Props:
 //   brand: { logoSrc, name, caption, homeTo }
-//   navGroups: [{ label?: string, items: [{ to, label, icon: ReactNode }] }]
+//   navGroups: [{ label?: string, items: [{ to, label, icon: ReactNode, badge?: number }] }]
 //   bottomAction?: { label, to, icon: ReactNode }
 // Nếu chỉ 1 group không label → render phẳng (không hiện caption group + không divider).
 // Nhiều group hoặc group có label → render label caps + divider giữa các group.
@@ -38,12 +38,26 @@ export default function AppSidebar({ brand, navGroups, bottomAction }) {
                 {group.label}
               </span>
             )}
-            {group.items.map((it) => (
-              <NavLink key={it.to} to={it.to} className={linkClass}>
-                {it.icon}
-                <span className="hidden lg:inline">{it.label}</span>
-              </NavLink>
-            ))}
+            {group.items.map((it) => {
+              const hasBadge = it.badge != null && it.badge > 0;
+              const badgeText = it.badge > 99 ? "99+" : it.badge;
+              return (
+                <NavLink key={it.to} to={it.to} className={linkClass}>
+                  <span className="relative inline-flex">
+                    {it.icon}
+                    {hasBadge && (
+                      <span className="lg:hidden absolute -top-1 -right-1 h-2 w-2 rounded-full bg-warning" />
+                    )}
+                  </span>
+                  <span className="hidden lg:inline">{it.label}</span>
+                  {hasBadge && (
+                    <span className="ml-auto hidden lg:inline-flex min-w-[18px] items-center justify-center rounded-pill bg-warning px-1.5 text-[10px] font-semibold text-white">
+                      {badgeText}
+                    </span>
+                  )}
+                </NavLink>
+              );
+            })}
           </div>
         ))}
       </nav>
