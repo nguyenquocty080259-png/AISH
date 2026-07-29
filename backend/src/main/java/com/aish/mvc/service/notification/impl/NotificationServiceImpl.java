@@ -13,6 +13,9 @@ import com.aish.mvc.repository.auth.AuthUserRepository;
 import com.aish.mvc.repository.notification.NotificationRepository;
 import com.aish.mvc.service.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -23,6 +26,8 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class NotificationServiceImpl implements NotificationService {
+
+    private static final Logger log = LoggerFactory.getLogger(NotificationServiceImpl.class);
 
     private final NotificationRepository notificationRepository;
     private final AuthAccountRepository authAccountRepository;
@@ -36,31 +41,41 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    @Async("notificationExecutor")
     @Transactional
     public void createNotification(
             Long recipientUserId, NotificationType type, String message, Long relatedReportId) {
-        Notification notification = Notification.builder()
-                .recipientUserId(recipientUserId)
-                .type(type)
-                .message(message)
-                .relatedReportId(relatedReportId)
-                .isRead(false)
-                .build();
-        notificationRepository.save(notification);
+        try {
+            Notification notification = Notification.builder()
+                    .recipientUserId(recipientUserId)
+                    .type(type)
+                    .message(message)
+                    .relatedReportId(relatedReportId)
+                    .isRead(false)
+                    .build();
+            notificationRepository.save(notification);
+        } catch (Exception ex) {
+            log.error("Failed to create notification for recipientUserId={}, type={}", recipientUserId, type, ex);
+        }
     }
 
     @Override
+    @Async("notificationExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void createDocumentNotification(
             Long recipientUserId, NotificationType type, String message, Long relatedDocumentId) {
-        Notification notification = Notification.builder()
-                .recipientUserId(recipientUserId)
-                .type(type)
-                .message(message)
-                .relatedDocumentId(relatedDocumentId)
-                .isRead(false)
-                .build();
-        notificationRepository.save(notification);
+        try {
+            Notification notification = Notification.builder()
+                    .recipientUserId(recipientUserId)
+                    .type(type)
+                    .message(message)
+                    .relatedDocumentId(relatedDocumentId)
+                    .isRead(false)
+                    .build();
+            notificationRepository.save(notification);
+        } catch (Exception ex) {
+            log.error("Failed to create document notification for recipientUserId={}, type={}", recipientUserId, type, ex);
+        }
     }
 
     @Override
@@ -94,18 +109,24 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    @Async("notificationExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void createCaseNotification(
             Long recipientUserId, NotificationType type, String message, CaseType caseType, Long caseId) {
-        Notification notification = Notification.builder()
-                .recipientUserId(recipientUserId)
-                .type(type)
-                .message(message)
-                .relatedCaseType(caseType)
-                .relatedCaseId(caseId)
-                .isRead(false)
-                .build();
-        notificationRepository.save(notification);
+        try {
+            Notification notification = Notification.builder()
+                    .recipientUserId(recipientUserId)
+                    .type(type)
+                    .message(message)
+                    .relatedCaseType(caseType)
+                    .relatedCaseId(caseId)
+                    .isRead(false)
+                    .build();
+            notificationRepository.save(notification);
+        } catch (Exception ex) {
+            log.error("Failed to create case notification for recipientUserId={}, type={}, caseType={}, caseId={}",
+                    recipientUserId, type, caseType, caseId, ex);
+        }
     }
 
     @Override
