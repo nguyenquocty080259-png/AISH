@@ -13,5 +13,6 @@ public enum NotificationType {
     APPEAL_APPROVED,
     APPEAL_REJECTED,
     COMMENT_ON_MY_DOC,
-    RATING_ON_MY_DOC
+    RATING_ON_MY_DOC,
+    CASE_REPLY
 }

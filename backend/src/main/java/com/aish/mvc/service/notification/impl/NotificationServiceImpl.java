@@ -2,6 +2,7 @@ package com.aish.mvc.service.notification.impl;
 
 import com.aish.mvc.dto.notification.NotificationResponseDTO;
 import com.aish.mvc.entity.auth.AuthUser;
+import com.aish.mvc.entity.enums.CaseType;
 import com.aish.mvc.entity.enums.NotificationType;
 import com.aish.mvc.entity.enums.UserStatus;
 import com.aish.mvc.entity.notification.Notification;
@@ -93,6 +94,21 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void createCaseNotification(
+            Long recipientUserId, NotificationType type, String message, CaseType caseType, Long caseId) {
+        Notification notification = Notification.builder()
+                .recipientUserId(recipientUserId)
+                .type(type)
+                .message(message)
+                .relatedCaseType(caseType)
+                .relatedCaseId(caseId)
+                .isRead(false)
+                .build();
+        notificationRepository.save(notification);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<NotificationResponseDTO> getMyNotifications() {
         Long userId = getCurrentUser().getId();
@@ -140,6 +156,8 @@ public class NotificationServiceImpl implements NotificationService {
                 .relatedReportId(notification.getRelatedReportId())
                 .relatedDocumentId(notification.getRelatedDocumentId())
                 .relatedCommentId(notification.getRelatedCommentId())
+                .relatedCaseId(notification.getRelatedCaseId())
+                .relatedCaseType(notification.getRelatedCaseType())
                 .isRead(notification.getIsRead())
                 .createdAt(notification.getCreatedAt())
                 .build();

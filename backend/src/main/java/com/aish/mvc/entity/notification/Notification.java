@@ -1,5 +1,6 @@
 package com.aish.mvc.entity.notification;
 
+import com.aish.mvc.entity.enums.CaseType;
 import com.aish.mvc.entity.enums.NotificationType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -50,6 +51,13 @@ public class Notification {
 
     @Column(name = "related_comment_id")
     private Long relatedCommentId;
+
+    @Column(name = "related_case_id")
+    private Long relatedCaseId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "related_case_type")
+    private CaseType relatedCaseType;
 
     @ColumnDefault("false")
     @Column(name = "is_read", nullable = false)

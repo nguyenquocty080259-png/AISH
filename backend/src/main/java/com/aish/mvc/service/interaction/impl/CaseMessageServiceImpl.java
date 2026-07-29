@@ -4,6 +4,8 @@ import com.aish.mvc.dto.interaction.CaseMessageDTO;
 import com.aish.mvc.entity.auth.AuthUser;
 import com.aish.mvc.entity.doc.ModerationAppeal;
 import com.aish.mvc.entity.enums.CaseType;
+import com.aish.mvc.entity.enums.NotificationType;
+import com.aish.mvc.entity.enums.UserStatus;
 import com.aish.mvc.entity.interaction.CaseMessage;
 import com.aish.mvc.entity.report.Report;
 import com.aish.mvc.exception.ForbiddenException;
@@ -14,7 +16,10 @@ import com.aish.mvc.repository.doc.ModerationAppealRepository;
 import com.aish.mvc.repository.interaction.CaseMessageRepository;
 import com.aish.mvc.repository.report.ReportRepository;
 import com.aish.mvc.service.interaction.CaseMessageService;
+import com.aish.mvc.service.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,12 +32,14 @@ import java.util.stream.Collectors;
 public class CaseMessageServiceImpl implements CaseMessageService {
 
     private static final int MAX_CONTENT_LENGTH = 2000;
+    private static final Logger log = LoggerFactory.getLogger(CaseMessageServiceImpl.class);
 
     private final CaseMessageRepository caseMessageRepository;
     private final ReportRepository reportRepository;
     private final ModerationAppealRepository moderationAppealRepository;
     private final AuthAccountRepository authAccountRepository;
     private final AuthUserRepository authUserRepository;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional(readOnly = true)
@@ -58,7 +65,38 @@ public class CaseMessageServiceImpl implements CaseMessageService {
                 .content(cleaned)
                 .build();
         CaseMessage saved = caseMessageRepository.save(message);
+        notifyCaseReply(caseType, caseId, currentUser);
         return toDTO(saved);
+    }
+
+    private void notifyCaseReply(CaseType caseType, Long caseId, AuthUser currentUser) {
+        try {
+            boolean isSenderAdmin = "ADMIN".equalsIgnoreCase(currentUser.getRole().getRoleName());
+            String caseLabel = caseType == CaseType.REPORT ? "báo cáo" : "kháng cáo";
+
+            if (isSenderAdmin) {
+                Long ownerId = resolveCaseOwnerId(caseType, caseId);
+                if (ownerId != null && !ownerId.equals(currentUser.getId())) {
+                    notificationService.createCaseNotification(
+                            ownerId,
+                            NotificationType.CASE_REPLY,
+                            "Có phản hồi mới cho " + caseLabel + " của bạn.",
+                            caseType,
+                            caseId);
+                }
+            } else {
+                authUserRepository.findByRole_RoleNameAndStatus("ADMIN", UserStatus.ACTIVE).stream()
+                        .filter(admin -> !admin.getId().equals(currentUser.getId()))
+                        .forEach(admin -> notificationService.createCaseNotification(
+                                admin.getId(),
+                                NotificationType.CASE_REPLY,
+                                "Có phản hồi mới từ người dùng trên " + caseLabel + " #" + caseId + ".",
+                                caseType,
+                                caseId));
+            }
+        } catch (Exception ex) {
+            log.error("Failed to send CASE_REPLY notification for caseType={}, caseId={}", caseType, caseId, ex);
+        }
     }
 
     private String validateContent(String content) {

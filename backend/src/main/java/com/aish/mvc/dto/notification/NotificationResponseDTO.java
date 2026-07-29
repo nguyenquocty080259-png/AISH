@@ -1,5 +1,6 @@
 package com.aish.mvc.dto.notification;
 
+import com.aish.mvc.entity.enums.CaseType;
 import com.aish.mvc.entity.enums.NotificationType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,6 +23,8 @@ public class NotificationResponseDTO {
     private Long relatedReportId;
     private Long relatedDocumentId;
     private Long relatedCommentId;
+    private Long relatedCaseId;
+    private CaseType relatedCaseType;
     private Boolean isRead;
     private LocalDateTime createdAt;
 }
