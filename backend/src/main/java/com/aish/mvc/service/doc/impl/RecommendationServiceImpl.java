@@ -1,6 +1,6 @@
-package com.aish.mvc.service.ai.impl;
+package com.aish.mvc.service.doc.impl;
 
-import com.aish.mvc.dto.ai.RecommendedDocumentDTO;
+import com.aish.mvc.dto.doc.RecommendedDocumentDTO;
 import com.aish.mvc.entity.doc.Collection;
 import com.aish.mvc.entity.doc.CollectionItem;
 import com.aish.mvc.entity.doc.DocDocument;
@@ -15,8 +15,8 @@ import com.aish.mvc.repository.doc.DownloadRepository;
 import com.aish.mvc.repository.doc.FavoriteRepository;
 import com.aish.mvc.repository.doc.RatingRepository;
 import com.aish.mvc.repository.doc.ViewHistoryRepository;
-import com.aish.mvc.service.ai.AiRecommendationService;
 import com.aish.mvc.service.doc.DocumentAccessPort;
+import com.aish.mvc.service.doc.RecommendationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,13 +28,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * MVP recommendation scoring (DEC-041/DEC-019, file 13 §12): subject overlap + trending.
+ * MVP recommendation scoring (DEC-041/DEC-019, file 13 §12): heuristic dựa trên
+ * subject overlap + favorite/download/rating + view history + collection.
+ * Không dùng AI/embedding.
  *
  * Content/deep-user-similarity signals are explicitly Full/later scope.
  */
 @Service
 @RequiredArgsConstructor
-public class AiRecommendationServiceImpl implements AiRecommendationService {
+public class RecommendationServiceImpl implements RecommendationService {
 
     // Trọng số: subject overlap áp đảo (100 điểm/subject chung) để luôn xếp trên trending
     // thuần; favorite/download/rating chỉ phá vỡ hòa hoặc làm tín hiệu fallback khi không

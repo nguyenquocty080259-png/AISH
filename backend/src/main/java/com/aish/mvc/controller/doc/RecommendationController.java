@@ -1,8 +1,8 @@
-package com.aish.mvc.controller.ai;
+package com.aish.mvc.controller.doc;
 
-import com.aish.mvc.dto.ai.RecommendedDocumentDTO;
+import com.aish.mvc.dto.doc.RecommendedDocumentDTO;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
-import com.aish.mvc.service.ai.AiRecommendationService;
+import com.aish.mvc.service.doc.RecommendationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,11 +20,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/ai/recommendations")
 @RequiredArgsConstructor
-public class AiRecommendationController {
+public class RecommendationController {
 
     private static final int DEFAULT_LIMIT = 8;
 
-    private final AiRecommendationService aiRecommendationService;
+    private final RecommendationService recommendationService;
     private final AuthAccountRepository authAccountRepository;
 
     // documentId có -> "Liên quan tới tài liệu này". documentId không có -> "Dành cho bạn".
@@ -36,8 +36,8 @@ public class AiRecommendationController {
         Long currentUserId = currentUserId();
 
         List<RecommendedDocumentDTO> result = documentId != null
-                ? aiRecommendationService.recommendRelatedToDocument(documentId, currentUserId, safeLimit)
-                : aiRecommendationService.recommendForUser(currentUserId, safeLimit);
+                ? recommendationService.recommendRelatedToDocument(documentId, currentUserId, safeLimit)
+                : recommendationService.recommendForUser(currentUserId, safeLimit);
 
         return ResponseEntity.ok(result);
     }

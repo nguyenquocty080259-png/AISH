@@ -1,10 +1,10 @@
-package com.aish.mvc.service.ai;
+package com.aish.mvc.service.doc;
 
-import com.aish.mvc.dto.ai.RecommendedDocumentDTO;
+import com.aish.mvc.dto.doc.RecommendedDocumentDTO;
 
 import java.util.List;
 
-public interface AiRecommendationService {
+public interface RecommendationService {
 
     // Tab "Liên quan": tài liệu PUBLIC khác cùng chủ đề (subject) với 1 tài liệu cho trước,
     // trending làm tie-break. currentUserId null = guest (vẫn được, vì kết quả luôn PUBLIC).

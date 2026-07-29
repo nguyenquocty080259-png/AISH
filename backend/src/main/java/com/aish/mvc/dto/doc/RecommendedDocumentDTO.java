@@ -1,4 +1,4 @@
-package com.aish.mvc.dto.ai;
+package com.aish.mvc.dto.doc;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

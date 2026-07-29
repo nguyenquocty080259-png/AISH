@@ -13,6 +13,7 @@ import com.aish.mvc.entity.enums.ModerationStatus;
 import com.aish.mvc.repository.doc.DocDocumentRepository;
 import com.aish.mvc.service.doc.DocEmbeddingService;
 import com.aish.mvc.service.doc.DocumentAccessPort;
+import com.aish.mvc.service.doc.RecommendationService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +50,7 @@ public class AiChatService {
     private final DocEmbeddingService docEmbeddingService;
     private final DocumentAccessPort documentAccessPort;
     private final DocDocumentRepository docDocumentRepository;
-    private final AiRecommendationService aiRecommendationService;
+    private final RecommendationService recommendationService;
     private final AiConversationService aiConversationService;
     private final AdminAiTools adminAiTools;
     private final UserAiTools userAiTools;
@@ -266,7 +267,7 @@ public class AiChatService {
         Long seedDocId = hits.isEmpty() ? null : documentIdOf(hits.get(0));
         if (seedDocId == null) return List.of();
         try {
-            return aiRecommendationService.recommendRelatedToDocument(seedDocId, currentUserId, RELATED_LIMIT).stream()
+            return recommendationService.recommendRelatedToDocument(seedDocId, currentUserId, RELATED_LIMIT).stream()
                     .map(r -> new RelatedDocDTO(r.getDocumentId(), r.getTitle(), r.getOwnerName()))
                     .collect(Collectors.toList());
         }
