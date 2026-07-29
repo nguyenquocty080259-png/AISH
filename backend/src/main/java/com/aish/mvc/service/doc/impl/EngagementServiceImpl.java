@@ -9,6 +9,7 @@ import com.aish.mvc.entity.doc.Rating;
 import com.aish.mvc.entity.doc.ViewHistory;
 import com.aish.mvc.entity.enums.CommentStatus;
 import com.aish.mvc.entity.enums.ModerationKeywordType;
+import com.aish.mvc.entity.enums.NotificationType;
 import com.aish.mvc.exception.CommentBlockedException;
 import com.aish.mvc.exception.ResourceNotFoundException;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
@@ -105,6 +106,10 @@ public class EngagementServiceImpl implements EngagementService {
         } else {
             eventPublisher.publishEvent(new CommentModerationRequestedEvent(saved.getId()));
         }
+        if (saved.getStatus() == CommentStatus.VISIBLE
+                && !saved.getUser().getId().equals(doc.getUser().getId())) {
+            notifyCommentOnMyDoc(doc);
+        }
     }
 
     @Override
@@ -141,8 +146,12 @@ public class EngagementServiceImpl implements EngagementService {
                         .document(doc)
                         .createdAt(LocalDateTime.now())
                         .build());
+        boolean isNewRating = rating.getId() == null;
         rating.setRating(star);
         ratingRepository.save(rating);
+        if (isNewRating && !uid.equals(doc.getUser().getId())) {
+            notifyRatingOnMyDoc(doc);
+        }
     }
 
     @Override
@@ -231,6 +240,32 @@ public class EngagementServiceImpl implements EngagementService {
         } catch (Exception exception) {
             log.warn("Không thể gửi thông báo cho bình luận {} đang chờ duyệt; luồng bình luận vẫn tiếp tục.",
                     comment.getId(), exception);
+        }
+    }
+
+    private void notifyCommentOnMyDoc(DocDocument doc) {
+        try {
+            notificationService.createDocumentNotification(
+                    doc.getUser().getId(),
+                    NotificationType.COMMENT_ON_MY_DOC,
+                    "Có bình luận mới trên tài liệu \"" + doc.getTitle() + "\" của bạn.",
+                    doc.getId());
+        } catch (Exception exception) {
+            log.warn("Không thể gửi thông báo bình luận mới cho chủ tài liệu {}; bình luận vẫn được lưu.",
+                    doc.getId(), exception);
+        }
+    }
+
+    private void notifyRatingOnMyDoc(DocDocument doc) {
+        try {
+            notificationService.createDocumentNotification(
+                    doc.getUser().getId(),
+                    NotificationType.RATING_ON_MY_DOC,
+                    "Có đánh giá mới trên tài liệu \"" + doc.getTitle() + "\" của bạn.",
+                    doc.getId());
+        } catch (Exception exception) {
+            log.warn("Không thể gửi thông báo đánh giá mới cho chủ tài liệu {}; đánh giá vẫn được lưu.",
+                    doc.getId(), exception);
         }
     }
 }

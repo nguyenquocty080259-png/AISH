@@ -22,6 +22,7 @@ import com.aish.mvc.entity.enums.IngestStatus;
 import com.aish.mvc.entity.enums.ModerationStatus;
 import com.aish.mvc.entity.enums.UserStatus;
 import com.aish.mvc.entity.enums.CommentStatus;
+import com.aish.mvc.entity.enums.NotificationType;
 import com.aish.mvc.exception.ResourceNotFoundException;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.repository.auth.AuthRoleRepository;
@@ -95,6 +96,7 @@ public class AdminServiceImpl implements AdminService {
         docDocumentRepository.save(doc);
 
         moderationAppealRepository.save(appeal);
+        notifyAppealDecision(appeal, NotificationType.APPEAL_APPROVED);
         return toAdminDTO(appeal);
     }
 
@@ -106,6 +108,7 @@ public class AdminServiceImpl implements AdminService {
         appeal.setStatus(AppealStatus.APPEAL_REJECTED);
         appeal.setAdminNote(adminNote);
         moderationAppealRepository.save(appeal);
+        notifyAppealDecision(appeal, NotificationType.APPEAL_REJECTED);
         return toAdminDTO(appeal);
     }
 
@@ -139,6 +142,8 @@ public class AdminServiceImpl implements AdminService {
         document.setAdminReviewedAt(LocalDateTime.now());
         document.setAdminReviewedBy(getCurrentAdminId());
         docDocumentRepository.save(document);
+        notifyDocumentReviewDecision(document, NotificationType.DOC_APPROVED,
+                "Tài liệu \"" + document.getTitle() + "\" của bạn đã được duyệt và công khai.");
     }
 
     @Override
@@ -150,6 +155,8 @@ public class AdminServiceImpl implements AdminService {
         document.setAdminReviewedAt(LocalDateTime.now());
         document.setAdminReviewedBy(getCurrentAdminId());
         docDocumentRepository.save(document);
+        notifyDocumentReviewDecision(document, NotificationType.DOC_REJECTED,
+                "Tài liệu \"" + document.getTitle() + "\" của bạn chưa được duyệt công khai.");
     }
 
     @Override
@@ -369,7 +376,44 @@ public class AdminServiceImpl implements AdminService {
             log.warn("Không thể gửi thông báo kết quả duyệt bình luận {}; quyết định vẫn được lưu.",
                     saved.getId(), exception);
         }
+
+        if (approved && !saved.getUser().getId().equals(saved.getDocument().getUser().getId())) {
+            try {
+                notificationService.createDocumentNotification(
+                        saved.getDocument().getUser().getId(),
+                        NotificationType.COMMENT_ON_MY_DOC,
+                        "Có bình luận mới trên tài liệu \"" + saved.getDocument().getTitle() + "\" của bạn.",
+                        saved.getDocument().getId());
+            } catch (Exception exception) {
+                log.warn("Không thể gửi thông báo bình luận mới cho chủ tài liệu {}; quyết định vẫn được lưu.",
+                        saved.getDocument().getId(), exception);
+            }
+        }
         return toAdminCommentDTO(saved);
+    }
+
+    private void notifyDocumentReviewDecision(DocDocument document, NotificationType type, String message) {
+        try {
+            notificationService.createDocumentNotification(
+                    document.getUser().getId(), type, message, document.getId());
+        } catch (Exception exception) {
+            log.warn("Không thể gửi thông báo kết quả duyệt tài liệu {} cho chủ sở hữu; quyết định vẫn được lưu.",
+                    document.getId(), exception);
+        }
+    }
+
+    private void notifyAppealDecision(ModerationAppeal appeal, NotificationType type) {
+        try {
+            String title = appeal.getDocument().getTitle();
+            String message = type == NotificationType.APPEAL_APPROVED
+                    ? "Kháng cáo cho tài liệu \"" + title + "\" đã được chấp nhận."
+                    : "Kháng cáo cho tài liệu \"" + title + "\" đã bị từ chối.";
+            notificationService.createDocumentNotification(
+                    appeal.getUser().getId(), type, message, appeal.getDocument().getId());
+        } catch (Exception exception) {
+            log.warn("Không thể gửi thông báo kết quả kháng cáo {} cho người kháng cáo; quyết định vẫn được lưu.",
+                    appeal.getId(), exception);
+        }
     }
 
     private Long getCurrentAdminId() {

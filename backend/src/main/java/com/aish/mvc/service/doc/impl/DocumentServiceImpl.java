@@ -576,6 +576,7 @@ public class DocumentServiceImpl implements DocumentService {
             doc.setModerationReason("Nội dung tài liệu kích hoạt quy tắc từ khóa không phù hợp.");
             DocDocument rejected = docDocumentRepository.save(doc);
             notifyAdminsDocumentScreened(rejected, "REJECTED_BY_CONTENT_KEYWORD");
+            notifyOwnerDocRejected(rejected);
             return documentMapper.toResponseDTO(rejected);
         }
 
@@ -613,6 +614,12 @@ public class DocumentServiceImpl implements DocumentService {
         DocDocument screenedDocument = docDocumentRepository.findById(savedDocument.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("error.document.notFound"));
         notifyAdminsDocumentScreened(screenedDocument, result.getDecision().name());
+        if (result.getDecision() == ModerationDecision.PASS) {
+            notifyOwnerDocApproved(screenedDocument);
+        }
+        else {
+            notifyOwnerDocRejected(screenedDocument);
+        }
 
         return documentMapper.toResponseDTO(screenedDocument);
     }
@@ -630,6 +637,24 @@ public class DocumentServiceImpl implements DocumentService {
         } catch (Exception exception) {
             log.error("Không thể gửi thông báo kiểm duyệt tài liệu id={} cho Admin; publish vẫn tiếp tục.",
                     document.getId(), exception);
+        }
+    }
+
+    private void notifyOwnerDocApproved(DocDocument document) {
+        try {
+            notificationService.createDocumentNotification(document.getUser().getId(), NotificationType.DOC_APPROVED,
+                    "Tài liệu \"" + document.getTitle() + "\" của bạn đã được duyệt và công khai.", document.getId());
+        } catch (Exception exception) {
+            log.error("Không thể gửi thông báo duyệt tài liệu id={} cho chủ sở hữu.", document.getId(), exception);
+        }
+    }
+
+    private void notifyOwnerDocRejected(DocDocument document) {
+        try {
+            notificationService.createDocumentNotification(document.getUser().getId(), NotificationType.DOC_REJECTED,
+                    "Tài liệu \"" + document.getTitle() + "\" của bạn chưa được duyệt công khai.", document.getId());
+        } catch (Exception exception) {
+            log.error("Không thể gửi thông báo từ chối tài liệu id={} cho chủ sở hữu.", document.getId(), exception);
         }
     }
 
