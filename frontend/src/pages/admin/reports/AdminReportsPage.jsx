@@ -30,8 +30,8 @@ export default function AdminReportsPage() {
   return <div>
     <PageHeader title={t("admin.reports.title")} subtitle={t("admin.reports.subtitle")}
       actions={<select value={page.statusFilter} onChange={(e) => page.setStatusFilter(e.target.value)}>
-        <option value="">{t("admin.reports.filterAll")}</option><option value="PENDING">PENDING</option>
-        <option value="RESOLVED">RESOLVED</option><option value="DISMISSED">DISMISSED</option>
+        <option value="">{t("admin.reports.filterAll")}</option><option value="PENDING">{t("admin.reports.statusPending")}</option>
+        <option value="RESOLVED">{t("admin.reports.statusResolved")}</option><option value="DISMISSED">{t("admin.reports.statusDismissed")}</option>
       </select>} />
     {page.loading ? <p>{t("admin.reports.loading")}</p> : page.reports.length === 0 ?
       <EmptyState icon="📭" message={t("admin.reports.empty")} /> : <Table>
