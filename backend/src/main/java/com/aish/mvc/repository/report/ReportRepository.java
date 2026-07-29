@@ -13,4 +13,8 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
     List<Report> findByReporterUserIdOrderByCreatedAtDesc(Long reporterUserId);
 
     long countByReporterUserId(Long reporterUserId);
+
+    long countByReporterUserIdAndStatus(Long reporterUserId, ReportStatus status);
+
+    long countByStatus(ReportStatus status);
 }

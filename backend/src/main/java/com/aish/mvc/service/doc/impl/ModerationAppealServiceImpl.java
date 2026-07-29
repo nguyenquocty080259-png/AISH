@@ -17,6 +17,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class ModerationAppealServiceImpl implements ModerationAppealService {
@@ -67,6 +69,15 @@ public class ModerationAppealServiceImpl implements ModerationAppealService {
         moderationAppealRepository.save(appeal);
 
         return toDTO(appeal);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ModerationAppealResponseDTO> listMyAppeals() {
+        Long userId = getCurrentUser().getId();
+        return moderationAppealRepository.findByUser_IdOrderByCreatedAtDesc(userId).stream()
+                .map(this::toDTO)
+                .toList();
     }
 
     private ModerationAppealResponseDTO toDTO(ModerationAppeal appeal) {

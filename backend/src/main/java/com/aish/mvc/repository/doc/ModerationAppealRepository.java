@@ -18,6 +18,11 @@ public interface ModerationAppealRepository extends JpaRepository<ModerationAppe
     // Lịch sử kháng cáo của 1 tài liệu (mới nhất trước).
     List<ModerationAppeal> findByDocument_IdOrderByCreatedAtDesc(Long documentId);
 
+    // Kháng cáo của 1 user (mới nhất trước) — dùng cho GET /api/appeals/mine.
+    List<ModerationAppeal> findByUser_IdOrderByCreatedAtDesc(Long userId);
+
+    long countByUser_IdAndStatus(Long userId, AppealStatus status);
+
     // Guard chống appeal trùng: 1 tài liệu chỉ được có tối đa 1 appeal đang PENDING tại 1 thời điểm.
     boolean existsByDocument_IdAndStatus(Long documentId, AppealStatus status);
 
