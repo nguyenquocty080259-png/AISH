@@ -247,11 +247,28 @@ public class AiChatService {
         }
         ChatResponse chatResponse = promptSpec.call().chatResponse();
         String answer = chatResponse.getResult().getOutput().getText();
+        if (!isAdmin) {
+            answer = stripInternalIds(answer);
+        }
         aiUsageTracker.log("CHAT_GENERAL", chatResponse, null);
 
         List<RelatedDocDTO> relatedDocs = suggestPublicDocsForTopic(userMessage, currentUserId);
 
         return new AiChatResponse(answer, "GENERAL", List.of(), relatedDocs);
+    }
+
+    // Lưới an toàn cuối cùng cho luồng non-admin: dọn các pattern ID nội bộ rõ ràng
+    // (nhãn ID + số, hoặc #số) phòng khi model vẫn lộ ID dù đã có rào ở system prompt.
+    // KHÔNG áp cho admin (admin được nhắc ID để tra trên trang quản trị).
+    private static final java.util.regex.Pattern INTERNAL_ID_LABELED_PATTERN = java.util.regex.Pattern.compile(
+            "(?i)\\bID(\\s*người\\s*dùng|\\s*tài\\s*liệu|\\s*report)?\\s*[:#]?\\s*\\d+");
+    private static final java.util.regex.Pattern INTERNAL_ID_HASH_PATTERN = java.util.regex.Pattern.compile("#\\d+");
+
+    private static String stripInternalIds(String text) {
+        if (text == null || text.isBlank()) return text;
+        String result = INTERNAL_ID_LABELED_PATTERN.matcher(text).replaceAll("");
+        result = INTERNAL_ID_HASH_PATTERN.matcher(result).replaceAll("");
+        return result.replaceAll("[ \\t]{2,}", " ").strip();
     }
 
     private AiChatResponse buildUnavailableDocumentGeneralResponse(
