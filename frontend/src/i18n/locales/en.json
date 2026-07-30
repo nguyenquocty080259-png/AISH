@@ -45,7 +45,8 @@
       "markAllRead": "Mark all as read",
       "marking": "Processing...",
       "loading": "Loading...",
-      "empty": "No notifications yet."
+      "empty": "No notifications yet.",
+      "viewAll": "View all"
     },
     "report": {
       "menuAria": "Open report menu",
@@ -872,6 +873,7 @@
     "emptyReports": "You haven't submitted any reports yet.",
     "emptyAppeals": "You haven't submitted any appeals yet.",
     "loadError": "Could not load the data.",
+    "loadMore": "Load more",
     "open": "Discuss",
     "colReason": "Reason",
     "colStatus": "Status",

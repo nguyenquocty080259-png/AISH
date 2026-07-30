@@ -3,8 +3,8 @@ package com.aish.mvc.service.notification;
 import com.aish.mvc.dto.notification.NotificationResponseDTO;
 import com.aish.mvc.entity.enums.CaseType;
 import com.aish.mvc.entity.enums.NotificationType;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface NotificationService {
 
@@ -20,7 +20,7 @@ public interface NotificationService {
     void createCaseNotification(
             Long recipientUserId, NotificationType type, String message, CaseType caseType, Long caseId);
 
-    List<NotificationResponseDTO> getMyNotifications();
+    Page<NotificationResponseDTO> getMyNotifications(Pageable pageable);
 
     long getUnreadCount();
 

@@ -1,7 +1,7 @@
 import apiClient from "../lib/apiClient";
 
-export function getMyNotifications() {
-  return apiClient.get("/notifications/mine").then((res) => res.data);
+export function getMyNotifications(page = 0, size = 15) {
+  return apiClient.get("/notifications/mine", { params: { page, size } }).then((res) => res.data);
 }
 
 export function getUnreadCount() {

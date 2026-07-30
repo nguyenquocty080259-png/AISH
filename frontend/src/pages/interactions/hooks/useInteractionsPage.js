@@ -20,6 +20,9 @@ export function useInteractionsPage() {
 
   const [notifications, setNotifications] = useState([]);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [notificationsLoadingMore, setNotificationsLoadingMore] = useState(false);
+  const [notificationsPage, setNotificationsPage] = useState(0);
+  const [notificationsHasMore, setNotificationsHasMore] = useState(false);
   const [markingAll, setMarkingAll] = useState(false);
 
   const [reports, setReports] = useState([]);
@@ -35,10 +38,27 @@ export function useInteractionsPage() {
 
   const loadNotifications = () => {
     setNotificationsLoading(true);
-    return notificationApi.getMyNotifications()
-      .then(setNotifications)
+    return notificationApi.getMyNotifications(0, 15)
+      .then((data) => {
+        setNotifications(data.content ?? []);
+        setNotificationsPage(0);
+        setNotificationsHasMore(!data.last);
+      })
       .catch((error) => showError(error.message))
       .finally(() => setNotificationsLoading(false));
+  };
+
+  const loadMoreNotifications = () => {
+    const nextPage = notificationsPage + 1;
+    setNotificationsLoadingMore(true);
+    return notificationApi.getMyNotifications(nextPage, 15)
+      .then((data) => {
+        setNotifications((current) => [...current, ...(data.content ?? [])]);
+        setNotificationsPage(nextPage);
+        setNotificationsHasMore(!data.last);
+      })
+      .catch((error) => showError(error.message))
+      .finally(() => setNotificationsLoadingMore(false));
   };
 
   const loadReports = () => {
@@ -101,6 +121,9 @@ export function useInteractionsPage() {
     summary,
     notifications,
     notificationsLoading,
+    notificationsLoadingMore,
+    notificationsHasMore,
+    loadMoreNotifications,
     markNotificationRead,
     markAllAsRead,
     markingAll,

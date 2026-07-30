@@ -45,7 +45,8 @@
       "markAllRead": "Đánh dấu tất cả đã đọc",
       "marking": "Đang xử lý...",
       "loading": "Đang tải...",
-      "empty": "Chưa có thông báo."
+      "empty": "Chưa có thông báo.",
+      "viewAll": "Xem tất cả"
     },
     "report": {
       "menuAria": "Mở menu báo cáo",
@@ -872,6 +873,7 @@
     "emptyReports": "Bạn chưa gửi báo cáo nào.",
     "emptyAppeals": "Bạn chưa gửi kháng cáo nào.",
     "loadError": "Không tải được dữ liệu.",
+    "loadMore": "Tải thêm",
     "open": "Trao đổi",
     "colReason": "Lý do",
     "colStatus": "Trạng thái",

@@ -41,6 +41,9 @@ export default function InteractionsPage() {
     summary,
     notifications,
     notificationsLoading,
+    notificationsLoadingMore,
+    notificationsHasMore,
+    loadMoreNotifications,
     markNotificationRead,
     markAllAsRead,
     markingAll,
@@ -126,6 +129,13 @@ export default function InteractionsPage() {
                   <time className="interactions-page__notification-time">{formatDate(notification.createdAt)}</time>
                 </button>
               ))}
+              {notificationsHasMore && (
+                <div className="interactions-page__load-more">
+                  <Button variant="secondary" onClick={loadMoreNotifications} disabled={notificationsLoadingMore}>
+                    {notificationsLoadingMore ? t("interactions.marking") : t("interactions.loadMore")}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </>

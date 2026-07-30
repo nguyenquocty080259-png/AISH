@@ -15,6 +15,8 @@ import com.aish.mvc.service.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -131,11 +133,10 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<NotificationResponseDTO> getMyNotifications() {
+    public Page<NotificationResponseDTO> getMyNotifications(Pageable pageable) {
         Long userId = getCurrentUser().getId();
-        return notificationRepository.findByRecipientUserIdOrderByCreatedAtDesc(userId).stream()
-                .map(this::toResponseDTO)
-                .toList();
+        return notificationRepository.findByRecipientUserIdOrderByCreatedAtDesc(userId, pageable)
+                .map(this::toResponseDTO);
     }
 
     @Override

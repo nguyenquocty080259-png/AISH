@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import * as notificationApi from "../../api/notificationApi";
 import { useToast } from "../../hooks/useToast";
 import { useAuth } from "../../hooks/useAuth";
+import { ROUTES } from "../../constants/routes";
 import { resolveRoute } from "../../utils/notificationRoute";
 import "./notification-bell.css";
 
@@ -54,12 +55,18 @@ export default function NotificationBell() {
     if (!nextOpen) return;
     setLoading(true);
     try {
-      setNotifications(await notificationApi.getMyNotifications());
+      const data = await notificationApi.getMyNotifications(0, 15);
+      setNotifications(data.content ?? []);
     } catch (error) {
       showError(error.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleViewAll = () => {
+    setOpen(false);
+    navigate(`${ROUTES.INTERACTIONS}?tab=notifications`);
   };
 
   const handleMarkAsRead = async (notification) => {
@@ -115,6 +122,9 @@ export default function NotificationBell() {
                 <span>{notification.message}</span>
                 <time>{formatDate(notification.createdAt)}</time>
               </button>)}
+        </div>
+        <div className="notification-bell__footer">
+          <button type="button" onClick={handleViewAll}>{t("common.notifications.viewAll")}</button>
         </div>
       </div>}
     </div>
