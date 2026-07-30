@@ -68,6 +68,14 @@ public class SystemSettingService {
     public static final String AI_CHUNK_SIZE_KEY = "AI_CHUNK_SIZE";
     public static final int AI_CHUNK_SIZE_DEFAULT = 800; // mặc định của TokenTextSplitter
 
+    // AiChatService: trần số lượt hỏi AI/ngày cho 1 user đã đăng nhập. <= 0 = tắt giới hạn.
+    public static final String AI_CHAT_DAILY_CALL_CAP_KEY = "AI_CHAT_DAILY_CALL_CAP";
+    public static final int AI_CHAT_DAILY_CALL_CAP_DEFAULT = 50;
+
+    // AiChatService: trần tổng token chat/ngày cho 1 user đã đăng nhập. <= 0 = tắt giới hạn.
+    public static final String AI_CHAT_DAILY_TOKEN_CAP_KEY = "AI_CHAT_DAILY_TOKEN_CAP";
+    public static final long AI_CHAT_DAILY_TOKEN_CAP_DEFAULT = 100000L;
+
     private final SystemSettingRepository systemSettingRepository;
 
     // Fail-safe: bất kỳ lỗi nào (không tìm thấy key, giá trị không parse được số, lỗi DB...)

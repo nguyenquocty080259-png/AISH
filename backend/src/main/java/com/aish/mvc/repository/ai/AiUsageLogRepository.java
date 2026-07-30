@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 
 public interface AiUsageLogRepository extends JpaRepository<AiUsageLog, Long> {
@@ -26,4 +27,16 @@ public interface AiUsageLogRepository extends JpaRepository<AiUsageLog, Long> {
             nativeQuery = true)
     List<Object[]> aggregateByBucket(@Param("granularity") String granularity,
             @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    // AiChatService: đếm/tổng usage chat (CHAT_RAG/CHAT_GENERAL) của 1 user từ 1 mốc thời gian -
+    // dùng để enforce quota lượt/token chat mỗi ngày (AIU-4).
+    @Query("SELECT COUNT(l) FROM AiUsageLog l " +
+            "WHERE l.userId = :uid AND l.callType IN :types AND l.createdAt >= :from")
+    long countChatCallsForUserSince(@Param("uid") Long uid, @Param("types") Collection<String> types,
+            @Param("from") LocalDateTime from);
+
+    @Query("SELECT COALESCE(SUM(l.totalTokens), 0) FROM AiUsageLog l " +
+            "WHERE l.userId = :uid AND l.callType IN :types AND l.createdAt >= :from")
+    long sumChatTokensForUserSince(@Param("uid") Long uid, @Param("types") Collection<String> types,
+            @Param("from") LocalDateTime from);
 }

@@ -49,6 +49,10 @@ public class SystemSettingSeedRunner implements CommandLineRunner {
                 String.valueOf(SystemSettingService.RECO_RATING_WEIGHT_DEFAULT));
         seedIfMissing(SystemSettingService.AI_CHUNK_SIZE_KEY,
                 String.valueOf(SystemSettingService.AI_CHUNK_SIZE_DEFAULT));
+        seedIfMissing(SystemSettingService.AI_CHAT_DAILY_CALL_CAP_KEY,
+                String.valueOf(SystemSettingService.AI_CHAT_DAILY_CALL_CAP_DEFAULT));
+        seedIfMissing(SystemSettingService.AI_CHAT_DAILY_TOKEN_CAP_KEY,
+                String.valueOf(SystemSettingService.AI_CHAT_DAILY_TOKEN_CAP_DEFAULT));
     }
 
     // Mỗi key seed độc lập - key đã tồn tại (kể cả admin đã sửa giá trị) thì bỏ qua riêng
