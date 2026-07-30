@@ -865,6 +865,8 @@
     "tabAppeals": "My appeals",
     "markAllRead": "Mark all as read",
     "marking": "Processing...",
+    "delete": "Delete",
+    "clearAll": "Clear all",
     "loadingNotifications": "Loading notifications...",
     "loadingReports": "Loading reports...",
     "loadingAppeals": "Loading appeals...",

@@ -24,6 +24,7 @@ export function useInteractionsPage() {
   const [notificationsPage, setNotificationsPage] = useState(0);
   const [notificationsHasMore, setNotificationsHasMore] = useState(false);
   const [markingAll, setMarkingAll] = useState(false);
+  const [clearingAll, setClearingAll] = useState(false);
 
   const [reports, setReports] = useState([]);
   const [reportsLoading, setReportsLoading] = useState(false);
@@ -115,6 +116,34 @@ export function useInteractionsPage() {
     }
   };
 
+  const deleteNotification = async (notification) => {
+    try {
+      await notificationApi.deleteNotification(notification.id);
+      setNotifications((current) => current.filter((item) => item.id !== notification.id));
+      if (!notification.isRead) {
+        setSummary((current) =>
+          current ? { ...current, unreadNotifications: Math.max(0, current.unreadNotifications - 1) } : current
+        );
+      }
+    } catch (error) {
+      showError(error.message);
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    setClearingAll(true);
+    try {
+      await notificationApi.clearAllNotifications();
+      setNotifications([]);
+      setNotificationsHasMore(false);
+      setSummary((current) => (current ? { ...current, unreadNotifications: 0 } : current));
+    } catch (error) {
+      showError(error.message);
+    } finally {
+      setClearingAll(false);
+    }
+  };
+
   return {
     activeTab,
     setActiveTab,
@@ -127,6 +156,9 @@ export function useInteractionsPage() {
     markNotificationRead,
     markAllAsRead,
     markingAll,
+    deleteNotification,
+    clearAllNotifications,
+    clearingAll,
     reports,
     reportsLoading,
     appeals,

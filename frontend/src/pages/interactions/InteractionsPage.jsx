@@ -47,6 +47,9 @@ export default function InteractionsPage() {
     markNotificationRead,
     markAllAsRead,
     markingAll,
+    deleteNotification,
+    clearAllNotifications,
+    clearingAll,
     reports,
     reportsLoading,
     appeals,
@@ -63,6 +66,11 @@ export default function InteractionsPage() {
     } catch (error) {
       showError(error.message);
     }
+  };
+
+  const handleDeleteNotification = (event, notification) => {
+    event.stopPropagation();
+    deleteNotification(notification);
   };
 
   const badgeCount = (count) => (count > 0 ? <Badge intent="warning">{count > 99 ? "99+" : count}</Badge> : null);
@@ -111,6 +119,13 @@ export default function InteractionsPage() {
             >
               {markingAll ? t("interactions.marking") : t("interactions.markAllRead")}
             </Button>
+            <Button
+              variant="ghost"
+              onClick={clearAllNotifications}
+              disabled={clearingAll || notifications.length === 0}
+            >
+              {clearingAll ? t("interactions.marking") : t("interactions.clearAll")}
+            </Button>
           </div>
           {notificationsLoading ? (
             <p className="interactions-page__loading">{t("interactions.loadingNotifications")}</p>
@@ -119,15 +134,27 @@ export default function InteractionsPage() {
           ) : (
             <div className="interactions-page__notification-list">
               {notifications.map((notification) => (
-                <button
-                  type="button"
+                <div
                   key={notification.id}
                   className={`interactions-page__notification-item${notification.isRead ? "" : " interactions-page__notification-item--unread"}`}
-                  onClick={() => handleNotificationClick(notification)}
                 >
-                  <span>{notification.message}</span>
-                  <time className="interactions-page__notification-time">{formatDate(notification.createdAt)}</time>
-                </button>
+                  <button
+                    type="button"
+                    className="interactions-page__notification-content"
+                    onClick={() => handleNotificationClick(notification)}
+                  >
+                    <span>{notification.message}</span>
+                    <time className="interactions-page__notification-time">{formatDate(notification.createdAt)}</time>
+                  </button>
+                  <button
+                    type="button"
+                    className="interactions-page__notification-delete"
+                    aria-label={t("interactions.delete")}
+                    onClick={(event) => handleDeleteNotification(event, notification)}
+                  >
+                    ✕
+                  </button>
+                </div>
               ))}
               {notificationsHasMore && (
                 <div className="interactions-page__load-more">

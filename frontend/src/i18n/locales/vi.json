@@ -865,6 +865,8 @@
     "tabAppeals": "Kháng cáo của tôi",
     "markAllRead": "Đánh dấu tất cả đã đọc",
     "marking": "Đang xử lý...",
+    "delete": "Xóa",
+    "clearAll": "Xóa tất cả",
     "loadingNotifications": "Đang tải thông báo...",
     "loadingReports": "Đang tải báo cáo...",
     "loadingAppeals": "Đang tải kháng cáo...",
