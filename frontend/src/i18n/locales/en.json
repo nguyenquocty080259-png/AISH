@@ -1155,7 +1155,15 @@
     "saving": "Saving...",
     "save": "Save changes",
     "avatarUpdated": "Avatar updated.",
-    "profileUpdated": "Profile updated."
+    "profileUpdated": "Profile updated.",
+    "notifPrefTitle": "Notification settings",
+    "notifPrefSaved": "Notification settings saved.",
+    "notifPref": {
+      "COMMENT_ON_MY_DOC": "Comments on my documents",
+      "RATING_ON_MY_DOC": "Ratings on my documents",
+      "DOCUMENT_SHARED": "Documents shared with me",
+      "CASE_REPLY": "New replies on my reports/appeals"
+    }
   },
   "onboarding": {
     "loading": "Loading profile...",

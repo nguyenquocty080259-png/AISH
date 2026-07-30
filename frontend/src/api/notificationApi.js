@@ -23,3 +23,11 @@ export function deleteNotification(id) {
 export function clearAllNotifications() {
   return apiClient.delete("/notifications/clear-all");
 }
+
+export function getNotificationPreferences() {
+  return apiClient.get("/notifications/preferences").then((res) => res.data);
+}
+
+export function updateNotificationPreferences(prefs) {
+  return apiClient.put("/notifications/preferences", prefs);
+}

@@ -1,6 +1,7 @@
 import { useProfilePage } from "./hooks/useProfilePage";
 import { API_ORIGIN } from "../../constants/apiConfig";
 import StorageUsageBar from "../../components/ui/StorageUsageBar";
+import NotificationSettings from "./components/NotificationSettings";
 import "./profile.css";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -150,6 +151,7 @@ export default function ProfilePage() {
             <h3 className="profile-storage__title">{t("profile.storageTitle")}</h3>
             <StorageUsageBar usage={storageUsage} />
           </div>
+          <NotificationSettings />
         </div>
       ) : (
         <form className="profile-form" onSubmit={handleSave}>

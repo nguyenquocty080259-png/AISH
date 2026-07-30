@@ -1155,7 +1155,15 @@
     "saving": "Đang lưu...",
     "save": "Lưu thay đổi",
     "avatarUpdated": "Đã cập nhật ảnh đại diện.",
-    "profileUpdated": "Đã cập nhật hồ sơ."
+    "profileUpdated": "Đã cập nhật hồ sơ.",
+    "notifPrefTitle": "Cài đặt thông báo",
+    "notifPrefSaved": "Đã lưu cài đặt thông báo.",
+    "notifPref": {
+      "COMMENT_ON_MY_DOC": "Bình luận trên tài liệu của tôi",
+      "RATING_ON_MY_DOC": "Đánh giá trên tài liệu của tôi",
+      "DOCUMENT_SHARED": "Tài liệu được chia sẻ với tôi",
+      "CASE_REPLY": "Phản hồi mới trên report/kháng cáo của tôi"
+    }
   },
   "onboarding": {
     "loading": "Đang tải hồ sơ...",
