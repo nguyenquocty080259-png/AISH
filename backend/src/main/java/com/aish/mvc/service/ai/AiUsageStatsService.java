@@ -1,13 +1,17 @@
 package com.aish.mvc.service.ai;
 
+import com.aish.mvc.dto.ai.AiUsageReportDTO;
 import com.aish.mvc.dto.ai.AiUsageStatsDTO;
+import com.aish.mvc.entity.enums.UsageGranularity;
 import com.aish.mvc.repository.ai.AiUsageLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -22,6 +26,42 @@ public class AiUsageStatsService {
         return new AiUsageStatsDTO(
                 period(today.atStartOfDay(), now),
                 period(today.minusDays(6).atStartOfDay(), now));
+    }
+
+    // Mặc định: granularity=MONTH, khoảng thời gian = cả năm hiện tại (1/1 năm nay đến 1/1 năm sau).
+    @Transactional(readOnly = true)
+    public AiUsageReportDTO getReport(UsageGranularity granularity, LocalDate from, LocalDate to) {
+        UsageGranularity effectiveGranularity = granularity != null ? granularity : UsageGranularity.MONTH;
+        LocalDate currentYearStart = LocalDate.now().withDayOfYear(1);
+        LocalDate effectiveFrom = from != null ? from : currentYearStart;
+        LocalDate effectiveTo = to != null ? to : currentYearStart.plusYears(1);
+
+        List<Object[]> rows = usageLogRepository.aggregateByBucket(
+                effectiveGranularity.toPgUnit(), effectiveFrom.atStartOfDay(), effectiveTo.atStartOfDay());
+
+        long totalTokens = 0;
+        long totalCalls = 0;
+        List<AiUsageReportDTO.Bucket> buckets = new ArrayList<>();
+        for (Object[] row : rows) {
+            long calls = number(row[1]).longValue();
+            long tokens = number(row[2]).longValue();
+            totalCalls += calls;
+            totalTokens += tokens;
+            buckets.add(new AiUsageReportDTO.Bucket(bucketLabel(row[0]), tokens, calls));
+        }
+
+        return new AiUsageReportDTO(effectiveGranularity.name(), effectiveFrom, effectiveTo,
+                totalTokens, totalCalls, buckets);
+    }
+
+    private static String bucketLabel(Object value) {
+        if (value instanceof Timestamp timestamp) {
+            return timestamp.toLocalDateTime().toString();
+        }
+        if (value instanceof LocalDateTime localDateTime) {
+            return localDateTime.toString();
+        }
+        return String.valueOf(value);
     }
 
     private AiUsageStatsDTO.PeriodStats period(LocalDateTime from, LocalDateTime to) {
