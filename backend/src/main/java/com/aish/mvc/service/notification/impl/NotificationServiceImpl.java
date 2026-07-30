@@ -170,6 +170,25 @@ public class NotificationServiceImpl implements NotificationService {
         notificationRepository.saveAll(unreadNotifications);
     }
 
+    @Override
+    @Transactional
+    public void deleteNotification(Long notificationId) {
+        AuthUser currentUser = getCurrentUser();
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Thông báo không tồn tại."));
+        if (!notification.getRecipientUserId().equals(currentUser.getId())) {
+            throw new ForbiddenException("error.notification.deleteOthersForbidden");
+        }
+        notificationRepository.delete(notification);
+    }
+
+    @Override
+    @Transactional
+    public void clearAllMine() {
+        Long userId = getCurrentUser().getId();
+        notificationRepository.deleteByRecipientUserId(userId);
+    }
+
     private NotificationResponseDTO toResponseDTO(Notification notification) {
         return NotificationResponseDTO.builder()
                 .id(notification.getId())

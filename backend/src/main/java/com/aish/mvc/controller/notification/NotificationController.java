@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -41,6 +42,18 @@ public class NotificationController {
     @PutMapping("/read-all")
     public ResponseEntity<Void> markAllAsRead() {
         notificationService.markAllAsRead();
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/clear-all")
+    public ResponseEntity<Void> clearAllMine() {
+        notificationService.clearAllMine();
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteNotification(@PathVariable Long id) {
+        notificationService.deleteNotification(id);
         return ResponseEntity.noContent().build();
     }
 }
