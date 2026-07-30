@@ -9,6 +9,7 @@ import com.aish.mvc.entity.enums.IngestStatus;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.repository.doc.DocDocumentRepository;
 import com.aish.mvc.repository.doc.DocEmbeddingRepository;
+import com.aish.mvc.service.config.SystemSettingService;
 import com.aish.mvc.service.doc.DocEmbeddingService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.errors.ApiException;
@@ -86,6 +87,7 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
     private final EmbeddingModel embeddingModel;
     private final HydratableSimpleVectorStore vectorStore;
     private final PlatformTransactionManager transactionManager;
+    private final SystemSettingService systemSettingService;
 
     // Instance riêng, không lấy bean của Spring — Boot 4 autoconfigure ở đây là
     // tools.jackson.databind.json.JsonMapper (Jackson 3), không phải ObjectMapper cổ điển.
@@ -191,7 +193,9 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
                     "Không trích xuất được nội dung hữu ích từ file (rỗng hoặc không phải văn bản thật).");
         }
 
-        List<Document> chunks = new TokenTextSplitter().apply(rawDocs);
+        int chunkSize = systemSettingService.getInt(
+                SystemSettingService.AI_CHUNK_SIZE_KEY, SystemSettingService.AI_CHUNK_SIZE_DEFAULT);
+        List<Document> chunks = TokenTextSplitter.builder().withChunkSize(chunkSize).build().apply(rawDocs);
 
         if (chunks.isEmpty()) {
             doc.setIngestStatus(IngestStatus.UNSUPPORTED_FORMAT);
