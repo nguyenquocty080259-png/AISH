@@ -33,6 +33,22 @@ public class SystemSettingSeedRunner implements CommandLineRunner {
                 String.valueOf(SystemSettingService.QUOTA_CLOUD_BYTES_DEFAULT));
         seedIfMissing(SystemSettingService.UPLOAD_ALLOWED_EXTENSIONS_KEY,
                 SystemSettingService.UPLOAD_ALLOWED_EXTENSIONS_DEFAULT);
+        seedIfMissing(SystemSettingService.AI_TOP_K_KEY,
+                String.valueOf(SystemSettingService.AI_TOP_K_DEFAULT));
+        seedIfMissing(SystemSettingService.AI_SIMILARITY_THRESHOLD_KEY,
+                String.valueOf(SystemSettingService.AI_SIMILARITY_THRESHOLD_DEFAULT));
+        seedIfMissing(SystemSettingService.AI_RECENT_MESSAGE_LIMIT_KEY,
+                String.valueOf(SystemSettingService.AI_RECENT_MESSAGE_LIMIT_DEFAULT));
+        seedIfMissing(SystemSettingService.RECO_SUBJECT_OVERLAP_WEIGHT_KEY,
+                String.valueOf(SystemSettingService.RECO_SUBJECT_OVERLAP_WEIGHT_DEFAULT));
+        seedIfMissing(SystemSettingService.RECO_FAVORITE_WEIGHT_KEY,
+                String.valueOf(SystemSettingService.RECO_FAVORITE_WEIGHT_DEFAULT));
+        seedIfMissing(SystemSettingService.RECO_DOWNLOAD_WEIGHT_KEY,
+                String.valueOf(SystemSettingService.RECO_DOWNLOAD_WEIGHT_DEFAULT));
+        seedIfMissing(SystemSettingService.RECO_RATING_WEIGHT_KEY,
+                String.valueOf(SystemSettingService.RECO_RATING_WEIGHT_DEFAULT));
+        seedIfMissing(SystemSettingService.AI_CHUNK_SIZE_KEY,
+                String.valueOf(SystemSettingService.AI_CHUNK_SIZE_DEFAULT));
     }
 
     // Mỗi key seed độc lập - key đã tồn tại (kể cả admin đã sửa giá trị) thì bỏ qua riêng

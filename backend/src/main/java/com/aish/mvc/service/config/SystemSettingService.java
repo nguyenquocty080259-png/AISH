@@ -39,6 +39,35 @@ public class SystemSettingService {
     public static final String UPLOAD_ALLOWED_EXTENSIONS_DEFAULT =
             "pdf,doc,docx,ppt,pptx,xls,xlsx,txt,csv,png,jpg,jpeg,gif,webp";
 
+    // AiChatService: số chunk lấy về (topK) khi truy vấn RAG.
+    public static final String AI_TOP_K_KEY = "AI_TOP_K";
+    public static final int AI_TOP_K_DEFAULT = 4;
+
+    // AiChatService: ngưỡng similarity tối thiểu để chunk được coi là liên quan.
+    public static final String AI_SIMILARITY_THRESHOLD_KEY = "AI_SIMILARITY_THRESHOLD";
+    public static final double AI_SIMILARITY_THRESHOLD_DEFAULT = 0.55;
+
+    // AiChatService: số tin nhắn gần đây đưa vào ngữ cảnh chat.
+    public static final String AI_RECENT_MESSAGE_LIMIT_KEY = "AI_RECENT_MESSAGE_LIMIT";
+    public static final int AI_RECENT_MESSAGE_LIMIT_DEFAULT = 10;
+
+    // RecommendationServiceImpl: trọng số các tín hiệu chấm điểm gợi ý tài liệu.
+    public static final String RECO_SUBJECT_OVERLAP_WEIGHT_KEY = "RECO_SUBJECT_OVERLAP_WEIGHT";
+    public static final double RECO_SUBJECT_OVERLAP_WEIGHT_DEFAULT = 100.0;
+
+    public static final String RECO_FAVORITE_WEIGHT_KEY = "RECO_FAVORITE_WEIGHT";
+    public static final double RECO_FAVORITE_WEIGHT_DEFAULT = 3.0;
+
+    public static final String RECO_DOWNLOAD_WEIGHT_KEY = "RECO_DOWNLOAD_WEIGHT";
+    public static final double RECO_DOWNLOAD_WEIGHT_DEFAULT = 1.0;
+
+    public static final String RECO_RATING_WEIGHT_KEY = "RECO_RATING_WEIGHT";
+    public static final double RECO_RATING_WEIGHT_DEFAULT = 10.0;
+
+    // DocEmbeddingServiceImpl: kích thước chunk (tokens) khi cắt tài liệu để embed.
+    public static final String AI_CHUNK_SIZE_KEY = "AI_CHUNK_SIZE";
+    public static final int AI_CHUNK_SIZE_DEFAULT = 800; // mặc định của TokenTextSplitter
+
     private final SystemSettingRepository systemSettingRepository;
 
     // Fail-safe: bất kỳ lỗi nào (không tìm thấy key, giá trị không parse được số, lỗi DB...)
@@ -48,6 +77,21 @@ public class SystemSettingService {
             return systemSettingRepository.findBySettingKey(key)
                     .map(SystemSetting::getSettingValue)
                     .map(Integer::parseInt)
+                    .orElse(defaultValue);
+        } catch (Exception exception) {
+            log.warn("Không đọc được system setting {}; dùng giá trị mặc định {}: {}",
+                    key, defaultValue, exception.getMessage());
+            return defaultValue;
+        }
+    }
+
+    // Fail-safe giống hệt getInt()/getLong() - dùng cho các setting số thực (ngưỡng
+    // similarity, trọng số gợi ý...).
+    public double getDouble(String key, double defaultValue) {
+        try {
+            return systemSettingRepository.findBySettingKey(key)
+                    .map(SystemSetting::getSettingValue)
+                    .map(Double::parseDouble)
                     .orElse(defaultValue);
         } catch (Exception exception) {
             log.warn("Không đọc được system setting {}; dùng giá trị mặc định {}: {}",
