@@ -1,6 +1,8 @@
 package com.aish.mvc.controller.notification;
 
+import com.aish.mvc.dto.notification.NotificationPreferenceDTO;
 import com.aish.mvc.dto.notification.NotificationResponseDTO;
+import com.aish.mvc.service.notification.NotificationPreferenceService;
 import com.aish.mvc.service.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -11,9 +13,11 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -22,6 +26,7 @@ import java.util.Map;
 public class NotificationController {
 
     private final NotificationService notificationService;
+    private final NotificationPreferenceService notificationPreferenceService;
 
     @GetMapping("/mine")
     public ResponseEntity<Page<NotificationResponseDTO>> getMyNotifications(
@@ -54,6 +59,17 @@ public class NotificationController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteNotification(@PathVariable Long id) {
         notificationService.deleteNotification(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/preferences")
+    public ResponseEntity<List<NotificationPreferenceDTO>> getMyPreferences() {
+        return ResponseEntity.ok(notificationPreferenceService.getMyPreferences());
+    }
+
+    @PutMapping("/preferences")
+    public ResponseEntity<Void> updateMyPreferences(@RequestBody List<NotificationPreferenceDTO> prefs) {
+        notificationPreferenceService.updateMyPreferences(prefs);
         return ResponseEntity.noContent().build();
     }
 }
