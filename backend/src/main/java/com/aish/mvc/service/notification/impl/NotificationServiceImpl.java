@@ -11,6 +11,7 @@ import com.aish.mvc.exception.ResourceNotFoundException;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.repository.auth.AuthUserRepository;
 import com.aish.mvc.repository.notification.NotificationRepository;
+import com.aish.mvc.service.notification.NotificationPreferenceService;
 import com.aish.mvc.service.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -34,6 +35,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final NotificationRepository notificationRepository;
     private final AuthAccountRepository authAccountRepository;
     private final AuthUserRepository authUserRepository;
+    private final NotificationPreferenceService notificationPreferenceService;
 
     private AuthUser getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -48,6 +50,7 @@ public class NotificationServiceImpl implements NotificationService {
     public void createNotification(
             Long recipientUserId, NotificationType type, String message, Long relatedReportId) {
         try {
+            if (!notificationPreferenceService.isEnabled(recipientUserId, type)) return;
             Notification notification = Notification.builder()
                     .recipientUserId(recipientUserId)
                     .type(type)
@@ -67,6 +70,7 @@ public class NotificationServiceImpl implements NotificationService {
     public void createDocumentNotification(
             Long recipientUserId, NotificationType type, String message, Long relatedDocumentId) {
         try {
+            if (!notificationPreferenceService.isEnabled(recipientUserId, type)) return;
             Notification notification = Notification.builder()
                     .recipientUserId(recipientUserId)
                     .type(type)
@@ -116,6 +120,7 @@ public class NotificationServiceImpl implements NotificationService {
     public void createCaseNotification(
             Long recipientUserId, NotificationType type, String message, CaseType caseType, Long caseId) {
         try {
+            if (!notificationPreferenceService.isEnabled(recipientUserId, type)) return;
             Notification notification = Notification.builder()
                     .recipientUserId(recipientUserId)
                     .type(type)
