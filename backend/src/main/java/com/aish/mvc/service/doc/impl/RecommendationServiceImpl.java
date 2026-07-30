@@ -15,6 +15,7 @@ import com.aish.mvc.repository.doc.DownloadRepository;
 import com.aish.mvc.repository.doc.FavoriteRepository;
 import com.aish.mvc.repository.doc.RatingRepository;
 import com.aish.mvc.repository.doc.ViewHistoryRepository;
+import com.aish.mvc.service.config.SystemSettingService;
 import com.aish.mvc.service.doc.DocumentAccessPort;
 import com.aish.mvc.service.doc.RecommendationService;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +42,7 @@ public class RecommendationServiceImpl implements RecommendationService {
     // Trọng số: subject overlap áp đảo (100 điểm/subject chung) để luôn xếp trên trending
     // thuần; favorite/download/rating chỉ phá vỡ hòa hoặc làm tín hiệu fallback khi không
     // có subject nào trùng (đảm bảo danh sách không bao giờ trống nếu có ứng viên).
+    // Giá trị fallback nếu SystemSetting chưa có key/lỗi đọc — giữ nguyên giá trị hard-code cũ.
     private static final double SUBJECT_OVERLAP_WEIGHT = 100.0;
     private static final double FAVORITE_WEIGHT = 3.0;
     private static final double DOWNLOAD_WEIGHT = 1.0;
@@ -54,6 +56,18 @@ public class RecommendationServiceImpl implements RecommendationService {
     private final CollectionRepository collectionRepository;
     private final CollectionItemRepository collectionItemRepository;
     private final DocumentAccessPort documentAccessPort;
+    private final SystemSettingService systemSettingService;
+
+    // Gộp 4 trọng số đọc 1 lần/lượt (KHÔNG đọc lại per-candidate trong rank()/toScored()).
+    private record ScoringWeights(double subjectOverlap, double favorite, double download, double rating) {}
+
+    private ScoringWeights loadWeights() {
+        return new ScoringWeights(
+                systemSettingService.getDouble(SystemSettingService.RECO_SUBJECT_OVERLAP_WEIGHT_KEY, SUBJECT_OVERLAP_WEIGHT),
+                systemSettingService.getDouble(SystemSettingService.RECO_FAVORITE_WEIGHT_KEY, FAVORITE_WEIGHT),
+                systemSettingService.getDouble(SystemSettingService.RECO_DOWNLOAD_WEIGHT_KEY, DOWNLOAD_WEIGHT),
+                systemSettingService.getDouble(SystemSettingService.RECO_RATING_WEIGHT_KEY, RATING_WEIGHT));
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -64,13 +78,13 @@ public class RecommendationServiceImpl implements RecommendationService {
         Set<Long> excludeIds = new HashSet<>();
         excludeIds.add(documentId);
 
-        return rank(subjectIdsOf(seed), excludeIds, currentUserId, limit, false);
+        return rank(subjectIdsOf(seed), excludeIds, currentUserId, limit, false, loadWeights());
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<RecommendedDocumentDTO> recommendForUser(Long currentUserId, int limit) {
-        return rank(personalSubjectAffinity(currentUserId), new HashSet<>(), currentUserId, limit, true);
+        return rank(personalSubjectAffinity(currentUserId), new HashSet<>(), currentUserId, limit, true, loadWeights());
     }
 
     // Tập subject user "quan tâm", gộp từ: tài liệu của chính mình + đã yêu thích + xem gần
@@ -101,7 +115,8 @@ public class RecommendationServiceImpl implements RecommendationService {
     }
 
     private List<RecommendedDocumentDTO> rank(Set<Long> affinitySubjectIds, Set<Long> excludeIds,
-                                               Long currentUserId, int limit, boolean excludeOwnDocuments) {
+                                               Long currentUserId, int limit, boolean excludeOwnDocuments,
+                                               ScoringWeights weights) {
         List<DocDocument> candidates = docDocumentRepository.findPublicApprovedDocuments(
                 DocumentVisibility.PUBLIC, ModerationStatus.APPROVED);
 
@@ -113,13 +128,13 @@ public class RecommendationServiceImpl implements RecommendationService {
                 // Double-check quyền truy cập theo đúng luật availability dùng chung toàn app,
                 // dù về lý thuyết PUBLIC+APPROVED đã luôn khả dụng với mọi người.
                 .filter(d -> documentAccessPort.isAvailableTo(d.getId(), currentUserId))
-                .map(d -> toScored(d, affinitySubjectIds))
+                .map(d -> toScored(d, affinitySubjectIds, weights))
                 .sorted(Comparator.comparingDouble(RecommendedDocumentDTO::getScore).reversed())
                 .limit(limit)
                 .collect(Collectors.toList());
     }
 
-    private RecommendedDocumentDTO toScored(DocDocument doc, Set<Long> affinitySubjectIds) {
+    private RecommendedDocumentDTO toScored(DocDocument doc, Set<Long> affinitySubjectIds, ScoringWeights weights) {
         Set<Long> docSubjectIds = subjectIdsOf(doc);
         long overlap = docSubjectIds.stream().filter(affinitySubjectIds::contains).count();
 
@@ -128,10 +143,10 @@ public class RecommendationServiceImpl implements RecommendationService {
         Double averageRating = ratingRepository.getAverageRatingByDocumentId(doc.getId());
         if (averageRating == null) averageRating = 0.0;
 
-        double score = overlap * SUBJECT_OVERLAP_WEIGHT
-                + (favoriteCount == null ? 0 : favoriteCount) * FAVORITE_WEIGHT
-                + (downloadCount == null ? 0 : downloadCount) * DOWNLOAD_WEIGHT
-                + averageRating * RATING_WEIGHT;
+        double score = overlap * weights.subjectOverlap()
+                + (favoriteCount == null ? 0 : favoriteCount) * weights.favorite()
+                + (downloadCount == null ? 0 : downloadCount) * weights.download()
+                + averageRating * weights.rating();
 
         List<String> subjectNames = doc.getSubjects() == null
                 ? List.of()
