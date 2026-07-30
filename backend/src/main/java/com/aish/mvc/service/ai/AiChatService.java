@@ -10,6 +10,8 @@ import com.aish.mvc.entity.auth.AuthUser;
 import com.aish.mvc.entity.doc.DocDocument;
 import com.aish.mvc.entity.enums.DocumentVisibility;
 import com.aish.mvc.entity.enums.ModerationStatus;
+import com.aish.mvc.exception.QuotaExceededException;
+import com.aish.mvc.repository.ai.AiUsageLogRepository;
 import com.aish.mvc.repository.doc.DocDocumentRepository;
 import com.aish.mvc.service.config.SystemSettingService;
 import com.aish.mvc.service.doc.DocEmbeddingService;
@@ -28,6 +30,8 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.document.Document;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -48,6 +52,9 @@ public class AiChatService {
     private static final int SNIPPET_LENGTH = 240;
     private static final int RELATED_LIMIT = 3;
 
+    // callType dùng khi log usage cho các lượt chat (RAG + GENERAL) - dùng để enforce quota/ngày (AIU-4).
+    private static final Set<String> CHAT_CALL_TYPES = Set.of("CHAT_RAG", "CHAT_GENERAL");
+
     private final ChatClient chatClient;
     private final DocEmbeddingService docEmbeddingService;
     private final DocumentAccessPort documentAccessPort;
@@ -58,6 +65,7 @@ public class AiChatService {
     private final UserAiTools userAiTools;
     private final AiUsageTracker aiUsageTracker;
     private final SystemSettingService systemSettingService;
+    private final AiUsageLogRepository aiUsageLogRepository;
 
     private static final String SYSTEM_PROMPT = """
             Bạn là AI HiveMind - trợ lý AI của nền tảng HiveMind dành cho sinh viên.
@@ -117,6 +125,9 @@ public class AiChatService {
         String message = request.getMessage();
         AuthUser currentUser = aiConversationService.currentUserOrNull();
         Long currentUserId = currentUser != null ? currentUser.getId() : null;
+        if (currentUser != null) {
+            enforceDailyQuota(currentUserId);
+        }
         AiConversation conversation = null;
 
         // Đọc 1 lần đầu mỗi request — KHÔNG đọc lặp lại trong các nhánh/vòng lặp bên dưới.
@@ -155,6 +166,23 @@ public class AiChatService {
                 : buildGeneralResponse(message, currentUser, currentUserId, recentMessages, similarityThreshold);
         persistIfAuthenticated(currentUser, request, response);
         return response;
+    }
+
+    // Chỉ áp cho user đã đăng nhập (ẩn danh bỏ qua - khe hở đã chấp nhận). Cap <= 0 = tắt giới hạn.
+    // Kiểm TRƯỚC khi retrieve/gọi LLM để không tốn chi phí cho lượt bị chặn.
+    private void enforceDailyQuota(Long currentUserId) {
+        int callCap = systemSettingService.getInt(
+                SystemSettingService.AI_CHAT_DAILY_CALL_CAP_KEY, SystemSettingService.AI_CHAT_DAILY_CALL_CAP_DEFAULT);
+        long tokenCap = systemSettingService.getLong(
+                SystemSettingService.AI_CHAT_DAILY_TOKEN_CAP_KEY, SystemSettingService.AI_CHAT_DAILY_TOKEN_CAP_DEFAULT);
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+
+        if (callCap > 0 && aiUsageLogRepository.countChatCallsForUserSince(currentUserId, CHAT_CALL_TYPES, startOfDay) >= callCap) {
+            throw new QuotaExceededException("error.ai.quotaCallsExceeded");
+        }
+        if (tokenCap > 0 && aiUsageLogRepository.sumChatTokensForUserSince(currentUserId, CHAT_CALL_TYPES, startOfDay) >= tokenCap) {
+            throw new QuotaExceededException("error.ai.quotaTokensExceeded");
+        }
     }
 
     private DocumentResolution resolveDocument(
