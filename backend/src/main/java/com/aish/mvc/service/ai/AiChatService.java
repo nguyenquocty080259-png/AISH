@@ -11,6 +11,7 @@ import com.aish.mvc.entity.doc.DocDocument;
 import com.aish.mvc.entity.enums.DocumentVisibility;
 import com.aish.mvc.entity.enums.ModerationStatus;
 import com.aish.mvc.repository.doc.DocDocumentRepository;
+import com.aish.mvc.service.config.SystemSettingService;
 import com.aish.mvc.service.doc.DocEmbeddingService;
 import com.aish.mvc.service.doc.DocumentAccessPort;
 import com.aish.mvc.service.doc.RecommendationService;
@@ -40,6 +41,7 @@ public class AiChatService {
 
     private static final Logger log = LoggerFactory.getLogger(AiChatService.class);
 
+    // Giá trị fallback nếu SystemSetting chưa có key/lỗi đọc — giữ nguyên giá trị hard-code cũ.
     private static final int TOP_K = 4;
     private static final int RECENT_MESSAGE_LIMIT = 10;
     private static final double SIMILARITY_THRESHOLD = 0.55;
@@ -55,6 +57,7 @@ public class AiChatService {
     private final AdminAiTools adminAiTools;
     private final UserAiTools userAiTools;
     private final AiUsageTracker aiUsageTracker;
+    private final SystemSettingService systemSettingService;
 
     private static final String SYSTEM_PROMPT = """
             Bạn là AI HiveMind - trợ lý AI của nền tảng HiveMind dành cho sinh viên.
@@ -116,6 +119,13 @@ public class AiChatService {
         Long currentUserId = currentUser != null ? currentUser.getId() : null;
         AiConversation conversation = null;
 
+        // Đọc 1 lần đầu mỗi request — KHÔNG đọc lặp lại trong các nhánh/vòng lặp bên dưới.
+        int topK = systemSettingService.getInt(SystemSettingService.AI_TOP_K_KEY, TOP_K);
+        double similarityThreshold = systemSettingService.getDouble(
+                SystemSettingService.AI_SIMILARITY_THRESHOLD_KEY, SIMILARITY_THRESHOLD);
+        int recentMessageLimit = systemSettingService.getInt(
+                SystemSettingService.AI_RECENT_MESSAGE_LIMIT_KEY, RECENT_MESSAGE_LIMIT);
+
         if (currentUser != null && request.getConversationId() != null) {
             conversation = aiConversationService.requireOwnedConversation(request.getConversationId(), currentUser);
         }
@@ -123,15 +133,15 @@ public class AiChatService {
         DocumentResolution resolution = resolveDocument(request, conversation, currentUserId);
         List<AiMessage> recentMessages = conversation == null
                 ? List.of()
-                : aiConversationService.getRecentMessages(conversation.getId(), RECENT_MESSAGE_LIMIT);
+                : aiConversationService.getRecentMessages(conversation.getId(), recentMessageLimit);
 
         AiChatResponse response;
         if (resolution.documentId() != null) {
             List<Document> hits = docEmbeddingService.retrieveChunks(
                     message,
                     List.of(resolution.documentId()),
-                    TOP_K,
-                    SIMILARITY_THRESHOLD);
+                    topK,
+                    similarityThreshold);
             if (!hits.isEmpty()) {
                 response = buildRagResponse(message, hits, currentUserId, recentMessages);
                 persistIfAuthenticated(currentUser, request, response);
@@ -140,8 +150,9 @@ public class AiChatService {
         }
 
         response = resolution.documentUnavailable()
-                ? buildUnavailableDocumentGeneralResponse(message, currentUser, currentUserId, recentMessages)
-                : buildGeneralResponse(message, currentUser, currentUserId, recentMessages);
+                ? buildUnavailableDocumentGeneralResponse(
+                        message, currentUser, currentUserId, recentMessages, similarityThreshold)
+                : buildGeneralResponse(message, currentUser, currentUserId, recentMessages, similarityThreshold);
         persistIfAuthenticated(currentUser, request, response);
         return response;
     }
@@ -229,7 +240,8 @@ public class AiChatService {
             String userMessage,
             AuthUser user,
             Long currentUserId,
-            List<AiMessage> recentMessages) {
+            List<AiMessage> recentMessages,
+            double similarityThreshold) {
         boolean isAdmin = user != null && "ADMIN".equalsIgnoreCase(user.getRole().getRoleName());
         boolean isAuthenticated = user != null;
         String systemPrompt = isAdmin
@@ -252,7 +264,7 @@ public class AiChatService {
         }
         aiUsageTracker.log("CHAT_GENERAL", chatResponse, null);
 
-        List<RelatedDocDTO> relatedDocs = suggestPublicDocsForTopic(userMessage, currentUserId);
+        List<RelatedDocDTO> relatedDocs = suggestPublicDocsForTopic(userMessage, currentUserId, similarityThreshold);
 
         return new AiChatResponse(answer, "GENERAL", List.of(), relatedDocs);
     }
@@ -275,8 +287,9 @@ public class AiChatService {
             String userMessage,
             AuthUser user,
             Long currentUserId,
-            List<AiMessage> recentMessages) {
-        AiChatResponse response = buildGeneralResponse(userMessage, user, currentUserId, recentMessages);
+            List<AiMessage> recentMessages,
+            double similarityThreshold) {
+        AiChatResponse response = buildGeneralResponse(userMessage, user, currentUserId, recentMessages, similarityThreshold);
         String answer = "Tài liệu gắn với cuộc trò chuyện này không còn khả dụng, nên mình sẽ trả lời ở chế độ GENERAL.\n\n"
                 + response.getAnswer();
         return new AiChatResponse(answer, "GENERAL", response.getCitations(), response.getRelatedDocs());
@@ -296,7 +309,7 @@ public class AiChatService {
         }
     }
 
-    private List<RelatedDocDTO> suggestPublicDocsForTopic(String message, Long currentUserId) {
+    private List<RelatedDocDTO> suggestPublicDocsForTopic(String message, Long currentUserId, double similarityThreshold) {
         try {
             List<Long> publicDocIds = docDocumentRepository
                     .findPublicApprovedDocuments(DocumentVisibility.PUBLIC, ModerationStatus.APPROVED)
@@ -306,7 +319,7 @@ public class AiChatService {
                     .collect(Collectors.toList());
             if (publicDocIds.isEmpty()) return List.of();
 
-            List<Document> hits = docEmbeddingService.retrieveChunks(message, publicDocIds, RELATED_LIMIT, SIMILARITY_THRESHOLD);
+            List<Document> hits = docEmbeddingService.retrieveChunks(message, publicDocIds, RELATED_LIMIT, similarityThreshold);
             if (hits.isEmpty()) return List.of();
 
             Set<Long> uniqueIds = new LinkedHashSet<>();
