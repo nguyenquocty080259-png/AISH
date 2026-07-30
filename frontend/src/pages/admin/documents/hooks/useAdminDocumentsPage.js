@@ -5,6 +5,7 @@ import * as adminApi from "../../../../api/adminApi";
 import * as documentApi from "../../../../api/documentApi";
 import * as subjectApi from "../../../../api/subjectApi";
 import { useToast } from "../../../../hooks/useToast";
+import { useDebounce } from "../../../../hooks/useDebounce";
 
 export function useAdminDocumentsPage() {
   const { t } = useTranslation();
@@ -32,11 +33,28 @@ export function useAdminDocumentsPage() {
   const [detailTarget, setDetailTarget] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
 
+  // Tìm kiếm + lọc (chỉ áp dụng cho tab "Tất cả" — tab "Cần xem xét" luôn hiện đủ hàng chờ).
+  // Từ khoá được debounce để không gọi API trên mỗi phím gõ.
+  const [keyword, setKeyword] = useState("");
+  const debouncedKeyword = useDebounce(keyword, 300);
+  const [visibilityFilter, setVisibilityFilter] = useState("");
+  const [moderationFilter, setModerationFilter] = useState("");
+  // "" = tất cả (mặc định) | "ACTIVE" = đang hoạt động | "REMOVED" = đã gỡ.
+  const [removedFilter, setRemovedFilter] = useState("");
+
   const load = async (targetPage) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await adminApi.listDocuments(targetPage, 20, null, needsReview);
+      const data = await adminApi.listDocuments(
+        targetPage,
+        20,
+        visibilityFilter || null,
+        needsReview,
+        debouncedKeyword.trim() || null,
+        moderationFilter || null,
+        removedFilter === "" ? null : removedFilter === "REMOVED"
+      );
       setDocuments(data.content ?? []);
       setTotalPages(data.totalPages ?? 1);
     } catch (err) {
@@ -50,7 +68,28 @@ export function useAdminDocumentsPage() {
   useEffect(() => {
     load(page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, needsReview]);
+  }, [page, needsReview, debouncedKeyword, visibilityFilter, moderationFilter, removedFilter]);
+
+  // Mọi thay đổi bộ lọc đều quay về trang đầu — trang đang xem có thể không còn ở kết quả mới.
+  const changeKeyword = (value) => {
+    setKeyword(value);
+    setPage(0);
+  };
+
+  const changeVisibilityFilter = (value) => {
+    setVisibilityFilter(value);
+    setPage(0);
+  };
+
+  const changeModerationFilter = (value) => {
+    setModerationFilter(value);
+    setPage(0);
+  };
+
+  const changeRemovedFilter = (value) => {
+    setRemovedFilter(value);
+    setPage(0);
+  };
 
   const changeReviewFilter = (enabled) => {
     const nextParams = new URLSearchParams(searchParams);
@@ -170,6 +209,14 @@ export function useAdminDocumentsPage() {
     setPage,
     needsReview,
     changeReviewFilter,
+    keyword,
+    changeKeyword,
+    visibilityFilter,
+    changeVisibilityFilter,
+    moderationFilter,
+    changeModerationFilter,
+    removedFilter,
+    changeRemovedFilter,
     removeTarget,
     removing,
     openRemoveModal,

@@ -65,6 +65,9 @@ export default function DocumentDetailPage() {
     handleIngest,
     handleToggleVisibility,
     handleDelete,
+    isAdmin,
+    adminReviewing,
+    handleAdminReview,
     goAskAi,
     activeTab,
     selectTab,
@@ -137,6 +140,56 @@ export default function DocumentDetailPage() {
         <span>{t("docDetail.metaStatus", { status: doc.visibility === "PUBLIC" ? t("docDetail.visibilityPublic") : t("docDetail.visibilityPrivate") })}</span>
       </div>
       <ModerationBadge doc={doc} />
+
+      {/* Panel xem xét của Admin: nổi bật khi tài liệu đang chờ duyệt, còn với tài liệu đã có
+          quyết định thì chỉ nhắc trạng thái nhưng vẫn cho Admin đổi ý (duyệt lại / gỡ công khai). */}
+      {isAdmin && (
+        <div
+          className={`detail-admin-review${
+            doc.moderationStatus === "ADMIN_PENDING" ? " detail-admin-review--pending" : ""
+          }`}
+        >
+          <div className="detail-admin-review__info">
+            <span className="detail-admin-review__title">{t("docDetail.adminReview.title")}</span>
+            <span className="detail-admin-review__hint">
+              {doc.moderationStatus === "ADMIN_PENDING"
+                ? doc.aiScreenOutcome === "FLAG"
+                  ? t("docDetail.adminReview.pendingFlaggedHint")
+                  : t("docDetail.adminReview.pendingHint")
+                : doc.moderationStatus === "APPROVED"
+                ? t("docDetail.adminReview.approvedHint")
+                : doc.moderationStatus === "REJECTED"
+                ? t("docDetail.adminReview.rejectedHint")
+                : t("docDetail.adminReview.noRequestHint")}
+            </span>
+            {doc.moderationReason && (
+              <span className="detail-admin-review__reason">
+                {t("docDetail.adminReview.reason", { reason: doc.moderationReason })}
+              </span>
+            )}
+          </div>
+          <div className="detail-admin-review__actions">
+            <button
+              className="detail-btn detail-btn--primary"
+              onClick={() => handleAdminReview("approve")}
+              disabled={adminReviewing !== null}
+            >
+              {adminReviewing === "approve"
+                ? t("docDetail.adminReview.approving")
+                : t("docDetail.adminReview.approve")}
+            </button>
+            <button
+              className="detail-btn detail-btn--danger"
+              onClick={() => handleAdminReview("reject")}
+              disabled={adminReviewing !== null}
+            >
+              {adminReviewing === "reject"
+                ? t("docDetail.adminReview.rejecting")
+                : t("docDetail.adminReview.reject")}
+            </button>
+          </div>
+        </div>
+      )}
 
       <p className="detail-desc">{doc.description}</p>
 

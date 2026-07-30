@@ -13,7 +13,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -47,24 +46,36 @@ class UserAiToolsTest {
 
         assertTrue(tools.getMyStats().contains("cần đăng nhập"));
         assertTrue(tools.searchMyDocuments(null, null).contains("cần đăng nhập"));
-        assertTrue(tools.getMyDocumentStatus(1L).contains("cần đăng nhập"));
+        assertTrue(tools.getMyDocumentStatus("đề cương").contains("cần đăng nhập"));
         assertTrue(tools.getMyReportStatus().contains("cần đăng nhập"));
         verifyNoInteractions(documents, favorites, collectionItems, reports, access);
     }
 
+    /**
+     * getMyDocumentStatus() tra cứu theo tiêu đề/từ khoá và CHỈ được nhìn vào kho tài liệu của
+     * chính người đang đăng nhập. Tài liệu của người khác vì thế phải bị từ chối y hệt như một
+     * tài liệu không tồn tại: cùng một câu trả lời, không lộ tiêu đề, và tuyệt đối không có
+     * truy vấn nào rộng hơn phạm vi chủ sở hữu.
+     */
     @Test
     void ownershipRefusalIsIdenticalForMissingAndOtherUsersDocument() {
         AuthUser current = user(10L, "A");
         when(conversations.currentUserOrNull()).thenReturn(current);
-        when(documents.findById(77L)).thenReturn(Optional.empty());
-        when(documents.findById(88L)).thenReturn(Optional.of(document(88L, "B private", user(20L, "B"))));
+        // Người khác có tài liệu tên "Bí mật nội bộ của B" — nó không nằm trong kho của A nên
+        // truy vấn owner-scoped duy nhất mà tool được phép dùng sẽ không bao giờ trả về nó.
+        when(documents.findByDeletedAtIsNullAndUser_Id(10L))
+                .thenReturn(List.of(document(1L, "Đề cương của A", current)));
 
-        String missing = tools.getMyDocumentStatus(77L);
-        String notMine = tools.getMyDocumentStatus(88L);
+        String missing = tools.getMyDocumentStatus("khong-ton-tai");
+        String notMine = tools.getMyDocumentStatus("nội bộ");
 
-        assertEquals("Không tìm thấy tài liệu ID 77 trong tài liệu của bạn.", missing);
-        assertEquals(missing.replace("77", "88"), notMine);
-        assertFalse(notMine.contains("B private"));
+        assertEquals("Không tìm thấy tài liệu nào của bạn khớp với \"khong-ton-tai\".", missing);
+        // Hai lời từ chối chỉ khác đúng từ khoá người dùng gõ vào — không suy ra được tài liệu
+        // của người khác có tồn tại hay không.
+        assertEquals(missing.replace("khong-ton-tai", "nội bộ"), notMine);
+        assertFalse(notMine.contains("Bí mật nội bộ của B"));
+        verify(documents, times(2)).findByDeletedAtIsNullAndUser_Id(10L);
+        verifyNoMoreInteractions(documents);
     }
 
     @Test
@@ -93,12 +104,16 @@ class UserAiToolsTest {
 
         String result = tools.searchMyDocuments("  KEYword ", 10);
 
-        assertTrue(result.contains("ID 1") && result.contains("Nhóm: Tài liệu của tôi"));
-        assertTrue(result.contains("ID 2") && result.contains("Nhóm: Yêu thích"));
-        assertTrue(result.contains("ID 3") && result.contains("Nhóm: Trong collection"));
-        assertEquals(1, occurrences(result, "ID 2"));
-        assertEquals(1, occurrences(result, "ID 3"));
-        assertFalse(result.contains("ID 4"));
+        // Mỗi tài liệu xuất hiện đúng 1 lần, ở nhóm ưu tiên CAO NHẤT mà nó thuộc về: id 2 vừa
+        // được yêu thích vừa nằm trong collection -> chỉ hiện ở "Yêu thích"; id 3 vừa trong
+        // collection vừa là PUBLIC/APPROVED -> chỉ hiện ở "Trong collection".
+        assertTrue(result.contains("Shared keyword own | Chủ sở hữu: Owner A | Nhóm: Tài liệu của tôi"));
+        assertTrue(result.contains("Shared keyword favorite | Chủ sở hữu: Owner B | Nhóm: Yêu thích"));
+        assertTrue(result.contains("Shared keyword collection | Chủ sở hữu: Owner B | Nhóm: Trong collection"));
+        assertEquals(1, occurrences(result, "Shared keyword favorite"));
+        assertEquals(1, occurrences(result, "Shared keyword collection"));
+        // Chốt chặn cuối: PUBLIC/APPROVED nhưng DocumentAccessPort từ chối -> không được lọt ra.
+        assertFalse(result.contains("Shared keyword blocked"));
         verify(access).isAvailableTo(4L, 10L);
     }
 

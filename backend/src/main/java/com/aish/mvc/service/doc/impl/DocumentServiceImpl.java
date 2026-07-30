@@ -62,6 +62,10 @@ public class DocumentServiceImpl implements DocumentService {
     static final int DEFAULT_COMMUNITY_PAGE_SIZE = 12;
     static final int MAX_COMMUNITY_PAGE_SIZE = 50;
 
+    // Giá trị của DocDocument.aiScreenOutcome — kết quả pre-screen kèm theo lần chờ Admin duyệt.
+    static final String AI_SCREEN_PASS = "PASS";
+    static final String AI_SCREEN_FLAG = "FLAG";
+
     @Autowired private DocDocumentRepository docDocumentRepository;
     @Autowired private DocFileRepository docFileRepository;
     @Autowired private FileStorageService fileStorageService;
@@ -547,6 +551,13 @@ public class DocumentServiceImpl implements DocumentService {
         return new CommunityPageResponseDTO(pageItems, page, size, totalItems, totalPages);
     }
 
+    /**
+     * Đảo chế độ hiển thị. PUBLIC -> PRIVATE là thao tác an toàn, làm ngay. Chiều ngược lại
+     * KHÔNG bao giờ tự động công khai nữa: mọi yêu cầu công khai đều dừng ở ADMIN_PENDING và
+     * tài liệu ở lại PRIVATE cho tới khi Admin duyệt (AdminServiceImpl.approveDocumentReview)
+     * hoặc từ chối (removeDocumentReview). AI pre-screen chỉ còn là gợi ý cho Admin, kết quả
+     * PASS/FLAG lưu ở aiScreenOutcome.
+     */
     @Override
     @Transactional
     public DocumentResponseDTO toggleVisibility(Long documentId) {
@@ -564,20 +575,24 @@ public class DocumentServiceImpl implements DocumentService {
             return documentMapper.toResponseDTO(docDocumentRepository.save(doc));
         }
 
-        // -> PUBLIC: reset lớp admin review trước mọi loại pre-screen.
+        // -> PUBLIC: reset lớp admin review trước mọi loại pre-screen — đây là một yêu cầu
+        // công khai MỚI, quyết định cũ của Admin (nếu có) không còn hiệu lực.
         doc.setAdminReviewedAt(null);
         doc.setAdminReviewedBy(null);
 
-        // Keyword DB là lớp rẻ nhất. Hit thì tự động từ chối và không gọi AI.
+        // Keyword DB là lớp rẻ nhất. Hit thì KHÔNG gọi AI (tiết kiệm), nhưng cũng KHÔNG từ chối
+        // cứng nữa: đi cùng đường với AI FLAG — vào hàng chờ Admin, Admin mới là người quyết
+        // định cuối. Lý do keyword được ghi lại để Admin biết vì sao tài liệu bị gắn cờ.
         if (documentContentKeywordService.matches(doc)) {
             log.info("Document {} matched a DOCUMENT_CONTENT keyword; skipping AI moderation screen", documentId);
             doc.setVisibility(DocumentVisibility.PRIVATE);
-            doc.setModerationStatus(ModerationStatus.REJECTED);
+            doc.setModerationStatus(ModerationStatus.ADMIN_PENDING);
+            doc.setAiScreenOutcome(AI_SCREEN_FLAG);
             doc.setModerationReason("Nội dung tài liệu kích hoạt quy tắc từ khóa không phù hợp.");
-            DocDocument rejected = docDocumentRepository.save(doc);
-            notifyAdminsDocumentScreened(rejected, "REJECTED_BY_CONTENT_KEYWORD");
-            notifyOwnerDocRejected(rejected);
-            return documentMapper.toResponseDTO(rejected);
+            DocDocument flagged = docDocumentRepository.save(doc);
+            notifyAdminsDocumentScreened(flagged, "PENDING_FLAGGED_BY_CONTENT_KEYWORD");
+            notifyOwnerDocPending(flagged, true);
+            return documentMapper.toResponseDTO(flagged);
         }
 
         // Không trúng keyword: tiếp tục AI pre-screen hiện có (DEC-035).
@@ -589,17 +604,12 @@ public class DocumentServiceImpl implements DocumentService {
             notifyMetadataMismatch(doc, result.getMetadataMismatchReason());
         }
 
-        if (result.getDecision() == ModerationDecision.PASS) {
-            doc.setVisibility(DocumentVisibility.PUBLIC);
-            doc.setModerationStatus(ModerationStatus.APPROVED);
-        }
-        else {
-            // FLAG: KHÔNG public, coi như bị từ chối (REJECTED) — không còn ở trạng thái
-            // "chờ" nữa. Nếu user không đồng ý, họ appeal thủ công (ModerationAppeal,
-            // không qua AI) — appeal đó mới thật sự vào hàng chờ Admin (APPEAL_PENDING).
-            doc.setVisibility(DocumentVisibility.PRIVATE);
-            doc.setModerationStatus(ModerationStatus.REJECTED);
-        }
+        // Dù AI PASS hay FLAG, tài liệu đều ở lại PRIVATE và vào hàng chờ Admin duyệt cuối.
+        // Kết quả AI chỉ được ghi vào aiScreenOutcome để Admin (và FE) biết ngữ cảnh.
+        boolean aiFlagged = result.getDecision() != ModerationDecision.PASS;
+        doc.setVisibility(DocumentVisibility.PRIVATE);
+        doc.setModerationStatus(ModerationStatus.ADMIN_PENDING);
+        doc.setAiScreenOutcome(aiFlagged ? AI_SCREEN_FLAG : AI_SCREEN_PASS);
 
         DocDocument savedDocument = docDocumentRepository.save(doc);
         LocalDateTime metadataCheckedAt = LocalDateTime.now();
@@ -614,12 +624,7 @@ public class DocumentServiceImpl implements DocumentService {
         DocDocument screenedDocument = docDocumentRepository.findById(savedDocument.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("error.document.notFound"));
         notifyAdminsDocumentScreened(screenedDocument, result.getDecision().name());
-        if (result.getDecision() == ModerationDecision.PASS) {
-            notifyOwnerDocApproved(screenedDocument);
-        }
-        else {
-            notifyOwnerDocRejected(screenedDocument);
-        }
+        notifyOwnerDocPending(screenedDocument, aiFlagged);
 
         return documentMapper.toResponseDTO(screenedDocument);
     }
@@ -640,21 +645,20 @@ public class DocumentServiceImpl implements DocumentService {
         }
     }
 
-    private void notifyOwnerDocApproved(DocDocument document) {
+    // Yêu cầu công khai đã được ghi nhận và đang chờ Admin duyệt cuối — chưa có quyết định nào
+    // cả, nên dùng DOCUMENT_SCREENED (thông báo trung tính) thay vì DOC_APPROVED/DOC_REJECTED;
+    // hai loại đó dành riêng cho quyết định thật của Admin (xem AdminServiceImpl).
+    private void notifyOwnerDocPending(DocDocument document, boolean aiFlagged) {
         try {
-            notificationService.createDocumentNotification(document.getUser().getId(), NotificationType.DOC_APPROVED,
-                    "Tài liệu \"" + document.getTitle() + "\" của bạn đã được duyệt và công khai.", document.getId());
+            String message = aiFlagged
+                    ? "Tài liệu \"" + document.getTitle() + "\" của bạn còn vài chỗ chưa phù hợp, "
+                        + "đang chờ Admin xem xét."
+                    : "Tài liệu \"" + document.getTitle() + "\" của bạn đã qua kiểm duyệt tự động "
+                        + "và đang chờ Admin xem xét.";
+            notificationService.createDocumentNotification(document.getUser().getId(),
+                    NotificationType.DOCUMENT_SCREENED, message, document.getId());
         } catch (Exception exception) {
-            log.error("Không thể gửi thông báo duyệt tài liệu id={} cho chủ sở hữu.", document.getId(), exception);
-        }
-    }
-
-    private void notifyOwnerDocRejected(DocDocument document) {
-        try {
-            notificationService.createDocumentNotification(document.getUser().getId(), NotificationType.DOC_REJECTED,
-                    "Tài liệu \"" + document.getTitle() + "\" của bạn chưa được duyệt công khai.", document.getId());
-        } catch (Exception exception) {
-            log.error("Không thể gửi thông báo từ chối tài liệu id={} cho chủ sở hữu.", document.getId(), exception);
+            log.error("Không thể gửi thông báo chờ duyệt tài liệu id={} cho chủ sở hữu.", document.getId(), exception);
         }
     }
 
@@ -701,25 +705,26 @@ public class DocumentServiceImpl implements DocumentService {
     public Page<AdminDocumentSummaryDTO> getAllDocumentsForAdmin(
             DocumentVisibility visibility,
             boolean needsReview,
+            String keyword,
+            ModerationStatus moderationStatus,
+            Boolean removed,
             Pageable pageable) {
 
         Page<DocDocument> page;
 
         if (needsReview) {
 
+            // Tab "Cần xem xét": đúng các tài liệu đang chờ Admin quyết định. Các bộ lọc còn lại
+            // bị bỏ qua ở nhánh này — hàng chờ luôn phải hiện đầy đủ.
             page = docDocumentRepository
-                    .findByModerationStatusInAndAdminReviewedAtIsNullAndDeletedAtIsNull(
-                            List.of(ModerationStatus.APPROVED, ModerationStatus.REJECTED),
-                            pageable);
-
-        } else if (visibility == null) {
-
-            page = docDocumentRepository.findAll(pageable);
+                    .findByModerationStatusAndDeletedAtIsNull(ModerationStatus.ADMIN_PENDING, pageable);
 
         } else {
 
-            page = docDocumentRepository
-                    .findByVisibility(visibility, pageable);
+            // Từ khoá rỗng = không lọc (chuẩn hoá tại đây để query chỉ cần so null).
+            String normalizedKeyword = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
+            page = docDocumentRepository.searchForAdminList(
+                    normalizedKeyword, visibility, moderationStatus, removed, pageable);
 
         }
         return page.map(document -> {
@@ -738,7 +743,8 @@ public class DocumentServiceImpl implements DocumentService {
                     document.getCreatedAt(),
                     document.getIngestStatus() != null ? document.getIngestStatus().name() : null,
                     document.getAdminReviewedAt(),
-                    document.getDeletedAt()
+                    document.getDeletedAt(),
+                    document.getAiScreenOutcome()
             );
         });
     }

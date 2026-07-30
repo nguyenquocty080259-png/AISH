@@ -64,13 +64,34 @@ export function resolveReport(id, payload) {
 
 // Returns a Spring Data Page: { content, totalPages, totalElements, number, size, ... }.
 // page is 0-indexed (matches Spring Pageable). Backend default: size=20, sort=createdAt DESC.
-export function listDocuments(page = 0, size = 20, visibility = null, needsReview = false) {
+// keyword lọc theo tiêu đề; moderationStatus là ModerationStatus ("NOT_REQUIRED" |
+// "ADMIN_PENDING" | "APPROVED" | "REJECTED"); removed lọc theo trạng thái gỡ (null = cả hai,
+// false = chỉ đang hoạt động, true = chỉ đã gỡ). needsReview = true thì BE bỏ qua các bộ lọc kia.
+export function listDocuments(
+  page = 0,
+  size = 20,
+  visibility = null,
+  needsReview = false,
+  keyword = null,
+  moderationStatus = null,
+  removed = null
+) {
   const params = { page, size };
   if (visibility) {
     params.visibility = visibility;
   }
   if (needsReview) {
     params.needsReview = true;
+  }
+  if (keyword) {
+    params.keyword = keyword;
+  }
+  if (moderationStatus) {
+    params.moderationStatus = moderationStatus;
+  }
+  // So sánh với null: false là một giá trị lọc hợp lệ ("chỉ đang hoạt động"), không phải "bỏ qua".
+  if (removed !== null && removed !== undefined) {
+    params.removed = removed;
   }
 
   return apiClient

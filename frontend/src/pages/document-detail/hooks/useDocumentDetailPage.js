@@ -6,9 +6,11 @@ import * as aiApi from "../../../api/aiApi";
 import * as collectionApi from "../../../api/collectionApi";
 import * as subjectApi from "../../../api/subjectApi";
 import * as shareApi from "../../../api/shareApi";
+import * as adminApi from "../../../api/adminApi";
 import { useAuth } from "../../../hooks/useAuth";
 import { useToast } from "../../../hooks/useToast";
 import { ROUTES, buildRoute } from "../../../constants/routes";
+import { ROLES } from "../../../constants/roles";
 
 // Bỏ dấu tiếng Việt để so khớp không phân biệt hoa/thường và có dấu/không dấu.
 const COMBINING_MARKS_RE = /[̀-ͯ]/g;
@@ -47,7 +49,7 @@ export function useDocumentDetailPage() {
   const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const { showSuccess, showError } = useToast();
   const [searchParams] = useSearchParams();
 
@@ -328,10 +330,18 @@ export function useDocumentDetailPage() {
 
   const handleToggleVisibility = async () => {
     try {
-      // BE trả về document sau khi đổi kèm kết quả kiểm duyệt AI.
+      // BE trả về document sau khi đổi kèm kết quả kiểm duyệt AI. Yêu cầu công khai KHÔNG còn
+      // tự động public: nó dừng ở ADMIN_PENDING cho tới khi Admin duyệt (xem toggleVisibility
+      // ở backend), nên nhánh chờ duyệt phải được xét TRƯỚC.
       const updated = await documentApi.toggleVisibility(id);
       if (updated && typeof updated === "object" && "visibility" in updated) {
-        if (updated.visibility === "PUBLIC") {
+        if (updated.moderationStatus === "ADMIN_PENDING") {
+          if (updated.aiScreenOutcome === "FLAG") {
+            showSuccess(t("docDetail.toasts.publicPendingFlagged"));
+          } else {
+            showSuccess(t("docDetail.toasts.publicPending"));
+          }
+        } else if (updated.visibility === "PUBLIC") {
           showSuccess(t("docDetail.toasts.madePublic"));
         } else if (updated.moderationStatus === "REJECTED") {
           showError(
@@ -346,6 +356,30 @@ export function useDocumentDetailPage() {
       await load();
     } catch (err) {
       showError(err.message);
+    }
+  };
+
+  // --- Xem xét của Admin ngay trên trang chi tiết ---
+  // Admin đọc được cả tài liệu PRIVATE đang chờ duyệt (backend miễn trừ theo role), nên chỗ
+  // quyết định hợp lý nhất là ngay sau khi xem nội dung. Quyền thật vẫn do /api/admin/** gác.
+  const isAdmin = role === ROLES.ADMIN;
+  const [adminReviewing, setAdminReviewing] = useState(null); // "approve" | "reject" | null
+
+  const handleAdminReview = async (action) => {
+    setAdminReviewing(action);
+    try {
+      if (action === "approve") {
+        await adminApi.approveDocumentReview(id);
+        showSuccess(t("docDetail.adminReview.approved"));
+      } else {
+        await adminApi.removeDocumentReview(id);
+        showSuccess(t("docDetail.adminReview.rejected"));
+      }
+      await load();
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setAdminReviewing(null);
     }
   };
   const handleDelete = async () => {
@@ -539,6 +573,9 @@ export function useDocumentDetailPage() {
     handleIngest,
     handleToggleVisibility,
     handleDelete,
+    isAdmin,
+    adminReviewing,
+    handleAdminReview,
     goAskAi,
     documentsRoute: buildRoute(ROUTES.DOCUMENTS),
 

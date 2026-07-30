@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import PageHeader from "../../../components/ui/PageHeader";
 import Badge from "../../../components/ui/Badge";
@@ -10,6 +11,7 @@ import IngestStatusBadge from "./components/IngestStatusBadge";
 import EditDocumentModal from "./components/EditDocumentModal";
 import DocumentDetailModal from "./components/DocumentDetailModal";
 import AdminPagination from "../components/AdminPagination";
+import { ROUTES, buildRoute } from "../../../constants/routes";
 import "./admin-documents.css";
 
 const VISIBILITY_BADGE = {
@@ -24,8 +26,15 @@ const STATUS_BADGE = {
 
 const MODERATION_BADGE = {
   NOT_REQUIRED: { intent: "neutral", labelKey: "admin.documents.modNotRequired" },
+  ADMIN_PENDING: { intent: "warning", labelKey: "admin.documents.modPending" },
   APPROVED: { intent: "success", labelKey: "admin.documents.modApproved" },
   REJECTED: { intent: "error", labelKey: "admin.documents.modRejected" },
+};
+
+// Kết quả AI pre-screen kèm theo lần chờ duyệt — chỉ có nghĩa khi đang ADMIN_PENDING.
+const AI_SCREEN_LABEL = {
+  PASS: "admin.documents.aiScreenPass",
+  FLAG: "admin.documents.aiScreenFlag",
 };
 
 export default function AdminDocumentsPage() {
@@ -40,6 +49,14 @@ export default function AdminDocumentsPage() {
     setPage,
     needsReview,
     changeReviewFilter,
+    keyword,
+    changeKeyword,
+    visibilityFilter,
+    changeVisibilityFilter,
+    moderationFilter,
+    changeModerationFilter,
+    removedFilter,
+    changeRemovedFilter,
     removeTarget,
     removing,
     openRemoveModal,
@@ -86,6 +103,47 @@ export default function AdminDocumentsPage() {
         </button>
       </div>
 
+      {/* Tab "Cần xem xét" luôn hiện toàn bộ hàng chờ nên backend bỏ qua các bộ lọc này —
+          ẩn luôn ở UI để không tạo cảm giác đã lọc mà kết quả không đổi. */}
+      {!needsReview && (
+        <div className="admin-documents-page__search">
+          <input
+            type="search"
+            className="admin-documents-page__search-input"
+            placeholder={t("admin.documents.searchPlaceholder")}
+            value={keyword}
+            onChange={(e) => changeKeyword(e.target.value)}
+            aria-label={t("admin.documents.searchPlaceholder")}
+          />
+          <label className="admin-documents-page__filter-field">
+            <span>{t("admin.documents.filterVisibilityLabel")}</span>
+            <select value={visibilityFilter} onChange={(e) => changeVisibilityFilter(e.target.value)}>
+              <option value="">{t("admin.documents.filterAll")}</option>
+              <option value="PUBLIC">{t("admin.documents.visPublic")}</option>
+              <option value="PRIVATE">{t("admin.documents.visPrivate")}</option>
+            </select>
+          </label>
+          <label className="admin-documents-page__filter-field">
+            <span>{t("admin.documents.filterModerationLabel")}</span>
+            <select value={moderationFilter} onChange={(e) => changeModerationFilter(e.target.value)}>
+              <option value="">{t("admin.documents.filterAll")}</option>
+              <option value="NOT_REQUIRED">{t("admin.documents.modNotRequired")}</option>
+              <option value="ADMIN_PENDING">{t("admin.documents.modPending")}</option>
+              <option value="APPROVED">{t("admin.documents.modApproved")}</option>
+              <option value="REJECTED">{t("admin.documents.modRejected")}</option>
+            </select>
+          </label>
+          <label className="admin-documents-page__filter-field">
+            <span>{t("admin.documents.filterRemovedLabel")}</span>
+            <select value={removedFilter} onChange={(e) => changeRemovedFilter(e.target.value)}>
+              <option value="">{t("admin.documents.filterAll")}</option>
+              <option value="ACTIVE">{t("admin.documents.statusActive")}</option>
+              <option value="REMOVED">{t("admin.documents.statusRemoved")}</option>
+            </select>
+          </label>
+        </div>
+      )}
+
       {loading ? (
         <p className="admin-documents-page__loading">{t("admin.documents.loading")}</p>
       ) : documents.length === 0 ? (
@@ -115,16 +173,30 @@ export default function AdminDocumentsPage() {
                 const statusBadge = isRemoved ? STATUS_BADGE.REMOVED : STATUS_BADGE.ACTIVE;
                 const isApproved = doc.moderationStatus === "APPROVED";
                 const isRejected = doc.moderationStatus === "REJECTED";
+                const isPending = doc.moderationStatus === "ADMIN_PENDING";
+                const aiScreenLabelKey = AI_SCREEN_LABEL[doc.aiScreenOutcome];
                 const isReviewingThis = reviewing?.id === doc.id;
                 return (
                   <Table.Row key={doc.id}>
-                    <Table.Cell className="ui-table__truncate">{doc.title}</Table.Cell>
+                    <Table.Cell className="ui-table__truncate">
+                      {/* Mở trang chi tiết đầy đủ (đọc nội dung + duyệt/từ chối) — Admin được
+                          backend miễn trừ nên xem được cả tài liệu PRIVATE đang chờ duyệt. */}
+                      <Link
+                        className="admin-documents-page__doc-link"
+                        to={buildRoute(ROUTES.DOCUMENT_DETAIL, { id: doc.id })}
+                      >
+                        {doc.title}
+                      </Link>
+                    </Table.Cell>
                     <Table.Cell>{doc.ownerName}</Table.Cell>
                     <Table.Cell>
                       <Badge intent={visibilityBadge.intent}>{t(visibilityBadge.labelKey)}</Badge>
                     </Table.Cell>
                     <Table.Cell>
                       <Badge intent={moderationBadge.intent}>{t(moderationBadge.labelKey)}</Badge>
+                      {isPending && aiScreenLabelKey && (
+                        <span className="admin-documents-page__ai-screen">{t(aiScreenLabelKey)}</span>
+                      )}
                     </Table.Cell>
                     <Table.Cell>
                       {doc.storageType && <Badge intent="info">{doc.storageType}</Badge>}

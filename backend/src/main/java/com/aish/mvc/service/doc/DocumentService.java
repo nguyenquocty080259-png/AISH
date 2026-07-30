@@ -6,6 +6,7 @@ import com.aish.mvc.dto.doc.DocumentResponseDTO;
 import com.aish.mvc.dto.doc.StorageUsageDTO;
 import com.aish.mvc.entity.doc.DocFile;
 import com.aish.mvc.entity.enums.DocumentVisibility;
+import com.aish.mvc.entity.enums.ModerationStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
@@ -116,11 +117,16 @@ public interface DocumentService {
     DocFile getFileByDocumentId(Long documentId);
 
     /**
-     * Đảo chế độ hiển thị — chỉ chủ sở hữu. PUBLIC -> PRIVATE luôn được phép. Chiều ngược lại
-     * phải qua kiểm duyệt: trúng từ khoá cấm thì bị từ chối ngay (không gọi AI), nếu không thì
-     * qua AI pre-screen (DEC-035); FLAG cũng bị coi là REJECTED và tài liệu ở lại PRIVATE.
+     * Đảo chế độ hiển thị — chỉ chủ sở hữu. PUBLIC -> PRIVATE luôn được phép và có hiệu lực ngay.
      *
-     * @return tài liệu sau khi đổi, để FE đọc visibility/moderationStatus/moderationReason mới
+     * <p>Chiều ngược lại KHÔNG bao giờ tự động công khai: tài liệu luôn dừng ở
+     * {@code ADMIN_PENDING} và ở lại PRIVATE cho tới khi Admin duyệt cuối. Trúng từ khoá cấm thì
+     * bỏ qua AI (tiết kiệm) và đánh dấu FLAG; nếu không thì chạy AI pre-screen (DEC-035) và ghi
+     * kết quả PASS/FLAG vào {@code aiScreenOutcome} — chỉ để Admin tham khảo, không quyết định
+     * visibility.
+     *
+     * @return tài liệu sau khi đổi, để FE đọc visibility/moderationStatus/moderationReason/
+     *         aiScreenOutcome mới
      */
     DocumentResponseDTO toggleVisibility(Long documentId);
 
@@ -139,12 +145,21 @@ public interface DocumentService {
      * Quyền ADMIN được gate ở tầng route, service không kiểm tra lại.
      *
      * @param visibility  lọc theo chế độ hiển thị; null là mọi chế độ (bị bỏ qua khi needsReview)
-     * @param needsReview true là chỉ lấy hàng chờ duyệt: đã qua kiểm duyệt AI nhưng admin chưa
-     *                    xem lại (adminReviewedAt còn trống), và chưa bị xoá mềm
+     * @param needsReview true là chỉ lấy hàng chờ duyệt: moderationStatus = ADMIN_PENDING và
+     *                    chưa bị xoá mềm. Bật cờ này thì các bộ lọc còn lại bị bỏ qua
+     * @param keyword     tìm trong tiêu đề; null/rỗng là không lọc (bị bỏ qua khi needsReview)
+     * @param moderationStatus lọc theo trạng thái kiểm duyệt; null là mọi trạng thái (bị bỏ qua
+     *                    khi needsReview)
+     * @param removed     lọc theo trạng thái gỡ (xoá mềm): null là cả đang hoạt động lẫn đã gỡ,
+     *                    FALSE là chỉ đang hoạt động, TRUE là chỉ đã gỡ (bị bỏ qua khi
+     *                    needsReview — hàng chờ luôn chỉ gồm tài liệu chưa bị gỡ)
      */
     Page<AdminDocumentSummaryDTO> getAllDocumentsForAdmin(
             DocumentVisibility visibility,
             boolean needsReview,
+            String keyword,
+            ModerationStatus moderationStatus,
+            Boolean removed,
             Pageable pageable
     );
 

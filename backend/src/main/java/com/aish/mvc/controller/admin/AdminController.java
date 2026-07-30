@@ -17,6 +17,7 @@ import com.aish.mvc.dto.report.ResolveReportRequestDTO;
 import com.aish.mvc.entity.enums.AppealStatus;
 import com.aish.mvc.entity.enums.CommentStatus;
 import com.aish.mvc.entity.enums.DocumentVisibility;
+import com.aish.mvc.entity.enums.ModerationStatus;
 import com.aish.mvc.entity.enums.ReportStatus;
 import com.aish.mvc.service.admin.AdminService;
 import com.aish.mvc.service.doc.DocumentService;
@@ -105,6 +106,16 @@ public class AdminController {
             @RequestParam(defaultValue = "false")
             boolean needsReview,
 
+            @RequestParam(required = false)
+            String keyword,
+
+            @RequestParam(required = false)
+            ModerationStatus moderationStatus,
+
+            // null = cả đang hoạt động lẫn đã gỡ; false = chỉ đang hoạt động; true = chỉ đã gỡ.
+            @RequestParam(required = false)
+            Boolean removed,
+
             @PageableDefault(
                     size = 20,
                     sort = "createdAt",
@@ -115,6 +126,9 @@ public class AdminController {
                 documentService.getAllDocumentsForAdmin(
                         visibility,
                         needsReview,
+                        keyword,
+                        moderationStatus,
+                        removed,
                         pageable
                 )
         );

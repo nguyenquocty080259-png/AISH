@@ -83,6 +83,7 @@ public class DocumentMapper {
         dto.setModerationStatus(doc.getModerationStatus() != null ? doc.getModerationStatus().name() : ModerationStatus.NOT_REQUIRED.name());
         dto.setModerationReason(doc.getModerationReason());
         dto.setAdminReviewedAt(doc.getAdminReviewedAt());
+        dto.setAiScreenOutcome(doc.getAiScreenOutcome());
         dto.setIngestStatus(doc.getIngestStatus() != null ? doc.getIngestStatus().name() : IngestStatus.NOT_INGESTED.name());
         dto.setCreatedAt(doc.getCreatedAt());
         dto.setDeletedAt(doc.getDeletedAt());
@@ -157,6 +158,7 @@ public class DocumentMapper {
                 doc.getCreatedAt(),
                 null,
                 doc.getAdminReviewedAt(),
-                doc.getDeletedAt());
+                doc.getDeletedAt(),
+                doc.getAiScreenOutcome());
     }
 }

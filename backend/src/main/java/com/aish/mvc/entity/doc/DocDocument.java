@@ -52,6 +52,11 @@ public class DocDocument {
     @Column(name = "moderation_reason", columnDefinition = "TEXT")
     private String moderationReason;
 
+    // Kết quả pre-screen của AI cho lần yêu cầu công khai hiện tại ("PASS" | "FLAG" | null) —
+    // chỉ mang tính tham khảo cho Admin khi duyệt cuối, KHÔNG tự quyết định visibility.
+    @Column(name = "ai_screen_outcome", length = 10)
+    private String aiScreenOutcome;
+
     @Column(name = "metadata_match_status", length = 10)
     private String metadataMatchStatus;
 

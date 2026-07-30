@@ -56,6 +56,50 @@
     margin-bottom: var(--spacing-lg);
 }
 
+.detail-admin-review {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card, 12px);
+    background: var(--color-surface-soft);
+}
+
+/* Đang chờ quyết định của Admin -> viền cảnh báo cho nổi bật. */
+.detail-admin-review--pending {
+    border-color: var(--color-warning, #f0a500);
+    border-width: 2px;
+}
+
+.detail-admin-review__info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    min-width: 240px;
+    flex: 1 1 320px;
+}
+
+.detail-admin-review__title {
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.detail-admin-review__hint,
+.detail-admin-review__reason {
+    font-size: var(--body-sm);
+    color: var(--color-text-secondary);
+}
+
+.detail-admin-review__actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
 .pdf-highlight-mark {
     background-color: rgba(255, 213, 79, 0.55);
     border-radius: 2px;

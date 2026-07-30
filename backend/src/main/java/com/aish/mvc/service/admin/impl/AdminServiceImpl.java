@@ -156,7 +156,7 @@ public class AdminServiceImpl implements AdminService {
         document.setAdminReviewedBy(getCurrentAdminId());
         docDocumentRepository.save(document);
         notifyDocumentReviewDecision(document, NotificationType.DOC_REJECTED,
-                "Tài liệu \"" + document.getTitle() + "\" của bạn chưa được duyệt công khai.");
+                "Tài liệu \"" + document.getTitle() + "\" của bạn không được duyệt công khai và vẫn ở chế độ riêng tư.");
     }
 
     @Override

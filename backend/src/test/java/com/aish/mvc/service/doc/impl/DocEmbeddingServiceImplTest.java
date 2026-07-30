@@ -20,8 +20,11 @@ import static org.mockito.Mockito.when;
  */
 class DocEmbeddingServiceImplTest {
 
+    // embedWithRetry() chỉ chạm tới embeddingModel — các dependency còn lại của constructor
+    // (repository, vector store, transaction manager, system settings) để null cho gọn, chạm
+    // vào chúng trong phạm vi test này sẽ NPE ngay chứ không âm thầm dùng hành vi giả.
     private DocEmbeddingServiceImpl newService(EmbeddingModel embeddingModel) {
-        return new DocEmbeddingServiceImpl(null, null, null, embeddingModel, null, null);
+        return new DocEmbeddingServiceImpl(null, null, null, embeddingModel, null, null, null);
     }
 
     @Test

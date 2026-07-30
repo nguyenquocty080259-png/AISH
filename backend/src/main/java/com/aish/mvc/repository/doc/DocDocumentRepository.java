@@ -49,15 +49,30 @@ public interface DocDocumentRepository extends JpaRepository<DocDocument, Long> 
     // lúc đó sẽ vi phạm FK. Không cần phân biệt "còn 1 subject" hay nhiều: attach = chặn, luôn an toàn.
     boolean existsBySubjects_Id(Long subjectId);
 
-    Page<DocDocument> findByVisibility(
-            DocumentVisibility visibility,
+    // Hàng chờ duyệt của Admin: chủ tài liệu đã yêu cầu công khai (ADMIN_PENDING) và tài liệu
+    // chưa bị gỡ. Không lọc adminReviewedAt vì toggleVisibility đã reset mốc đó cho mỗi lần
+    // yêu cầu mới — trạng thái ADMIN_PENDING tự nó đã là "đang chờ".
+    Page<DocDocument> findByModerationStatusAndDeletedAtIsNull(
+            ModerationStatus moderationStatus,
             Pageable pageable
     );
 
-    Page<DocDocument> findByModerationStatusInAndAdminReviewedAtIsNullAndDeletedAtIsNull(
-            List<ModerationStatus> moderationStatuses,
-            Pageable pageable
-    );
+    // Danh sách tài liệu cho trang quản trị: tìm theo tiêu đề + lọc visibility/moderationStatus/
+    // trạng thái gỡ, tham số null là bỏ qua bộ lọc đó. KHÔNG dùng JOIN FETCH để Spring Data còn
+    // tự sinh được count query cho phân trang. CAST(:keyword AS string) để Postgres không hiểu
+    // nhầm là bytea. removed: null = cả đang hoạt động lẫn đã gỡ, FALSE = chỉ đang hoạt động,
+    // TRUE = chỉ đã gỡ (soft-delete).
+    @Query("SELECT d FROM DocDocument d WHERE " +
+           "(:keyword IS NULL OR LOWER(d.title) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%'))) " +
+           "AND (:visibility IS NULL OR d.visibility = :visibility) " +
+           "AND (:moderationStatus IS NULL OR d.moderationStatus = :moderationStatus) " +
+           "AND (:removed IS NULL OR (:removed = TRUE AND d.deletedAt IS NOT NULL) " +
+           "     OR (:removed = FALSE AND d.deletedAt IS NULL))")
+    Page<DocDocument> searchForAdminList(@Param("keyword") String keyword,
+                                         @Param("visibility") DocumentVisibility visibility,
+                                         @Param("moderationStatus") ModerationStatus moderationStatus,
+                                         @Param("removed") Boolean removed,
+                                         Pageable pageable);
     @Query("SELECT DISTINCT d FROM DocDocument d LEFT JOIN FETCH d.subjects WHERE d.deletedAt IS NULL " +
             "AND (d.visibility = :pub OR d.user.id = :userId)")
     List<DocDocument> findVisibleDocuments(@Param("pub") DocumentVisibility pub, @Param("userId") Long userId);
@@ -81,9 +96,9 @@ public interface DocDocumentRepository extends JpaRepository<DocDocument, Long> 
             "WHERE d.ingestStatus = :status ORDER BY d.id ASC")
     List<DocDocument> findNotIngestedBatch(@Param("status") IngestStatus status, Pageable pageable);
 
-    // Candidate pool cho recommendations: PUBLIC + đã qua kiểm duyệt AI + chưa xoá.
-    // Về mặt cấu trúc PUBLIC luôn kéo theo APPROVED (toggleVisibility chỉ set PUBLIC khi
-    // PASS/Admin-approve), nhưng lọc rõ ràng ở đây để không phụ thuộc ngầm vào invariant đó.
+    // Candidate pool cho recommendations: PUBLIC + đã được Admin duyệt + chưa xoá.
+    // Về mặt cấu trúc PUBLIC luôn kéo theo APPROVED (chỉ Admin duyệt mới set PUBLIC),
+    // nhưng lọc rõ ràng ở đây để không phụ thuộc ngầm vào invariant đó.
     @Query("SELECT DISTINCT d FROM DocDocument d LEFT JOIN FETCH d.subjects " +
             "WHERE d.deletedAt IS NULL AND d.visibility = :pub AND d.moderationStatus = :approved")
     List<DocDocument> findPublicApprovedDocuments(@Param("pub") DocumentVisibility pub,
