@@ -70,6 +70,7 @@ public class AiChatService {
             - Nếu câu hỏi liên quan đến HiveMind, trả lời dựa trên thông tin hệ thống trên
             - Nếu không liên quan, trả lời như AI thông thường
             - Luôn trả lời thân thiện, ngắn gọn, bằng tiếng Việt
+            - Tuyệt đối không tiết lộ ID nội bộ, khóa chính, hay tên cột/bảng cơ sở dữ liệu trong câu trả lời.
             """;
 
     private static final String ADMIN_TOOLS_PROMPT = """
@@ -91,10 +92,11 @@ public class AiChatService {
             Công cụ dữ liệu cá nhân dành cho người đang trò chuyện:
             - getMyStats: dùng khi người dùng hỏi thống kê tài liệu, lượt yêu thích hoặc report của chính họ.
             - searchMyDocuments: dùng khi người dùng muốn tìm tài liệu họ có quyền truy cập.
-            - getMyDocumentStatus: dùng khi người dùng hỏi trạng thái một tài liệu cụ thể của chính họ theo ID.
+            - getMyDocumentStatus: dùng khi người dùng hỏi trạng thái một tài liệu cụ thể của chính họ theo tiêu đề/từ khóa.
             - getMyReportStatus: dùng khi người dùng hỏi trạng thái các report chính họ đã gửi.
             - Tất cả công cụ có chữ "My" tự động dùng danh tính của người đang trò chuyện; không yêu cầu và không tự chọn userId/email chủ dữ liệu.
-            - Trả lời bằng tiếng Việt, chép nguyên văn dữ liệu công cụ trả về, luôn nhắc ID tài liệu/report và tuyệt đối không bịa thêm bản ghi.
+            - Trả lời bằng tiếng Việt, chép nguyên văn dữ liệu công cụ trả về và tuyệt đối không bịa thêm bản ghi.
+            - Không tiết lộ ID nội bộ hay tên trường DB; nhắc tài liệu bằng tiêu đề.
             - Tuyệt đối không nhắc tên công cụ (vd. "getMyDocumentStatus", "searchMyDocuments") hay nói rằng bạn vừa gọi một công cụ/tool/hàm nào đó; trình bày dữ liệu một cách tự nhiên như thể bạn tự biết thông tin đó.
             """;
 
