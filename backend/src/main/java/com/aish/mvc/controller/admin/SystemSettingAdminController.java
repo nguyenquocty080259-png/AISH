@@ -1,5 +1,6 @@
 package com.aish.mvc.controller.admin;
 
+import com.aish.mvc.dto.config.AiConfigDTO;
 import com.aish.mvc.dto.config.MinUploadAgeDTO;
 import com.aish.mvc.dto.config.UploadFileTypesDTO;
 import com.aish.mvc.dto.config.UploadLimitsDTO;
@@ -111,6 +112,83 @@ public class SystemSettingAdminController {
 
         systemSettingService.setValue(SystemSettingService.UPLOAD_ALLOWED_EXTENSIONS_KEY, joined);
         return ResponseEntity.ok(new UploadFileTypesDTO(normalized));
+    }
+
+    @GetMapping("/ai-config")
+    public ResponseEntity<AiConfigDTO> getAiConfig() {
+        return ResponseEntity.ok(readAiConfig());
+    }
+
+    @PutMapping("/ai-config")
+    public ResponseEntity<AiConfigDTO> updateAiConfig(@RequestBody AiConfigDTO request) {
+        Integer topK = request.getTopK();
+        Double similarityThreshold = request.getSimilarityThreshold();
+        Integer recentMessageLimit = request.getRecentMessageLimit();
+        Double subjectOverlapWeight = request.getSubjectOverlapWeight();
+        Double favoriteWeight = request.getFavoriteWeight();
+        Double downloadWeight = request.getDownloadWeight();
+        Double ratingWeight = request.getRatingWeight();
+        Integer chunkSize = request.getChunkSize();
+
+        if (topK == null || topK < 1 || topK > 20) {
+            throw new IllegalArgumentException("error.settings.aiTopKRange");
+        }
+        if (similarityThreshold == null || similarityThreshold < 0.0 || similarityThreshold > 1.0) {
+            throw new IllegalArgumentException("error.settings.aiThresholdRange");
+        }
+        if (recentMessageLimit == null || recentMessageLimit < 0 || recentMessageLimit > 50) {
+            throw new IllegalArgumentException("error.settings.aiRecentLimitRange");
+        }
+        validateNonNegativeWeight(subjectOverlapWeight);
+        validateNonNegativeWeight(favoriteWeight);
+        validateNonNegativeWeight(downloadWeight);
+        validateNonNegativeWeight(ratingWeight);
+        if (chunkSize == null || chunkSize < 100 || chunkSize > 2000) {
+            throw new IllegalArgumentException("error.settings.aiChunkSizeRange");
+        }
+
+        systemSettingService.setValue(SystemSettingService.AI_TOP_K_KEY, String.valueOf(topK));
+        systemSettingService.setValue(
+                SystemSettingService.AI_SIMILARITY_THRESHOLD_KEY, String.valueOf(similarityThreshold));
+        systemSettingService.setValue(
+                SystemSettingService.AI_RECENT_MESSAGE_LIMIT_KEY, String.valueOf(recentMessageLimit));
+        systemSettingService.setValue(
+                SystemSettingService.RECO_SUBJECT_OVERLAP_WEIGHT_KEY, String.valueOf(subjectOverlapWeight));
+        systemSettingService.setValue(SystemSettingService.RECO_FAVORITE_WEIGHT_KEY, String.valueOf(favoriteWeight));
+        systemSettingService.setValue(SystemSettingService.RECO_DOWNLOAD_WEIGHT_KEY, String.valueOf(downloadWeight));
+        systemSettingService.setValue(SystemSettingService.RECO_RATING_WEIGHT_KEY, String.valueOf(ratingWeight));
+        systemSettingService.setValue(SystemSettingService.AI_CHUNK_SIZE_KEY, String.valueOf(chunkSize));
+        return ResponseEntity.ok(readAiConfig());
+    }
+
+    private AiConfigDTO readAiConfig() {
+        int topK = systemSettingService.getInt(
+                SystemSettingService.AI_TOP_K_KEY, SystemSettingService.AI_TOP_K_DEFAULT);
+        double similarityThreshold = systemSettingService.getDouble(
+                SystemSettingService.AI_SIMILARITY_THRESHOLD_KEY,
+                SystemSettingService.AI_SIMILARITY_THRESHOLD_DEFAULT);
+        int recentMessageLimit = systemSettingService.getInt(
+                SystemSettingService.AI_RECENT_MESSAGE_LIMIT_KEY,
+                SystemSettingService.AI_RECENT_MESSAGE_LIMIT_DEFAULT);
+        double subjectOverlapWeight = systemSettingService.getDouble(
+                SystemSettingService.RECO_SUBJECT_OVERLAP_WEIGHT_KEY,
+                SystemSettingService.RECO_SUBJECT_OVERLAP_WEIGHT_DEFAULT);
+        double favoriteWeight = systemSettingService.getDouble(
+                SystemSettingService.RECO_FAVORITE_WEIGHT_KEY, SystemSettingService.RECO_FAVORITE_WEIGHT_DEFAULT);
+        double downloadWeight = systemSettingService.getDouble(
+                SystemSettingService.RECO_DOWNLOAD_WEIGHT_KEY, SystemSettingService.RECO_DOWNLOAD_WEIGHT_DEFAULT);
+        double ratingWeight = systemSettingService.getDouble(
+                SystemSettingService.RECO_RATING_WEIGHT_KEY, SystemSettingService.RECO_RATING_WEIGHT_DEFAULT);
+        int chunkSize = systemSettingService.getInt(
+                SystemSettingService.AI_CHUNK_SIZE_KEY, SystemSettingService.AI_CHUNK_SIZE_DEFAULT);
+        return new AiConfigDTO(topK, similarityThreshold, recentMessageLimit, subjectOverlapWeight,
+                favoriteWeight, downloadWeight, ratingWeight, chunkSize);
+    }
+
+    private void validateNonNegativeWeight(Double value) {
+        if (value == null || value < 0.0) {
+            throw new IllegalArgumentException("error.settings.aiWeightNonNegative");
+        }
     }
 
     private UploadLimitsDTO readUploadLimits() {
