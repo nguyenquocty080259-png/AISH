@@ -150,6 +150,25 @@
       "tokens": "tokens",
       "footnote": "CHAT_GENERAL tính theo response cuối, chưa gộp các vòng tool nội bộ; lượt gọi lỗi giữa chừng không được ghi."
     },
+    "aiReport": {
+      "title": "Báo cáo token",
+      "granularityLabel": "Mốc thời gian",
+      "granularityDay": "Ngày",
+      "granularityWeek": "Tuần",
+      "granularityMonth": "Tháng",
+      "granularityQuarter": "Quý",
+      "granularityYear": "Năm",
+      "fromLabel": "Từ ngày",
+      "toLabel": "Đến ngày",
+      "totalTokens": "Tổng token",
+      "totalCalls": "Tổng lượt gọi",
+      "colBucket": "Mốc thời gian",
+      "colTokens": "Token",
+      "colCalls": "Lượt gọi",
+      "loading": "Đang tải báo cáo...",
+      "loadError": "Không tải được báo cáo token.",
+      "empty": "Chưa có dữ liệu cho khoảng thời gian đã chọn."
+    },
     "stats": {
       "title": "Bảng điều khiển Admin",
       "loading": "Đang tải thống kê...",

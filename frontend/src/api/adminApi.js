@@ -10,6 +10,14 @@ export function getAiUsage() {
   return apiClient.get("/admin/ai-usage").then((res) => res.data);
 }
 
+// granularity: "DAY" | "WEEK" | "MONTH" | "QUARTER" | "YEAR". from/to: "YYYY-MM-DD" (to là exclusive
+// ở BE - xem AiUsageReport.jsx để biết cách bù +1 ngày trước khi gọi hàm này).
+export function getAiUsageReport(granularity, from, to) {
+  return apiClient
+    .get("/admin/ai-usage/report", { params: { granularity, from, to } })
+    .then((res) => res.data);
+}
+
 // status: AppealStatus ("APPEAL_PENDING" | "APPEAL_APPROVED" | "APPEAL_REJECTED"), optional.
 // Omit to get every appeal regardless of status.
 export function listAppeals(status) {

@@ -150,6 +150,25 @@
       "tokens": "tokens",
       "footnote": "CHAT_GENERAL is counted by the final response, internal tool rounds are not aggregated; calls that error mid-way are not recorded."
     },
+    "aiReport": {
+      "title": "Token report",
+      "granularityLabel": "Granularity",
+      "granularityDay": "Day",
+      "granularityWeek": "Week",
+      "granularityMonth": "Month",
+      "granularityQuarter": "Quarter",
+      "granularityYear": "Year",
+      "fromLabel": "From",
+      "toLabel": "To",
+      "totalTokens": "Total tokens",
+      "totalCalls": "Total calls",
+      "colBucket": "Period",
+      "colTokens": "Tokens",
+      "colCalls": "Calls",
+      "loading": "Loading report...",
+      "loadError": "Could not load the token report.",
+      "empty": "No data for the selected range."
+    },
     "stats": {
       "title": "Admin dashboard",
       "loading": "Loading statistics...",

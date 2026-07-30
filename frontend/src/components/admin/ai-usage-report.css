@@ -1,0 +1,121 @@
+.ai-usage-report {
+    margin-top: 24px;
+    padding: 20px;
+    border: 1px solid var(--color-border, #e2e8f0);
+    border-radius: 16px;
+    background: var(--color-surface, #fff);
+}
+
+.ai-usage-report__title {
+    margin: 0 0 16px;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.ai-usage-report__controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.ai-usage-report__field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: var(--body-sm, 0.85rem);
+    color: var(--color-text-secondary, #64748b);
+}
+
+.ai-usage-report__field select,
+.ai-usage-report__field input {
+    padding: 6px 10px;
+    border: 1px solid var(--color-border, #cbd5e1);
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.ai-usage-report__status {
+    color: var(--color-text-secondary, #64748b);
+    font-size: var(--body-sm, 0.85rem);
+}
+
+.ai-usage-report__summary {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 20px;
+}
+
+.ai-usage-report__summary-item {
+    display: flex;
+    flex-direction: column;
+    padding: 12px 20px;
+    border-radius: 12px;
+    background: #eff6ff;
+}
+
+.ai-usage-report__summary-item strong {
+    font-size: 1.4rem;
+    color: #1d4ed8;
+}
+
+.ai-usage-report__summary-item span {
+    font-size: var(--body-sm, 0.85rem);
+    color: var(--color-text-secondary, #64748b);
+}
+
+.ai-usage-report__chart {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.ai-usage-report__bar-row {
+    display: grid;
+    grid-template-columns: 110px 1fr 90px;
+    align-items: center;
+    gap: 10px;
+}
+
+.ai-usage-report__bar-label {
+    font-size: var(--body-sm, 0.85rem);
+    color: var(--color-text-secondary, #64748b);
+}
+
+.ai-usage-report__bar-track {
+    height: 14px;
+    border-radius: 999px;
+    background: #eef2f7;
+    overflow: hidden;
+}
+
+.ai-usage-report__bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+    min-width: 2px;
+}
+
+.ai-usage-report__bar-value {
+    font-size: var(--body-sm, 0.85rem);
+    text-align: right;
+}
+
+.ai-usage-report__table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.ai-usage-report__table th {
+    text-align: left;
+    padding: 10px 12px;
+    font-weight: 700;
+    color: #555;
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.ai-usage-report__table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #f0f0f0;
+}
