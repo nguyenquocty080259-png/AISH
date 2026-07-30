@@ -8,7 +8,6 @@ import com.aish.mvc.entity.enums.NotificationType;
 import com.aish.mvc.entity.enums.UserStatus;
 import com.aish.mvc.entity.interaction.CaseMessage;
 import com.aish.mvc.entity.report.Report;
-import com.aish.mvc.exception.ForbiddenException;
 import com.aish.mvc.exception.ResourceNotFoundException;
 import com.aish.mvc.repository.auth.AuthAccountRepository;
 import com.aish.mvc.repository.auth.AuthUserRepository;
@@ -116,7 +115,10 @@ public class CaseMessageServiceImpl implements CaseMessageService {
         Long ownerId = resolveCaseOwnerId(caseType, caseId);
 
         if (!isAdmin && (ownerId == null || !ownerId.equals(currentUser.getId()))) {
-            throw new ForbiddenException("error.caseMessage.forbidden");
+            // Đồng nhất với "case không tồn tại" (404) để không lộ ID case nào có thật (chống dò ID/IDOR).
+            throw new ResourceNotFoundException(caseType == CaseType.REPORT
+                    ? "error.caseMessage.reportNotFound"
+                    : "error.caseMessage.appealNotFound");
         }
     }
 
