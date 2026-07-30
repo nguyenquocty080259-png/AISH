@@ -51,14 +51,13 @@ public class UserAiTools {
                             .filter(document -> document.getModerationStatus() == status).count())
                     .reduce((left, right) -> left + ", " + right).orElse("-");
             return """
-                    ID người dùng: %d
                     Tổng tài liệu sở hữu (không tính thùng rác): %d
                     Công khai: %d
                     Riêng tư: %d
                     Phân loại kiểm duyệt: %s
                     Tổng lượt yêu thích nhận được: %d
                     Số report đã gửi: %d""".formatted(
-                    user.getId(), documents.size(), publicCount, privateCount, moderationBreakdown,
+                    documents.size(), publicCount, privateCount, moderationBreakdown,
                     favoriteRepository.countReceivedByDocumentOwner(user.getId()),
                     reportRepository.countByReporterUserId(user.getId()));
         } catch (Exception exception) {
@@ -98,19 +97,31 @@ public class UserAiTools {
     }
 
     @Tool(description = "Use this tool when the logged-in person asks for the status of one of their own documents by "
-            + "numeric document ID. Never use it to inspect another person's document.")
+            + "title or keyword. Never use it to inspect another person's document.")
     @Transactional(readOnly = true)
-    public String getMyDocumentStatus(Long documentId) {
+    public String getMyDocumentStatus(String titleOrKeyword) {
         try {
             AuthUser user = currentUser();
             if (user == null) return LOGIN_REQUIRED;
-            String refusal = ownedDocumentNotFound(documentId);
-            if (documentId == null) return refusal;
-            DocDocument document = docDocumentRepository.findById(documentId).orElse(null);
-            if (document == null || document.getUser() == null
-                    || !user.getId().equals(document.getUser().getId())) return refusal;
+            String keyword = blankToNull(titleOrKeyword);
+            if (keyword == null) return "Vui lòng cho biết tiêu đề hoặc từ khóa của tài liệu bạn muốn tra cứu.";
+
+            List<DocDocument> matches = docDocumentRepository.findByDeletedAtIsNullAndUser_Id(user.getId()).stream()
+                    .filter(document -> titleMatches(document.getTitle(), keyword))
+                    .toList();
+
+            if (matches.isEmpty()) {
+                return "Không tìm thấy tài liệu nào của bạn khớp với \"" + keyword + "\".";
+            }
+            if (matches.size() > 1) {
+                String titles = matches.stream().limit(5).map(document -> value(document.getTitle()))
+                        .reduce((left, right) -> left + ", " + right).orElse("-");
+                return "Có nhiều tài liệu của bạn khớp với \"" + keyword + "\": " + titles
+                        + ". Bạn vui lòng nói rõ tiêu đề hơn.";
+            }
+
+            DocDocument document = matches.get(0);
             return """
-                    ID: %d
                     Tiêu đề: %s
                     Visibility: %s
                     Moderation status: %s
@@ -120,13 +131,13 @@ public class UserAiTools {
                     Admin xác nhận: %s
                     Created at: %s
                     Trạng thái thùng rác: %s""".formatted(
-                    document.getId(), value(document.getTitle()), value(document.getVisibility()),
+                    value(document.getTitle()), value(document.getVisibility()),
                     value(document.getModerationStatus()), value(document.getModerationReason()),
                     value(document.getIngestStatus()), value(document.getMetadataMatchStatus()),
                     document.getAdminReviewedAt() == null ? "Chưa được Admin xác nhận" : "Đã được Admin xác nhận",
                     value(document.getCreatedAt()), document.getDeletedAt() == null ? "Không" : "Đang ở trong thùng rác");
         } catch (Exception exception) {
-            log.warn("Không thể lấy trạng thái tài liệu cá nhân {}: {}", documentId, exception.getMessage());
+            log.warn("Không thể lấy trạng thái tài liệu cá nhân theo tiêu đề '{}': {}", titleOrKeyword, exception.getMessage());
             return "Không thể lấy trạng thái tài liệu của bạn lúc này. Vui lòng thử lại sau.";
         }
     }
@@ -141,8 +152,8 @@ public class UserAiTools {
             List<Report> reports = reportRepository.findByReporterUserIdOrderByCreatedAtDesc(user.getId()).stream()
                     .limit(10).toList();
             if (reports.isEmpty()) return "Bạn chưa gửi report nào.";
-            return reports.stream().map(report -> "ID %d | Loại/đối tượng: %s ID %s (nguồn: %s) | Trạng thái: %s | Created at: %s"
-                            .formatted(report.getId(), value(report.getTargetType()), value(report.getTargetId()),
+            return reports.stream().map(report -> "Loại/đối tượng: %s (nguồn: %s) | Trạng thái: %s | Created at: %s"
+                            .formatted(value(report.getTargetType()),
                                     value(report.getSource()), value(report.getStatus()), value(report.getCreatedAt())))
                     .reduce((left, right) -> left + "\n" + right).orElseThrow();
         } catch (Exception exception) {
@@ -166,8 +177,8 @@ public class UserAiTools {
                     || document.getModerationStatus() != ModerationStatus.APPROVED)) continue;
             if (!documentAccessPort.isAvailableTo(document.getId(), userId)) continue;
             included.add(document.getId());
-            lines.add("ID %d | %s | Chủ sở hữu: %s | Nhóm: %s".formatted(
-                    document.getId(), value(document.getTitle()),
+            lines.add("%s | Chủ sở hữu: %s | Nhóm: %s".formatted(
+                    value(document.getTitle()),
                     document.getUser() == null ? "-" : value(document.getUser().getFullName()), group));
         }
     }
@@ -175,10 +186,6 @@ public class UserAiTools {
     private static boolean titleMatches(String title, String keyword) {
         return keyword == null || title != null
                 && title.toLowerCase(Locale.ROOT).contains(keyword.toLowerCase(Locale.ROOT));
-    }
-
-    private static String ownedDocumentNotFound(Long documentId) {
-        return "Không tìm thấy tài liệu ID " + value(documentId) + " trong tài liệu của bạn.";
     }
 
     private static int normalizeLimit(Integer limit) {
