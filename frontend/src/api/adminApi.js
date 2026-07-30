@@ -162,3 +162,13 @@ export function updateUploadFileTypes(allowedExtensions) {
     .then((res) => res.data);
 }
 
+// TOP_K/threshold/recent-limit (AiChatService), 4 trọng số gợi ý (RecommendationServiceImpl),
+// chunkSize (DocEmbeddingServiceImpl). Tất cả đọc/ghi qua SystemSetting - xem AiConfigDTO.
+export function getAiConfig() {
+  return apiClient.get("/admin/settings/ai-config").then((res) => res.data);
+}
+
+export function updateAiConfig(payload) {
+  return apiClient.put("/admin/settings/ai-config", payload).then((res) => res.data);
+}
+

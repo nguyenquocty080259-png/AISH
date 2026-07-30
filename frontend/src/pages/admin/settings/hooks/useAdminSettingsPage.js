@@ -23,18 +23,28 @@ export function useAdminSettingsPage() {
   const [quotaLocalGb, setQuotaLocalGb] = useState("");
   const [quotaCloudGb, setQuotaCloudGb] = useState("");
   const [allowedFileTypes, setAllowedFileTypes] = useState("");
+  const [aiTopK, setAiTopK] = useState("");
+  const [aiThreshold, setAiThreshold] = useState("");
+  const [aiRecentLimit, setAiRecentLimit] = useState("");
+  const [aiSubjectOverlapWeight, setAiSubjectOverlapWeight] = useState("");
+  const [aiFavoriteWeight, setAiFavoriteWeight] = useState("");
+  const [aiDownloadWeight, setAiDownloadWeight] = useState("");
+  const [aiRatingWeight, setAiRatingWeight] = useState("");
+  const [aiChunkSize, setAiChunkSize] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingLimits, setSavingLimits] = useState(false);
   const [savingFileTypes, setSavingFileTypes] = useState(false);
+  const [savingAiConfig, setSavingAiConfig] = useState(false);
 
   const load = async () => {
     setLoading(true);
     try {
-      const [ageData, limitsData, fileTypesData] = await Promise.all([
+      const [ageData, limitsData, fileTypesData, aiConfigData] = await Promise.all([
         adminApi.getMinUploadAge(),
         adminApi.getUploadLimits(),
         adminApi.getUploadFileTypes(),
+        adminApi.getAiConfig(),
       ]);
       setMinUploadAge(String(ageData.minUploadAge));
       setMaxFileLocalGb(bytesToGb(limitsData.maxFileLocalBytes));
@@ -42,6 +52,14 @@ export function useAdminSettingsPage() {
       setQuotaLocalGb(bytesToGb(limitsData.quotaLocalBytes));
       setQuotaCloudGb(bytesToGb(limitsData.quotaCloudBytes));
       setAllowedFileTypes((fileTypesData.allowedExtensions || []).join(", "));
+      setAiTopK(String(aiConfigData.topK));
+      setAiThreshold(String(aiConfigData.similarityThreshold));
+      setAiRecentLimit(String(aiConfigData.recentMessageLimit));
+      setAiSubjectOverlapWeight(String(aiConfigData.subjectOverlapWeight));
+      setAiFavoriteWeight(String(aiConfigData.favoriteWeight));
+      setAiDownloadWeight(String(aiConfigData.downloadWeight));
+      setAiRatingWeight(String(aiConfigData.ratingWeight));
+      setAiChunkSize(String(aiConfigData.chunkSize));
     } catch (err) {
       showError(err.message);
     } finally {
@@ -175,6 +193,79 @@ export function useAdminSettingsPage() {
     }
   };
 
+  // Validate ở FE trước cho phản hồi tức thì; validate thật (cùng khoảng) ở BE
+  // (SystemSettingAdminController#updateAiConfig) vẫn là nguồn sự thật cuối cùng.
+  const validateRange = (value, label, min, max) => {
+    const num = Number(value);
+    if (value === "" || Number.isNaN(num)) {
+      return t("admin.settings.valMustBeNumber", { label });
+    }
+    if (num < min || num > max) {
+      return t("admin.settings.valRange", { label, min, max });
+    }
+    return null;
+  };
+
+  const saveAiConfig = async (values) => {
+    const {
+      topK,
+      similarityThreshold,
+      recentMessageLimit,
+      subjectOverlapWeight,
+      favoriteWeight,
+      downloadWeight,
+      ratingWeight,
+      chunkSize,
+    } = values;
+
+    const checks = [
+      [topK, t("admin.settings.aiTopK"), 1, 20],
+      [similarityThreshold, t("admin.settings.aiThreshold"), 0.0, 1.0],
+      [recentMessageLimit, t("admin.settings.aiRecentLimit"), 0, 50],
+      [subjectOverlapWeight, t("admin.settings.aiSubjectOverlapWeight"), 0, Infinity],
+      [favoriteWeight, t("admin.settings.aiFavoriteWeight"), 0, Infinity],
+      [downloadWeight, t("admin.settings.aiDownloadWeight"), 0, Infinity],
+      [ratingWeight, t("admin.settings.aiRatingWeight"), 0, Infinity],
+      [chunkSize, t("admin.settings.aiChunkSize"), 100, 2000],
+    ];
+    for (const [value, label, min, max] of checks) {
+      const error = validateRange(value, label, min, max);
+      if (error) {
+        showError(error);
+        return false;
+      }
+    }
+
+    setSavingAiConfig(true);
+    try {
+      const data = await adminApi.updateAiConfig({
+        topK: Number(topK),
+        similarityThreshold: Number(similarityThreshold),
+        recentMessageLimit: Number(recentMessageLimit),
+        subjectOverlapWeight: Number(subjectOverlapWeight),
+        favoriteWeight: Number(favoriteWeight),
+        downloadWeight: Number(downloadWeight),
+        ratingWeight: Number(ratingWeight),
+        chunkSize: Number(chunkSize),
+      });
+      setAiTopK(String(data.topK));
+      setAiThreshold(String(data.similarityThreshold));
+      setAiRecentLimit(String(data.recentMessageLimit));
+      setAiSubjectOverlapWeight(String(data.subjectOverlapWeight));
+      setAiFavoriteWeight(String(data.favoriteWeight));
+      setAiDownloadWeight(String(data.downloadWeight));
+      setAiRatingWeight(String(data.ratingWeight));
+      setAiChunkSize(String(data.chunkSize));
+      showSuccess(t("admin.settings.saved"));
+      return true;
+    } catch (err) {
+      showError(err.message);
+      return false;
+    } finally {
+      setSavingAiConfig(false);
+    }
+  };
+
   return {
     minUploadAge,
     loading,
@@ -189,5 +280,15 @@ export function useAdminSettingsPage() {
     allowedFileTypes,
     savingFileTypes,
     saveAllowedFileTypes,
+    aiTopK,
+    aiThreshold,
+    aiRecentLimit,
+    aiSubjectOverlapWeight,
+    aiFavoriteWeight,
+    aiDownloadWeight,
+    aiRatingWeight,
+    aiChunkSize,
+    savingAiConfig,
+    saveAiConfig,
   };
 }
