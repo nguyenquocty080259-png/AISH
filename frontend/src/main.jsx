@@ -5,6 +5,7 @@ import "./assets/css/tailwind.css";
 import "./assets/css/reset.css";
 import "./styles/tokens.css";
 import "./assets/css/global.css";
+import "./styles/doc-card.css";
 import "./assets/css/toast.css";
 
 import "./i18n";

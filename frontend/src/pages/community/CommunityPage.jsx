@@ -3,6 +3,21 @@ import { useTranslation } from "react-i18next";
 import { useCommunityPage } from "./useCommunityPage";
 import { ROUTES, buildRoute } from "../../constants/routes";
 import DocumentThumb from "../../components/ui/DocumentThumb";
+import PageHeader from "../../components/ui/PageHeader";
+import EmptyState from "../../components/ui/EmptyState";
+import Pagination from "../../components/ui/Pagination";
+import Button from "../../components/ui/Button";
+import FormatBadge from "../../components/ui/FormatBadge";
+import { SkeletonCard } from "../../components/ui/Skeleton";
+import { Input, Select } from "../../components/ui/Field";
+import "./community.css";
+
+const IconSearch = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8" />
+    <path d="m21 21-4.3-4.3" />
+  </svg>
+);
 
 export default function CommunityPage() {
   const { t } = useTranslation();
@@ -12,64 +27,106 @@ export default function CommunityPage() {
     resetFilters, page, setPage, totalPages,
   } = useCommunityPage();
 
-  const selectCls = "rounded-pill border border-border bg-surface px-4 py-2.5 text-sm text-app outline-none focus:border-primary cursor-pointer";
-
   return (
-    <div className="px-6 lg:px-8 py-6 text-app">
-      <h1 className="mb-6 text-2xl font-bold">{t("community.title")}</h1>
+    <div className="page-shell community">
+      <PageHeader title={t("community.title")} subtitle={t("community.subtitle")} />
 
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        <div className="relative min-w-[220px] flex-1">
-          <svg className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-secondary" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
-          <input type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder={t("community.searchPlaceholder")}
-            className="w-full rounded-pill border border-border bg-surface py-2.5 pl-11 pr-4 text-sm text-app outline-none focus:border-primary" />
-        </div>
-        <select value={subjectId} onChange={(e) => setSubjectId(e.target.value)} className={selectCls}>
+      <div className="community__toolbar">
+        <Input
+          type="search"
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
+          placeholder={t("community.searchPlaceholder")}
+          aria-label={t("community.searchPlaceholder")}
+          leftIcon={<IconSearch />}
+          fieldClassName="community__search"
+        />
+
+        <Select
+          value={subjectId}
+          onChange={(e) => setSubjectId(e.target.value)}
+          aria-label={t("community.allSubjects")}
+          fieldClassName="community__filter"
+        >
           <option value="">{t("community.allSubjects")}</option>
           {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-        </select>
-        <select value={minRating} onChange={(e) => setMinRating(e.target.value)} className={selectCls}>
+        </Select>
+
+        <Select
+          value={minRating}
+          onChange={(e) => setMinRating(e.target.value)}
+          aria-label={t("community.anyRating")}
+          fieldClassName="community__filter"
+        >
           <option value="">{t("community.anyRating")}</option>
           <option value="4">{t("community.rating4")}</option>
           <option value="3">{t("community.rating3")}</option>
           <option value="2">{t("community.rating2")}</option>
           <option value="1">{t("community.rating1")}</option>
-        </select>
-        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className={selectCls}>
+        </Select>
+
+        <Select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          aria-label={t("community.sortNewest")}
+          fieldClassName="community__filter"
+        >
           <option value="newest">{t("community.sortNewest")}</option>
           <option value="downloads">{t("community.sortDownloads")}</option>
           <option value="rating">{t("community.sortRating")}</option>
-        </select>
-        <button type="button" onClick={resetFilters}
-          className="rounded-pill border border-border bg-surface px-4 py-2.5 text-sm font-medium text-secondary transition-colors hover:border-primary hover:text-primary">
+        </Select>
+
+        <Button variant="ghost" onClick={resetFilters} className="community__reset">
           {t("community.resetFilter")}
-        </button>
+        </Button>
       </div>
 
       {loading ? (
-        <p className="py-16 text-center text-secondary">{t("community.loading")}</p>
+        <div className="doc-grid" aria-busy="true" aria-label={t("community.loading")}>
+          {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
+        </div>
       ) : items.length === 0 ? (
-        <p className="py-16 text-center text-secondary">{t("community.empty")}</p>
+        <EmptyState
+          icon="🔍"
+          title={t("community.empty")}
+          message={t("community.emptyHint")}
+          actionLabel={t("community.resetFilter")}
+          onAction={resetFilters}
+        />
       ) : (
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="doc-grid">
           {items.map((doc) => {
             const detail = buildRoute(ROUTES.DOCUMENT_DETAIL, { id: doc.id });
             return (
-              <article key={doc.id} className="flex flex-col rounded-card border border-border bg-surface shadow-sm transition-transform hover:-translate-y-1">
-                <Link to={detail} className="doc-card__thumb-link block p-3 pb-0">
+              <article key={doc.id} className="doc-tile">
+                <Link to={detail} className="doc-card__thumb-link doc-tile__media" tabIndex={-1} aria-hidden="true">
                   <DocumentThumb doc={doc} />
                 </Link>
-                <div className="flex flex-1 flex-col p-4 pt-3">
+
+                <div className="doc-tile__body">
                   {doc.subjectNames?.length > 0 && (
-                    <span className="mb-1 text-xs font-semibold uppercase tracking-wide text-primary">{doc.subjectNames.join(", ")}</span>
+                    <span className="doc-tile__eyebrow">{doc.subjectNames.join(", ")}</span>
                   )}
-                  <Link to={detail} className="line-clamp-2 font-semibold text-app hover:text-primary">{doc.title}</Link>
-                  <p className="mt-1 line-clamp-2 flex-1 text-sm text-secondary">{doc.description}</p>
-                  <div className="mt-3 flex items-center justify-between border-t border-border pt-3 text-xs text-secondary">
-                    <span className="truncate">{doc.ownerName}</span>
-                    <span className="flex items-center gap-3">
-                      <span className="text-primary-dark">★ {doc.averageRating?.toFixed?.(1) ?? "—"}</span>
-                      <span>⬇ {doc.downloadCount ?? 0}</span>
+
+                  <Link to={detail} className="doc-tile__title has-custom-focus">{doc.title}</Link>
+
+                  {doc.description && <p className="doc-tile__desc">{doc.description}</p>}
+
+                  <div className="doc-tile__badges">
+                    <FormatBadge fileType={doc.fileType} fileName={doc.fileName} />
+                  </div>
+
+                  <div className="doc-tile__foot">
+                    <span className="doc-tile__owner">{doc.ownerName}</span>
+                    <span className="doc-tile__stats">
+                      <span className="doc-tile__stat doc-tile__stat--rating">
+                        <span aria-hidden="true">★</span>
+                        {doc.averageRating?.toFixed?.(1) ?? "—"}
+                      </span>
+                      <span className="doc-tile__stat">
+                        <span aria-hidden="true">⬇</span>
+                        {doc.downloadCount ?? 0}
+                      </span>
                     </span>
                   </div>
                 </div>
@@ -79,15 +136,16 @@ export default function CommunityPage() {
         </div>
       )}
 
-      {totalPages > 1 && (
-        <div className="mt-8 flex items-center justify-center gap-4 text-sm">
-          <button disabled={page <= 0} onClick={() => setPage((p) => p - 1)}
-            className="rounded-input border border-border px-4 py-2 text-secondary transition-colors hover:border-primary hover:text-primary disabled:opacity-50">{t("community.prev")}</button>
-          <span className="text-secondary">{t("community.pageOf", { page: page + 1, total: totalPages })}</span>
-          <button disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}
-            className="rounded-input border border-border px-4 py-2 text-secondary transition-colors hover:border-primary hover:text-primary disabled:opacity-50">{t("community.next")}</button>
-        </div>
-      )}
+      {/* Hook đánh số trang từ 0, Pagination dùng số từ 1 -> quy đổi ở đây, không đụng hook. */}
+      <Pagination
+        className="community__pagination"
+        page={page + 1}
+        totalPages={totalPages}
+        onPageChange={(next) => setPage(next - 1)}
+        prevLabel={t("community.prev")}
+        nextLabel={t("community.next")}
+        ariaLabel={t("community.title")}
+      />
     </div>
   );
 }

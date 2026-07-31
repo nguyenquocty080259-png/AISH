@@ -3,6 +3,16 @@
     "account": "Tài khoản",
     "user": "Người dùng",
     "openMenu": "Mở menu",
+    "moderation": {
+      "notRequired": "Chưa cần duyệt",
+      "adminPending": "Chờ Admin duyệt",
+      "approved": "Đã duyệt",
+      "rejected": "Bị từ chối"
+    },
+    "visibility": {
+      "public": "Công khai",
+      "private": "Riêng tư"
+    },
     "loggedOut": "Đã đăng xuất.",
     "menu": {
       "profile": "Trang cá nhân",
@@ -1186,6 +1196,8 @@
   },
   "community": {
     "title": "Cộng đồng",
+    "subtitle": "Khám phá tài liệu công khai do cộng đồng chia sẻ.",
+    "emptyHint": "Thử đổi từ khoá hoặc bỏ bớt bộ lọc để xem thêm tài liệu.",
     "searchPlaceholder": "Tìm tài liệu công khai...",
     "allSubjects": "Tất cả môn học",
     "anyRating": "Mọi đánh giá",

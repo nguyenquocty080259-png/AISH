@@ -3,6 +3,16 @@
     "account": "Account",
     "user": "User",
     "openMenu": "Open menu",
+    "moderation": {
+      "notRequired": "No review needed",
+      "adminPending": "Awaiting admin review",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "visibility": {
+      "public": "Public",
+      "private": "Private"
+    },
     "loggedOut": "Signed out.",
     "menu": {
       "profile": "Profile",
@@ -1186,6 +1196,8 @@
   },
   "community": {
     "title": "Community",
+    "subtitle": "Explore public documents shared by the community.",
+    "emptyHint": "Try a different keyword or clear some filters to see more documents.",
     "searchPlaceholder": "Search public documents...",
     "allSubjects": "All subjects",
     "anyRating": "Any rating",
