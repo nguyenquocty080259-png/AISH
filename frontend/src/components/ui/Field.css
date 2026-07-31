@@ -1,0 +1,135 @@
+/* Form control dùng chung. Lớp .ui-input là "bề mặt" gốc — input, textarea và select
+   đều xài, nên 3 loại luôn cùng chiều cao, cùng viền, cùng vòng focus. */
+
+.ui-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.ui-field__label {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+}
+
+.ui-field__required {
+    color: var(--color-danger-fg);
+    margin-left: 2px;
+}
+
+.ui-field__hint {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    line-height: var(--leading-snug);
+}
+
+.ui-field__error {
+    font-size: var(--text-xs);
+    color: var(--color-danger-fg);
+    line-height: var(--leading-snug);
+}
+
+/* ===== Bề mặt input ===== */
+
+.ui-input {
+    width: 100%;
+    min-width: 0;
+    padding: var(--space-2) var(--space-3);
+    min-height: 40px;
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: var(--leading-snug);
+    color: var(--color-text);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast),
+        background-color var(--transition-fast);
+}
+
+.ui-input::placeholder {
+    color: var(--color-text-subtle);
+}
+
+.ui-input:hover:not(:disabled):not(:read-only) {
+    border-color: var(--color-text-subtle);
+}
+
+.ui-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: var(--focus-ring);
+}
+
+.ui-input:disabled {
+    background-color: var(--color-surface-2);
+    color: var(--color-text-muted);
+    cursor: not-allowed;
+}
+
+.ui-field--invalid .ui-input {
+    border-color: var(--color-danger-fg);
+}
+
+.ui-field--invalid .ui-input:focus {
+    box-shadow: 0 0 0 3px var(--color-danger-bg);
+}
+
+.ui-textarea {
+    min-height: 88px;
+    padding: var(--space-3);
+    resize: vertical;
+    line-height: var(--leading-normal);
+}
+
+/* ===== Input có icon / slot phải ===== */
+
+.ui-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.ui-input__adornment {
+    position: absolute;
+    left: var(--space-3);
+    display: inline-flex;
+    align-items: center;
+    color: var(--color-text-subtle);
+    pointer-events: none;
+}
+
+.ui-input-wrap--has-left .ui-input {
+    padding-left: var(--space-10);
+}
+
+.ui-input__right {
+    position: absolute;
+    right: var(--space-2);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+/* ===== Select ===== */
+
+.ui-select-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.ui-select {
+    appearance: none;
+    padding-right: var(--space-8);
+    cursor: pointer;
+}
+
+.ui-select__chevron {
+    position: absolute;
+    right: var(--space-3);
+    color: var(--color-text-muted);
+    pointer-events: none;
+}

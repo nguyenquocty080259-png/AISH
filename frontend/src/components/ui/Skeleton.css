@@ -1,0 +1,80 @@
+/* Skeleton: nền surface-2 + vệt sáng chạy ngang. Nhẹ, chỉ animation background-position. */
+
+.ui-skeleton {
+    display: block;
+    background-color: var(--color-surface-2);
+    background-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.65) 50%,
+        transparent 100%
+    );
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    border-radius: var(--radius-sm);
+    animation: ui-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+[data-theme="dark"] .ui-skeleton {
+    background-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.08) 50%,
+        transparent 100%
+    );
+}
+
+.ui-skeleton--line {
+    height: 12px;
+    width: 100%;
+}
+
+.ui-skeleton--title {
+    height: 18px;
+    width: 70%;
+    border-radius: var(--radius-xs);
+}
+
+.ui-skeleton--block {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--radius-md);
+}
+
+.ui-skeleton--circle {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+}
+
+.ui-skeleton-text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    width: 100%;
+}
+
+.ui-skeleton-card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.ui-skeleton-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+@keyframes ui-skeleton-shimmer {
+    from {
+        background-position: 180% 0;
+    }
+    to {
+        background-position: -80% 0;
+    }
+}

@@ -1,5 +1,8 @@
+/* Nhãn định dạng file (PDF/DOCX/XLSX...) — trung tính để không tranh chú ý với
+   badge trạng thái kiểm duyệt vốn mới là thứ cần nhìn thấy trước. */
+
 .format-badge {
     text-transform: uppercase;
-    font-weight: 700;
+    font-weight: var(--weight-bold);
     letter-spacing: 0.02em;
 }

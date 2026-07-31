@@ -50,7 +50,7 @@ export default function FormatBadge({ fileType, fileName, className = "" }) {
   const label = resolveFormatLabel(fileType, fileName);
   if (!label) return null;
   return (
-    <Badge intent="info" className={`format-badge ${className}`.trim()}>
+    <Badge intent="neutral" size="sm" className={`format-badge ${className}`.trim()}>
       {label}
     </Badge>
   );

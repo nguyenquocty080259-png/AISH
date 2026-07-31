@@ -1,32 +1,60 @@
-/* Header trang: tăng spacing dưới + title đậm hơn tí, subtitle line-height rộng. */
+/* Header trang: tiêu đề + mô tả bên trái, cụm nút bên phải, có thể kèm breadcrumb/eyebrow. */
 
 .ui-page-header {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: var(--spacing-md);
-    margin-bottom: var(--spacing-xl);
+    gap: var(--space-4);
+    margin-bottom: var(--space-8);
     flex-wrap: wrap;
 }
 
+.ui-page-header__text {
+    min-width: 0;
+}
+
+.ui-page-header__eyebrow {
+    display: block;
+    margin-bottom: var(--space-2);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-accent-text);
+}
+
 .ui-page-header__title {
-    font-size: var(--headline-lg);
-    font-weight: 700;
+    font-size: var(--text-3xl);
+    font-weight: var(--weight-bold);
     color: var(--color-text);
-    letter-spacing: -0.01em;
+    letter-spacing: var(--tracking-tight);
 }
 
 .ui-page-header__subtitle {
-    font-size: var(--body-sm);
-    color: var(--color-text-secondary);
-    margin-top: 6px;
-    line-height: 1.6;
-    max-width: 720px;
+    font-size: var(--text-base);
+    color: var(--color-text-muted);
+    margin-top: var(--space-2);
+    line-height: var(--leading-normal);
+    max-width: 72ch;
 }
 
 .ui-page-header__actions {
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
+    gap: var(--space-2);
     flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+    .ui-page-header {
+        margin-bottom: var(--space-6);
+    }
+
+    .ui-page-header__title {
+        font-size: var(--text-2xl);
+    }
+
+    .ui-page-header__actions {
+        width: 100%;
+    }
 }

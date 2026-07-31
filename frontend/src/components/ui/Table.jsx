@@ -1,13 +1,18 @@
 import "./Table.css";
 
-// Thin, token-based <table> wrapper — no data/columns API, just styled subcomponents
-// (Table, Table.Head, Table.Body, Table.Row, Table.HeaderCell, Table.Cell) so pages keep
-// writing their own JSX per cell (Badge, Button, conditional content) with zero churn.
-export default function Table({ className = "", children, ...rest }) {
+// Wrapper <table> mỏng theo token — không có API data/columns, chỉ là các sub-component
+// đã style sẵn (Table, Table.Head, Table.Body, Table.Row, Table.HeaderCell, Table.Cell)
+// để mỗi trang vẫn tự viết JSX từng ô (Badge, Button, nội dung có điều kiện) mà không phải sửa gì.
+//
+// Bảng luôn được bọc trong .ui-table-scroll: màn hẹp thì cuộn ngang trong khung của nó,
+// KHÔNG đẩy cả trang tràn ngang.
+export default function Table({ className = "", wrapperClassName = "", children, ...rest }) {
   return (
-    <table className={`ui-table ${className}`.trim()} {...rest}>
-      {children}
-    </table>
+    <div className={`ui-table-scroll ${wrapperClassName}`.trim()}>
+      <table className={`ui-table ${className}`.trim()} {...rest}>
+        {children}
+      </table>
+    </div>
   );
 }
 

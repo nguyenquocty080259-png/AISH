@@ -1,21 +1,24 @@
-/* Button chung. Giữ nguyên 4 variant + rounded-pill mặc định (dùng ở CTA lớn như "Xoá lọc").
-   THÊM rule scoped: nút nằm TRONG .ui-table hoặc .ui-table__actions tự thu nhỏ + đổi sang
-   rounded-input 12px — khớp mockup admin, KHÔNG đụng Button.jsx và KHÔNG đụng caller. */
+/* Button chung — 6 variant x 3 size, mọi giá trị lấy từ token.
+   Giữ bo tròn pill mặc định như bản cũ (CTA lớn kiểu "Xoá lọc").
+   Rule scoped cuối file: nút nằm TRONG .ui-table / .ui-table__actions tự thu nhỏ + bo 12px,
+   khớp mockup admin mà không phải đụng caller. */
 
 .ui-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: var(--spacing-xs);
-    padding: var(--spacing-sm) var(--spacing-lg);
-    border-radius: var(--radius-pill);
-    font-size: var(--body-sm);
-    font-weight: 600;
-    font-family: var(--font-family);
+    gap: var(--space-2);
+    border-radius: var(--radius-full);
+    font-family: var(--font-sans);
+    font-weight: var(--weight-semibold);
+    line-height: 1.2;
     cursor: pointer;
     border: 1px solid transparent;
-    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
     white-space: nowrap;
+    user-select: none;
+    text-decoration: none;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast),
+        color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .ui-btn:disabled {
@@ -23,48 +26,142 @@
     cursor: not-allowed;
 }
 
-.ui-btn--primary {
-    background-color: var(--color-primary);
-    color: var(--color-surface);
+.ui-btn__icon {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
 }
+
+.ui-btn__icon svg {
+    display: block;
+}
+
+.ui-btn--loading {
+    cursor: progress;
+}
+
+/* ===== Size ===== */
+
+.ui-btn--sm {
+    padding: 6px var(--space-3);
+    font-size: var(--text-xs);
+}
+
+.ui-btn--md {
+    padding: var(--space-2) var(--space-5);
+    font-size: var(--text-base);
+}
+
+.ui-btn--lg {
+    padding: 12px var(--space-6);
+    font-size: var(--text-md);
+}
+
+.ui-btn--block {
+    display: flex;
+    width: 100%;
+}
+
+.ui-btn--icon-only {
+    padding: 0;
+}
+
+.ui-btn--icon-only.ui-btn--sm {
+    width: 28px;
+    height: 28px;
+}
+
+.ui-btn--icon-only.ui-btn--md {
+    width: 36px;
+    height: 36px;
+}
+
+.ui-btn--icon-only.ui-btn--lg {
+    width: 44px;
+    height: 44px;
+}
+
+/* ===== Variant ===== */
+
+.ui-btn--primary {
+    background-color: var(--color-accent);
+    color: var(--color-text-on-accent);
+    box-shadow: var(--shadow-xs);
+}
+
 .ui-btn--primary:hover:not(:disabled) {
-    background-color: var(--color-primary-dark);
+    background-color: var(--color-accent-hover);
+}
+
+.ui-btn--primary:active:not(:disabled) {
+    background-color: var(--color-accent-active);
 }
 
 .ui-btn--secondary {
-    background: var(--color-surface);
-    border-color: var(--color-border);
+    background-color: var(--color-surface);
+    border-color: var(--color-border-strong);
     color: var(--color-text);
+    box-shadow: var(--shadow-xs);
 }
+
 .ui-btn--secondary:hover:not(:disabled) {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
+    background-color: var(--color-surface-2);
+    border-color: var(--color-text-subtle);
 }
 
 .ui-btn--ghost {
     background: none;
     border-color: transparent;
-    color: var(--color-text-secondary);
+    color: var(--color-text-muted);
 }
+
 .ui-btn--ghost:hover:not(:disabled) {
-    background-color: var(--color-surface-soft);
-    color: var(--color-primary-dark);
+    background-color: var(--color-surface-2);
+    color: var(--color-text);
 }
 
 .ui-btn--danger {
-    background: var(--color-surface);
-    border-color: var(--color-error);
-    color: var(--color-error);
-}
-.ui-btn--danger:hover:not(:disabled) {
-    background-color: var(--color-error);
-    color: var(--color-surface);
+    background-color: var(--color-surface);
+    border-color: var(--color-danger-border);
+    color: var(--color-danger-fg);
 }
 
-/* Compact khi nằm trong bảng — khớp mockup admin (nút Chi tiết/Sửa/Duyệt/Gỡ). */
+.ui-btn--danger:hover:not(:disabled) {
+    background-color: var(--color-danger-bg);
+    border-color: var(--color-danger-fg);
+}
+
+.ui-btn--danger-solid {
+    background-color: var(--color-danger);
+    color: var(--color-text-on-accent);
+}
+
+.ui-btn--danger-solid:hover:not(:disabled) {
+    filter: brightness(0.92);
+}
+
+.ui-btn--link {
+    background: none;
+    border-color: transparent;
+    color: var(--color-accent-text);
+    padding-inline: 0;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.ui-btn--link:hover:not(:disabled) {
+    color: var(--color-accent-active);
+}
+
+/* Compact khi nằm trong bảng — khớp mockup admin (Chi tiết/Sửa/Duyệt/Gỡ). */
 .ui-table .ui-btn,
 .ui-table__actions .ui-btn {
-    padding: 6px 12px;
-    border-radius: var(--radius-input);
-    font-size: 12px;
+    padding: 6px var(--space-3);
+    border-radius: var(--radius-md);
+    font-size: var(--text-xs);
+}
+
+.ui-table .ui-btn--icon-only,
+.ui-table__actions .ui-btn--icon-only {
+    padding: 0;
 }

@@ -1,0 +1,45 @@
+/* Tooltip thuần CSS — không JS, không đo vị trí. Đủ cho nhãn ngắn trên nút icon.
+   Hiện khi hover HOẶC khi phần tử con nhận focus bàn phím (focus-within). */
+
+.ui-tooltip {
+    position: relative;
+    display: inline-flex;
+}
+
+.ui-tooltip__bubble {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    padding: 5px var(--space-2);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-medium);
+    line-height: 1.4;
+    color: var(--color-surface);
+    background-color: #16181D;
+    border-radius: var(--radius-xs);
+    box-shadow: var(--shadow-md);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    z-index: var(--z-dropdown);
+    transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+[data-theme="dark"] .ui-tooltip__bubble {
+    color: #0F1115;
+    background-color: #ECEFF4;
+}
+
+.ui-tooltip--top .ui-tooltip__bubble {
+    bottom: calc(100% + 6px);
+}
+
+.ui-tooltip--bottom .ui-tooltip__bubble {
+    top: calc(100% + 6px);
+}
+
+.ui-tooltip:hover .ui-tooltip__bubble,
+.ui-tooltip:focus-within .ui-tooltip__bubble {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
