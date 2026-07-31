@@ -81,7 +81,11 @@ export default function AdminLayout() {
       />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar left={t("admin.adminMode")} menuItems={menuItems} onMenuClick={() => setNavOpen(true)} />
-        <main className="flex-1"><Outlet /></main>
+        {/* page-shell lo container + padding cho MỌI trang admin, nhờ vậy từng trang
+            không phải tự đặt padding (trước đây không trang nào có, nội dung dính sát mép). */}
+        <main className="flex-1">
+          <div className="page-shell page-shell--wide"><Outlet /></div>
+        </main>
       </div>
     </div>
   );

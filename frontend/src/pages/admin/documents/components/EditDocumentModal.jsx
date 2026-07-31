@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Button from "../../../../components/ui/Button";
 import Modal from "../../../../components/ui/Modal";
+import { Field, Input, Textarea } from "../../../../components/ui/Field";
+import { SkeletonText } from "../../../../components/ui/Skeleton";
 import * as aiApi from "../../../../api/aiApi";
 
 // Modal Admin sửa metadata tài liệu (title/description/subjectIds) — field shape đồng bộ với
@@ -45,27 +47,53 @@ export default function EditDocumentModal({ open, doc, subjects, submitting, loa
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={t("admin.documents.editTitle")}>
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={t("admin.documents.editTitle")}
+      footer={
+        !loading && (
+          <>
+            <Button variant="secondary" onClick={onClose} disabled={submitting}>
+              {t("common.actions.cancel")}
+            </Button>
+            <Button type="submit" form="admin-edit-doc-form" loading={submitting}>
+              {submitting ? t("admin.common.saving") : t("common.actions.save")}
+            </Button>
+          </>
+        )
+      }
+    >
       {loading ? (
-        <p className="admin-documents-page__loading">{t("admin.documents.editLoading")}</p>
+        <SkeletonText lines={6} />
       ) : (
-      <form className="admin-subjects-form" onSubmit={handleSubmit}>
-        <label className="admin-subjects-form__field">
-          {t("admin.documents.editName")}
-          <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} />
-        </label>
-        <Button type="button" variant="secondary" onClick={suggest} disabled={suggesting || submitting}>
-          {suggesting ? t("admin.documents.suggesting") : t("admin.documents.aiSuggest")}
-        </Button>
-        {suggestionError && <p className="admin-documents-page__subject-error">{suggestionError}</p>}
+      <form id="admin-edit-doc-form" className="doc-form__form" onSubmit={handleSubmit}>
+        <Input
+          label={t("admin.documents.editName")}
+          required
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
 
-        <label className="admin-subjects-form__field">
-          {t("admin.documents.editDesc")}
-          <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
-        </label>
+        <div>
+          <Button variant="secondary" size="sm" onClick={suggest} loading={suggesting} disabled={submitting}>
+            {suggesting ? t("admin.documents.suggesting") : t("admin.documents.aiSuggest")}
+          </Button>
+          {suggestionError && <p className="admin-documents-page__subject-error">{suggestionError}</p>}
+        </div>
 
-        <div className="admin-subjects-form__field">
-          {t("admin.documents.editSubjectLabel")}
+        <Textarea
+          label={t("admin.documents.editDesc")}
+          rows={3}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+
+        <Field
+          id="admin-edit-doc-subjects"
+          label={t("admin.documents.editSubjectLabel")}
+          error={subjectError ? t("admin.documents.subjectRequired") : undefined}
+        >
           <div className="admin-documents-page__subject-list">
             {subjects.map((s) => {
               const checked = subjectIds.includes(s.id);
@@ -77,19 +105,7 @@ export default function EditDocumentModal({ open, doc, subjects, submitting, loa
               );
             })}
           </div>
-          {subjectError && (
-            <p className="admin-documents-page__subject-error">{t("admin.documents.subjectRequired")}</p>
-          )}
-        </div>
-
-        <div className="admin-subjects-form__actions">
-          <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
-            {t("common.actions.cancel")}
-          </Button>
-          <Button type="submit" variant="primary" disabled={submitting}>
-            {submitting ? t("admin.common.saving") : t("common.actions.save")}
-          </Button>
-        </div>
+        </Field>
       </form>
       )}
     </Modal>

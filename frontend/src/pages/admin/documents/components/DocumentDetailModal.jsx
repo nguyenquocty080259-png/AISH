@@ -1,6 +1,8 @@
 import { useTranslation } from "react-i18next";
 import Modal from "../../../../components/ui/Modal";
 import Button from "../../../../components/ui/Button";
+import { SkeletonText } from "../../../../components/ui/Skeleton";
+import { ModerationBadge, VisibilityBadge } from "../../../../components/ui/StatusBadge";
 
 function Row({ label, children }) {
   return (
@@ -17,18 +19,29 @@ export default function DocumentDetailModal({ open, doc, loading, onClose }) {
   const locale = i18n.resolvedLanguage === "en" ? "en-US" : "vi-VN";
   const formatDate = (iso) => (iso ? new Date(iso).toLocaleString(locale) : "—");
   return (
-    <Modal open={open} onClose={onClose} title={t("admin.documents.detailTitle")}>
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={t("admin.documents.detailTitle")}
+      footer={
+        <Button variant="secondary" onClick={onClose}>
+          {t("common.actions.close")}
+        </Button>
+      }
+    >
       {loading ? (
-        <p className="admin-documents-page__loading">{t("admin.documents.detailLoading")}</p>
+        <SkeletonText lines={8} />
       ) : doc ? (
         <div className="admin-documents-page__detail">
           <Row label={t("admin.documents.dTitle")}>{doc.title || "—"}</Row>
           <Row label={t("admin.documents.dDesc")}>{doc.description || "—"}</Row>
           <Row label={t("admin.documents.dOwner")}>{doc.ownerName || "—"}</Row>
           <Row label={t("admin.documents.dSubjects")}>{doc.subjectNames?.length ? doc.subjectNames.join(", ") : "—"}</Row>
-          <Row label={t("admin.documents.dVisibility")}>{doc.visibility || "—"}</Row>
+          <Row label={t("admin.documents.dVisibility")}>
+            <VisibilityBadge visibility={doc.visibility} /> {!doc.visibility && "—"}
+          </Row>
           <Row label={t("admin.documents.dModeration")}>
-            {doc.moderationStatus || "—"}
+            <ModerationBadge status={doc.moderationStatus} /> {!doc.moderationStatus && "—"}
             {doc.moderationReason ? ` — ${doc.moderationReason}` : ""}
           </Row>
           <Row label={t("admin.documents.dStorage")}>{doc.storageType || "—"}</Row>
@@ -40,12 +53,6 @@ export default function DocumentDetailModal({ open, doc, loading, onClose }) {
           {doc.deletedAt && <Row label={t("admin.documents.dRemovedAt")}>{formatDate(doc.deletedAt)}</Row>}
         </div>
       ) : null}
-
-      <div className="admin-documents-page__modal-actions">
-        <Button variant="secondary" onClick={onClose}>
-          {t("common.actions.close")}
-        </Button>
-      </div>
     </Modal>
   );
 }

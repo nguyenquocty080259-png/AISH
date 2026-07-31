@@ -6,6 +6,10 @@ import Button from "../../../components/ui/Button";
 import Modal from "../../../components/ui/Modal";
 import EmptyState from "../../../components/ui/EmptyState";
 import Table from "../../../components/ui/Table";
+import Tabs from "../../../components/ui/Tabs";
+import Skeleton from "../../../components/ui/Skeleton";
+import { Input, Select } from "../../../components/ui/Field";
+import { ModerationBadge, VisibilityBadge } from "../../../components/ui/StatusBadge";
 import { useAdminDocumentsPage } from "./hooks/useAdminDocumentsPage";
 import IngestStatusBadge from "./components/IngestStatusBadge";
 import EditDocumentModal from "./components/EditDocumentModal";
@@ -14,21 +18,11 @@ import AdminPagination from "../components/AdminPagination";
 import { ROUTES, buildRoute } from "../../../constants/routes";
 import "./admin-documents.css";
 
-const VISIBILITY_BADGE = {
-  PUBLIC: { intent: "info", labelKey: "admin.documents.visPublic" },
-  PRIVATE: { intent: "neutral", labelKey: "admin.documents.visPrivate" },
-};
-
+// Badge phạm vi hiển thị và trạng thái kiểm duyệt dùng chung components/ui/StatusBadge
+// để màu khớp với trang Cộng đồng / Chi tiết tài liệu. Ở đây chỉ còn badge riêng của admin.
 const STATUS_BADGE = {
   ACTIVE: { intent: "success", labelKey: "admin.documents.statusActive" },
-  REMOVED: { intent: "error", labelKey: "admin.documents.statusRemoved" },
-};
-
-const MODERATION_BADGE = {
-  NOT_REQUIRED: { intent: "neutral", labelKey: "admin.documents.modNotRequired" },
-  ADMIN_PENDING: { intent: "warning", labelKey: "admin.documents.modPending" },
-  APPROVED: { intent: "success", labelKey: "admin.documents.modApproved" },
-  REJECTED: { intent: "error", labelKey: "admin.documents.modRejected" },
+  REMOVED: { intent: "danger", labelKey: "admin.documents.statusRemoved" },
 };
 
 // Kết quả AI pre-screen kèm theo lần chờ duyệt — chỉ có nghĩa khi đang ADMIN_PENDING.
@@ -86,68 +80,71 @@ export default function AdminDocumentsPage() {
         subtitle={t("admin.documents.subtitle")}
       />
 
-      <div className="admin-documents-page__filters" role="group" aria-label={t("admin.documents.filterAria")}>
-        <button
-          type="button"
-          className={!needsReview ? "admin-documents-page__filter--active" : ""}
-          onClick={() => changeReviewFilter(false)}
-        >
-          {t("admin.documents.filterAll")}
-        </button>
-        <button
-          type="button"
-          className={needsReview ? "admin-documents-page__filter--active" : ""}
-          onClick={() => changeReviewFilter(true)}
-        >
-          {t("admin.documents.filterNeedsReview")}
-        </button>
-      </div>
+      <Tabs
+        className="admin-documents-page__filters"
+        variant="pill"
+        items={[
+          { value: "all", label: t("admin.documents.filterAll") },
+          { value: "needsReview", label: t("admin.documents.filterNeedsReview") },
+        ]}
+        value={needsReview ? "needsReview" : "all"}
+        onChange={(v) => changeReviewFilter(v === "needsReview")}
+        ariaLabel={t("admin.documents.filterAria")}
+      />
 
       {/* Tab "Cần xem xét" luôn hiện toàn bộ hàng chờ nên backend bỏ qua các bộ lọc này —
           ẩn luôn ở UI để không tạo cảm giác đã lọc mà kết quả không đổi. */}
       {!needsReview && (
         <div className="admin-documents-page__search">
-          <input
+          <Input
             type="search"
-            className="admin-documents-page__search-input"
             placeholder={t("admin.documents.searchPlaceholder")}
             value={keyword}
             onChange={(e) => changeKeyword(e.target.value)}
             aria-label={t("admin.documents.searchPlaceholder")}
+            fieldClassName="admin-documents-page__search-input"
           />
-          <label className="admin-documents-page__filter-field">
-            <span>{t("admin.documents.filterVisibilityLabel")}</span>
-            <select value={visibilityFilter} onChange={(e) => changeVisibilityFilter(e.target.value)}>
-              <option value="">{t("admin.documents.filterAll")}</option>
-              <option value="PUBLIC">{t("admin.documents.visPublic")}</option>
-              <option value="PRIVATE">{t("admin.documents.visPrivate")}</option>
-            </select>
-          </label>
-          <label className="admin-documents-page__filter-field">
-            <span>{t("admin.documents.filterModerationLabel")}</span>
-            <select value={moderationFilter} onChange={(e) => changeModerationFilter(e.target.value)}>
-              <option value="">{t("admin.documents.filterAll")}</option>
-              <option value="NOT_REQUIRED">{t("admin.documents.modNotRequired")}</option>
-              <option value="ADMIN_PENDING">{t("admin.documents.modPending")}</option>
-              <option value="APPROVED">{t("admin.documents.modApproved")}</option>
-              <option value="REJECTED">{t("admin.documents.modRejected")}</option>
-            </select>
-          </label>
-          <label className="admin-documents-page__filter-field">
-            <span>{t("admin.documents.filterRemovedLabel")}</span>
-            <select value={removedFilter} onChange={(e) => changeRemovedFilter(e.target.value)}>
-              <option value="">{t("admin.documents.filterAll")}</option>
-              <option value="ACTIVE">{t("admin.documents.statusActive")}</option>
-              <option value="REMOVED">{t("admin.documents.statusRemoved")}</option>
-            </select>
-          </label>
+          <Select
+            label={t("admin.documents.filterVisibilityLabel")}
+            value={visibilityFilter}
+            onChange={(e) => changeVisibilityFilter(e.target.value)}
+            fieldClassName="admin-documents-page__filter-field"
+          >
+            <option value="">{t("admin.documents.filterAll")}</option>
+            <option value="PUBLIC">{t("admin.documents.visPublic")}</option>
+            <option value="PRIVATE">{t("admin.documents.visPrivate")}</option>
+          </Select>
+          <Select
+            label={t("admin.documents.filterModerationLabel")}
+            value={moderationFilter}
+            onChange={(e) => changeModerationFilter(e.target.value)}
+            fieldClassName="admin-documents-page__filter-field"
+          >
+            <option value="">{t("admin.documents.filterAll")}</option>
+            <option value="NOT_REQUIRED">{t("admin.documents.modNotRequired")}</option>
+            <option value="ADMIN_PENDING">{t("admin.documents.modPending")}</option>
+            <option value="APPROVED">{t("admin.documents.modApproved")}</option>
+            <option value="REJECTED">{t("admin.documents.modRejected")}</option>
+          </Select>
+          <Select
+            label={t("admin.documents.filterRemovedLabel")}
+            value={removedFilter}
+            onChange={(e) => changeRemovedFilter(e.target.value)}
+            fieldClassName="admin-documents-page__filter-field"
+          >
+            <option value="">{t("admin.documents.filterAll")}</option>
+            <option value="ACTIVE">{t("admin.documents.statusActive")}</option>
+            <option value="REMOVED">{t("admin.documents.statusRemoved")}</option>
+          </Select>
         </div>
       )}
 
       {loading ? (
-        <p className="admin-documents-page__loading">{t("admin.documents.loading")}</p>
+        <div className="admin-documents-page__skeleton" aria-busy="true" aria-label={t("admin.documents.loading")}>
+          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} height={44} />)}
+        </div>
       ) : documents.length === 0 ? (
-        <EmptyState icon="📄" message={t("admin.documents.empty")} />
+        <EmptyState icon="📄" title={t("admin.documents.empty")} />
       ) : (
         <>
           <Table>
@@ -166,9 +163,6 @@ export default function AdminDocumentsPage() {
             </Table.Head>
             <Table.Body>
               {documents.map((doc) => {
-                const visibilityBadge = VISIBILITY_BADGE[doc.visibility] ?? VISIBILITY_BADGE.PRIVATE;
-                const moderationBadge =
-                  MODERATION_BADGE[doc.moderationStatus] ?? MODERATION_BADGE.NOT_REQUIRED;
                 const isRemoved = !!doc.deletedAt;
                 const statusBadge = isRemoved ? STATUS_BADGE.REMOVED : STATUS_BADGE.ACTIVE;
                 const isApproved = doc.moderationStatus === "APPROVED";
@@ -190,10 +184,10 @@ export default function AdminDocumentsPage() {
                     </Table.Cell>
                     <Table.Cell>{doc.ownerName}</Table.Cell>
                     <Table.Cell>
-                      <Badge intent={visibilityBadge.intent}>{t(visibilityBadge.labelKey)}</Badge>
+                      <VisibilityBadge visibility={doc.visibility ?? "PRIVATE"} />
                     </Table.Cell>
                     <Table.Cell>
-                      <Badge intent={moderationBadge.intent}>{t(moderationBadge.labelKey)}</Badge>
+                      <ModerationBadge status={doc.moderationStatus ?? "NOT_REQUIRED"} />
                       {isPending && aiScreenLabelKey && (
                         <span className="admin-documents-page__ai-screen">{t(aiScreenLabelKey)}</span>
                       )}

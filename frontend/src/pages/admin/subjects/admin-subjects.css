@@ -1,42 +1,55 @@
+/* Form trong modal của khu quản trị. Bố cục dọc + hàng nút cuối form. */
+
 .admin-subjects-page__loading {
-    color: var(--color-text-secondary);
-    font-size: var(--body-sm);
+    color: var(--color-text-muted);
+    font-size: var(--text-base);
 }
 
 .admin-subjects-form {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-md);
+    gap: var(--space-4);
 }
 
 .admin-subjects-form__field {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-xs);
-    font-size: var(--body-sm);
-    color: var(--color-text-secondary);
-    font-weight: 600;
+    gap: 6px;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
 }
 
 .admin-subjects-form__field input,
 .admin-subjects-form__field textarea {
-    padding: var(--spacing-sm) var(--spacing-md);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-input);
-    font-size: var(--body-sm);
-    font-weight: 400;
+    padding: var(--space-2) var(--space-3);
+    min-height: 40px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    font-weight: var(--weight-normal);
     color: var(--color-text);
-    font-family: var(--font-family);
+    background-color: var(--color-surface);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.admin-subjects-form__field input:focus,
+.admin-subjects-form__field textarea:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: var(--focus-ring);
 }
 
 .admin-subjects-form__actions {
     display: flex;
     justify-content: flex-end;
-    gap: var(--spacing-sm);
+    gap: var(--space-2);
 }
 
 .admin-subjects-page__confirm-text {
-    font-size: var(--body-sm);
+    font-size: var(--text-base);
     color: var(--color-text);
-    margin-bottom: var(--spacing-lg);
+    line-height: var(--leading-normal);
+    margin-bottom: var(--space-5);
 }

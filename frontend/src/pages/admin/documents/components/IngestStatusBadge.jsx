@@ -1,10 +1,12 @@
 import { useTranslation } from "react-i18next";
-import "./ingest-status-badge.css";
+import Badge from "../../../../components/ui/Badge";
 
+// Trạng thái nạp nội dung cho AI. Dùng Badge chung để cùng bảng màu semantic với
+// các badge khác (đã nạp = success, chưa nạp = neutral, không đọc được = warning).
 const STATUS_META = {
-  INGESTED: { className: "ingest-status-badge--ingested", labelKey: "admin.ingest.ingested" },
-  NOT_INGESTED: { className: "ingest-status-badge--pending", labelKey: "admin.ingest.notIngested" },
-  UNSUPPORTED_FORMAT: { className: "ingest-status-badge--unsupported", labelKey: "admin.ingest.unsupported" },
+  INGESTED: { intent: "success", labelKey: "admin.ingest.ingested" },
+  NOT_INGESTED: { intent: "neutral", labelKey: "admin.ingest.notIngested" },
+  UNSUPPORTED_FORMAT: { intent: "warning", labelKey: "admin.ingest.unsupported" },
 };
 
 export default function IngestStatusBadge({ status }) {
@@ -14,9 +16,5 @@ export default function IngestStatusBadge({ status }) {
   const badge = STATUS_META[status];
   if (!badge) return null;
 
-  return (
-    <span className={`ingest-status-badge ${badge.className}`}>
-      {t(badge.labelKey)}
-    </span>
-  );
+  return <Badge intent={badge.intent}>{t(badge.labelKey)}</Badge>;
 }
