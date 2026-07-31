@@ -1228,6 +1228,7 @@
     "loading": "Loading profile...",
     "loadError": "Could not load profile.",
     "notSet": "Not set",
+    "changeAvatar": "Change avatar",
     "edit": "Edit profile",
     "storageTitle": "Storage usage",
     "daysValue": "{{count}} days",

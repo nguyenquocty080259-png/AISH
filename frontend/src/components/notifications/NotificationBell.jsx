@@ -98,7 +98,7 @@ export default function NotificationBell() {
 
   return (
     <div className="notification-bell" ref={rootRef}>
-      <button type="button" className="notification-bell__trigger" onClick={toggleDropdown}
+      <button type="button" className="notification-bell__trigger has-custom-focus" onClick={toggleDropdown}
         aria-label={t("common.notifications.ariaLabel", { count: unreadCount })} aria-expanded={open}>
         <span aria-hidden="true">🔔</span>
         {unreadCount > 0 && <span className="notification-bell__badge">{unreadCount > 99 ? "99+" : unreadCount}</span>}
@@ -117,7 +117,7 @@ export default function NotificationBell() {
             notifications.length === 0 ? <p className="notification-bell__empty">{t("common.notifications.empty")}</p> :
             notifications.map((notification) =>
               <button type="button" key={notification.id}
-                className={`notification-bell__item${notification.isRead ? "" : " notification-bell__item--unread"}`}
+                className={`notification-bell__item has-custom-focus${notification.isRead ? "" : " notification-bell__item--unread"}`}
                 onClick={() => handleMarkAsRead(notification)}>
                 <span>{notification.message}</span>
                 <time>{formatDate(notification.createdAt)}</time>

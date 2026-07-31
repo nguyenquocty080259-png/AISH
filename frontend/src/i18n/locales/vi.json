@@ -1228,6 +1228,7 @@
     "loading": "Đang tải hồ sơ...",
     "loadError": "Không tải được hồ sơ.",
     "notSet": "Chưa cập nhật",
+    "changeAvatar": "Đổi ảnh đại diện",
     "edit": "Chỉnh sửa hồ sơ",
     "storageTitle": "Dung lượng lưu trữ",
     "daysValue": "{{count}} ngày",

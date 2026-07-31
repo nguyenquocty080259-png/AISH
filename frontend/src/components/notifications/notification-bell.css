@@ -1,106 +1,156 @@
+/* Chuông thông báo. Mặc định dropdown mở LÊN TRÊN (thiết kế cho bell ở chân sidebar);
+   khi đặt ở TopBar thì top-bar.css lật xuống dưới bằng .topbar-bell. */
+
 .notification-bell {
-  position: relative;
-  flex-shrink: 0;
+    position: relative;
+    flex-shrink: 0;
 }
 
 .notification-bell__trigger {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border: 1px solid var(--color-border);
-  border-radius: 50%;
-  background: var(--color-surface);
-  cursor: pointer;
-  font-size: 17px;
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    background-color: var(--color-surface);
+    color: var(--color-text-muted);
+    font-size: var(--text-md);
+    transition: background-color var(--transition-fast), color var(--transition-fast),
+        border-color var(--transition-fast);
 }
 
-.notification-bell__trigger:hover { background: var(--color-surface-soft); }
+.notification-bell__trigger:hover {
+    background-color: var(--color-surface-2);
+    border-color: var(--color-border-strong);
+    color: var(--color-text);
+}
 
 .notification-bell__badge {
-  position: absolute;
-  top: -5px;
-  right: -7px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
-  border: 2px solid var(--color-surface);
-  border-radius: 10px;
-  background: var(--color-error);
-  color: white;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 14px;
+    position: absolute;
+    top: -5px;
+    right: -6px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border: 2px solid var(--color-surface);
+    border-radius: var(--radius-full);
+    background-color: var(--color-danger);
+    color: var(--color-text-on-accent);
+    font-size: 10px;
+    font-weight: var(--weight-bold);
+    line-height: 14px;
+    text-align: center;
 }
 
 .notification-bell__dropdown {
-  position: absolute;
-  z-index: 100;
-  bottom: calc(100% + 10px);
-  left: 0;
-  width: min(220px, calc(100vw - 32px));
-  max-height: 420px;
-  overflow: hidden;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-input);
-  background: var(--color-surface);
-  color: var(--color-text);
-  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.22);
+    position: absolute;
+    z-index: var(--z-dropdown);
+    bottom: calc(100% + 10px);
+    left: 0;
+    width: min(320px, calc(100vw - 32px));
+    max-height: 420px;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    box-shadow: var(--shadow-lg);
 }
 
 .notification-bell__header {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  padding: 12px;
-  border-bottom: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
 }
 
 .notification-bell__header button {
-  border: 0;
-  padding: 0;
-  background: transparent;
-  color: var(--color-primary);
-  cursor: pointer;
-  font-size: 11px;
+    padding: 0;
+    background: transparent;
+    color: var(--color-accent-text);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
 }
 
-.notification-bell__header button:disabled { opacity: 0.5; cursor: default; }
-.notification-bell__list { max-height: 330px; overflow-y: auto; }
+.notification-bell__header button:hover:not(:disabled) {
+    text-decoration: underline;
+}
+
+.notification-bell__header button:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.notification-bell__list {
+    max-height: 330px;
+    overflow-y: auto;
+}
 
 .notification-bell__item {
-  display: grid;
-  width: 100%;
-  gap: 5px;
-  padding: 11px 12px;
-  border: 0;
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text);
-  text-align: left;
-  cursor: pointer;
+    display: grid;
+    width: 100%;
+    gap: 3px;
+    padding: var(--space-3);
+    border: 0;
+    border-bottom: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    font-size: var(--text-base);
+    line-height: var(--leading-snug);
+    text-align: left;
+    transition: background-color var(--transition-fast);
 }
 
-.notification-bell__item--unread { background: var(--color-surface-soft); font-weight: 700; }
-.notification-bell__item:hover { filter: brightness(0.98); }
-.notification-bell__item time { color: var(--color-text-secondary); font-size: 10px; font-weight: 400; }
-.notification-bell__empty { margin: 0; padding: 18px 12px; color: var(--color-text-secondary); font-size: 12px; }
+.notification-bell__item:last-child {
+    border-bottom: none;
+}
+
+.notification-bell__item:hover {
+    background-color: var(--color-surface-2);
+}
+
+/* Chưa đọc: nền cam nhạt + vạch màu bên trái để phân biệt kể cả khi hover */
+.notification-bell__item--unread {
+    background-color: var(--color-accent-soft);
+    font-weight: var(--weight-semibold);
+    box-shadow: inset 3px 0 0 var(--color-accent);
+}
+
+.notification-bell__item time {
+    color: var(--color-text-subtle);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-normal);
+}
+
+.notification-bell__empty {
+    margin: 0;
+    padding: var(--space-6) var(--space-3);
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: var(--text-base);
+}
 
 .notification-bell__footer {
-  display: flex;
-  justify-content: center;
-  padding: 8px 12px;
-  border-top: 1px solid var(--color-border);
+    display: flex;
+    justify-content: center;
+    padding: var(--space-2) var(--space-3);
+    border-top: 1px solid var(--color-border);
 }
 
 .notification-bell__footer button {
-  border: 0;
-  padding: 0;
-  background: transparent;
-  color: var(--color-primary);
-  cursor: pointer;
-  font-size: 11px;
-  font-weight: 600;
+    padding: 0;
+    background: transparent;
+    color: var(--color-accent-text);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+}
+
+.notification-bell__footer button:hover {
+    text-decoration: underline;
 }

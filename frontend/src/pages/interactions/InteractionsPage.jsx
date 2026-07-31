@@ -7,6 +7,8 @@ import Button from "../../components/ui/Button";
 import Modal from "../../components/ui/Modal";
 import EmptyState from "../../components/ui/EmptyState";
 import Table from "../../components/ui/Table";
+import Tabs from "../../components/ui/Tabs";
+import { SkeletonText } from "../../components/ui/Skeleton";
 import CaseThread from "../../components/interaction/CaseThread";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
@@ -73,41 +75,24 @@ export default function InteractionsPage() {
     deleteNotification(notification);
   };
 
-  const badgeCount = (count) => (count > 0 ? <Badge intent="warning">{count > 99 ? "99+" : count}</Badge> : null);
+  // Tabs dùng chung nhận count là số, tự render chip — không truyền node vào label nữa.
+  const tabCount = (count) => (count > 0 ? (count > 99 ? "99+" : count) : undefined);
 
   return (
-    <div style={{ padding: "var(--spacing-xl)", maxWidth: "var(--container-width)", margin: "0 auto" }}>
+    <div className="page-shell interactions-page">
       <PageHeader title={t("interactions.title")} subtitle={t("interactions.subtitle")} />
 
-      <div className="interactions-tabs" role="tablist" aria-label={t("interactions.title")}>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "notifications"}
-          className={`interactions-tabs__item${activeTab === "notifications" ? " interactions-tabs__item--active" : ""}`}
-          onClick={() => setActiveTab("notifications")}
-        >
-          {t("interactions.tabNotifications")} {badgeCount(summary?.unreadNotifications)}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "reports"}
-          className={`interactions-tabs__item${activeTab === "reports" ? " interactions-tabs__item--active" : ""}`}
-          onClick={() => setActiveTab("reports")}
-        >
-          {t("interactions.tabReports")} {badgeCount(summary?.myPendingReports)}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "appeals"}
-          className={`interactions-tabs__item${activeTab === "appeals" ? " interactions-tabs__item--active" : ""}`}
-          onClick={() => setActiveTab("appeals")}
-        >
-          {t("interactions.tabAppeals")} {badgeCount(summary?.myPendingAppeals)}
-        </button>
-      </div>
+      <Tabs
+        className="interactions-tabs"
+        items={[
+          { value: "notifications", label: t("interactions.tabNotifications"), count: tabCount(summary?.unreadNotifications) },
+          { value: "reports", label: t("interactions.tabReports"), count: tabCount(summary?.myPendingReports) },
+          { value: "appeals", label: t("interactions.tabAppeals"), count: tabCount(summary?.myPendingAppeals) },
+        ]}
+        value={activeTab}
+        onChange={setActiveTab}
+        ariaLabel={t("interactions.title")}
+      />
 
       {activeTab === "notifications" && (
         <>
@@ -128,7 +113,7 @@ export default function InteractionsPage() {
             </Button>
           </div>
           {notificationsLoading ? (
-            <p className="interactions-page__loading">{t("interactions.loadingNotifications")}</p>
+            <SkeletonText lines={6} />
           ) : notifications.length === 0 ? (
             <EmptyState icon="🔔" message={t("interactions.emptyNotifications")} />
           ) : (
@@ -140,7 +125,7 @@ export default function InteractionsPage() {
                 >
                   <button
                     type="button"
-                    className="interactions-page__notification-content"
+                    className="interactions-page__notification-content has-custom-focus"
                     onClick={() => handleNotificationClick(notification)}
                   >
                     <span>{notification.message}</span>
@@ -148,7 +133,7 @@ export default function InteractionsPage() {
                   </button>
                   <button
                     type="button"
-                    className="interactions-page__notification-delete"
+                    className="interactions-page__notification-delete has-custom-focus"
                     aria-label={t("interactions.delete")}
                     onClick={(event) => handleDeleteNotification(event, notification)}
                   >
