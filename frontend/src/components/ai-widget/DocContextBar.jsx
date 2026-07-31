@@ -1,63 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useAiWidget } from "../../context/AiWidgetContext";
-
-const styles = {
-  bar: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "stretch",
-    gap: 4,
-    padding: "8px 12px",
-    borderTop: "1px solid rgba(15, 23, 42, 0.08)",
-    background: "#fff7ed",
-    color: "#9a3412",
-    fontSize: 12,
-  },
-  label: {
-    minWidth: 0,
-    overflow: "hidden",
-    whiteSpace: "nowrap",
-    textOverflow: "ellipsis",
-    fontWeight: 700,
-  },
-  row: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-  },
-  warning: {
-    color: "#a16207",
-    fontSize: 11,
-    lineHeight: 1.35,
-  },
-  toggle: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 6,
-    border: "none",
-    background: "transparent",
-    color: "inherit",
-    font: "inherit",
-    fontWeight: 800,
-    cursor: "pointer",
-    padding: 0,
-  },
-  track: {
-    width: 32,
-    height: 18,
-    borderRadius: 999,
-    padding: 2,
-    display: "flex",
-    alignItems: "center",
-  },
-  knob: {
-    width: 14,
-    height: 14,
-    borderRadius: "50%",
-    background: "#fff",
-    boxShadow: "0 1px 3px rgba(15, 23, 42, 0.22)",
-  },
-};
+import "./ai-widget.css";
 
 export default function DocContextBar() {
   const { t } = useTranslation();
@@ -72,39 +15,35 @@ export default function DocContextBar() {
   if (!routeDocumentId) return null;
 
   const toggleDisabled = !currentDocReady;
+  const on = docContextEnabled && !toggleDisabled;
 
   return (
-    <div style={styles.bar}>
-      <div style={styles.row}>
-        <span style={styles.label}>{t("aiWidget.askAbout", { title: currentDocTitle })}</span>
+    <div className="ai-widget__doccontext">
+      <div className="ai-widget__doccontext-row">
+        <span className="ai-widget__doccontext-label">
+          {t("aiWidget.askAbout", { title: currentDocTitle })}
+        </span>
         <button
           type="button"
-          style={{
-            ...styles.toggle,
-            opacity: toggleDisabled ? 0.62 : 1,
-            cursor: toggleDisabled ? "not-allowed" : "pointer",
-          }}
+          className="ai-widget__doccontext-toggle has-custom-focus"
           onClick={() => setDocContextEnabled((enabled) => !enabled)}
-          aria-pressed={docContextEnabled && !toggleDisabled}
+          aria-pressed={on}
           title={docContextEnabled ? t("aiWidget.toggleOn") : t("aiWidget.toggleOff")}
           disabled={toggleDisabled}
         >
           <span
-            style={{
-              ...styles.track,
-              justifyContent:
-                docContextEnabled && !toggleDisabled ? "flex-end" : "flex-start",
-              background:
-                docContextEnabled && !toggleDisabled ? "#f97316" : "#d6d3d1",
-            }}
+            className={`ai-widget__doccontext-track ${
+              on ? "ai-widget__doccontext-track--on" : ""
+            }`.trim()}
+            aria-hidden="true"
           >
-            <span style={styles.knob} />
+            <span className="ai-widget__doccontext-knob" />
           </span>
-          {docContextEnabled && !toggleDisabled ? "ON" : "OFF"}
+          {on ? "ON" : "OFF"}
         </button>
       </div>
       {toggleDisabled && (
-        <span style={styles.warning}>
+        <span className="ai-widget__doccontext-warning">
           {t("aiWidget.notIngestedWarning")}
         </span>
       )}

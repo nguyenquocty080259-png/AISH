@@ -1181,6 +1181,8 @@
     "noResponse": "AI HiveMind hiện không phản hồi được, vui lòng thử lại."
   },
   "aiWidget": {
+      "typing": "AI HiveMind đang trả lời",
+      "send": "Gửi",
     "historyTitle": "Lịch sử trò chuyện",
     "minimize": "Thu nhỏ",
     "close": "Đóng",

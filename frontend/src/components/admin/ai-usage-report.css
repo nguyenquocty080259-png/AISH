@@ -1,9 +1,9 @@
 .ai-usage-report {
     margin-top: 24px;
     padding: 20px;
-    border: 1px solid var(--color-border, #e2e8f0);
+    border: 1px solid var(--color-border);
     border-radius: 16px;
-    background: var(--color-surface, #fff);
+    background: var(--color-surface);
 }
 
 .ai-usage-report__title {
@@ -24,19 +24,19 @@
     flex-direction: column;
     gap: 4px;
     font-size: var(--body-sm, 0.85rem);
-    color: var(--color-text-secondary, #64748b);
+    color: var(--color-text-muted);
 }
 
 .ai-usage-report__field select,
 .ai-usage-report__field input {
     padding: 6px 10px;
-    border: 1px solid var(--color-border, #cbd5e1);
+    border: 1px solid var(--color-border-strong);
     border-radius: 8px;
     font-size: 0.9rem;
 }
 
 .ai-usage-report__status {
-    color: var(--color-text-secondary, #64748b);
+    color: var(--color-text-muted);
     font-size: var(--body-sm, 0.85rem);
 }
 
@@ -51,17 +51,17 @@
     flex-direction: column;
     padding: 12px 20px;
     border-radius: 12px;
-    background: #eff6ff;
+    background: var(--color-info-bg);
 }
 
 .ai-usage-report__summary-item strong {
     font-size: 1.4rem;
-    color: #1d4ed8;
+    color: var(--color-info-fg);
 }
 
 .ai-usage-report__summary-item span {
     font-size: var(--body-sm, 0.85rem);
-    color: var(--color-text-secondary, #64748b);
+    color: var(--color-text-muted);
 }
 
 .ai-usage-report__chart {
@@ -80,20 +80,20 @@
 
 .ai-usage-report__bar-label {
     font-size: var(--body-sm, 0.85rem);
-    color: var(--color-text-secondary, #64748b);
+    color: var(--color-text-muted);
 }
 
 .ai-usage-report__bar-track {
     height: 14px;
     border-radius: 999px;
-    background: #eef2f7;
+    background: var(--color-surface-2);
     overflow: hidden;
 }
 
 .ai-usage-report__bar-fill {
     height: 100%;
     border-radius: 999px;
-    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+    background: linear-gradient(90deg, var(--color-accent), var(--color-accent-hover));
     min-width: 2px;
 }
 
@@ -111,11 +111,11 @@
     text-align: left;
     padding: 10px 12px;
     font-weight: 700;
-    color: #555;
-    border-bottom: 1px solid #e8e8e8;
+    color: var(--color-text-muted);
+    border-bottom: 1px solid var(--color-border-strong);
 }
 
 .ai-usage-report__table td {
     padding: 10px 12px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--color-border);
 }

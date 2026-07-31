@@ -102,29 +102,29 @@
 }
 
 .admin-users-badge--admin {
-    background: #DBEAFE;
-    color: #1D4ED8;
+    background: var(--color-info-bg);
+    color: var(--color-info-fg);
 }
 
 .admin-users-badge--user {
-    background: #F1F5F9;
-    color: #475569;
+    background: var(--color-neutral-bg);
+    color: var(--color-neutral-fg);
 }
 
 .admin-users-status--active {
-    background: #DCFCE7;
-    color: #15803D;
+    background: var(--color-success-bg);
+    color: var(--color-success-fg);
 }
 
 .admin-users-status--banned {
-    background: #FEE2E2;
-    color: #B91C1C;
+    background: var(--color-danger-bg);
+    color: var(--color-danger-fg);
 }
 
 .admin-users-status--pending,
 .admin-users-status--inactive {
-    background: #FEF3C7;
-    color: #B45309;
+    background: var(--color-warning-bg);
+    color: var(--color-warning-fg);
 }
 
 .admin-users-form {

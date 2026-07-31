@@ -58,7 +58,7 @@
 .case-thread__role-badge--admin {
     background: var(--color-error);
     border-color: var(--color-error);
-    color: #fff;
+    color: var(--color-text-on-accent);
 }
 
 .case-thread__content {

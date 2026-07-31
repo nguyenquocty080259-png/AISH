@@ -72,7 +72,7 @@
 }
 
 .onboarding-field__required {
-    color: var(--color-danger, #d92d20);
+    color: var(--color-danger-fg);
     margin-left: 2px;
 }
 

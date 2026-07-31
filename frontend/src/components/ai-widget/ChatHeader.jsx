@@ -1,87 +1,47 @@
 import { useTranslation } from "react-i18next";
 import { useAiWidget } from "../../context/AiWidgetContext";
-
-const styles = {
-  header: {
-    minHeight: 68,
-    padding: "12px 14px",
-    background: "linear-gradient(135deg, #f59e0b, #f97316)",
-    color: "#fff",
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: "50%",
-    background: "rgba(255, 255, 255, 0.22)",
-    border: "1px solid rgba(255, 255, 255, 0.42)",
-    display: "grid",
-    placeItems: "center",
-    fontWeight: 800,
-    fontSize: 14,
-    flexShrink: 0,
-  },
-  meta: {
-    flex: 1,
-    minWidth: 0,
-  },
-  name: {
-    margin: 0,
-    fontSize: 15,
-    fontWeight: 800,
-    letterSpacing: 0,
-  },
-  status: {
-    margin: "2px 0 0",
-    fontSize: 12,
-    opacity: 0.9,
-  },
-  actions: {
-    display: "flex",
-    gap: 6,
-  },
-  action: {
-    width: 30,
-    height: 30,
-    borderRadius: "50%",
-    border: "1px solid rgba(255, 255, 255, 0.34)",
-    color: "#fff",
-    background: "rgba(255, 255, 255, 0.16)",
-    cursor: "pointer",
-    fontSize: 18,
-    lineHeight: "28px",
-  },
-};
+import "./ai-widget.css";
 
 export default function ChatHeader() {
   const { t } = useTranslation();
   const { closeWidget, isAuthenticated, toggleHistoryPanel } = useAiWidget();
 
   return (
-    <header style={styles.header}>
-      <div style={styles.avatar}>AI</div>
-      <div style={styles.meta}>
-        <p style={styles.name}>AI HiveMind</p>
-        <p style={styles.status}>{t("aiWidget.status")}</p>
+    <header className="ai-widget__header">
+      <div className="ai-widget__avatar" aria-hidden="true">AI</div>
+      <div className="ai-widget__meta">
+        <p className="ai-widget__name">AI HiveMind</p>
+        <p className="ai-widget__status">{t("aiWidget.status")}</p>
       </div>
-      <div style={styles.actions}>
+      <div className="ai-widget__actions">
         {isAuthenticated && (
           <button
             type="button"
-            style={styles.action}
+            className="ai-widget__action has-custom-focus"
             onClick={toggleHistoryPanel}
             title={t("aiWidget.historyTitle")}
+            aria-label={t("aiWidget.historyTitle")}
           >
-            ≡
+            <span aria-hidden="true">≡</span>
           </button>
         )}
-        <button type="button" style={styles.action} onClick={closeWidget} title={t("aiWidget.minimize")}>
-          -
+        <button
+          type="button"
+          className="ai-widget__action has-custom-focus"
+          onClick={closeWidget}
+          title={t("aiWidget.minimize")}
+          aria-label={t("aiWidget.minimize")}
+        >
+          <span aria-hidden="true">-</span>
         </button>
-        <button type="button" style={styles.action} onClick={closeWidget} title={t("aiWidget.close")}>
-          ×
+        <button
+          type="button"
+          className="ai-widget__action has-custom-focus"
+          onClick={closeWidget}
+          title={t("aiWidget.close")}
+          aria-label={t("aiWidget.close")}
+        >
+          <span aria-hidden="true">×</span>
         </button>
       </div>
     </header>

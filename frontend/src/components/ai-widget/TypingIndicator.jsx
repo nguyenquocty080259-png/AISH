@@ -1,26 +1,9 @@
-const styles = {
-  row: {
-    display: "flex",
-    justifyContent: "flex-start",
-    margin: "8px 0",
-  },
-  bubble: {
-    padding: "9px 12px",
-    borderRadius: "16px 16px 16px 4px",
-    background: "#fff",
-    color: "#6b7280",
-    boxShadow: "0 4px 14px rgba(15, 23, 42, 0.08)",
-    border: "1px solid rgba(15, 23, 42, 0.06)",
-    fontSize: 13,
-  },
-  dots: {
-    display: "inline-block",
-    width: 22,
-    marginLeft: 2,
-  },
-};
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import "./ai-widget.css";
 
 export default function TypingIndicator() {
+  const { t } = useTranslation();
   const [dots, setDots] = useState(".");
 
   useEffect(() => {
@@ -31,11 +14,11 @@ export default function TypingIndicator() {
   }, []);
 
   return (
-    <div style={styles.row}>
-      <div style={styles.bubble}>
-        AI HiveMind is typing<span style={styles.dots}>{dots}</span>
+    <div className="ai-widget__row" role="status">
+      <div className="ai-widget__bubble ai-widget__bubble--typing">
+        {t("aiWidget.typing")}
+        <span className="ai-widget__typing-dots" aria-hidden="true">{dots}</span>
       </div>
     </div>
   );
 }
-import { useEffect, useState } from "react";

@@ -173,7 +173,7 @@
 
 .collection-detail-add__segmented button.is-active {
     background: var(--color-primary);
-    color: #fff;
+    color: var(--color-text-on-accent);
 }
 
 .collection-detail-add__subject-select {

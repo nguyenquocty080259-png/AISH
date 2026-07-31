@@ -1,37 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-
-const styles = {
-  form: {
-    display: "flex",
-    gap: 8,
-    padding: 12,
-    borderTop: "1px solid rgba(15, 23, 42, 0.08)",
-    background: "#fff",
-  },
-  input: {
-    flex: 1,
-    minHeight: 40,
-    maxHeight: 92,
-    resize: "none",
-    borderRadius: 18,
-    border: "1px solid #fed7aa",
-    padding: "10px 12px",
-    font: "inherit",
-    outline: "none",
-  },
-  button: {
-    width: 44,
-    height: 40,
-    borderRadius: "50%",
-    border: "none",
-    background: "#f97316",
-    color: "#fff",
-    cursor: "pointer",
-    fontWeight: 800,
-    flexShrink: 0,
-  },
-};
+import "./ai-widget.css";
 
 export default function ChatInput({ onSend, disabled }) {
   const { t } = useTranslation();
@@ -57,18 +26,24 @@ export default function ChatInput({ onSend, disabled }) {
   };
 
   return (
-    <form style={styles.form} onSubmit={handleSubmit}>
+    <form className="ai-widget__composer" onSubmit={handleSubmit}>
       <textarea
-        style={styles.input}
+        className="ai-widget__input has-custom-focus"
         rows={1}
         value={value}
         onChange={(event) => setValue(event.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={t("aiWidget.inputPlaceholder")}
+        aria-label={t("aiWidget.inputPlaceholder")}
         disabled={disabled}
       />
-      <button type="submit" style={styles.button} disabled={disabled || !value.trim()}>
-        ➤
+      <button
+        type="submit"
+        className="ai-widget__send has-custom-focus"
+        disabled={disabled || !value.trim()}
+        aria-label={t("aiWidget.send")}
+      >
+        <span aria-hidden="true">➤</span>
       </button>
     </form>
   );

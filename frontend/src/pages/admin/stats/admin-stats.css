@@ -35,7 +35,7 @@
     color: var(--color-surface);
     cursor: pointer;
     transform: translateY(-4px);
-    box-shadow: 0 10px 15px rgba(0,0,0,.12);
+    box-shadow: var(--shadow-md);
 }
 
 .admin-stat-card:hover .admin-stat-card__value,
@@ -90,21 +90,21 @@
 }
 
 .admin-users-table thead {
-    background: #f8f9fb;
+    background: var(--color-surface-2);
 }
 
 .admin-users-table th {
     padding: 16px;
     text-align: left;
     font-weight: 700;
-    color: #555;
-    border-bottom: 1px solid #e8e8e8;
+    color: var(--color-text-muted);
+    border-bottom: 1px solid var(--color-border-strong);
 }
 
 .admin-users-table td {
     padding: 18px 16px;
     vertical-align: middle;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--color-border);
 }
 
 .admin-users-table tbody tr {
@@ -112,7 +112,7 @@
 }
 
 .admin-users-table tbody tr:hover {
-    background: #fafafa;
+    background: var(--color-surface-2);
 }
 
 .admin-stats-doc-summary {
@@ -137,8 +137,8 @@
     height: 52px;
     border-radius: 50%;
     object-fit: cover;
-    background: #fff;
-    border: 1px solid #ddd;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-strong);
     flex-shrink: 0;
 }
 
@@ -149,13 +149,13 @@
 
 .user-name {
     font-weight: 600;
-    color: #222;
+    color: var(--color-text);
     margin-bottom: 4px;
 }
 
 .user-email {
     font-size: 13px;
-    color: #8b8b8b;
+    color: var(--color-text-subtle);
 }
 
 /* Role */
@@ -169,13 +169,13 @@
 }
 
 .role-badge.admin {
-    background: #ffe4bf;
-    color: #d97706;
+    background: var(--color-warning-bg);
+    color: var(--color-warning-fg);
 }
 
 .role-badge.user {
-    background: #dbeafe;
-    color: #2563eb;
+    background: var(--color-info-bg);
+    color: var(--color-info-fg);
 }
 
 /* Status */
@@ -184,8 +184,8 @@
     display: inline-block;
     padding: 6px 14px;
     border-radius: 999px;
-    background: #dcfce7;
-    color: #15803d;
+    background: var(--color-success-bg);
+    color: var(--color-success-fg);
     font-size: 13px;
     font-weight: 600;
 }
@@ -197,18 +197,18 @@
 }
 
 .online {
-    color: #16a34a;
+    color: var(--color-success-fg);
 }
 
 .offline {
-    color: #9ca3af;
+    color: var(--color-text-subtle);
 }
 
 .visibility-public{
 
-    background:#dcfce7;
+    background: var(--color-success-bg);
 
-    color:#15803d;
+    color: var(--color-success-fg);
 
     padding:6px 14px;
 
@@ -222,9 +222,9 @@
 
 .visibility-private{
 
-    background:#fee2e2;
+    background: var(--color-danger-bg);
 
-    color:#dc2626;
+    color: var(--color-danger-fg);
 
     padding:6px 14px;
 

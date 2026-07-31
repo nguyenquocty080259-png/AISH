@@ -1181,6 +1181,8 @@
     "noResponse": "AI HiveMind can't respond right now, please try again."
   },
   "aiWidget": {
+      "typing": "AI HiveMind is typing",
+      "send": "Send",
     "historyTitle": "Chat history",
     "minimize": "Minimize",
     "close": "Close",

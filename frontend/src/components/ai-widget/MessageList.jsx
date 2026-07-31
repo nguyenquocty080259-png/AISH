@@ -2,21 +2,7 @@ import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import MessageBubble from "./MessageBubble";
 import TypingIndicator from "./TypingIndicator";
-
-const styles = {
-  list: {
-    flex: 1,
-    minHeight: 0,
-    padding: "14px 12px",
-    overflowY: "auto",
-    background: "#fff7ed",
-  },
-  loading: {
-    margin: "8px 0",
-    color: "#92400e",
-    fontSize: 13,
-  },
-};
+import "./ai-widget.css";
 
 export default function MessageList({ messages, isTyping, isHistoryLoading }) {
   const { t } = useTranslation();
@@ -27,11 +13,11 @@ export default function MessageList({ messages, isTyping, isHistoryLoading }) {
   }, [messages, isTyping, isHistoryLoading]);
 
   return (
-    <div style={styles.list}>
+    <div className="ai-widget__list">
       {messages.map((message) => (
         <MessageBubble key={message.id} message={message} />
       ))}
-      {isHistoryLoading && <p style={styles.loading}>{t("aiWidget.loadingHistory")}</p>}
+      {isHistoryLoading && <p className="ai-widget__list-note">{t("aiWidget.loadingHistory")}</p>}
       {isTyping && <TypingIndicator />}
       <div ref={bottomRef} />
     </div>

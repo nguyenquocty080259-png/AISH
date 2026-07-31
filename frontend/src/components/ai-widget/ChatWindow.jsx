@@ -1,37 +1,13 @@
-import { useEffect, useState } from "react";
 import { useAiWidget } from "../../context/AiWidgetContext";
 import ChatHeader from "./ChatHeader";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
 import HistoryPanel from "./HistoryPanel";
 import DocContextBar from "./DocContextBar";
+import "./ai-widget.css";
 
-const getWindowStyle = (isSmallScreen) => ({
-  position: "fixed",
-  right: isSmallScreen ? 12 : 24,
-  bottom: isSmallScreen ? 12 : 24,
-  width: isSmallScreen ? "calc(100vw - 24px)" : 360,
-  height: isSmallScreen ? "min(520px, calc(100vh - 24px))" : 480,
-  borderRadius: 18,
-  overflow: "hidden",
-  background: "#fff",
-  boxShadow: "0 24px 60px rgba(15, 23, 42, 0.24)",
-  border: "1px solid rgba(15, 23, 42, 0.08)",
-  zIndex: 9999,
-  display: "flex",
-  flexDirection: "column",
-});
-
-const styles = {
-  body: {
-    position: "relative",
-    flex: 1,
-    minHeight: 0,
-    display: "flex",
-    flexDirection: "column",
-  },
-};
-
+// Kích thước/vị trí cửa sổ do CSS lo (kể cả bố cục màn hẹp), không còn phải đo
+// window.innerWidth và re-render theo sự kiện resize.
 export default function ChatWindow() {
   const {
     messages,
@@ -40,18 +16,11 @@ export default function ChatWindow() {
     isHistoryPanelOpen,
     sendMessage,
   } = useAiWidget();
-  const [isSmallScreen, setIsSmallScreen] = useState(() => window.innerWidth <= 480);
-
-  useEffect(() => {
-    const onResize = () => setIsSmallScreen(window.innerWidth <= 480);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
 
   return (
-    <section style={getWindowStyle(isSmallScreen)} aria-label="AI HiveMind chat">
+    <section className="ai-widget" aria-label="AI HiveMind chat">
       <ChatHeader />
-      <div style={styles.body}>
+      <div className="ai-widget__body">
         <MessageList
           messages={messages}
           isTyping={isTyping}
