@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../hooks/useAuth";
@@ -42,6 +42,10 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const { showSuccess } = useToast();
 
+  // Ngăn kéo sidebar cho màn hẹp. Đổi route thì tự đóng lại.
+  const [navOpen, setNavOpen] = useState(false);
+  useEffect(() => { setNavOpen(false); }, [pathname]);
+
   const userNavGroups = useMemo(() => [{
     items: [
       { to: ROUTES.DASHBOARD, label: t("nav.dashboard"), icon: <IconHome /> },
@@ -73,10 +77,12 @@ export default function AppLayout() {
           brand={{ logoSrc: logo, name: "HiveMind", caption: "AI STUDY HUB", homeTo: ROUTES.HOME }}
           navGroups={userNavGroups}
           bottomAction={{ label: t("nav.addDocument"), to: ROUTES.DOCUMENTS, icon: <IconPlus /> }}
+          open={navOpen}
+          onClose={() => setNavOpen(false)}
         />}
 
         <div className="app-shell__body">
-          {isAuthenticated && <TopBar menuItems={userMenuItems} />}
+          {isAuthenticated && <TopBar menuItems={userMenuItems} onMenuClick={() => setNavOpen(true)} />}
           {showGuestChrome && <GuestNavbar />}
 
           <main className="app-main">

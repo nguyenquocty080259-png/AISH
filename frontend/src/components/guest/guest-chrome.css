@@ -1,0 +1,247 @@
+/* Header + footer của khu vực khách (Trang chủ, Tính năng, Cách hoạt động, Giới thiệu).
+   Dùng chung 1 file vì hai phần dùng chung khung container và cách đặt khoảng trắng. */
+
+/* ============================ HEADER ============================ */
+
+.guest-nav {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+    background-color: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.guest-nav__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    width: 100%;
+    max-width: var(--container-max);
+    margin-inline: auto;
+    padding: var(--space-3) var(--container-pad);
+}
+
+.guest-nav__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-shrink: 0;
+}
+
+.guest-nav__logo {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+}
+
+.guest-nav__brand-name {
+    font-size: var(--text-lg);
+    font-weight: var(--weight-bold);
+    color: var(--color-accent-text);
+    letter-spacing: var(--tracking-tight);
+}
+
+.guest-nav__links {
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+}
+
+.guest-nav__link {
+    position: relative;
+    padding: var(--space-2) 0;
+    font-size: var(--text-base);
+    font-weight: var(--weight-medium);
+    color: var(--color-text-muted);
+    transition: color var(--transition-fast);
+}
+
+.guest-nav__link:hover {
+    color: var(--color-text);
+}
+
+.guest-nav__link--active {
+    color: var(--color-accent-text);
+    font-weight: var(--weight-semibold);
+}
+
+/* Gạch chân bằng ::after để không làm nhảy chiều cao khi đổi trạng thái */
+.guest-nav__link--active::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-accent);
+}
+
+.guest-nav__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.guest-nav__login {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-base);
+    font-weight: var(--weight-medium);
+    color: var(--color-text-muted);
+    border-radius: var(--radius-full);
+    transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.guest-nav__login:hover {
+    color: var(--color-text);
+    background-color: var(--color-surface-2);
+}
+
+.guest-nav__cta {
+    padding: var(--space-2) var(--space-5);
+    border-radius: var(--radius-full);
+    background-color: var(--color-accent);
+    color: var(--color-text-on-accent);
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+    box-shadow: var(--shadow-xs);
+    transition: background-color var(--transition-fast);
+}
+
+.guest-nav__cta:hover {
+    background-color: var(--color-accent-hover);
+}
+
+.guest-nav__toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    color: var(--color-text-muted);
+}
+
+.guest-nav__toggle:hover {
+    background-color: var(--color-surface-2);
+    color: var(--color-text);
+}
+
+/* ===== Menu mobile ===== */
+
+.guest-nav__mobile {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--container-pad) var(--space-4);
+    border-top: 1px solid var(--color-border);
+}
+
+.guest-nav__mobile .guest-nav__link {
+    padding: var(--space-3) var(--space-2);
+    border-radius: var(--radius-sm);
+}
+
+.guest-nav__mobile .guest-nav__link--active::after {
+    display: none;
+}
+
+.guest-nav__mobile .guest-nav__link--active {
+    background-color: var(--color-accent-soft);
+}
+
+.guest-nav__mobile-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+}
+
+@media (max-width: 900px) {
+    .guest-nav__links,
+    .guest-nav__actions {
+        display: none;
+    }
+
+    .guest-nav__toggle {
+        display: inline-flex;
+    }
+}
+
+@media (min-width: 901px) {
+    .guest-nav__mobile {
+        display: none;
+    }
+}
+
+/* ============================ FOOTER ============================ */
+
+.guest-footer {
+    background-color: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    margin-top: auto;
+}
+
+.guest-footer__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-6);
+    width: 100%;
+    max-width: var(--container-max);
+    margin-inline: auto;
+    padding: var(--space-10) var(--container-pad);
+}
+
+.guest-footer__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.guest-footer__logo {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
+.guest-footer__brand-name {
+    font-size: var(--text-md);
+    font-weight: var(--weight-bold);
+    color: var(--color-accent-text);
+}
+
+.guest-footer__links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-6);
+}
+
+.guest-footer__links a {
+    font-size: var(--text-base);
+    color: var(--color-text-muted);
+}
+
+.guest-footer__links a:hover {
+    color: var(--color-accent-text);
+}
+
+.guest-footer__copyright {
+    font-size: var(--text-sm);
+    color: var(--color-text-subtle);
+}
+
+@media (max-width: 768px) {
+    .guest-footer__inner {
+        flex-direction: column;
+        text-align: center;
+        gap: var(--space-5);
+        padding-block: var(--space-8);
+    }
+}

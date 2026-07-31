@@ -1,4 +1,4 @@
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
@@ -27,6 +27,11 @@ export default function AdminLayout() {
   const { logout } = useAuth();
   const { showSuccess } = useToast();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+
+  // Ngăn kéo sidebar cho màn hẹp — đổi route thì tự đóng.
+  const [navOpen, setNavOpen] = useState(false);
+  useEffect(() => { setNavOpen(false); }, [pathname]);
 
   const [summary, setSummary] = useState(null);
   useEffect(() => {
@@ -67,13 +72,15 @@ export default function AdminLayout() {
   ], [navigate, t]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="flex min-h-screen bg-surface">
+    <div className="flex min-h-screen bg-app">
       <AppSidebar
         brand={{ logoSrc: logo, name: "HiveMind", caption: "ADMIN", homeTo: ROUTES.ADMIN }}
         navGroups={adminNavGroups}
+        open={navOpen}
+        onClose={() => setNavOpen(false)}
       />
       <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar left={t("admin.adminMode")} menuItems={menuItems} />
+        <TopBar left={t("admin.adminMode")} menuItems={menuItems} onMenuClick={() => setNavOpen(true)} />
         <main className="flex-1"><Outlet /></main>
       </div>
     </div>

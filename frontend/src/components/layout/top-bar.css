@@ -1,9 +1,154 @@
+/* Thanh trên: dính đỉnh, mỏng, viền dưới mảnh — nội dung trang mới là thứ nổi bật. */
+
+.top-bar {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    height: var(--topbar-height);
+    padding-inline: var(--space-6);
+    background-color: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.top-bar__left,
+.top-bar__right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-width: 0;
+}
+
+.top-bar__label {
+    font-size: var(--text-base);
+    font-weight: var(--weight-medium);
+    color: var(--color-text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Hamburger — chỉ có nghĩa khi sidebar đang ở dạng ngăn kéo */
+.top-bar__menu-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: var(--radius-sm);
+    color: var(--color-text-muted);
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.top-bar__menu-btn:hover {
+    background-color: var(--color-surface-2);
+    color: var(--color-text);
+}
+
+@media (max-width: 767.98px) {
+    .top-bar {
+        padding-inline: var(--space-4);
+    }
+
+    .top-bar__menu-btn {
+        display: inline-flex;
+    }
+}
+
+/* ===== Nút tài khoản + menu ===== */
+
+.top-bar__user {
+    position: relative;
+}
+
+.top-bar__user-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 3px var(--space-2) 3px 3px;
+    border-radius: var(--radius-full);
+    color: var(--color-text-muted);
+    transition: background-color var(--transition-fast);
+}
+
+.top-bar__user-btn:hover {
+    background-color: var(--color-surface-2);
+}
+
+.top-bar__menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + var(--space-2));
+    width: 240px;
+    padding: var(--space-1);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    z-index: var(--z-dropdown);
+}
+
+.top-bar__menu-head {
+    padding: var(--space-2) var(--space-3) var(--space-1);
+}
+
+.top-bar__menu-caption {
+    font-size: 10px;
+    font-weight: var(--weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-text-subtle);
+}
+
+.top-bar__menu-name {
+    margin-top: 2px;
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.top-bar__menu-divider {
+    height: 1px;
+    margin: var(--space-1) 0;
+    background-color: var(--color-border);
+}
+
+.top-bar__menu-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-base);
+    color: var(--color-text);
+    text-align: left;
+    border-radius: var(--radius-xs);
+    transition: background-color var(--transition-fast);
+}
+
+.top-bar__menu-item:hover {
+    background-color: var(--color-surface-2);
+}
+
+.top-bar__menu-icon {
+    display: inline-flex;
+    align-items: center;
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+}
+
 /* Bell nằm ở top bar: lật dropdown xuống dưới + canh phải (mặc định của
    notification-bell.css mở lên trên vì thiết kế cho bell ở chân sidebar).
-   Override scoped, KHÔNG động tới notification-bell.css để AdminLayout giữ nguyên. */
+   Override scoped, KHÔNG động tới notification-bell.css. */
 .topbar-bell .notification-bell__dropdown {
-  top: calc(100% + 10px);
-  bottom: auto;
-  left: auto;
-  right: 0;
+    top: calc(100% + 10px);
+    bottom: auto;
+    left: auto;
+    right: 0;
 }

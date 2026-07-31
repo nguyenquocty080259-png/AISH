@@ -1,9 +1,14 @@
+/* Khung ngoài cùng: sidebar bên trái (khi đã đăng nhập) + cột nội dung bên phải.
+   Dùng min-height 100dvh để không bị hụt/ dư một dải trên trình duyệt mobile có
+   thanh địa chỉ tự ẩn. */
+
 .app-shell {
-    min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
+    background-color: var(--color-bg);
 }
 
-/* ===== Body (right of sidebar / full width for guests) ===== */
+/* ===== Cột nội dung (bên phải sidebar / full width cho khách) ===== */
 
 .app-shell__body {
     flex: 1;
@@ -14,61 +19,5 @@
 
 .app-main {
     flex: 1;
-}
-
-/* ===== Guest top bar (Home/Login/SignUp/AI Chat when not authenticated) ===== */
-
-.guest-topbar {
-    height: 64px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 var(--spacing-xl);
-    border-bottom: 1px solid var(--color-border);
-    background-color: var(--color-surface);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
-
-.guest-topbar__brand {
-    font-size: var(--title-md);
-    font-weight: 700;
-    color: var(--color-primary);
-}
-
-.guest-topbar__nav {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-lg);
-    font-size: var(--body-sm);
-}
-
-.guest-topbar__nav a {
-    color: var(--color-text);
-}
-
-.guest-topbar__nav a:hover {
-    color: var(--color-primary);
-}
-
-.guest-topbar__cta {
-    padding: var(--spacing-xs) var(--spacing-md);
-    border-radius: var(--radius-pill);
-    background-color: var(--color-primary);
-    color: var(--color-surface);
-}
-
-.guest-topbar__cta:hover {
-    background-color: var(--color-primary-dark);
-}
-
-@media (max-width: 640px) {
-    .guest-topbar {
-        padding: 0 var(--spacing-md);
-    }
-
-    .guest-topbar__nav {
-        gap: var(--spacing-sm);
-    }
+    min-width: 0;
 }

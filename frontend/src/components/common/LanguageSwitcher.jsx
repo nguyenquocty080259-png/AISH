@@ -18,7 +18,7 @@ export default function LanguageSwitcher({ className = "" }) {
 
   return (
     <div
-      className={`inline-flex items-center rounded-pill border border-border bg-surface-soft p-0.5 ${className}`}
+      className={`inline-flex items-center rounded-pill border border-border bg-surface-2 p-0.5 ${className}`}
       role="group"
       aria-label="Language"
     >
@@ -31,10 +31,10 @@ export default function LanguageSwitcher({ className = "" }) {
             onClick={() => setLang(l.code)}
             aria-pressed={active}
             className={[
-              "px-2.5 py-1 text-xs font-semibold rounded-pill transition-colors",
+              "has-custom-focus px-2.5 py-1 text-xs font-semibold rounded-pill transition-colors",
               active
                 ? "bg-primary text-white"
-                : "text-secondary hover:text-primary",
+                : "text-muted hover:text-app",
             ].join(" ")}
           >
             {l.label}

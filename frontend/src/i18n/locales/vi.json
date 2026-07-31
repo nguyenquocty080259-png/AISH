@@ -2,6 +2,7 @@
   "common": {
     "account": "Tài khoản",
     "user": "Người dùng",
+    "openMenu": "Mở menu",
     "loggedOut": "Đã đăng xuất.",
     "menu": {
       "profile": "Trang cá nhân",
@@ -61,7 +62,8 @@
       "postedBy": "Đăng bởi {{name}}"
     },
     "footer": {
-      "copyright": "© 2026 HiveMind"
+      "copyright": "© 2026 HiveMind",
+      "navAria": "Liên kết chân trang"
     },
     "time": {
       "justNow": "Vừa xong",

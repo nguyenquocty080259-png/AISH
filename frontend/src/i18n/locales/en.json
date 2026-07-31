@@ -2,6 +2,7 @@
   "common": {
     "account": "Account",
     "user": "User",
+    "openMenu": "Open menu",
     "loggedOut": "Signed out.",
     "menu": {
       "profile": "Profile",
@@ -61,7 +62,8 @@
       "postedBy": "Posted by {{name}}"
     },
     "footer": {
-      "copyright": "© 2026 HiveMind"
+      "copyright": "© 2026 HiveMind",
+      "navAria": "Footer links"
     },
     "time": {
       "justNow": "Just now",

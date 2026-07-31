@@ -1,74 +1,97 @@
+import { useEffect } from "react";
 import { NavLink, Link } from "react-router-dom";
+import "./app-sidebar.css";
 
-// Props:
+// Props (giữ nguyên như trước):
 //   brand: { logoSrc, name, caption, homeTo }
 //   navGroups: [{ label?: string, items: [{ to, label, icon: ReactNode, badge?: number }] }]
 //   bottomAction?: { label, to, icon: ReactNode }
-// Nếu chỉ 1 group không label → render phẳng (không hiện caption group + không divider).
-// Nhiều group hoặc group có label → render label caps + divider giữa các group.
+// Nếu chỉ 1 group không label → render phẳng (không caption group, không divider).
+// Nhiều group hoặc group có label → render label in hoa + divider giữa các group.
+//
+// Thêm cho responsive:
+//   open / onClose — dưới 768px sidebar thành ngăn kéo trượt từ trái, TopBar mở nó bằng
+//   nút hamburger. Từ 768px trở lên hai prop này không có tác dụng.
 
-function linkClass({ isActive }) {
-  return [
-    "flex items-center gap-3 rounded-input px-3 py-2.5 text-sm font-medium transition-colors justify-center lg:justify-start",
-    isActive ? "bg-surface-soft text-primary-dark" : "text-secondary hover:bg-surface-soft hover:text-primary",
-  ].join(" ");
-}
-
-export default function AppSidebar({ brand, navGroups, bottomAction }) {
+export default function AppSidebar({ brand, navGroups, bottomAction, open = false, onClose }) {
   const showGroupLabels = navGroups.length > 1 || navGroups.some((g) => g.label);
 
+  // Ngăn kéo đang mở: Esc để đóng + khoá cuộn nền cho khỏi cuộn trang phía sau.
+  useEffect(() => {
+    if (!open) return undefined;
+
+    function onKeyDown(e) {
+      if (e.key === "Escape") onClose?.();
+    }
+    document.addEventListener("keydown", onKeyDown);
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open, onClose]);
+
   return (
-    <aside className="sticky top-0 flex h-screen w-16 lg:w-64 flex-shrink-0 flex-col overflow-y-auto border-r border-border bg-surface px-2 lg:px-4 py-6">
-      <Link to={brand.homeTo} className="flex items-center gap-2 px-1 lg:px-2 justify-center lg:justify-start">
-        <img src={brand.logoSrc} alt={brand.name} className="h-9 w-9 object-contain" />
-        <div className="hidden lg:block leading-tight">
-          <span className="block text-lg font-bold text-primary tracking-tight">{brand.name}</span>
-          {brand.caption && (
-            <span className="block text-[10px] font-semibold uppercase tracking-widest text-secondary">{brand.caption}</span>
-          )}
+    <>
+      {open && <div className="app-sidebar__scrim" onClick={onClose} aria-hidden="true" />}
+
+      <aside className={`app-sidebar ${open ? "app-sidebar--open" : ""}`.trim()}>
+        <div className="app-sidebar__head">
+          <Link to={brand.homeTo} className="app-sidebar__brand" onClick={onClose}>
+            <img src={brand.logoSrc} alt="" className="app-sidebar__logo" />
+            <span className="app-sidebar__brand-text">
+              <span className="app-sidebar__brand-name">{brand.name}</span>
+              {brand.caption && (
+                <span className="app-sidebar__brand-caption">{brand.caption}</span>
+              )}
+            </span>
+          </Link>
         </div>
-      </Link>
 
-      <nav className="mt-8 flex flex-1 flex-col gap-1">
-        {navGroups.map((group, gi) => (
-          <div key={gi} className="flex flex-col gap-1">
-            {gi > 0 && <div className="my-3 border-t border-border" />}
-            {showGroupLabels && group.label && (
-              <span className="hidden lg:block px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-secondary">
-                {group.label}
-              </span>
-            )}
-            {group.items.map((it) => {
-              const hasBadge = it.badge != null && it.badge > 0;
-              const badgeText = it.badge > 99 ? "99+" : it.badge;
-              return (
-                <NavLink key={it.to} to={it.to} className={linkClass}>
-                  <span className="relative inline-flex">
-                    {it.icon}
-                    {hasBadge && (
-                      <span className="lg:hidden absolute -top-1 -right-1 h-2 w-2 rounded-full bg-warning" />
-                    )}
-                  </span>
-                  <span className="hidden lg:inline">{it.label}</span>
-                  {hasBadge && (
-                    <span className="ml-auto hidden lg:inline-flex min-w-[18px] items-center justify-center rounded-pill bg-warning px-1.5 text-[10px] font-semibold text-white">
-                      {badgeText}
+        <nav className="app-sidebar__nav">
+          {navGroups.map((group, gi) => (
+            <div key={gi} className="app-sidebar__group">
+              {gi > 0 && <div className="app-sidebar__divider" />}
+              {showGroupLabels && group.label && (
+                <span className="app-sidebar__group-label">{group.label}</span>
+              )}
+              {group.items.map((it) => {
+                const hasBadge = it.badge != null && it.badge > 0;
+                const badgeText = it.badge > 99 ? "99+" : it.badge;
+                return (
+                  <NavLink
+                    key={it.to}
+                    to={it.to}
+                    onClick={onClose}
+                    className={({ isActive }) =>
+                      `app-sidebar__link has-custom-focus ${
+                        isActive ? "app-sidebar__link--active" : ""
+                      }`.trim()
+                    }
+                  >
+                    <span className="app-sidebar__link-icon">
+                      {it.icon}
+                      {hasBadge && <span className="app-sidebar__dot" aria-hidden="true" />}
                     </span>
-                  )}
-                </NavLink>
-              );
-            })}
-          </div>
-        ))}
-      </nav>
+                    <span className="app-sidebar__link-label">{it.label}</span>
+                    {hasBadge && <span className="app-sidebar__badge">{badgeText}</span>}
+                  </NavLink>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
 
-      {bottomAction && (
-        <Link to={bottomAction.to}
-          className="mt-4 flex items-center justify-center gap-2 rounded-input bg-primary py-3 font-semibold text-white transition-colors hover:bg-primary-dark">
-          {bottomAction.icon}
-          <span className="hidden lg:inline">{bottomAction.label}</span>
-        </Link>
-      )}
-    </aside>
+        {bottomAction && (
+          <Link to={bottomAction.to} className="app-sidebar__cta has-custom-focus" onClick={onClose}>
+            {bottomAction.icon}
+            <span className="app-sidebar__link-label">{bottomAction.label}</span>
+          </Link>
+        )}
+      </aside>
+    </>
   );
 }

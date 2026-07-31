@@ -1,0 +1,266 @@
+/* Sidebar 3 trạng thái theo bề rộng màn hình:
+     >= 1024px : cột đầy đủ 260px, có nhãn chữ
+     768–1023px: thanh icon 64px, ẩn nhãn chữ
+     < 768px   : ẩn hẳn, chỉ hiện dạng ngăn kéo trượt từ trái khi .app-sidebar--open
+   Ngăn kéo luôn hiện nhãn chữ (đủ chỗ) nên phần ẩn/hiện nhãn dùng chung 1 selector. */
+
+.app-sidebar {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    width: var(--sidebar-width);
+    height: 100vh;
+    padding: var(--space-5) var(--space-3);
+    background-color: var(--color-surface);
+    border-right: 1px solid var(--color-border);
+    overflow-y: auto;
+    z-index: var(--z-sticky);
+}
+
+/* ===== Thương hiệu ===== */
+
+.app-sidebar__head {
+    padding-inline: var(--space-2);
+    margin-bottom: var(--space-6);
+}
+
+.app-sidebar__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+}
+
+.app-sidebar__logo {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.app-sidebar__brand-text {
+    display: block;
+    line-height: var(--leading-tight);
+    min-width: 0;
+}
+
+.app-sidebar__brand-name {
+    display: block;
+    font-size: var(--text-lg);
+    font-weight: var(--weight-bold);
+    color: var(--color-accent-text);
+    letter-spacing: var(--tracking-tight);
+}
+
+.app-sidebar__brand-caption {
+    display: block;
+    font-size: 10px;
+    font-weight: var(--weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-text-subtle);
+}
+
+/* ===== Điều hướng ===== */
+
+.app-sidebar__nav {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.app-sidebar__group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.app-sidebar__divider {
+    height: 1px;
+    margin: var(--space-3) var(--space-2);
+    background-color: var(--color-border);
+}
+
+.app-sidebar__group-label {
+    padding: 0 var(--space-3) var(--space-1);
+    font-size: 10px;
+    font-weight: var(--weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-text-subtle);
+}
+
+.app-sidebar__link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    font-size: var(--text-base);
+    font-weight: var(--weight-medium);
+    color: var(--color-text-muted);
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.app-sidebar__link:hover {
+    background-color: var(--color-surface-2);
+    color: var(--color-text);
+}
+
+.app-sidebar__link--active {
+    background-color: var(--color-accent-soft);
+    color: var(--color-accent-text);
+    font-weight: var(--weight-semibold);
+}
+
+.app-sidebar__link-icon {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.app-sidebar__link-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Chấm báo cạnh icon — chỉ dùng khi thu về thanh icon (không còn chỗ cho số) */
+.app-sidebar__dot {
+    display: none;
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 7px;
+    height: 7px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-warning);
+    border: 1.5px solid var(--color-surface);
+}
+
+.app-sidebar__badge {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 18px;
+    padding: 0 6px;
+    font-size: 10px;
+    font-weight: var(--weight-bold);
+    border-radius: var(--radius-full);
+    background-color: var(--color-warning-bg);
+    color: var(--color-warning-fg);
+}
+
+/* ===== Nút chính dưới cùng ===== */
+
+.app-sidebar__cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    background-color: var(--color-accent);
+    color: var(--color-text-on-accent);
+    font-weight: var(--weight-semibold);
+    font-size: var(--text-base);
+    box-shadow: var(--shadow-xs);
+    transition: background-color var(--transition-fast);
+}
+
+.app-sidebar__cta:hover {
+    background-color: var(--color-accent-hover);
+}
+
+/* ===== Lớp nền mờ của ngăn kéo ===== */
+
+.app-sidebar__scrim {
+    position: fixed;
+    inset: 0;
+    background: var(--color-overlay);
+    z-index: var(--z-overlay);
+    animation: app-sidebar-fade var(--transition-fast) both;
+}
+
+@keyframes app-sidebar-fade {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* ===== 768–1023px: thu về thanh icon ===== */
+
+@media (min-width: 768px) and (max-width: 1023.98px) {
+    .app-sidebar {
+        width: var(--sidebar-width-collapsed);
+        padding-inline: var(--space-2);
+        align-items: center;
+    }
+
+    .app-sidebar__brand-text,
+    .app-sidebar__link-label,
+    .app-sidebar__group-label,
+    .app-sidebar__badge {
+        display: none;
+    }
+
+    .app-sidebar__dot {
+        display: block;
+    }
+
+    .app-sidebar__head {
+        padding-inline: 0;
+    }
+
+    .app-sidebar__nav,
+    .app-sidebar__group {
+        width: 100%;
+    }
+
+    .app-sidebar__link,
+    .app-sidebar__cta {
+        justify-content: center;
+        padding-inline: 0;
+    }
+
+    .app-sidebar__divider {
+        margin-inline: 0;
+    }
+}
+
+/* ===== < 768px: ngăn kéo ===== */
+
+@media (max-width: 767.98px) {
+    .app-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: min(84vw, var(--sidebar-width));
+        transform: translateX(-100%);
+        transition: transform var(--transition-base);
+        box-shadow: var(--shadow-xl);
+        z-index: var(--z-modal);
+    }
+
+    .app-sidebar--open {
+        transform: translateX(0);
+    }
+}
+
+/* Từ 768px trở lên, scrim không bao giờ hiện dù state còn sót lại */
+@media (min-width: 768px) {
+    .app-sidebar__scrim {
+        display: none;
+    }
+}
