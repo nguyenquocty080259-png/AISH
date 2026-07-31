@@ -328,7 +328,7 @@
 }
 
 .detail-rating__star--filled {
-    color: var(--color-accent);          /* sao đã đạt: vàng */
+    color: var(--color-accent-2);        /* sao đã đạt: vàng */
 }
 
 .detail-rating__star:hover {
@@ -337,7 +337,7 @@
 
 /* Hover: tô vàng sao đang trỏ + tất cả sao bên trái nó */
 .detail-rating__stars:hover .detail-rating__star {
-    color: var(--color-accent);
+    color: var(--color-accent-2);
 }
 .detail-rating__stars .detail-rating__star:hover ~ .detail-rating__star {
     color: var(--color-border);
@@ -623,7 +623,7 @@
 }
 
 .detail-comment--pending {
-  border-color: var(--color-accent);
+  border-color: var(--color-warning-border);
 }
 
 .detail-comment__pending-tag {

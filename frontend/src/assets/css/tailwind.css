@@ -20,3 +20,16 @@
 @utility rounded-input { border-radius: var(--radius-input); }
 @utility rounded-card { border-radius: var(--radius-card); }
 @utility rounded-pill { border-radius: var(--radius-pill); }
+
+/* ===== Bổ sung theo token mới (src/styles/tokens.css) ===== */
+@utility bg-app { background-color: var(--color-bg); }
+@utility bg-surface-2 { background-color: var(--color-surface-2); }
+@utility bg-accent-soft { background-color: var(--color-accent-soft); }
+@utility text-accent { color: var(--color-accent-text); }
+@utility text-muted { color: var(--color-text-muted); }
+@utility text-subtle { color: var(--color-text-subtle); }
+@utility border-strong { border-color: var(--color-border-strong); }
+@utility border-accent { border-color: var(--color-accent); }
+/* Vòng focus chuẩn — dùng kèm focus-visible: (vd "focus-visible:ring-focus") */
+@utility ring-focus { box-shadow: var(--focus-ring); outline: none; }
+@utility transition-base { transition: all var(--transition-base); }

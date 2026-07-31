@@ -1,0 +1,278 @@
+/* =============================================================================
+   AISH — Design tokens
+   Lớp token gốc duy nhất của app. Mọi file CSS khác chỉ được dùng var(--...)
+   ở đây, KHÔNG hardcode màu/spacing/radius nữa.
+
+   Hệ màu giữ nguyên tông cam/hổ phách của thương hiệu HiveMind, chỉ chỉnh lại
+   cho sạch hơn: viền + nền chuyển sang xám trung tính (thay nâu #DAC2AF cũ),
+   riêng surface-soft giữ sắc cam nhạt để nav active / hover vẫn ấm.
+
+   Cuối file là nhóm "alias tương thích" ánh xạ các biến cũ (--color-primary,
+   --spacing-md, --radius-card...) sang token mới, để CSS/Tailwind utilities
+   đang dùng tên cũ không vỡ.
+   ============================================================================= */
+
+:root {
+    color-scheme: light;
+
+    /* ========================= COLOR — NỀN & BỀ MẶT ========================= */
+
+    --color-bg: #F7F8FA;
+    --color-surface: #FFFFFF;
+    --color-surface-2: #F3F4F6;
+    /* Nền cam rất nhạt: nav active, hover mềm, chip thương hiệu */
+    --color-surface-accent: #FFF4E5;
+
+    /* ========================= COLOR — CHỮ ========================= */
+
+    --color-text: #16181D;
+    --color-text-muted: #5B6472;
+    --color-text-subtle: #8A93A0;
+    /* Chữ đặt trên nền accent/semantic đậm */
+    --color-text-on-accent: #FFFFFF;
+
+    /* ========================= COLOR — VIỀN ========================= */
+
+    --color-border: #E4E7EC;
+    --color-border-strong: #D0D5DD;
+
+    /* ========================= COLOR — ACCENT (thương hiệu) ========================= */
+
+    --color-accent: #E07B00;
+    --color-accent-hover: #C26800;
+    --color-accent-active: #A85A00;
+    /* Chữ cam đủ tương phản khi đặt trên nền trắng/nhạt (AA cho body text) */
+    --color-accent-text: #B45309;
+    --color-accent-soft: #FFF4E5;
+    --color-accent-ring: rgba(224, 123, 0, 0.32);
+
+    /* Vàng phụ, dùng cho gradient/điểm nhấn trang marketing */
+    --color-accent-2: #E8B631;
+
+    /* ========================= COLOR — SEMANTIC =========================
+       Mỗi nhóm: -bg (nền nhạt) + -fg (chữ đậm) + -border, dùng cho badge/alert. */
+
+    --color-success: #15803D;
+    --color-success-fg: #15803D;
+    --color-success-bg: #DCFCE7;
+    --color-success-border: #A7F3C0;
+
+    --color-warning: #B45309;
+    --color-warning-fg: #B45309;
+    --color-warning-bg: #FEF3C7;
+    --color-warning-border: #FCD9A0;
+
+    --color-danger: #B42318;
+    --color-danger-fg: #B42318;
+    --color-danger-bg: #FEE4E2;
+    --color-danger-border: #FCC9C4;
+
+    --color-info: #1D4ED8;
+    --color-info-fg: #1D4ED8;
+    --color-info-bg: #DBEAFE;
+    --color-info-border: #BFD5FD;
+
+    --color-neutral-fg: #475467;
+    --color-neutral-bg: #F1F3F5;
+    --color-neutral-border: #E4E7EC;
+
+    /* ========================= COLOR — PHỦ / KÍNH ========================= */
+
+    --color-overlay: rgba(16, 24, 40, 0.55);
+    --glass-light: rgba(255, 255, 255, 0.72);
+    --glass-dark: rgba(20, 22, 26, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --glass-blur: 20px;
+
+    /* ========================= SPACING (thang 4px) ========================= */
+
+    --space-0: 0;
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-10: 40px;
+    --space-12: 48px;
+    --space-16: 64px;
+    --space-20: 80px;
+
+    /* ========================= RADIUS ========================= */
+
+    --radius-xs: 6px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-full: 999px;
+
+    /* ========================= SHADOW =========================
+       Bóng nhẹ, nhiều lớp — hợp gu SaaS sạch, không "nặng". */
+
+    --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.05);
+    --shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.08), 0 1px 2px rgba(16, 24, 40, 0.04);
+    --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.08), 0 2px 4px rgba(16, 24, 40, 0.04);
+    --shadow-lg: 0 12px 28px rgba(16, 24, 40, 0.12), 0 4px 8px rgba(16, 24, 40, 0.05);
+    --shadow-xl: 0 24px 48px rgba(16, 24, 40, 0.16);
+
+    /* ========================= TYPOGRAPHY ========================= */
+
+    --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue",
+        Arial, "Noto Sans", sans-serif;
+    --font-mono: "SFMono-Regular", ui-monospace, Menlo, Consolas, "Liberation Mono",
+        monospace;
+
+    --text-xs: 12px;
+    --text-sm: 13px;
+    --text-base: 14px;
+    --text-md: 16px;
+    --text-lg: 18px;
+    --text-xl: 20px;
+    --text-2xl: 24px;
+    --text-3xl: 30px;
+    --text-4xl: 38px;
+    --text-5xl: 48px;
+
+    --leading-tight: 1.25;
+    --leading-snug: 1.4;
+    --leading-normal: 1.55;
+    --leading-relaxed: 1.7;
+
+    --weight-normal: 400;
+    --weight-medium: 500;
+    --weight-semibold: 600;
+    --weight-bold: 700;
+
+    --tracking-tight: -0.015em;
+    --tracking-wide: 0.06em;
+
+    /* ========================= Z-INDEX ========================= */
+
+    --z-base: 1;
+    --z-sticky: 20;
+    --z-dropdown: 50;
+    --z-widget: 80;
+    --z-overlay: 100;
+    --z-modal: 110;
+    --z-toast: 1000;
+
+    /* ========================= LAYOUT ========================= */
+
+    --container-max: 1280px;
+    --container-wide: 1440px;
+    --container-pad: var(--space-6);
+    --sidebar-width: 260px;
+    --sidebar-width-collapsed: 64px;
+    --topbar-height: 64px;
+
+    /* ========================= MOTION ========================= */
+
+    --transition-fast: 120ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 280ms cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Vòng focus dùng chung cho MỌI phần tử tương tác */
+    --focus-ring: 0 0 0 3px var(--color-accent-ring);
+
+    /* =====================================================================
+       ALIAS TƯƠNG THÍCH — tên biến cũ (variables.css) trỏ về token mới.
+       Không xoá: tailwind.css và nhiều file CSS trang vẫn đang dùng.
+       ===================================================================== */
+
+    --color-primary: var(--color-accent);
+    --color-primary-dark: var(--color-accent-hover);
+    --color-background: var(--color-bg);
+    --color-surface-soft: var(--color-surface-accent);
+    --color-text-secondary: var(--color-text-muted);
+    --color-error: var(--color-danger);
+
+    --radius-input: var(--radius-md);
+    --radius-card: var(--radius-lg);
+    --radius-pill: var(--radius-full);
+
+    --container-width: var(--container-wide);
+
+    --spacing-xs: var(--space-1);
+    --spacing-sm: var(--space-2);
+    --spacing-md: var(--space-4);
+    --spacing-lg: var(--space-6);
+    --spacing-xl: var(--space-12);
+
+    --font-family: var(--font-sans);
+    --display-lg: var(--text-5xl);
+    --headline-lg: var(--text-3xl);
+    --title-md: var(--text-xl);
+    --body-lg: var(--text-md);
+    --body-md: var(--text-base);
+    --body-sm: var(--text-base);
+}
+
+/* =============================================================================
+   DARK MODE — bật bằng <html data-theme="dark">.
+   Chỉ ghi đè biến màu; spacing/radius/typography dùng chung với light.
+   ============================================================================= */
+
+[data-theme="dark"] {
+    color-scheme: dark;
+
+    --color-bg: #0F1115;
+    --color-surface: #171A20;
+    --color-surface-2: #1F232B;
+    --color-surface-accent: #2A1F12;
+
+    --color-text: #ECEFF4;
+    --color-text-muted: #A3ACBA;
+    --color-text-subtle: #7A8494;
+
+    --color-border: #2A2F38;
+    --color-border-strong: #3A414D;
+
+    --color-accent: #F59234;
+    --color-accent-hover: #FFA653;
+    --color-accent-active: #E07B00;
+    --color-accent-text: #FBBF6B;
+    --color-accent-soft: #2A1F12;
+    --color-accent-ring: rgba(245, 146, 52, 0.36);
+
+    --color-success-fg: #6EE7A0;
+    --color-success-bg: #10291B;
+    --color-success-border: #1E4632;
+
+    --color-warning-fg: #FBBF4E;
+    --color-warning-bg: #2C2110;
+    --color-warning-border: #4A3616;
+
+    --color-danger-fg: #FF9A92;
+    --color-danger-bg: #2E1614;
+    --color-danger-border: #4E211D;
+
+    --color-info-fg: #8FB6FF;
+    --color-info-bg: #131E33;
+    --color-info-border: #1E3358;
+
+    --color-neutral-fg: #A3ACBA;
+    --color-neutral-bg: #1F232B;
+    --color-neutral-border: #2A2F38;
+
+    --color-overlay: rgba(0, 0, 0, 0.65);
+
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.55);
+    --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.6);
+}
+
+/* Người dùng bật "giảm chuyển động" ở hệ điều hành → tắt animation/transition. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

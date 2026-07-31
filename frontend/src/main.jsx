@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 
 import "./assets/css/tailwind.css";
 import "./assets/css/reset.css";
-import "./assets/css/variables.css";
+import "./styles/tokens.css";
 import "./assets/css/global.css";
 import "./assets/css/toast.css";
 

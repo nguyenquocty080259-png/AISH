@@ -30,7 +30,7 @@
 
 .case-thread__message--mine {
     align-self: flex-end;
-    background: var(--color-accent);
+    background: var(--color-accent-soft);
 }
 
 .case-thread__message-header {
