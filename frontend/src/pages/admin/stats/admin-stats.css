@@ -192,10 +192,6 @@
 
 /* Online */
 
-.online-status {
-    font-weight: 500;
-}
-
 .online {
     color: var(--color-success-fg);
 }
@@ -204,34 +200,3 @@
     color: var(--color-text-subtle);
 }
 
-.visibility-public{
-
-    background: var(--color-success-bg);
-
-    color: var(--color-success-fg);
-
-    padding:6px 14px;
-
-    border-radius:20px;
-
-    font-size:13px;
-
-    font-weight:600;
-
-}
-
-.visibility-private{
-
-    background: var(--color-danger-bg);
-
-    color: var(--color-danger-fg);
-
-    padding:6px 14px;
-
-    border-radius:20px;
-
-    font-size:13px;
-
-    font-weight:600;
-
-}

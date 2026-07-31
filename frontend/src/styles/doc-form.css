@@ -22,12 +22,6 @@
     color: var(--color-danger-fg);
 }
 
-.doc-form__section-label {
-    font-size: var(--text-sm);
-    font-weight: var(--weight-semibold);
-    color: var(--color-text);
-}
-
 /* ===== Chọn môn học ===== */
 
 .doc-form__chips {

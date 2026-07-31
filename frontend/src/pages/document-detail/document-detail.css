@@ -614,14 +614,9 @@
     margin-bottom: var(--spacing-md);
 }
 
+/* Lớp bọc của Input dùng chung — viền/padding do .ui-input lo, ở đây chỉ canh lề. */
 .detail-add-collection__search {
-    width: 100%;
-    padding: var(--spacing-sm) var(--spacing-md);
-    margin-bottom: var(--spacing-sm);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-input);
-    font-size: var(--body-sm);
-    color: var(--color-text);
+    margin-bottom: var(--space-3);
 }
 
 .detail-add-collection__list {
