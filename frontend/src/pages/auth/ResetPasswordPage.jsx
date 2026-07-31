@@ -5,6 +5,8 @@ import * as authApi from "../../api/authApi";
 import { ROUTES } from "../../constants/routes";
 import AuthShell from "../../components/auth/AuthShell";
 import PasswordField from "../../components/auth/PasswordField";
+import Button from "../../components/ui/Button";
+import Alert from "../../components/ui/Alert";
 
 export default function ResetPasswordPage() {
   const { t } = useTranslation();
@@ -38,29 +40,30 @@ export default function ResetPasswordPage() {
 
   return (
     <AuthShell>
-      <h1 className="text-3xl font-bold tracking-tight text-app">{t("auth.reset.title")}</h1>
-      <p className="mt-2 text-secondary">{t("auth.reset.subtitle")}</p>
+      <h1 className="auth-title">{t("auth.reset.title")}</h1>
+      <p className="auth-subtitle">{t("auth.reset.subtitle")}</p>
 
-      <form className="mt-8 flex flex-col gap-5" onSubmit={handleSubmit}>
+      <form className="auth-form" onSubmit={handleSubmit}>
         <PasswordField id="password" label={t("auth.reset.newPassword")} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
         <PasswordField id="confirmPassword" label={t("auth.reset.confirmPassword")} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" />
 
-        <div className="rounded-input bg-surface-soft px-4 py-3 text-sm">
-          <p className="font-semibold text-secondary">{t("auth.reset.requirementsTitle")}</p>
-          <p className={lengthOk ? "mt-1 text-primary-dark" : "mt-1 text-secondary"}>{lengthOk ? "✓" : "○"} {t("auth.reset.minChars")}</p>
+        <div className="auth-rules">
+          <p className="auth-rules__title">{t("auth.reset.requirementsTitle")}</p>
+          <p className={`auth-rules__item ${lengthOk ? "auth-rules__item--ok" : ""}`.trim()}>
+            <span aria-hidden="true">{lengthOk ? "✓" : "○"}</span> {t("auth.reset.minChars")}
+          </p>
         </div>
 
-        {error && <p className="rounded-input bg-error px-4 py-2.5 text-sm text-white">{error}</p>}
+        {error && <Alert intent="danger">{error}</Alert>}
 
-        <button type="submit" disabled={submitting}
-          className="mt-1 w-full rounded-input bg-primary py-3 font-semibold text-white transition-colors hover:bg-primary-dark disabled:opacity-60">
+        <Button type="submit" size="lg" block loading={submitting} className="auth-form__submit">
           {submitting ? t("auth.reset.submitting") : t("auth.reset.submit")}
-        </button>
+        </Button>
       </form>
 
-      <div className="mt-6 text-center">
-        <Link to={ROUTES.LOGIN} className="text-sm font-semibold text-secondary hover:text-primary">{t("auth.reset.backToLogin")}</Link>
-      </div>
+      <p className="auth-foot">
+        <Link to={ROUTES.LOGIN} className="auth-link has-custom-focus">{t("auth.reset.backToLogin")}</Link>
+      </p>
     </AuthShell>
   );
 }

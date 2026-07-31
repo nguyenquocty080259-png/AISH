@@ -5,6 +5,8 @@ import { ROUTES } from "../../constants/routes";
 import AuthShell from "../../components/auth/AuthShell";
 import PasswordField from "../../components/auth/PasswordField";
 import SocialButtons from "../../components/auth/SocialButtons";
+import Button from "../../components/ui/Button";
+import { Input } from "../../components/ui/Field";
 
 export default function SignUpPage() {
   const { t } = useTranslation();
@@ -12,38 +14,54 @@ export default function SignUpPage() {
 
   return (
     <AuthShell>
-      <h1 className="text-3xl font-bold tracking-tight text-app">{t("auth.signup.title")}</h1>
-      <p className="mt-2 text-secondary">{t("auth.signup.subtitle")}</p>
+      <h1 className="auth-title">{t("auth.signup.title")}</h1>
+      <p className="auth-subtitle">{t("auth.signup.subtitle")}</p>
 
-      <form className="mt-8 flex flex-col gap-5" onSubmit={handleSubmit}>
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="fullName" className="text-sm font-semibold text-secondary">{t("auth.signup.fullName")}</label>
-          <input id="fullName" type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder={t("auth.signup.fullNamePlaceholder")}
-            className="w-full rounded-input border border-border bg-surface px-4 py-2.5 text-app outline-none focus:border-primary" />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="email" className="text-sm font-semibold text-secondary">{t("auth.login.email")}</label>
-          <input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t("auth.login.emailPlaceholder")}
-            className="w-full rounded-input border border-border bg-surface px-4 py-2.5 text-app outline-none focus:border-primary" />
-        </div>
-        <PasswordField id="password" label={t("auth.signup.password")} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" minLength={8} helper={t("auth.signup.passwordHelper")} />
+      <form className="auth-form" onSubmit={handleSubmit}>
+        <Input
+          id="fullName"
+          type="text"
+          label={t("auth.signup.fullName")}
+          required
+          autoComplete="name"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          placeholder={t("auth.signup.fullNamePlaceholder")}
+        />
 
-        <button type="submit" disabled={submitting}
-          className="mt-1 w-full rounded-input bg-primary py-3 font-semibold text-white transition-colors hover:bg-primary-dark disabled:opacity-60">
+        <Input
+          id="email"
+          type="email"
+          label={t("auth.login.email")}
+          required
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder={t("auth.login.emailPlaceholder")}
+        />
+
+        <PasswordField
+          id="password"
+          label={t("auth.signup.password")}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="••••••••"
+          minLength={8}
+          helper={t("auth.signup.passwordHelper")}
+        />
+
+        <Button type="submit" size="lg" block loading={submitting} className="auth-form__submit">
           {submitting ? t("auth.signup.submitting") : t("auth.signup.submit")}
-        </button>
+        </Button>
       </form>
 
-      <div className="my-6 flex items-center gap-4">
-        <span className="flex-1 border-t border-border" />
-        <span className="text-sm text-secondary">{t("auth.orDivider")}</span>
-        <span className="flex-1 border-t border-border" />
-      </div>
+      <div className="auth-divider">{t("auth.orDivider")}</div>
 
       <SocialButtons />
 
-      <p className="mt-6 text-center text-sm text-secondary">
-        {t("auth.signup.haveAccount")} <Link to={ROUTES.LOGIN} className="font-semibold text-primary hover:text-primary-dark">{t("auth.signup.login")}</Link>
+      <p className="auth-foot">
+        {t("auth.signup.haveAccount")}{" "}
+        <Link to={ROUTES.LOGIN} className="auth-link has-custom-focus">{t("auth.signup.login")}</Link>
       </p>
     </AuthShell>
   );

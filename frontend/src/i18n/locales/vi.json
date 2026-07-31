@@ -568,6 +568,7 @@
       "notReceived": "Không nhận được mã?",
       "resend": "Gửi lại mã OTP",
       "resendIn": "Gửi lại sau {{count}}s",
+      "digitAria": "Chữ số thứ {{index}} của mã OTP",
       "backToSignupPage": "← Quay lại trang đăng ký",
       "verifySuccess": "Xác thực OTP thành công.",
       "verifyEmailSuccess": "Xác minh email thành công, vui lòng đăng nhập.",

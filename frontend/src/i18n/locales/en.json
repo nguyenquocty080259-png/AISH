@@ -568,6 +568,7 @@
       "notReceived": "Didn't receive the code?",
       "resend": "Resend OTP code",
       "resendIn": "Resend in {{count}}s",
+      "digitAria": "OTP digit {{index}}",
       "backToSignupPage": "← Back to sign up page",
       "verifySuccess": "OTP verified successfully.",
       "verifyEmailSuccess": "Email verified successfully, please sign in.",
