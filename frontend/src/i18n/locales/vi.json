@@ -746,6 +746,9 @@
   },
   "documents": {
     "title": "Tài liệu",
+    "subtitle": "Quản lý tài liệu bạn đã tải lên, sắp xếp theo môn học và chia sẻ cho cộng đồng.",
+    "emptyHint": "Tải tài liệu đầu tiên lên để bắt đầu xây dựng thư viện của bạn.",
+    "emptyFilterHint": "Không có tài liệu nào khớp bộ lọc. Thử đổi từ khoá hoặc chọn môn khác.",
     "upload": "+ Tải lên tài liệu",
     "loading": "Đang tải danh sách tài liệu...",
     "empty": "Không tìm thấy tài liệu phù hợp.",

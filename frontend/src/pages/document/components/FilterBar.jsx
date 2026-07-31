@@ -1,4 +1,6 @@
 import { useTranslation } from "react-i18next";
+import { Select } from "../../../components/ui/Field";
+import Button from "../../../components/ui/Button";
 
 export default function FilterBar({
   subjects,
@@ -9,9 +11,11 @@ export default function FilterBar({
   const { t } = useTranslation();
   return (
     <div className="doc-filterbar">
-      <select
+      <Select
         value={subjectFilter}
         onChange={(e) => onSubjectChange(e.target.value)}
+        aria-label={t("documents.allSubjects")}
+        fieldClassName="doc-filterbar__select"
       >
         <option value="">{t("documents.allSubjects")}</option>
         {subjects.map((subject) => (
@@ -19,11 +23,11 @@ export default function FilterBar({
             {subject.name}
           </option>
         ))}
-      </select>
+      </Select>
 
-      <button type="button" className="doc-filterbar__reset" onClick={onReset}>
+      <Button variant="ghost" onClick={onReset}>
         {t("documents.resetFilter")}
-      </button>
+      </Button>
     </div>
   );
 }

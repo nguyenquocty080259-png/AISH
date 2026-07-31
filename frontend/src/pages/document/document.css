@@ -1,392 +1,89 @@
-.doc-page {
-    max-width: var(--container-width);
-    margin: 0 auto;
-    padding: var(--spacing-xl);
-}
+/* Trang "Tài liệu của tôi" và "Thùng rác".
+   Thẻ tài liệu + lưới nằm ở src/styles/doc-card.css (.doc-grid/.doc-tile), phần form
+   trong modal nằm ở src/styles/doc-form.css — file này chỉ còn thanh công cụ, ô dung
+   lượng và vài chi tiết riêng của hai trang. */
 
-.doc-page__header {
+/* ===== Thanh công cụ + ô dung lượng ===== */
+
+.doc-page__bar {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
-    gap: var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
+    gap: var(--space-4);
     flex-wrap: wrap;
-}
-
-.doc-page__title {
-    font-size: var(--headline-lg);
-    color: var(--color-text);
-}
-
-.doc-page__upload-btn {
-    padding: var(--spacing-sm) var(--spacing-lg);
-    border-radius: var(--radius-pill);
-    border: none;
-    background-color: var(--color-primary);
-    color: var(--color-surface);
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.doc-page__upload-btn:hover {
-    background-color: var(--color-primary-dark);
-}
-
-.doc-page__storage {
-    max-width: 420px;
-    margin-bottom: var(--spacing-lg);
-    padding: var(--spacing-md);
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-card);
+    margin-bottom: var(--space-6);
 }
 
 .doc-page__toolbar {
     display: flex;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-lg);
+    align-items: center;
+    flex: 1 1 420px;
     flex-wrap: wrap;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xs);
 }
 
 .doc-search {
-    flex: 1;
-    min-width: 220px;
-    padding: var(--spacing-sm) var(--spacing-md);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-input);
-    font-size: var(--body-sm);
-    background-color: var(--color-surface);
+    flex: 1 1 220px;
+    min-width: 180px;
 }
 
 .doc-filterbar {
     display: flex;
-    gap: var(--spacing-sm);
+    align-items: center;
+    gap: var(--space-2);
     flex-wrap: wrap;
 }
 
-.doc-filterbar select {
-    padding: var(--spacing-sm) var(--spacing-md);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-input);
-    background-color: var(--color-surface);
-    font-size: var(--body-sm);
+.doc-filterbar__select {
+    min-width: 160px;
 }
 
-.doc-filterbar__reset {
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: var(--radius-input);
-    border: 1px solid var(--color-border);
-    background: none;
-    cursor: pointer;
-    font-size: var(--body-sm);
-    color: var(--color-text-secondary);
-}
-
-.doc-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-lg);
-}
-
-.doc-card {
+.doc-page__storage {
+    flex: 0 1 320px;
+    min-width: 260px;
+    padding: var(--space-4);
     background-color: var(--color-surface);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-card);
-    padding: var(--spacing-lg);
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
-}
-
-.doc-card__top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.doc-card__subject {
-    font-size: var(--body-sm);
-    color: var(--color-primary);
-    font-weight: 600;
-}
-
-.doc-card__fav {
-    background: none;
-    border: none;
-    font-size: var(--title-md);
-    cursor: pointer;
-    color: var(--color-text-secondary);
-}
-
-.doc-card__fav--active {
-    color: var(--color-error);
-}
-
-.doc-card__title {
-    font-size: var(--title-md);
-    color: var(--color-text);
-    text-decoration: none;
-    font-weight: 600;
-}
-
-.doc-card__title:hover {
-    color: var(--color-primary);
-}
-
-.doc-card__desc {
-    font-size: var(--body-sm);
-    color: var(--color-text-secondary);
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-}
-
-.doc-card__meta {
-    display: flex;
-    justify-content: space-between;
-    font-size: var(--body-sm);
-    color: var(--color-text-secondary);
-    margin-top: var(--spacing-xs);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xs);
 }
 
 .doc-pagination {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--spacing-md);
+    margin-top: var(--space-8);
 }
 
-.doc-pagination button {
-    padding: var(--spacing-xs) var(--spacing-md);
-    border-radius: var(--radius-input);
-    border: 1px solid var(--color-border);
-    background: none;
-    cursor: pointer;
-}
-
-.doc-pagination button:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
-
-.doc-empty {
-    text-align: center;
-    color: var(--color-text-secondary);
-    padding: var(--spacing-xl);
-}
-
-/* Modal */
-.doc-modal__overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--spacing-lg);
-    z-index: 100;
-}
-
-.doc-modal {
-    background-color: var(--color-surface);
-    border-radius: var(--radius-card);
-    padding: var(--spacing-lg);
-    width: min(100%, 480px);
-    max-height: 90vh;
-    overflow-y: auto;
-}
-
-.doc-modal__title {
-    font-size: var(--title-md);
-    margin-bottom: var(--spacing-md);
-    color: var(--color-text);
-}
-
-.doc-modal__form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md);
-}
-
-.doc-modal__form label {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
-    font-size: var(--body-sm);
-    color: var(--color-text-secondary);
-    font-weight: 600;
-}
-
-.doc-modal__form input,
-.doc-modal__form textarea,
-.doc-modal__form select {
-    padding: var(--spacing-sm) var(--spacing-md);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-input);
-    font-size: var(--body-sm);
-    font-weight: 400;
-    color: var(--color-text);
-}
-
-.doc-modal__actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--spacing-sm);
-}
-
-.doc-modal__cancel {
-    padding: var(--spacing-sm) var(--spacing-lg);
-    border-radius: var(--radius-pill);
-    border: 1px solid var(--color-border);
-    background: none;
-    cursor: pointer;
-}
-
-.doc-modal__submit {
-    padding: var(--spacing-sm) var(--spacing-lg);
-    border-radius: var(--radius-pill);
-    border: none;
-    background-color: var(--color-primary);
-    color: var(--color-surface);
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.doc-modal__submit:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-/* Thumbnail mờ trên card — bấm vào để xem kỹ ở trang chi tiết */
+/* Ảnh preview trên thẻ — bấm vào để xem kỹ ở trang chi tiết.
+   Khung .doc-thumb do components/ui/doc-thumb.css lo, ở đây chỉ canh khoảng cách. */
 .doc-card__thumb-link {
-  display: block;
-  margin: 8px 0 10px;
-}
-.doc-thumb {
-  position: relative;
-  width: 100%;
-  height: 140px;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #f4f4f6;
-  border: 1px solid #ececec;
-}
-.doc-thumb__inner {
-  position: absolute;
-  inset: 0;
-  filter: blur(2.5px);
-  transform: scale(1.05);
-  pointer-events: none;
-}
-.doc-thumb__img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.doc-thumb__pdf {
-  width: 100%;
-  height: 100%;
-  border: 0;
-  background: #fff;
-}
-.doc-thumb__icon {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 44px;
-}
-.doc-card__thumb-link:hover .doc-thumb__inner {
-  filter: blur(1px);
-}
-/* ============ TOOLBAR TÌM KIẾM / LỌC (trang Cộng đồng) ============ */
-.doc-page__toolbar {
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  box-shadow: var(--shadow-sm);
+    display: block;
 }
 
-/* Style chung cho ô tìm kiếm + các dropdown + nút, để cao đều nhau */
-.doc-page__toolbar input,
-.doc-page__toolbar select,
-.doc-page__toolbar button {
-  height: 44px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  background-color: var(--color-surface);
-  font-size: var(--body-sm);
-  font-family: var(--font-family);
-  color: var(--color-text);
-  padding: 0 var(--spacing-md);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  cursor: pointer;
+@media (max-width: 900px) {
+    .doc-page__bar {
+        flex-direction: column;
+    }
+
+    .doc-page__storage,
+    .doc-page__toolbar {
+        flex-basis: auto;
+        width: 100%;
+    }
 }
 
-.doc-page__toolbar input {
-  cursor: text;
+/* ===== Thùng rác ===== */
+
+.trash-page__note {
+    margin-bottom: var(--space-6);
 }
 
-/* Ô tìm kiếm: có icon kính lúp bằng background, chiếm phần lớn chiều ngang */
-.doc-page__toolbar input[type="text"] {
-  flex: 1 1 240px;
-  min-width: 200px;
-  padding-left: 42px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23544435' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: 14px center;
-}
-
-/* Dropdown: bỏ mũi tên mặc định, vẽ mũi tên tùy chỉnh */
-.doc-page__toolbar select {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  padding-right: 38px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23E08307' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 14px center;
-}
-
-/* Focus: viền cam + glow nhẹ */
-.doc-page__toolbar input:focus,
-.doc-page__toolbar select:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(224, 131, 7, 0.15);
-}
-
-.doc-page__toolbar select:hover {
-  border-color: var(--color-primary);
-}
-
-/* Nút "Xoá lọc": nổi bật màu cam */
-.doc-page__toolbar button {
-  font-weight: 600;
-  color: var(--color-primary);
-  border-color: var(--color-primary);
-  background-color: var(--color-surface-soft);
-  white-space: nowrap;
-}
-
-.doc-page__toolbar button:hover {
-  background-color: var(--color-primary);
-  color: #fff;
-}
-
-/* Màn hình nhỏ: toolbar bỏ bo tròn viên thuốc cho gọn */
-@media (max-width: 640px) {
-  .doc-page__toolbar {
-    border-radius: var(--radius-card);
-  }
-  .doc-page__toolbar input[type="text"] {
-    flex-basis: 100%;
-  }
+.trash-card__actions {
+    display: flex;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+    flex-wrap: wrap;
 }

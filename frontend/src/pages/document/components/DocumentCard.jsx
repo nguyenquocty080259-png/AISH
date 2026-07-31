@@ -2,46 +2,61 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ROUTES, buildRoute } from "../../../constants/routes";
 import DocumentThumb from "../../../components/ui/DocumentThumb";
+import FormatBadge from "../../../components/ui/FormatBadge";
 import ReportMenu from "../../../components/report/ReportMenu";
 import ModerationBadge from "./ModerationBadge";
 
 export default function DocumentCard({ doc, onToggleFavorite }) {
   const { t } = useTranslation();
+  const detail = buildRoute(ROUTES.DOCUMENT_DETAIL, { id: doc.id });
+
   return (
-    <div className="doc-card">
-      <div className="doc-card__top">
+    <article className="doc-tile doc-card">
+      <div className="doc-tile__actions">
         <ReportMenu targetType="DOCUMENT" targetId={doc.id} />
-        {doc.subjectNames?.length > 0 && (
-          <span className="doc-card__subject">{doc.subjectNames.join(", ")}</span>
-        )}
         <button
           type="button"
-          className={`doc-card__fav ${doc.favorited ? "doc-card__fav--active" : ""}`}
+          className={`doc-tile__fav has-custom-focus ${doc.favorited ? "doc-tile__fav--active" : ""}`.trim()}
           onClick={() => onToggleFavorite(doc.id)}
+          aria-pressed={!!doc.favorited}
           aria-label={t("documents.favorite")}
         >
-          {doc.favorited ? "♥" : "♡"}
+          <span aria-hidden="true">{doc.favorited ? "♥" : "♡"}</span>
         </button>
       </div>
 
-      <Link to={buildRoute(ROUTES.DOCUMENT_DETAIL, { id: doc.id })} className="doc-card__thumb-link">
+      <Link to={detail} className="doc-card__thumb-link doc-tile__media" tabIndex={-1} aria-hidden="true">
         <DocumentThumb doc={doc} />
       </Link>
 
-      <Link
-        to={buildRoute(ROUTES.DOCUMENT_DETAIL, { id: doc.id })}
-        className="doc-card__title"
-      >
-        {doc.title}
-      </Link>
-      <p className="doc-card__desc">{doc.description}</p>
-      <ModerationBadge doc={doc} />
+      <div className="doc-tile__body">
+        {doc.subjectNames?.length > 0 && (
+          <span className="doc-tile__eyebrow">{doc.subjectNames.join(", ")}</span>
+        )}
 
-      <div className="doc-card__meta">
-        <span>{doc.ownerName}</span>
-        <span>★ {doc.averageRating?.toFixed?.(1) ?? "—"}</span>
-        <span>⬇ {doc.downloadCount ?? 0}</span>
+        <Link to={detail} className="doc-tile__title has-custom-focus">{doc.title}</Link>
+
+        {doc.description && <p className="doc-tile__desc">{doc.description}</p>}
+
+        <div className="doc-tile__badges">
+          <FormatBadge fileType={doc.fileType} fileName={doc.fileName} />
+          <ModerationBadge doc={doc} />
+        </div>
+
+        <div className="doc-tile__foot">
+          <span className="doc-tile__owner">{doc.ownerName}</span>
+          <span className="doc-tile__stats">
+            <span className="doc-tile__stat doc-tile__stat--rating">
+              <span aria-hidden="true">★</span>
+              {doc.averageRating?.toFixed?.(1) ?? "—"}
+            </span>
+            <span className="doc-tile__stat">
+              <span aria-hidden="true">⬇</span>
+              {doc.downloadCount ?? 0}
+            </span>
+          </span>
+        </div>
       </div>
-    </div>
+    </article>
   );
 }

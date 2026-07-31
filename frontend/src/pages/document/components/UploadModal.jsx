@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { formatBytes } from "../../../components/ui/StorageUsageBar";
+import Modal from "../../../components/ui/Modal";
+import Button from "../../../components/ui/Button";
+import { Field, Input, Textarea } from "../../../components/ui/Field";
 
 // Trả về thông báo lỗi (đã dịch) nếu file vượt giới hạn 1 tệp HOẶC vượt quota còn lại cho
 // storage đã chọn, null nếu ổn. storageUsage null (chưa tải được / lỗi) -> fail-open, không
@@ -99,8 +102,6 @@ export default function UploadModal({ open, subjects, submitting, storageUsage, 
       ? allowedFileTypes.map((ext) => "." + ext).join(",")
       : undefined;
 
-  if (!open) return null;
-
   // lọc môn theo ô tìm kiếm
   const kw = subjectSearch.trim().toLowerCase();
   const filteredSubjects = kw
@@ -126,182 +127,170 @@ export default function UploadModal({ open, subjects, submitting, storageUsage, 
   };
 
   return (
-    <div className="doc-modal__overlay" onClick={onClose}>
-      <div className="doc-modal" onClick={(e) => e.stopPropagation()}>
-        <h2 className="doc-modal__title">{t("documents.upload_modal.title")}</h2>
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={t("documents.upload_modal.title")}
+      size="lg"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose} disabled={submitting}>
+            {t("common.actions.cancel")}
+          </Button>
+          <Button
+            type="submit"
+            form="upload-modal-form"
+            loading={submitting}
+            disabled={!!sizeError || !!typeError}
+          >
+            {submitting ? t("documents.upload_modal.submitting") : t("documents.upload_modal.submit")}
+          </Button>
+        </>
+      }
+    >
+      <form id="upload-modal-form" className="doc-form__form" onSubmit={handleSubmit}>
+        <Input
+          label={t("documents.upload_modal.name")}
+          required
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
 
-        <form className="doc-modal__form" onSubmit={handleSubmit}>
-          <label>
-            {t("documents.upload_modal.name")}
-            <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} />
-          </label>
-          <button type="button" disabled title={t("documents.upload_modal.aiSuggestHint")}
-            style={{ opacity: 0.65, cursor: "not-allowed" }} className="doc-modal__submit">
+        <div>
+          <Button variant="secondary" size="sm" disabled title={t("documents.upload_modal.aiSuggestHint")}>
             {t("documents.upload_modal.aiSuggest")}
-          </button>
-          <p style={{ color: "#777", fontSize: 12 }}>{t("documents.upload_modal.aiSuggestHint")}</p>
+          </Button>
+          <p className="doc-form__hint">{t("documents.upload_modal.aiSuggestHint")}</p>
+        </div>
 
-          <label>
-            {t("documents.upload_modal.description")}
-            <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
-          </label>
+        <Textarea
+          label={t("documents.upload_modal.description")}
+          rows={3}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
 
-          <label style={{ fontWeight: 600 }}>{t("documents.upload_modal.subjectLabel")}</label>
-
+        {/* ===== Chọn môn học ===== */}
+        <Field
+          id="upload-modal-subjects"
+          label={t("documents.upload_modal.subjectLabel")}
+          error={subjectError ? t("documents.upload_modal.subjectRequired") : undefined}
+        >
           {subjectIds.length > 0 && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, margin: "6px 0" }}>
+            <div className="doc-form__chips">
               {subjectIds.map((id) => {
                 const s = subjects.find((x) => x.id === id);
                 if (!s) return null;
                 return (
-                  <span
+                  <button
                     key={id}
+                    type="button"
+                    className="doc-form__chip has-custom-focus"
                     onClick={() => toggleSubject(id)}
-                    style={{
-                      background: "#f3a712", color: "#fff", borderRadius: 999,
-                      padding: "3px 12px", fontSize: 13, cursor: "pointer",
-                      display: "inline-flex", alignItems: "center", gap: 6,
-                    }}
                     title={t("documents.upload_modal.subjectRemoveHint")}
                   >
-                    {s.name} <span style={{ fontWeight: 700 }}>×</span>
-                  </span>
+                    {s.name}
+                    <span className="doc-form__chip-x" aria-hidden="true">×</span>
+                  </button>
                 );
               })}
             </div>
           )}
 
-          <input
-            type="text"
+          <Input
+            id="upload-modal-subjects"
+            type="search"
             placeholder={t("documents.upload_modal.subjectSearch")}
+            aria-label={t("documents.upload_modal.subjectSearch")}
             value={subjectSearch}
             onChange={(e) => setSubjectSearch(e.target.value)}
-            style={{ marginBottom: 8 }}
           />
 
-          <div
-            style={{
-              maxHeight: 200,
-              overflowY: "auto",
-              border: "1px solid #e2e2e2",
-              borderRadius: 10,
-              background: "#fff",
-            }}
-          >
+          <div className="doc-form__subject-list">
             {filteredSubjects.length === 0 && (
-              <p style={{ color: "#888", fontSize: 13, margin: 0, padding: 12 }}>
-                {t("documents.upload_modal.noSubject")}
-              </p>
+              <p className="doc-form__subject-empty">{t("documents.upload_modal.noSubject")}</p>
             )}
             {filteredSubjects.map((s) => {
               const checked = subjectIds.includes(s.id);
               return (
-                <div
+                <button
                   key={s.id}
+                  type="button"
+                  role="checkbox"
+                  aria-checked={checked}
                   onClick={() => toggleSubject(s.id)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    padding: "8px 12px",
-                    cursor: "pointer",
-                    borderBottom: "1px solid #f0f0f0",
-                    background: checked ? "#fff7e6" : "transparent",
-                    fontSize: 14,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!checked) e.currentTarget.style.background = "#f7f7f7";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = checked ? "#fff7e6" : "transparent";
-                  }}
+                  className={`doc-form__subject has-custom-focus ${
+                    checked ? "doc-form__subject--checked" : ""
+                  }`.trim()}
                 >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    readOnly
-                    style={{ width: 16, height: 16, flexShrink: 0, pointerEvents: "none" }}
-                  />
-                  <span style={{ textAlign: "left" }}>{s.name}</span>
-                </div>
+                  <input type="checkbox" checked={checked} readOnly tabIndex={-1} aria-hidden="true" />
+                  <span>{s.name}</span>
+                </button>
               );
             })}
           </div>
+        </Field>
 
-          {subjectError && (
-            <p style={{ color: "#e11", fontSize: 13, margin: "4px 0 0" }}>
-              {t("documents.upload_modal.subjectRequired")}
-            </p>
-          )}
+        {/* ===== Chọn tệp ===== */}
+        <Field
+          id="upload-modal-file"
+          label={t("documents.upload_modal.fileLabel")}
+          required
+          hint={
+            allowedFileTypes && allowedFileTypes.length > 0
+              ? t("documents.upload_modal.allowedTypes", { types: allowedFileTypes.join(", ") })
+              : undefined
+          }
+          error={typeError || undefined}
+        >
+          <input
+            id="upload-modal-file"
+            className="doc-form__file has-custom-focus"
+            type="file"
+            required
+            accept={acceptAttr}
+            onChange={(e) => {
+              const f = e.target.files[0];
+              if (!f) return;
+              setFile(f);
+              if (!title.trim()) setTitle(f.name.replace(/\.[^/.]+$/, ""));
+            }}
+          />
+        </Field>
 
-          <label>
-            {t("documents.upload_modal.fileLabel")}
-            <input
-              type="file"
-              required
-              accept={acceptAttr}
-              onChange={(e) => {
-                const f = e.target.files[0];
-                if (!f) return;
-                setFile(f);
-                if (!title.trim()) setTitle(f.name.replace(/\.[^/.]+$/, ""));
-              }}
-            />
-          </label>
-          {allowedFileTypes && allowedFileTypes.length > 0 && (
-            <p style={{ color: "#888", fontSize: 12, margin: "2px 0 0" }}>
-              {t("documents.upload_modal.allowedTypes", { types: allowedFileTypes.join(", ") })}
-            </p>
-          )}
-          {typeError && (
-            <p style={{ color: "#e11", fontSize: 13, margin: "4px 0 0" }}>{typeError}</p>
-          )}
-          <label style={{ fontWeight: 600 }}>{t("documents.upload_modal.storageLabel")}</label>
-          <div style={{ display: "flex", gap: 8 }}>
+        {/* ===== Nơi lưu ===== */}
+        <Field
+          id="upload-modal-storage"
+          label={t("documents.upload_modal.storageLabel")}
+          hint={
+            [STORAGE_OPTIONS.find((o) => o.value === storage)?.hint, remainingText]
+              .filter(Boolean)
+              .join(" · ")
+          }
+          error={sizeError || undefined}
+        >
+          <div className="doc-form__storage" role="radiogroup" aria-label={t("documents.upload_modal.storageLabel")}>
             {STORAGE_OPTIONS.map((opt) => {
               const active = storage === opt.value;
               return (
                 <button
                   key={opt.value}
                   type="button"
+                  role="radio"
+                  aria-checked={active}
                   onClick={() => setStorage(opt.value)}
                   title={opt.hint}
-                  style={{
-                    flex: 1,
-                    padding: "8px 10px",
-                    borderRadius: 10,
-                    cursor: "pointer",
-                    fontSize: 14,
-                    fontWeight: active ? 700 : 400,
-                    border: active ? "2px solid #f3a712" : "1px solid #e2e2e2",
-                    background: active ? "#fff7e6" : "#fff",
-                    color: active ? "#b97b00" : "#444",
-                  }}
+                  className={`doc-form__storage-opt has-custom-focus ${
+                    active ? "doc-form__storage-opt--active" : ""
+                  }`.trim()}
                 >
                   {opt.label}
                 </button>
               );
             })}
           </div>
-          <p style={{ color: "#888", fontSize: 12, margin: "2px 0 0" }}>
-            {STORAGE_OPTIONS.find((o) => o.value === storage)?.hint}
-          </p>
-          {remainingText && (
-            <p style={{ color: "#888", fontSize: 12, margin: "2px 0 0" }}>{remainingText}</p>
-          )}
-
-          {sizeError && (
-            <p style={{ color: "#e11", fontSize: 13, margin: "4px 0 0" }}>{sizeError}</p>
-          )}
-
-          <div className="doc-modal__actions">
-            <button type="button" onClick={onClose} className="doc-modal__cancel">{t("common.actions.cancel")}</button>
-            <button type="submit" disabled={submitting || !!sizeError || !!typeError} className="doc-modal__submit">
-              {submitting ? t("documents.upload_modal.submitting") : t("documents.upload_modal.submit")}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        </Field>
+      </form>
+    </Modal>
   );
 }

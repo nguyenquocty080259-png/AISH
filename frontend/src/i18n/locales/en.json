@@ -746,6 +746,9 @@
   },
   "documents": {
     "title": "Documents",
+    "subtitle": "Manage the documents you uploaded, organise them by subject and share them with the community.",
+    "emptyHint": "Upload your first document to start building your library.",
+    "emptyFilterHint": "No documents match the filters. Try another keyword or subject.",
     "upload": "+ Upload document",
     "loading": "Loading documents...",
     "empty": "No matching documents found.",

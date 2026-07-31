@@ -6,7 +6,19 @@ import DocumentCard from "./components/DocumentCard";
 import Pagination from "./components/Pagination";
 import UploadModal from "./components/UploadModal";
 import StorageUsageBar from "../../components/ui/StorageUsageBar";
+import PageHeader from "../../components/ui/PageHeader";
+import Button from "../../components/ui/Button";
+import EmptyState from "../../components/ui/EmptyState";
+import { SkeletonCard } from "../../components/ui/Skeleton";
 import "./document.css";
+
+const IconUpload = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <path d="m17 8-5-5-5 5" />
+    <path d="M12 3v12" />
+  </svg>
+);
 
 export default function DocumentPage() {
   const { t } = useTranslation();
@@ -31,31 +43,46 @@ export default function DocumentPage() {
     handleToggleFavorite,
   } = useDocumentPage();
 
+  const filtering = searchText.trim() !== "" || subjectFilter !== "";
+
   return (
-    <div className="doc-page">
-      <div className="doc-page__header">
-        <h1 className="doc-page__title">{t("documents.title")}</h1>
-        <button className="doc-page__upload-btn" onClick={() => setIsUploadOpen(true)}>
-          {t("documents.upload")}
-        </button>
-      </div>
+    <div className="page-shell doc-page">
+      <PageHeader
+        title={t("documents.title")}
+        subtitle={t("documents.subtitle")}
+        actions={
+          <Button leftIcon={<IconUpload />} onClick={() => setIsUploadOpen(true)}>
+            {t("documents.upload")}
+          </Button>
+        }
+      />
 
-      <StorageUsageBar usage={storageUsage} className="doc-page__storage" />
+      <div className="doc-page__bar">
+        <div className="doc-page__toolbar">
+          <SearchBar value={searchText} onChange={setSearchText} />
+          <FilterBar
+            subjects={subjects}
+            subjectFilter={subjectFilter}
+            onSubjectChange={setSubjectFilter}
+            onReset={resetFilters}
+          />
+        </div>
 
-      <div className="doc-page__toolbar">
-        <SearchBar value={searchText} onChange={setSearchText} />
-        <FilterBar
-          subjects={subjects}
-          subjectFilter={subjectFilter}
-          onSubjectChange={setSubjectFilter}
-          onReset={resetFilters}
-        />
+        <StorageUsageBar usage={storageUsage} className="doc-page__storage" />
       </div>
 
       {loading ? (
-        <p className="doc-empty">{t("documents.loading")}</p>
+        <div className="doc-grid" aria-busy="true" aria-label={t("documents.loading")}>
+          {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
+        </div>
       ) : documents.length === 0 ? (
-        <p className="doc-empty">{t("documents.empty")}</p>
+        <EmptyState
+          icon={filtering ? "🔍" : "📄"}
+          title={t("documents.empty")}
+          message={filtering ? t("documents.emptyFilterHint") : t("documents.emptyHint")}
+          actionLabel={filtering ? t("documents.resetFilter") : t("documents.upload")}
+          onAction={filtering ? resetFilters : () => setIsUploadOpen(true)}
+        />
       ) : (
         <div className="doc-grid">
           {documents.map((doc) => (

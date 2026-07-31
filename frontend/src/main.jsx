@@ -6,6 +6,7 @@ import "./assets/css/reset.css";
 import "./styles/tokens.css";
 import "./assets/css/global.css";
 import "./styles/doc-card.css";
+import "./styles/doc-form.css";
 import "./assets/css/toast.css";
 
 import "./i18n";

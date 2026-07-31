@@ -1,0 +1,162 @@
+/* =============================================================================
+   Khối form dựng tài liệu — dùng chung cho modal "Tải lên" (Tài liệu của tôi) và
+   modal "Sửa tài liệu" (Chi tiết tài liệu). Hai modal có cùng các phần: chọn môn
+   học dạng chip + danh sách, ô chọn tệp, chọn nơi lưu — nên style để chung một chỗ
+   thay vì lặp lại ở mỗi trang.
+   ============================================================================= */
+
+.doc-form__form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.doc-form__hint {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    line-height: var(--leading-snug);
+}
+
+.doc-form__error {
+    font-size: var(--text-xs);
+    color: var(--color-danger-fg);
+}
+
+.doc-form__section-label {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+}
+
+/* ===== Chọn môn học ===== */
+
+.doc-form__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+}
+
+.doc-form__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 3px var(--space-2) 3px var(--space-3);
+    border-radius: var(--radius-full);
+    background-color: var(--color-accent);
+    color: var(--color-text-on-accent);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    transition: background-color var(--transition-fast);
+}
+
+.doc-form__chip:hover {
+    background-color: var(--color-accent-hover);
+}
+
+.doc-form__chip-x {
+    font-size: var(--text-base);
+    line-height: 1;
+}
+
+.doc-form__subject-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface);
+}
+
+.doc-form__subject {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-base);
+    color: var(--color-text);
+    text-align: left;
+    border-bottom: 1px solid var(--color-border);
+    transition: background-color var(--transition-fast);
+}
+
+.doc-form__subject:last-child {
+    border-bottom: none;
+}
+
+.doc-form__subject:hover {
+    background-color: var(--color-surface-2);
+}
+
+.doc-form__subject--checked {
+    background-color: var(--color-accent-soft);
+    color: var(--color-accent-text);
+    font-weight: var(--weight-medium);
+}
+
+.doc-form__subject-empty {
+    padding: var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--color-text-subtle);
+}
+
+/* ===== Chọn nơi lưu ===== */
+
+.doc-form__storage {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.doc-form__storage-opt {
+    flex: 1;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-base);
+    color: var(--color-text-muted);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    transition: border-color var(--transition-fast), background-color var(--transition-fast),
+        color var(--transition-fast);
+}
+
+.doc-form__storage-opt:hover {
+    border-color: var(--color-text-subtle);
+}
+
+.doc-form__storage-opt--active {
+    border-color: var(--color-accent);
+    background-color: var(--color-accent-soft);
+    color: var(--color-accent-text);
+    font-weight: var(--weight-semibold);
+}
+
+/* ===== Ô chọn tệp ===== */
+
+.doc-form__file {
+    width: 100%;
+    padding: var(--space-3);
+    font-size: var(--text-base);
+    color: var(--color-text-muted);
+    background-color: var(--color-surface-2);
+    border: 1px dashed var(--color-border-strong);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+}
+
+.doc-form__file::file-selector-button {
+    margin-right: var(--space-3);
+    padding: 6px var(--space-3);
+    font-family: var(--font-sans);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-full);
+    cursor: pointer;
+}
+
+@media (max-width: 520px) {
+    .doc-form__storage {
+        flex-direction: column;
+    }
+}
