@@ -10,11 +10,12 @@ export default function RatingStars({ average, onRate }) {
           <button
             key={star}
             type="button"
-            className="detail-rating__star"
+            className="detail-rating__star has-custom-focus"
             onClick={() => onRate(star)}
             title={t("docDetail.ratingStarTitle", { star })}
+            aria-label={t("docDetail.ratingStarTitle", { star })}
           >
-            ★
+            <span aria-hidden="true">★</span>
           </button>
         ))}
       </div>
