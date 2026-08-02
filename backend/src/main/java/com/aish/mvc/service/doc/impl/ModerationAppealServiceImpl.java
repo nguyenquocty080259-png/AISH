@@ -19,6 +19,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * KHÁNG CÁO KIỂM DUYỆT — khi tài liệu bị từ chối công khai, chủ tài liệu có quyền trình bày lý do
+ * để xin Admin xem xét lại.
+ *
+ * <p>Đây là "đường lùi" cho người dùng, tránh việc AI/Admin từ chối nhầm mà không ai sửa được.
+ * Kháng cáo đi thẳng vào hàng chờ của Admin và KHÔNG gọi AI — con người quyết định.
+ */
 @Service
 @RequiredArgsConstructor
 public class ModerationAppealServiceImpl implements ModerationAppealService {
@@ -34,6 +41,16 @@ public class ModerationAppealServiceImpl implements ModerationAppealService {
                 .getUser();
     }
 
+    /**
+     * GỬI KHÁNG CÁO cho một tài liệu bị từ chối.
+     *
+     * <p>Đầu vào: id tài liệu + lý do kháng cáo. Trả về: thông tin đơn kháng cáo vừa tạo.
+     *
+     * <p>Các bước: (1) chỉ chủ tài liệu được kháng cáo, (2) tài liệu phải đang ở trạng thái
+     * REJECTED (bị từ chối) — chưa bị từ chối thì không có gì để kháng, (3) phải nêu lý do,
+     * (4) mỗi tài liệu chỉ có tối đa 1 đơn đang chờ, (5) lưu đơn ở trạng thái APPEAL_PENDING
+     * để hiện trong hàng chờ của Admin.
+     */
     @Override
     @Transactional
     public ModerationAppealResponseDTO appeal(Long documentId, String reason) {
@@ -45,6 +62,7 @@ public class ModerationAppealServiceImpl implements ModerationAppealService {
             throw new ForbiddenException("error.appeal.forbidden");
         }
 
+        // REJECTED = Admin đã từ chối công khai tài liệu này. Chỉ khi đó mới có cái để kháng cáo.
         if (doc.getModerationStatus() != ModerationStatus.REJECTED) {
             throw new IllegalStateException("error.appeal.onlyRejected");
         }
@@ -63,14 +81,18 @@ public class ModerationAppealServiceImpl implements ModerationAppealService {
                 .document(doc)
                 .user(currentUser)
                 .reason(reason.strip())
+                // APPEAL_PENDING = đơn đang chờ Admin xử lý.
                 .status(AppealStatus.APPEAL_PENDING)
                 .build();
 
+        // Ghi đơn kháng cáo xuống database (bảng moderation_appeals: tài liệu nào, ai gửi,
+        // lý do gì, trạng thái ra sao).
         moderationAppealRepository.save(appeal);
 
         return toDTO(appeal);
     }
 
+    /** Danh sách kháng cáo của user đang đăng nhập, mới nhất trước — để họ theo dõi tiến độ. */
     @Override
     @Transactional(readOnly = true)
     public List<ModerationAppealResponseDTO> listMyAppeals() {

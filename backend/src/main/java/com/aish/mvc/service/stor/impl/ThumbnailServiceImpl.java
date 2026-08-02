@@ -19,6 +19,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
+/**
+ * Sinh ảnh xem trước (thumbnail) cho tài liệu ngay lúc upload, để danh sách tài liệu ngoài FE
+ * hiển thị được ảnh bìa thay vì icon trống. PDF thì vẽ lại trang đầu tiên, ảnh thì thu nhỏ chính
+ * nó, các định dạng còn lại (docx/pptx/txt...) trả null.
+ *
+ * <p>Toàn bộ là "best-effort": thumbnail lỗi KHÔNG bao giờ làm hỏng lần upload — chỉ ghi log
+ * cảnh báo rồi trả null.
+ */
 @Service
 public class ThumbnailServiceImpl implements ThumbnailService {
 
@@ -34,23 +42,35 @@ public class ThumbnailServiceImpl implements ThumbnailService {
     @Value("${app.upload.dir}")
     private String uploadDir;
 
+    /**
+     * Tạo ảnh thumbnail PNG cho file vừa upload.
+     *
+     * <p>Đầu vào: file người dùng tải lên. Trả về: đường dẫn tương đối của ảnh trong thư mục
+     * uploads (vd. "thumbnails/abc.png") để lưu vào cột thumbnail_url của bảng doc_files;
+     * trả null nếu định dạng không hỗ trợ hoặc vẽ ảnh thất bại.
+     *
+     * <p>Các bước: (1) xem file thuộc loại nào, (2) lấy ảnh gốc (PDF thì render trang 1, ảnh
+     * thì đọc thẳng), (3) thu nhỏ về bề rộng chuẩn, (4) ghi ra file PNG trong uploads/thumbnails.
+     */
     @Override
     public String createThumbnail(MultipartFile file) {
         try {
             String name = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().toLowerCase();
             String type = file.getContentType() == null ? "" : file.getContentType().toLowerCase();
 
+            // B1+B2: chọn cách lấy ảnh gốc theo loại file.
             BufferedImage source;
             if (type.contains("pdf") || name.endsWith(".pdf")) {
-                source = renderFirstPdfPage(file.getBytes());
+                source = renderFirstPdfPage(file.getBytes()); // PDF: vẽ trang 1 thành ảnh
             } else if (type.startsWith("image/")) {
-                source = ImageIO.read(new ByteArrayInputStream(file.getBytes()));
+                source = ImageIO.read(new ByteArrayInputStream(file.getBytes())); // Ảnh: đọc thẳng
             } else {
                 return null; // docx/pptx/txt... -> FE hiển thị icon, không cần thumbnail
             }
 
             if (source == null) return null;
 
+            // B3+B4: thu nhỏ rồi ghi ra file PNG trên đĩa.
             BufferedImage scaled = scaleToWidth(source, THUMB_WIDTH);
             return savePng(scaled);
         }
@@ -61,6 +81,10 @@ public class ThumbnailServiceImpl implements ThumbnailService {
         }
     }
 
+    /**
+     * Xoá file ảnh thumbnail khỏi đĩa. Đầu vào là đường dẫn tương đối đã lưu ở cột thumbnail_url.
+     * Chỉ dùng khi XOÁ VĨNH VIỄN tài liệu. Không tìm thấy file thì bỏ qua, không báo lỗi.
+     */
     @Override
     public void deleteThumbnail(String thumbnailUrl) {
         if (thumbnailUrl == null || thumbnailUrl.isBlank()) return;

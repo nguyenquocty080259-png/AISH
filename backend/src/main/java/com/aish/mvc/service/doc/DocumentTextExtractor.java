@@ -27,6 +27,15 @@ import java.util.stream.Collectors;
 @Service
 public class DocumentTextExtractor {
 
+    /**
+     * Đọc chữ trong file ra dạng văn bản thuần.
+     *
+     * <p>Đầu vào: nội dung file (Resource) + bản ghi file (để biết tên và loại). Trả về: chuỗi
+     * văn bản, hoặc null nếu không đọc được / file rỗng.
+     *
+     * <p>Chọn cách đọc theo loại file: DOCX dùng thư viện Word của Apache POI, PPTX ghép chữ
+     * từng slide, các loại còn lại đọc bằng Tika.
+     */
     public String extract(Resource resource, DocFile docFile) {
         String type = docFile.getFileType() != null ? docFile.getFileType().toLowerCase() : "";
         String name = docFile.getFileName() != null ? docFile.getFileName().toLowerCase() : "";

@@ -23,6 +23,14 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * BỘ SƯU TẬP tài liệu — cho phép user tự gom các tài liệu vào các "thư mục ảo" của riêng mình
+ * (tạo, đổi tên, xoá bộ sưu tập; thêm/gỡ tài liệu khỏi bộ sưu tập).
+ *
+ * <p>Hai điểm cần nhớ: (1) mọi bộ sưu tập đều RIÊNG TƯ của người tạo — mọi thao tác đều kiểm tra
+ * bộ sưu tập thuộc user đang đăng nhập; (2) bộ sưu tập chỉ CHỨA THAM CHIẾU tới tài liệu, nên xoá
+ * bộ sưu tập hay gỡ tài liệu khỏi đó KHÔNG hề xoá tài liệu gốc.
+ */
 @Service
 public class CollectionServiceImpl implements CollectionService {
 
@@ -46,11 +54,17 @@ public class CollectionServiceImpl implements CollectionService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy bộ sưu tập!"));
     }
 
+    /**
+     * TẠO bộ sưu tập mới. Đầu vào: tên. Trả về: bộ sưu tập vừa tạo (số tài liệu = 0).
+     * Các bước: (1) kiểm duyệt tên, (2) chặn trùng tên trong cùng một user, (3) lưu xuống DB.
+     */
     @Override
     @Transactional
     public CollectionResponseDTO createCollection(String name) {
         AuthUser user = getCurrentUser();
+        // Tên phải đủ dài, không toàn số/ký tự lặp, không chứa từ cấm.
         String cleaned = namingModerationService.validate(name);
+        // Cùng một user không được có 2 bộ sưu tập trùng tên (người khác trùng tên thì không sao).
         if (collectionRepository.existsByUser_IdAndName(user.getId(), cleaned)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "error.collection.duplicateName");
         }
@@ -61,6 +75,7 @@ public class CollectionServiceImpl implements CollectionService {
         return toResponseDTO(saved, 0L);
     }
 
+    /** Danh sách bộ sưu tập của user đang đăng nhập, mới nhất trước, kèm số tài liệu mỗi bộ. */
     @Override
     @Transactional(readOnly = true)
     public List<CollectionResponseDTO> getMyCollections() {
@@ -70,6 +85,13 @@ public class CollectionServiceImpl implements CollectionService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * CHI TIẾT một bộ sưu tập: thông tin bộ sưu tập + danh sách tài liệu bên trong.
+     *
+     * <p>Mỗi tài liệu được kiểm tra lại quyền xem tại thời điểm mở: tài liệu đã bị xoá hoặc chủ
+     * nó đã chuyển sang riêng tư thì vẫn hiện trong danh sách nhưng đánh dấu "không khả dụng"
+     * và không kèm nội dung.
+     */
     @Override
     @Transactional(readOnly = true)
     public CollectionDetailResponseDTO getCollectionDetail(Long id) {
@@ -89,6 +111,10 @@ public class CollectionServiceImpl implements CollectionService {
         return dto;
     }
 
+    /**
+     * ĐỔI TÊN bộ sưu tập. Đầu vào: id + tên mới. Trả về: bộ sưu tập sau khi đổi.
+     * Tên mới cũng phải qua kiểm duyệt và không được trùng bộ sưu tập khác của cùng user.
+     */
     @Override
     @Transactional
     public CollectionResponseDTO renameCollection(Long id, String name) {
@@ -103,6 +129,10 @@ public class CollectionServiceImpl implements CollectionService {
         return toResponseDTO(saved, collectionItemRepository.countByCollection_Id(saved.getId()));
     }
 
+    /**
+     * XOÁ bộ sưu tập. Đầu vào: id. Chỉ xoá bộ sưu tập và các dòng liên kết bên trong —
+     * TÀI LIỆU GỐC KHÔNG bị xoá.
+     */
     @Override
     @Transactional
     public void deleteCollection(Long id) {
@@ -112,6 +142,13 @@ public class CollectionServiceImpl implements CollectionService {
         collectionRepository.delete(c);
     }
 
+    /**
+     * THÊM NHIỀU TÀI LIỆU vào bộ sưu tập cùng lúc.
+     *
+     * <p>Đầu vào: id bộ sưu tập + danh sách id tài liệu. Trả về: kết quả chia làm 3 nhóm — đã
+     * thêm, vốn đã có sẵn, bị bỏ qua vì không có quyền. Nhờ vậy FE báo được cho người dùng biết
+     * chính xác cái nào vào được cái nào không, thay vì báo lỗi cả lô.
+     */
     @Override
     @Transactional
     public AddDocumentsResultDTO addDocuments(Long id, List<Long> documentIds) {
@@ -140,12 +177,18 @@ public class CollectionServiceImpl implements CollectionService {
             CollectionItem item = new CollectionItem();
             item.setCollection(c);
             item.setDocumentId(docId);
+            // Ghi xuống database (bảng collection_items): chỉ lưu "bộ sưu tập nào chứa tài liệu
+            // nào", không sao chép nội dung tài liệu.
             collectionItemRepository.save(item);
             result.getAdded().add(docId);
         }
         return result;
     }
 
+    /**
+     * GỠ một tài liệu khỏi bộ sưu tập. Đầu vào: id bộ sưu tập + id tài liệu.
+     * Chỉ xoá dòng liên kết — tài liệu gốc vẫn còn nguyên trong "Tài liệu của tôi".
+     */
     @Override
     @Transactional
     public void removeDocument(Long id, Long documentId) {

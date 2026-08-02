@@ -34,6 +34,14 @@ import com.aish.mvc.exception.ForbiddenException;
 
 import java.time.LocalDateTime;
 
+/**
+ * TƯƠNG TÁC của người dùng với tài liệu: bình luận (kèm lọc từ khoá + kiểm duyệt AI), yêu thích,
+ * chấm sao, và ghi nhận lượt xem / lượt tải.
+ *
+ * <p>Điểm chung: bình luận, yêu thích, chấm sao đều là thao tác TRÊN nội dung nên trước khi làm
+ * gì cũng phải kiểm tra người dùng thật sự được xem tài liệu đó (dùng chung
+ * {@link DocumentAccessPort} với các module khác, không tự chép lại luật quyền).
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -82,13 +90,25 @@ public class EngagementServiceImpl implements EngagementService {
         }
     }
 
+    /**
+     * THÊM BÌNH LUẬN vào tài liệu.
+     *
+     * <p>Đầu vào: id tài liệu, nội dung, cờ khiếu nại và lý do khiếu nại. Không trả về gì.
+     *
+     * <p>Các bước: (1) tài liệu phải tồn tại và người dùng phải được xem nó, (2) làm sạch nội
+     * dung, (3) quét từ khoá cấm, (4) trúng từ khoá mà không khiếu nại -> chặn luôn; có khiếu
+     * nại -> lưu ở trạng thái chờ Admin duyệt, (5) lưu bình luận, (6) bình luận sạch thì gửi
+     * đi kiểm duyệt AI ở chế độ nền và báo cho chủ tài liệu.
+     */
     @Override
     @Transactional
     public void addComment(Long documentId, String content, boolean dispute, String disputeNote) {
         DocDocument doc = requireDocument(documentId);
         requireReadableDocument(documentId);
         String cleaned = validateContent(content);
+        // B3: đối chiếu nội dung với danh sách từ khoá cấm loại COMMENT do Admin quản lý.
         boolean keywordHit = toxicKeywordFilter.matches(cleaned, ModerationKeywordType.COMMENT);
+        // B4: trúng từ khoá và người dùng KHÔNG khiếu nại -> chặn, không lưu gì cả.
         if (keywordHit && !dispute) {
             throw new CommentBlockedException(KEYWORD_REASON);
         }
@@ -96,14 +116,18 @@ public class EngagementServiceImpl implements EngagementService {
                 .document(doc)
                 .user(getCurrentUser())
                 .content(cleaned)
+                // PENDING_REVIEW = ẩn với người khác, chờ Admin duyệt. VISIBLE = hiện bình thường.
                 .status(keywordHit ? CommentStatus.PENDING_REVIEW : CommentStatus.VISIBLE)
                 .moderationReason(keywordHit ? KEYWORD_REASON : null)
                 .disputeNote(keywordHit ? validateDisputeNote(disputeNote) : null)
                 .build();
+        // B5: ghi bình luận xuống database (bảng comments: tài liệu, người viết, nội dung, trạng thái).
         Comment saved = commentRepository.save(comment);
         if (keywordHit) {
-            notifyUnderReview(saved);
+            notifyUnderReview(saved); // báo người viết là bình luận đang chờ duyệt
         } else {
+            // B6: bắn sự kiện để AI kiểm duyệt chạy NGẦM sau khi lưu xong — người dùng không phải
+            // chờ AI, bình luận hiện ngay; nếu AI thấy có vấn đề thì mới chuyển sang chờ duyệt.
             eventPublisher.publishEvent(new CommentModerationRequestedEvent(saved.getId()));
         }
         if (saved.getStatus() == CommentStatus.VISIBLE
@@ -112,6 +136,10 @@ public class EngagementServiceImpl implements EngagementService {
         }
     }
 
+    /**
+     * BẤM TIM / BỎ TIM (một endpoint làm cả hai việc). Đầu vào: id tài liệu.
+     * Đã thích rồi thì xoá dòng trong bảng favorites, chưa thích thì thêm dòng mới.
+     */
     @Override
     @Transactional
     public void toggleFavorite(Long documentId) {
@@ -119,20 +147,28 @@ public class EngagementServiceImpl implements EngagementService {
         requireReadableDocument(documentId);
         Long uid = getCurrentUser().getId();
         if (favoriteRepository.existsByUserIdAndDocumentId(uid, documentId)) {
-            favoriteRepository.deleteByUserIdAndDocumentId(uid, documentId);
+            favoriteRepository.deleteByUserIdAndDocumentId(uid, documentId); // đang thích -> bỏ thích
         } else {
             Favorite favorite = Favorite.builder()
                     .userId(uid)
                     .documentId(documentId)
                     .createdAt(LocalDateTime.now())
                     .build();
+            // Ghi xuống database (bảng favorites: ai thích tài liệu nào, lúc nào).
             favoriteRepository.save(favorite);
         }
     }
 
+    /**
+     * CHẤM SAO cho tài liệu. Đầu vào: id tài liệu + số sao (1-5).
+     *
+     * <p>Mỗi người chỉ có MỘT điểm cho mỗi tài liệu: chấm lại là ghi đè điểm cũ, không tạo dòng
+     * mới — nhờ vậy không ai tự "cày" điểm cho tài liệu của mình bằng cách bấm nhiều lần.
+     */
     @Override
     @Transactional
     public void rateDocument(Long documentId, Integer star) {
+        // Chốt lại khoảng 1-5 ở backend: giao diện có giới hạn rồi nhưng ai cũng gọi thẳng API được.
         if (star == null || star < MIN_RATING || star > MAX_RATING) {
             throw new IllegalArgumentException(
                     "Điểm đánh giá phải là số nguyên từ " + MIN_RATING + " đến " + MAX_RATING + ".");
@@ -146,14 +182,20 @@ public class EngagementServiceImpl implements EngagementService {
                         .document(doc)
                         .createdAt(LocalDateTime.now())
                         .build());
-        boolean isNewRating = rating.getId() == null;
+        boolean isNewRating = rating.getId() == null; // chưa có id nghĩa là lần chấm đầu tiên
         rating.setRating(star);
+        // Ghi xuống database (bảng ratings): có sẵn thì cập nhật, chưa có thì thêm dòng mới.
         ratingRepository.save(rating);
+        // Chỉ báo cho chủ tài liệu ở LẦN CHẤM ĐẦU, và không tự báo cho chính mình.
         if (isNewRating && !uid.equals(doc.getUser().getId())) {
             notifyRatingOnMyDoc(doc);
         }
     }
 
+    /**
+     * GHI NHẬN LƯỢT XEM vào lịch sử (phục vụ mục "Tiếp tục học"). Đầu vào: id tài liệu.
+     * Mỗi cặp (người xem, tài liệu) chỉ có MỘT dòng — xem lại thì chỉ cập nhật thời điểm xem.
+     */
     @Override
     @Transactional
     public void logView(Long documentId) {
@@ -164,9 +206,14 @@ public class EngagementServiceImpl implements EngagementService {
                         .documentId(documentId)
                         .build());
         vh.setViewedAt(LocalDateTime.now());
+        // Ghi xuống database (bảng view_history: ai xem tài liệu nào, lần cuối lúc nào).
         viewHistoryRepository.save(vh);
     }
 
+    /**
+     * GHI NHẬN LƯỢT TẢI. Đầu vào: id tài liệu. Khác lượt xem: mỗi lần tải là MỘT dòng mới,
+     * nên đếm được tổng số lượt tải để xếp hạng "tải nhiều nhất" ở trang Cộng đồng.
+     */
     @Override
     @Transactional
     public void logDownload(Long documentId) {
@@ -176,8 +223,15 @@ public class EngagementServiceImpl implements EngagementService {
                 .document(doc)
                 .downloadedAt(LocalDateTime.now())
                 .build();
+        // Ghi xuống database (bảng downloads: ai tải tài liệu nào, lúc nào).
         downloadRepository.save(download);
     }
+    /**
+     * SỬA BÌNH LUẬN — chỉ tác giả. Đầu vào: id bình luận + nội dung mới (+ khiếu nại nếu có).
+     *
+     * <p>Nội dung mới bị lọc từ khoá lại từ đầu, và kết quả duyệt trước đó bị xoá đi — tránh
+     * việc viết nội dung sạch để được duyệt rồi sửa thành nội dung xấu.
+     */
     @Override
     @Transactional
     public void updateComment(Long commentId, String content, boolean dispute, String disputeNote) {
@@ -206,6 +260,7 @@ public class EngagementServiceImpl implements EngagementService {
         }
     }
 
+    /** XOÁ BÌNH LUẬN — chỉ tác giả. Đầu vào: id bình luận. Xoá hẳn dòng khỏi bảng comments. */
     @Override
     @Transactional
     public void deleteComment(Long commentId) {

@@ -13,6 +13,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
+/**
+ * NƠI TRẢ LỜI CÂU HỎI "người này có được xem tài liệu kia không" — một chỗ duy nhất giữ luật
+ * quyền, để các module khác (Bộ sưu tập, Lịch sử xem, Tương tác, Gợi ý, Chat AI) dùng chung thay
+ * vì mỗi nơi tự viết lại một kiểu (dễ sai lệch, dễ hở bảo mật).
+ *
+ * <p>Khác với DocumentService: ở đây trả về true/false hoặc Optional rỗng chứ KHÔNG ném lỗi, vì
+ * bên gọi chỉ muốn biết "có được xem không" để lọc danh sách, không phải để chặn request.
+ */
 @Service
 public class DocumentAccessPortImpl implements DocumentAccessPort {
 
@@ -20,6 +28,12 @@ public class DocumentAccessPortImpl implements DocumentAccessPort {
     @Autowired private DocumentService documentService;
     @Autowired private DocumentShareService documentShareService;
 
+    /**
+     * KIỂM TRA QUYỀN XEM tài liệu. Đầu vào: id tài liệu + id người xem. Trả về: true nếu được xem.
+     *
+     * <p>Xét lần lượt 5 trường hợp bên dưới. Tài liệu không tồn tại cũng trả false (không phân
+     * biệt "không có" với "không được xem", để không lộ ra là tài liệu đó tồn tại).
+     */
     @Override
     @Transactional(readOnly = true)
     public boolean isAvailableTo(Long documentId, Long currentUserId) {
@@ -50,6 +64,10 @@ public class DocumentAccessPortImpl implements DocumentAccessPort {
         return documentShareService.hasShareAccess(documentId, currentUserId);
     }
 
+    /**
+     * Lấy dữ liệu đầy đủ của tài liệu NẾU người này được xem. Đầu vào: id tài liệu + id người xem.
+     * Trả về: Optional rỗng khi không được xem, thay vì báo lỗi.
+     */
     @Override
     @Transactional(readOnly = true)
     public Optional<DocumentResponseDTO> getDocumentDto(Long documentId, Long currentUserId) {
@@ -58,6 +76,10 @@ public class DocumentAccessPortImpl implements DocumentAccessPort {
         return Optional.of(documentService.getDocumentById(documentId));
     }
 
+    /**
+     * Chỉ lấy TIÊU ĐỀ tài liệu (nếu được xem) — dùng cho chỗ chỉ cần hiển thị tên, khỏi phải
+     * dựng cả bộ dữ liệu nặng gồm bình luận và số liệu tương tác.
+     */
     @Override
     @Transactional(readOnly = true)
     public Optional<String> getDocumentTitle(Long documentId, Long currentUserId) {
@@ -65,6 +87,7 @@ public class DocumentAccessPortImpl implements DocumentAccessPort {
         return docDocumentRepository.findById(documentId).map(DocDocument::getTitle);
     }
 
+    /** Có được thêm tài liệu này vào bộ sưu tập không — dùng đúng luật quyền như xem tài liệu. */
     @Override
     @Transactional(readOnly = true)
     public boolean canAddToCollection(Long documentId, Long currentUserId) {

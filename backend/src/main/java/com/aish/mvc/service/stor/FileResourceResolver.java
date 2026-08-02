@@ -36,6 +36,16 @@ public class FileResourceResolver {
         this.cloudinaryService = cloudinaryService;
     }
 
+    /**
+     * Từ một bản ghi file trong DB, mở ra nội dung file thật để đọc.
+     *
+     * <p>Đầu vào: {@link DocFile} (có file_url, public_id, resource_type). Trả về: Resource —
+     * luồng đọc nội dung file, dùng cho tải về / xem trước / nạp AI.
+     *
+     * <p>Các bước: (1) file_url không bắt đầu bằng "http" nghĩa là file nằm trên đĩa máy chủ ->
+     * mở từ thư mục uploads; (2) ngược lại là file trên Cloudinary -> thử URL công khai trước;
+     * (3) URL công khai lỗi thì đổi sang signed URL; (4) vẫn không được thì báo lỗi rõ ràng.
+     */
     public Resource resolve(DocFile docFile) {
         String fileUrl = docFile.getFileUrl();
 

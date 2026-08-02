@@ -8,6 +8,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * API cho tính năng "TIẾP TỤC HỌC" (lịch sử xem gần đây): ghi nhận lượt xem và trả về danh sách
+ * tài liệu vừa xem.
+ */
 // Controller RIÊNG cho tính năng "Tiếp tục học" — KHÔNG đụng DocumentController (Person 2)
 // hay UserController/ProfileController (Person 1), dù path nằm dưới /api/documents và /api/users.
 @RestController

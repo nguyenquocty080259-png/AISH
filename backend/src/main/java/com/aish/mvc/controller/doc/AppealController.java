@@ -10,6 +10,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * API xem KHÁNG CÁO KIỂM DUYỆT của chính người dùng (/api/appeals). Chỉ có phần XEM ở đây; việc
+ * GỬI kháng cáo nằm ở {@code POST /api/documents/{id}/appeal} trong DocumentController, vì thao
+ * tác đó gắn với một tài liệu cụ thể.
+ */
 @RestController
 @RequestMapping("/api/appeals")
 @RequiredArgsConstructor
@@ -17,6 +22,7 @@ public class AppealController {
 
     private final ModerationAppealService moderationAppealService;
 
+    // Danh sách kháng cáo của user đang đăng nhập (mới nhất trước) để họ theo dõi tiến độ xử lý.
     @GetMapping("/mine")
     public ResponseEntity<List<ModerationAppealResponseDTO>> getMyAppeals() {
         return ResponseEntity.ok(moderationAppealService.listMyAppeals());

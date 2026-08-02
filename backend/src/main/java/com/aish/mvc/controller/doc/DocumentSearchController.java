@@ -9,6 +9,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * API cho TRANG CỘNG ĐỒNG (/api/documents/community) — nơi mọi người tìm và xem tài liệu công
+ * khai của nhau. Tách riêng khỏi DocumentController để phần tìm kiếm/lọc/phân trang nằm gọn một chỗ.
+ */
 @RestController
 @RequestMapping("/api/documents")
 @RequiredArgsConstructor

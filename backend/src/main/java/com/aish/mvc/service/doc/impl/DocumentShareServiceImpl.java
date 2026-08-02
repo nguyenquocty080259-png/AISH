@@ -33,6 +33,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * CHIA SẺ TÀI LIỆU cho người khác: mời theo email/danh sách user (RESTRICTED), bật link ai có
+ * link cũng vào được (ANYONE_WITH_LINK), hoặc tắt link (NONE); kèm gỡ chia sẻ và các danh sách
+ * "được chia sẻ với tôi" / "đang chia sẻ cho ai".
+ *
+ * <p>Điểm cần nhớ khi bảo vệ: chia sẻ KHÔNG làm tài liệu công khai và cũng không đổi chế độ hiển
+ * thị — chỉ tài liệu vốn đã PUBLIC mới chia sẻ được, việc chia sẻ chỉ cấp thêm đặc quyền (hiện ở
+ * trang "Được chia sẻ với tôi" và có thông báo). Mọi thao tác quản lý đều CHỈ chủ sở hữu làm được.
+ */
 @Service
 @RequiredArgsConstructor
 public class DocumentShareServiceImpl implements DocumentShareService {
@@ -66,6 +75,15 @@ public class DocumentShareServiceImpl implements DocumentShareService {
         return doc;
     }
 
+    /**
+     * CHIA SẺ TÀI LIỆU — chỉ chủ sở hữu.
+     *
+     * <p>Đầu vào: id tài liệu + yêu cầu chia sẻ (chế độ, email/danh sách user, quyền). Trả về:
+     * chế độ đã áp dụng, kèm token nếu là chia sẻ bằng link.
+     *
+     * <p>Các bước: (1) kiểm tra người gọi là chủ sở hữu và tài liệu chưa bị xoá, (2) kiểm tra
+     * chế độ và quyền hợp lệ, (3) chặn nếu tài liệu chưa công khai, (4) rẽ nhánh theo chế độ.
+     */
     @Override
     @Transactional
     public ShareResponseDTO shareDocument(Long documentId, ShareRequestDTO request) {
@@ -75,8 +93,10 @@ public class DocumentShareServiceImpl implements DocumentShareService {
         if (request == null || request.getMode() == null) {
             throw new IllegalArgumentException("error.share.modeRequired");
         }
+        // Không nói rõ quyền thì mặc định VIEWER (chỉ được xem).
         SharePermission permission = request.getPermission() == null
                 ? SharePermission.VIEWER : request.getPermission();
+        // EDITOR (cho phép sửa) chưa làm ở phiên bản này -> từ chối thẳng thay vì làm nửa vời.
         if (permission == SharePermission.EDITOR) {
             throw new IllegalArgumentException("error.share.editorUnsupported");
         }
@@ -94,13 +114,16 @@ public class DocumentShareServiceImpl implements DocumentShareService {
                     "error.share.publicOnly");
         }
 
+        // B4: rẽ nhánh theo chế độ chia sẻ người dùng chọn.
         return switch (request.getMode()) {
-            case RESTRICTED -> shareToUsers(doc, owner, request, permission);
-            case ANYONE_WITH_LINK -> shareByLink(doc, owner, permission);
-            case NONE -> disableLinkShare(documentId);
+            case RESTRICTED -> shareToUsers(doc, owner, request, permission);   // mời từng người
+            case ANYONE_WITH_LINK -> shareByLink(doc, owner, permission);       // ai có link cũng vào
+            case NONE -> disableLinkShare(documentId);                          // tắt link đã tạo
         };
     }
 
+    // Chia sẻ cho TỪNG NGƯỜI cụ thể: với mỗi người nhận, tạo mới hoặc cập nhật dòng trong bảng
+    // document_shares rồi gửi thông báo cho họ.
     private ShareResponseDTO shareToUsers(
             DocDocument doc, AuthUser owner, ShareRequestDTO request, SharePermission permission) {
         List<Long> userIds = resolveTargetUserIds(request, owner);
@@ -117,6 +140,8 @@ public class DocumentShareServiceImpl implements DocumentShareService {
             share.setPermission(permission);
             share.setShareMode(ShareMode.RESTRICTED);
             share.setShareToken(null);
+            // Ghi quyền chia sẻ xuống database (bảng document_shares: tài liệu nào, chia sẻ cho
+            // ai, ai chia sẻ, quyền gì).
             documentShareRepository.save(share);
 
             // B3: thông báo chạy transaction riêng (REQUIRES_NEW). Nếu lỗi (vd constraint DB drift)
@@ -200,6 +225,8 @@ public class DocumentShareServiceImpl implements DocumentShareService {
         }
     }
 
+    // Chia sẻ bằng LINK: tìm lại dòng link cũ nếu đã có, chưa có thì tạo mới kèm một mã token
+    // ngẫu nhiên (UUID) — mã này đi vào đường link chia sẻ.
     private ShareResponseDTO shareByLink(DocDocument doc, AuthUser owner, SharePermission permission) {
         DocumentShare link = documentShareRepository.findByDocumentId(doc.getId()).stream()
                 .filter(s -> s.getShareMode() == ShareMode.ANYONE_WITH_LINK)
@@ -218,11 +245,17 @@ public class DocumentShareServiceImpl implements DocumentShareService {
         return new ShareResponseDTO(ShareMode.ANYONE_WITH_LINK.name(), link.getShareToken());
     }
 
+    // Tắt chia sẻ bằng link: xoá dòng link-share khỏi database, link cũ hết tác dụng ngay.
+    // Không đụng tới những người đã được mời trực tiếp.
     private ShareResponseDTO disableLinkShare(Long documentId) {
         documentShareRepository.deleteByDocumentIdAndShareMode(documentId, ShareMode.ANYONE_WITH_LINK);
         return new ShareResponseDTO(ShareMode.NONE.name(), null);
     }
 
+    /**
+     * GỠ quyền chia sẻ của một người — chỉ chủ sở hữu. Đầu vào: id tài liệu + id người bị gỡ.
+     * Chỉ xoá dòng trong bảng document_shares; người đó chưa từng được chia sẻ thì không sao.
+     */
     @Override
     @Transactional
     public void revokeShare(Long documentId, Long userId) {
@@ -231,6 +264,10 @@ public class DocumentShareServiceImpl implements DocumentShareService {
         documentShareRepository.deleteByDocumentIdAndSharedWithUserId(documentId, userId);
     }
 
+    /**
+     * Trang "ĐƯỢC CHIA SẺ VỚI TÔI": duyệt các dòng chia sẻ trỏ tới user hiện tại, nạp tài liệu
+     * tương ứng, bỏ qua tài liệu đã bị xoá, kèm theo quyền và tên người chia sẻ.
+     */
     @Override
     @Transactional(readOnly = true)
     public List<SharedWithMeItemDTO> listSharedWithMe() {
@@ -248,6 +285,10 @@ public class DocumentShareServiceImpl implements DocumentShareService {
         return result;
     }
 
+    /**
+     * Danh sách những người ĐANG được chia sẻ tài liệu này (tên, email, quyền) — hiện trong hộp
+     * thoại chia sẻ. CHỈ chủ sở hữu gọi được.
+     */
     @Override
     @Transactional(readOnly = true)
     public List<DocumentShareRecipientDTO> listShareRecipients(Long documentId) {
@@ -274,6 +315,12 @@ public class DocumentShareServiceImpl implements DocumentShareService {
         return result;
     }
 
+    /**
+     * User này có xem được tài liệu qua đường CHIA SẺ không — hàm được gọi ở khắp nơi khi kiểm
+     * tra quyền (xem chi tiết, xem trước, tải về).
+     *
+     * <p>Trả true nếu: user được mời trực tiếp, HOẶC tài liệu đang bật chia sẻ bằng link.
+     */
     @Override
     @Transactional(readOnly = true)
     public boolean hasShareAccess(Long documentId, Long userId) {

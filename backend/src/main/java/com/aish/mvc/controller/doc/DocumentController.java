@@ -34,6 +34,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+/**
+ * CỬA NGÕ API của luồng tài liệu — mọi request từ giao diện web về tài liệu đều vào đây trước
+ * (đường dẫn /api/documents/**): tải lên, xem chi tiết, sửa, xoá/khôi phục, xem trước, tải về,
+ * xin công khai, chia sẻ, bình luận/đánh giá/yêu thích và kháng cáo.
+ *
+ * <p>Controller chỉ làm 3 việc: nhận tham số từ request, gọi service tương ứng, và bọc kết quả
+ * vào HTTP response. Toàn bộ nghiệp vụ và kiểm tra quyền nằm ở tầng service
+ * ({@link DocumentService}, {@link EngagementService}, {@link DocumentShareService}...).
+ */
 @RestController
 @RequestMapping("/api/documents")
 @RequiredArgsConstructor
@@ -52,6 +61,7 @@ public class DocumentController {
     @Value("${app.upload.dir}")
     private String uploadDir;
 
+    // GET /api/documents — danh sách tài liệu của chính user đang đăng nhập ("Tài liệu của tôi").
     @GetMapping
     public ResponseEntity<List<DocumentResponseDTO>> getAll() {
         return ResponseEntity.ok(documentService.getAllDocuments());
@@ -75,6 +85,13 @@ public class DocumentController {
 
     // Endpoint hợp nhất: storage = LOCAL | CLOUD | BOTH (BOTH lưu cả 2 nơi).
     // Giữ 2 endpoint cũ bên dưới để không phá client cũ.
+    /**
+     * POST /api/documents/upload — TẢI TÀI LIỆU LÊN.
+     *
+     * <p>Nhận dữ liệu dạng form (multipart) vì có kèm file: tiêu đề, mô tả, danh sách id môn học,
+     * nơi lưu và chính file đó. Trả về 201 CREATED kèm thông tin tài liệu vừa tạo.
+     * Mọi chốt chặn (tuổi, loại tệp, dung lượng, quota) nằm trong service.
+     */
     @PostMapping("/upload")
     public ResponseEntity<DocumentResponseDTO> upload(
             @RequestParam("title") String title,
@@ -87,6 +104,7 @@ public class DocumentController {
                 HttpStatus.CREATED);
     }
 
+    // Endpoint cũ: luôn lưu trên ĐĨA máy chủ. Giữ lại để client phiên bản cũ không bị lỗi.
     @PostMapping("/upload-server")
     public ResponseEntity<DocumentResponseDTO> uploadServer(
             @RequestParam("title") String title,
@@ -98,6 +116,7 @@ public class DocumentController {
                 HttpStatus.CREATED);
     }
 
+    // Endpoint cũ: luôn lưu trên ĐÁM MÂY Cloudinary. Giữ lại để tương thích ngược.
     @PostMapping("/upload-cloud")
     public ResponseEntity<DocumentResponseDTO> uploadCloud(
             @RequestParam("title") String title,
@@ -109,12 +128,20 @@ public class DocumentController {
                 HttpStatus.CREATED);
     }
 
+    // Bấm tim: chưa thích thì thêm, đang thích thì bỏ (cùng 1 endpoint).
     @PostMapping("/{id}/favorite")
     public ResponseEntity<Void> toggleFavorite(@PathVariable Long id) {
         engagementService.toggleFavorite(id);
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * Thêm bình luận vào tài liệu. Nội dung bị lọc từ khoá cấm trước khi lưu.
+     *
+     * <p>Trúng từ khoá -> trả 422 kèm lý do để FE hiện hộp thoại "bình luận bị chặn"; người dùng
+     * có thể gửi lại với dispute=true + lý do khiếu nại, khi đó bình luận được lưu ở trạng thái
+     * chờ Admin duyệt thay vì bị chặn thẳng.
+     */
     @PostMapping("/{id}/comment")
     public ResponseEntity<?> addComment(
             @PathVariable Long id,
@@ -130,6 +157,7 @@ public class DocumentController {
         }
     }
 
+    // Sửa bình luận — chỉ tác giả. Nội dung mới bị lọc từ khoá lại y như lúc thêm mới.
     @PutMapping("/comments/{commentId}")
     public ResponseEntity<?> updateComment(
             @PathVariable Long commentId,
@@ -145,46 +173,54 @@ public class DocumentController {
         }
     }
 
+    // Xoá bình luận — chỉ tác giả của bình luận đó.
     @DeleteMapping("/comments/{commentId}")
     public ResponseEntity<Void> deleteComment(@PathVariable Long commentId) {
         engagementService.deleteComment(commentId);
         return ResponseEntity.noContent().build();
     }
 
+    // Sửa thông tin tài liệu (tiêu đề/mô tả/môn học) — chỉ chủ sở hữu, kiểm tra trong service.
     @PutMapping("/{id}")
     public ResponseEntity<DocumentResponseDTO> update(@PathVariable Long id, @RequestBody DocumentUpdateRequestDTO request) {
         return ResponseEntity.ok(
                 documentService.updateDocument(id, request.getTitle(), request.getDescription(), request.getSubjectIds()));
     }
 
+    // Chấm sao cho tài liệu (1-5). Chấm lại thì ghi đè điểm cũ, không cộng thêm.
     @PostMapping("/{id}/rate")
     public ResponseEntity<Void> rate(@PathVariable Long id, @RequestParam Integer star) {
         engagementService.rateDocument(id, star);
         return ResponseEntity.ok().build();
     }
 
+    // Đưa tài liệu vào THÙNG RÁC (xoá mềm) — vẫn khôi phục được, file trên đĩa còn nguyên.
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         documentService.deleteDocument(id);
         return ResponseEntity.noContent().build();
     }
 
+    // Danh sách tài liệu trong thùng rác của user đang đăng nhập.
     @GetMapping("/trash")
     public ResponseEntity<List<DocumentResponseDTO>> getTrash() {
         return ResponseEntity.ok(documentService.getDeletedDocuments());
     }
 
+    // Danh sách tài liệu user đã bấm yêu thích.
     @GetMapping("/favorites")
     public ResponseEntity<List<DocumentResponseDTO>> getFavorites() {
         return ResponseEntity.ok(documentService.getFavoriteDocuments());
     }
 
+    // Khôi phục tài liệu từ thùng rác về danh sách bình thường.
     @PutMapping("/{id}/restore")
     public ResponseEntity<Void> restore(@PathVariable Long id) {
         documentService.restoreDocument(id);
         return ResponseEntity.ok().build();
     }
 
+    // XOÁ VĨNH VIỄN: xoá cả file thật lẫn mọi dữ liệu liên quan. KHÔNG khôi phục được.
     @DeleteMapping("/{id}/permanent")
     public ResponseEntity<Void> permanentDelete(@PathVariable Long id) {
         documentService.permanentDeleteDocument(id);
@@ -193,6 +229,8 @@ public class DocumentController {
 
     // Trả về document sau khi đổi để FE hiển thị kết quả kiểm duyệt AI
     // (visibility mới, moderationStatus, moderationReason).
+    // Đây là nút "Công khai / Ẩn tài liệu": ẩn thì có hiệu lực ngay, còn xin công khai thì phải
+    // qua kiểm duyệt AI rồi chờ Admin duyệt cuối (xem DocumentServiceImpl.toggleVisibility).
     @PutMapping("/{id}/toggle-visibility")
     public ResponseEntity<DocumentResponseDTO> toggleVisibility(@PathVariable Long id) {
         return ResponseEntity.ok(documentService.toggleVisibility(id));
@@ -231,6 +269,8 @@ public class DocumentController {
         return ResponseEntity.noContent().build();
     }
 
+    // Chi tiết 1 tài liệu. Lấy dữ liệu TRƯỚC (đã kiểm tra quyền bên trong), lấy được rồi mới
+    // ghi nhận lượt xem — người không có quyền xem thì không bị tính vào lịch sử xem.
     @GetMapping("/{id}")
     public ResponseEntity<DocumentResponseDTO> getOne(@PathVariable Long id) {
         DocumentResponseDTO dto = documentService.getDocumentById(id);
@@ -238,6 +278,13 @@ public class DocumentController {
         return ResponseEntity.ok(dto);
     }
 
+    /**
+     * TẢI FILE VỀ MÁY.
+     *
+     * <p>Các bước: (1) lấy bản ghi file kèm kiểm tra quyền, (2) mở nội dung file thật (trên đĩa
+     * hoặc trên Cloudinary), (3) ghi nhận lượt tải, (4) trả file kèm header
+     * Content-Disposition "attachment" để trình duyệt tải xuống thay vì mở lên.
+     */
     @GetMapping("/{id}/download")
     public ResponseEntity<Resource> downloadFile(@PathVariable Long id) {
         DocFile docFile = documentService.getFileByDocumentId(id);
@@ -260,6 +307,8 @@ public class DocumentController {
         }
     }
 
+    // XEM TRƯỚC ngay trên trình duyệt: giống /download nhưng dùng header "inline" (mở lên xem)
+    // và KHÔNG ghi nhận lượt tải.
     @GetMapping("/{id}/preview")
     public ResponseEntity<Resource> previewFile(@PathVariable Long id) {
         try {

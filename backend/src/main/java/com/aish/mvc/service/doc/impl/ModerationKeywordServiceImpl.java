@@ -17,12 +17,24 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * QUẢN LÝ DANH SÁCH TỪ KHOÁ CẤM cho trang quản trị (thêm/sửa/xoá/liệt kê).
+ *
+ * <p>Từ khoá được chia theo loại dùng: NAMING (đặt tên tài liệu, bộ sưu tập), COMMENT (bình
+ * luận), DOCUMENT_CONTENT (nội dung tài liệu khi xin công khai). Vì lưu trong database nên Admin
+ * sửa là có hiệu lực ngay, không cần lập trình viên sửa code hay khởi động lại server.
+ *
+ * <p>Mọi từ khoá được chuẩn hoá về CHỮ THƯỜNG trước khi lưu, và không cho trùng trong cùng một loại.
+ */
 @Service
 @RequiredArgsConstructor
 public class ModerationKeywordServiceImpl implements ModerationKeywordService {
 
     private final ModerationKeywordRepository moderationKeywordRepository;
 
+    /**
+     * Liệt kê từ khoá, mới nhất trước. Đầu vào: loại từ khoá muốn lọc, để null thì lấy tất cả.
+     */
     @Override
     @Transactional(readOnly = true)
     public List<ModerationKeywordResponseDTO> list(ModerationKeywordType type) {
@@ -32,10 +44,15 @@ public class ModerationKeywordServiceImpl implements ModerationKeywordService {
         return keywords.stream().map(this::toResponse).toList();
     }
 
+    /**
+     * THÊM một từ khoá cấm. Đầu vào: từ khoá + loại. Trả về: từ khoá vừa tạo (mặc định đang bật).
+     * Các bước: (1) chuẩn hoá chữ thường + chặn chuỗi rỗng, (2) chặn trùng, (3) lưu xuống DB.
+     */
     @Override
     @Transactional
     public ModerationKeywordResponseDTO create(ModerationKeywordCreateRequestDTO request) {
         String keyword = normalizeAndValidate(request.getKeyword());
+        // Cùng một từ trong cùng một loại thì không thêm lần hai.
         if (moderationKeywordRepository.existsByKeywordAndType(keyword, request.getType())) {
             throw duplicateKeyword();
         }
@@ -48,6 +65,11 @@ public class ModerationKeywordServiceImpl implements ModerationKeywordService {
         return toResponse(save(entity));
     }
 
+    /**
+     * SỬA từ khoá: đổi chữ và/hoặc bật-tắt. Đầu vào: id + các trường muốn đổi (null = giữ nguyên).
+     * Tắt (active = false) thì từ khoá còn trong danh sách nhưng thôi không dùng để chặn nữa —
+     * tiện hơn xoá hẳn khi Admin chỉ muốn tạm ngưng một quy tắc.
+     */
     @Override
     @Transactional
     public ModerationKeywordResponseDTO update(Long id, ModerationKeywordUpdateRequestDTO request) {
@@ -73,6 +95,7 @@ public class ModerationKeywordServiceImpl implements ModerationKeywordService {
         return toResponse(save(entity));
     }
 
+    /** XOÁ hẳn một từ khoá khỏi danh sách. Đầu vào: id. Không tìm thấy thì trả lỗi 404. */
     @Override
     @Transactional
     public void delete(Long id) {

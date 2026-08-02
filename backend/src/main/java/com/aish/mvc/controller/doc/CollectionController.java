@@ -13,6 +13,13 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * API cho BỘ SƯU TẬP tài liệu (/api/collections/**): tạo, liệt kê, xem chi tiết, đổi tên, xoá bộ
+ * sưu tập và thêm/gỡ tài liệu trong đó.
+ *
+ * <p>Controller chỉ nhận request rồi gọi {@link CollectionService}; toàn bộ nghiệp vụ và kiểm
+ * tra "bộ sưu tập này có phải của mình không" nằm ở tầng service.
+ */
 @RestController
 @RequestMapping("/api/collections")
 @RequiredArgsConstructor

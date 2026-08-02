@@ -72,6 +72,10 @@ public class UploadFileTypeService {
         return parseExtensions(raw);
     }
 
+    /**
+     * Tách chuỗi cấu hình dạng "pdf, .docx, PNG" thành danh sách đuôi chuẩn ["pdf","docx","png"]:
+     * bỏ khoảng trắng, chuyển chữ thường, bỏ dấu chấm đầu, loại trùng. Chuỗi null -> danh sách rỗng.
+     */
     public static List<String> parseExtensions(String raw) {
         if (raw == null) return List.of();
         Set<String> result = new LinkedHashSet<>();

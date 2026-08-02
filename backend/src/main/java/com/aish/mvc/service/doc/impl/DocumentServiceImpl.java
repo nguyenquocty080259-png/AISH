@@ -52,6 +52,19 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * TRÁI TIM của luồng tài liệu — nơi thực hiện mọi nghiệp vụ chính: tải tài liệu lên (kèm các
+ * chốt chặn tuổi/loại tệp/dung lượng/quota), sửa thông tin, thùng rác (xoá mềm - khôi phục - xoá
+ * vĩnh viễn), xin công khai qua kiểm duyệt AI + Admin (toggleVisibility), lấy file để xem
+ * trước/tải về, trang Cộng đồng, và các thao tác dành riêng cho Admin.
+ *
+ * <p>Hai nguyên tắc xuyên suốt: (1) mọi thao tác đều tính theo user đang đăng nhập lấy từ token,
+ * KHÔNG nhận userId do client gửi lên; (2) mọi lối lấy nội dung (chi tiết, xem trước, tải về)
+ * đều áp cùng một luật quyền: chủ sở hữu / tài liệu PUBLIC / được chia sẻ / Admin.
+ *
+ * <p>Việc dựng dữ liệu trả về FE giao cho {@link DocumentMapper}; lưu file vật lý giao cho
+ * {@code FileStorageService} (đĩa máy chủ) và {@code CloudinaryService} (đám mây).
+ */
 @Service
 public class DocumentServiceImpl implements DocumentService {
 
@@ -94,6 +107,9 @@ public class DocumentServiceImpl implements DocumentService {
     @Autowired private AuthUserProfileRepository authUserProfileRepository;
     @Autowired private SystemSettingService systemSettingService;
 
+    // Lấy user đang đăng nhập: đọc email từ token trong SecurityContext rồi tra ra bản ghi user.
+    // Dùng ở hầu hết các method để biết "ai đang thao tác" — nhờ vậy không cần client gửi userId
+    // (client gửi thì có thể giả mạo thành người khác).
     private AuthUser getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return authAccountRepository.findByIdentifier(email)
@@ -127,10 +143,17 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     // getAllDocuments (My Documents - chỉ của mình, chưa xóa):
+    /**
+     * Danh sách tài liệu cho trang "Tài liệu của tôi".
+     *
+     * <p>Đầu vào: không có (tự lấy user đang đăng nhập). Trả về: danh sách DTO tài liệu của
+     * CHÍNH user đó và chưa nằm trong thùng rác.
+     */
     @Override
     @Transactional(readOnly = true)
     public List<DocumentResponseDTO> getAllDocuments() {
         Long uid = getCurrentUser().getId();
+        // Điều kiện truy vấn: deletedAt IS NULL (chưa xoá) VÀ user_id = mình.
         return docDocumentRepository.findByDeletedAtIsNullAndUser_Id(uid).stream()
                 .map(documentMapper::toResponseDTO)
                 .collect(Collectors.toList());
@@ -153,9 +176,12 @@ public class DocumentServiceImpl implements DocumentService {
                     "error.document.dobRequired");
         }
 
+        // Tính tuổi = khoảng cách từ ngày sinh tới hôm nay, lấy phần số năm tròn.
         int age = Period.between(dob, LocalDate.now()).getYears();
+        // Tuổi tối thiểu đọc từ bảng system_settings (Admin chỉnh được), mặc định 16.
         int minAge = systemSettingService.getInt(
                 SystemSettingService.MIN_UPLOAD_AGE_KEY, SystemSettingService.MIN_UPLOAD_AGE_DEFAULT);
+        // Chưa đủ tuổi -> chặn upload ngay, trả lỗi 400.
         if (age < minAge) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Bạn cần đủ " + minAge + " tuổi để tải tài liệu lên.");
@@ -168,8 +194,10 @@ public class DocumentServiceImpl implements DocumentService {
     // test gọi trực tiếp mà không cần dựng lại toàn bộ pipeline buildDocument()/file storage.
     void enforceUploadSizeLimit(long fileSize, String storage) {
         if (StorageTarget.LOCAL.equals(storage) || StorageTarget.BOTH.equals(storage)) {
+            // Giới hạn dung lượng 1 tệp khi lưu trên đĩa máy chủ, đọc từ system_settings.
             long maxLocal = systemSettingService.getLong(
                     SystemSettingService.MAX_FILE_LOCAL_BYTES_KEY, SystemSettingService.MAX_FILE_LOCAL_BYTES_DEFAULT);
+            // Tệp to hơn mức cho phép -> chặn, tránh một người up file khổng lồ làm đầy ổ đĩa.
             if (fileSize > maxLocal) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "Tệp " + humanReadableSize(fileSize) + " vượt giới hạn " + humanReadableSize(maxLocal)
@@ -194,9 +222,11 @@ public class DocumentServiceImpl implements DocumentService {
     // HAI quota, kiểm tra độc lập (không dừng sớm sau khi 1 bên qua). Package-private để test.
     void enforceUploadQuota(long fileSize, String storage, Long userId) {
         if (StorageTarget.LOCAL.equals(storage) || StorageTarget.BOTH.equals(storage)) {
+            // Cộng tổng dung lượng các file LOCAL user này đang chiếm (truy vấn SUM trên doc_files).
             long usedLocal = docFileRepository.sumLocalFileSizeByUserId(userId);
             long quotaLocal = systemSettingService.getLong(
                     SystemSettingService.QUOTA_LOCAL_BYTES_KEY, SystemSettingService.QUOTA_LOCAL_BYTES_DEFAULT);
+            // Đã dùng + tệp mới mà vượt quota -> chặn (mỗi user chỉ được dùng tối đa từng đó dung lượng).
             if (usedLocal + fileSize > quotaLocal) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "Dung lượng đã dùng " + humanReadableSize(usedLocal) + " + tệp " + humanReadableSize(fileSize)
@@ -256,23 +286,28 @@ public class DocumentServiceImpl implements DocumentService {
         DocDocument doc = new DocDocument();
         doc.setTitle(validatedTitle);
         doc.setDescription(description);
-        doc.setUser(getCurrentUser());
+        doc.setUser(getCurrentUser()); // chủ sở hữu = người đang đăng nhập
         doc.setStatus(DocumentStatus.COMPLETED);
         // DEC-006: Private by default — không kiểm duyệt lúc upload, chỉ khi user chủ động
         // chuyển sang PUBLIC (toggleVisibility) mới bắt buộc AI pre-screen (DEC-035).
         doc.setVisibility(DocumentVisibility.PRIVATE);
+        // NOT_REQUIRED = "chưa cần kiểm duyệt", vì tài liệu đang riêng tư, chưa ai ngoài chủ thấy.
         doc.setModerationStatus(ModerationStatus.NOT_REQUIRED);
         doc.setSubjects(subjects);
 
+        // Ghi bản ghi tài liệu xuống database (bảng doc_documents: tiêu đề, mô tả, chủ sở hữu,
+        // trạng thái, chế độ hiển thị + bảng nối tài liệu-môn học). Chưa có file đính kèm.
         return docDocumentRepository.save(doc);
     }
 
+    /** Tải lên và lưu trên ĐĨA máy chủ — gọi lại {@link #uploadDocument} với nơi lưu LOCAL. */
     @Override
     @Transactional
     public DocumentResponseDTO uploadDocumentToServer(String title, String description, java.util.List<Long> subjectIds, MultipartFile file) {
         return uploadDocument(title, description, subjectIds, file, StorageTarget.LOCAL);
     }
 
+    /** Tải lên và lưu trên ĐÁM MÂY Cloudinary — gọi lại {@link #uploadDocument} với nơi lưu CLOUD. */
     @Override
     @Transactional
     public DocumentResponseDTO uploadDocumentToCloud(String title, String description, java.util.List<Long> subjectIds, MultipartFile file) {
@@ -282,30 +317,59 @@ public class DocumentServiceImpl implements DocumentService {
     // Upload hợp nhất: storage = "LOCAL" | "CLOUD" | "BOTH".
     // BOTH: lưu cả local lẫn Cloudinary — file local được add TRƯỚC để mọi nơi đọc
     // (preview/download/ingest AI) ưu tiên bản local, không phụ thuộc Cloudinary.
+    /**
+     * TẢI TÀI LIỆU LÊN — method quan trọng nhất của luồng tài liệu.
+     *
+     * <p>Đầu vào: tiêu đề, mô tả, danh sách id môn học, file người dùng chọn, và nơi lưu
+     * ("LOCAL" = đĩa máy chủ, "CLOUD" = Cloudinary, "BOTH" = cả hai). Trả về: DTO tài liệu vừa
+     * tạo để FE hiển thị ngay.
+     *
+     * <p>Các bước:
+     * <br>1. Kiểm tra người dùng đủ tuổi tối thiểu.
+     * <br>2. Kiểm tra nơi lưu hợp lệ.
+     * <br>3. Kiểm tra loại tệp được phép (chống đổi đuôi lừa hệ thống).
+     * <br>4. Kiểm tra dung lượng một tệp và tổng quota của user.
+     * <br>5. Tạo bản ghi tài liệu trong database (mặc định PRIVATE - riêng tư).
+     * <br>6. Sinh ảnh thumbnail (không bắt buộc thành công).
+     * <br>7. Ghi file thật lên đĩa và/hoặc lên Cloudinary, mỗi bản lưu một dòng trong doc_files.
+     *
+     * <p>Cả method nằm trong một @Transactional: bước nào lỗi thì các bản ghi đã tạo trong DB
+     * bị huỷ hết, không để lại tài liệu dở dang.
+     */
     @Override
     @Transactional
     public DocumentResponseDTO uploadDocument(String title, String description, java.util.List<Long> subjectIds, MultipartFile file, String storage) {
+        // B1: chưa đủ tuổi (hoặc chưa khai ngày sinh) -> dừng luôn, chưa đụng gì tới file.
         enforceMinUploadAge();
 
+        // B2: chuẩn hoá tham số nơi lưu (viết hoa, bỏ khoảng trắng); không truyền gì thì mặc định LOCAL.
         String target = storage == null ? StorageTarget.LOCAL : storage.trim().toUpperCase();
         if (!StorageTarget.ALL.contains(target)) {
             throw new IllegalArgumentException("storage phải là LOCAL, CLOUD hoặc BOTH (nhận được: " + storage + ")");
         }
 
-        // Chốt chặn loại tệp (allowlist đuôi + đối chiếu content-type thật, chống đổi đuôi).
+        // B3: chốt chặn loại tệp (allowlist đuôi + đối chiếu content-type thật, chống đổi đuôi).
+        // Chống đổi đuôi lừa: đổi tên virus.exe thành baitap.pdf vẫn bị phát hiện vì hệ thống đọc
+        // "vân tay" nội dung file chứ không tin phần mở rộng.
         // Đọc allowlist tươi từ DB mỗi lần nên admin đổi là ăn liền, không cần restart.
         uploadFileTypeService.validate(file);
 
+        // B4: chặn tệp quá to, và chặn nếu tổng dung lượng user đã dùng vượt quota được cấp.
         enforceUploadSizeLimit(file.getSize(), target);
         enforceUploadQuota(file.getSize(), target, getCurrentUser().getId());
 
+        // B5: tạo bản ghi tài liệu trong DB trước (chưa gắn file), tài liệu mới luôn PRIVATE.
         DocDocument savedDoc = buildDocument(title, description, subjectIds);
 
-        // Thumbnail sinh 1 lần cho cả 2 bản (best-effort, null nếu định dạng không hỗ trợ).
+        // B6: Thumbnail sinh 1 lần cho cả 2 bản (best-effort, null nếu định dạng không hỗ trợ).
         String thumbnailUrl = thumbnailService.createThumbnail(file);
 
+        // B7a: nhánh lưu trên ĐĨA máy chủ (áp dụng cho cả LOCAL lẫn BOTH).
         if (StorageTarget.LOCAL.equals(target) || StorageTarget.BOTH.equals(target)) {
+            // Ghi nội dung file thật vào thư mục uploads; trả về tên file đã đổi để không trùng.
             String storedFileName = fileStorageService.storeFile(file);
+            // Mô tả file vừa lưu: tên gốc để hiển thị, tên đã lưu để tìm lại file trên đĩa,
+            // loại/kích thước để kiểm tra và thống kê dung lượng.
             DocFile localFile = DocFile.builder()
                     .fileName(file.getOriginalFilename())
                     .fileUrl(storedFileName)
@@ -316,10 +380,14 @@ public class DocumentServiceImpl implements DocumentService {
                     .document(savedDoc)
                     .build();
             savedDoc.addFile(localFile);
+            // Ghi bản ghi file xuống database (bảng doc_files): lưu tên file, đường dẫn, loại,
+            // dung lượng, thumbnail và id tài liệu cha.
             docFileRepository.save(localFile);
         }
 
+        // B7b: nhánh lưu trên ĐÁM MÂY Cloudinary (áp dụng cho cả CLOUD lẫn BOTH).
         if (StorageTarget.CLOUD.equals(target) || StorageTarget.BOTH.equals(target)) {
+            // Đẩy file lên Cloudinary; nhận về URL truy cập + publicId (dùng để xoá sau này).
             com.aish.mvc.service.stor.CloudUploadResult uploaded = cloudinaryService.upload(file);
             DocFile cloudFile = DocFile.builder()
                     .fileName(file.getOriginalFilename())
@@ -332,9 +400,12 @@ public class DocumentServiceImpl implements DocumentService {
                     .document(savedDoc)
                     .build();
             savedDoc.addFile(cloudFile);
+            // Ghi bản ghi file xuống database (bảng doc_files) — dòng riêng cho bản trên đám mây,
+            // nên chọn BOTH sẽ có 2 dòng doc_files cho cùng 1 tài liệu.
             docFileRepository.save(cloudFile);
         }
 
+        // Đổi entity sang DTO để FE hiển thị ngay tài liệu vừa tạo.
         return documentMapper.toResponseDTO(savedDoc);
     }
 
@@ -350,6 +421,15 @@ public class DocumentServiceImpl implements DocumentService {
         }
     }
 
+    /**
+     * Sửa thông tin tài liệu (tiêu đề, mô tả, môn học) — CHỈ chủ sở hữu được sửa.
+     *
+     * <p>Đầu vào: id tài liệu + các trường muốn sửa (để null nghĩa là giữ nguyên). Trả về: DTO
+     * tài liệu sau khi sửa.
+     *
+     * <p>Các bước: (1) tìm tài liệu, (2) tài liệu trong thùng rác thì coi như không tồn tại,
+     * (3) chặn nếu người gọi không phải chủ sở hữu, (4) kiểm duyệt tiêu đề mới, (5) lưu lại.
+     */
     @Override
     @Transactional
     public DocumentResponseDTO updateDocument(Long id, String title, String description, java.util.List<Long> subjectIds) {
@@ -364,12 +444,20 @@ public class DocumentServiceImpl implements DocumentService {
             throw new ForbiddenException("error.document.editForbidden");
         }
 
+        // Tiêu đề mới phải qua kiểm duyệt tên: đủ dài, không toàn số/ký tự lặp, không chứa từ cấm.
         String validatedTitle = title == null ? null : namingModerationService.validate(title);
         applyDocumentUpdate(doc, validatedTitle, description, subjectIds);
 
+        // Ghi thay đổi xuống database (bảng doc_documents + bảng nối tài liệu-môn học).
         return documentMapper.toResponseDTO(docDocumentRepository.save(doc));
     }
 
+    /**
+     * Danh sách tài liệu user đã bấm "Yêu thích" (trang Yêu thích).
+     *
+     * <p>Các bước: (1) lấy id các tài liệu user đã thích từ bảng favorites, (2) nạp các tài liệu
+     * đó nhưng bỏ qua tài liệu đã nằm trong thùng rác.
+     */
     @Override
     @Transactional(readOnly = true)
     public List<DocumentResponseDTO> getFavoriteDocuments() {
@@ -381,10 +469,16 @@ public class DocumentServiceImpl implements DocumentService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Số liệu dung lượng của user cho thanh "đã dùng / tổng quota" và để FE tự chặn trước khi
+     * gửi file quá lớn. Trả về: đã dùng + quota + giới hạn 1 tệp, tách riêng cho LOCAL và CLOUD.
+     */
     @Override
     @Transactional(readOnly = true)
     public StorageUsageDTO getStorageUsage() {
         Long uid = getCurrentUser().getId();
+        // Cộng tổng dung lượng file của user, tách theo nơi lưu (kể cả file trong thùng rác,
+        // vì bytes vẫn còn chiếm chỗ cho tới khi xoá vĩnh viễn).
         long usedLocal = docFileRepository.sumLocalFileSizeByUserId(uid);
         long usedCloud = docFileRepository.sumCloudFileSizeByUserId(uid);
         long quotaLocal = systemSettingService.getLong(
@@ -398,6 +492,10 @@ public class DocumentServiceImpl implements DocumentService {
         return new StorageUsageDTO(usedLocal, usedCloud, quotaLocal, quotaCloud, maxFileLocal, maxFileCloud);
     }
 
+    /**
+     * Đưa tài liệu vào THÙNG RÁC (xoá mềm) — chỉ chủ sở hữu. Đầu vào: id tài liệu.
+     * Không xoá dữ liệu thật, chỉ đánh dấu thời điểm xoá để có thể khôi phục.
+     */
     @Override
     @Transactional
     public void deleteDocument(Long id) {
@@ -406,10 +504,14 @@ public class DocumentServiceImpl implements DocumentService {
         if (!doc.getUser().getId().equals(getCurrentUser().getId())) {
             throw new ForbiddenException("error.document.deleteForbidden");
         }
+        // XOÁ MỀM: không xoá dòng nào cả, chỉ ghi thời điểm xoá vào cột deleted_at. Mọi truy vấn
+        // khác đều lọc "deleted_at IS NULL" nên tài liệu biến mất khỏi giao diện nhưng vẫn khôi
+        // phục được. File trên đĩa/Cloudinary vẫn còn nguyên.
         doc.setDeletedAt(LocalDateTime.now());
-        docDocumentRepository.save(doc);
+        docDocumentRepository.save(doc); // cập nhật bản ghi trong bảng doc_documents
     }
 
+    /** Danh sách tài liệu trong THÙNG RÁC của user đang đăng nhập (deleted_at khác null). */
     @Override
     @Transactional(readOnly = true)
     public List<DocumentResponseDTO> getDeletedDocuments() {
@@ -420,6 +522,10 @@ public class DocumentServiceImpl implements DocumentService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * KHÔI PHỤC tài liệu từ thùng rác — chỉ chủ sở hữu. Đầu vào: id tài liệu.
+     * Chỉ cần xoá dấu thời điểm xoá là tài liệu hiện lại như cũ.
+     */
     @Override
     @Transactional
     public void restoreDocument(Long id) {
@@ -428,10 +534,20 @@ public class DocumentServiceImpl implements DocumentService {
         if (!doc.getUser().getId().equals(getCurrentUser().getId())) {
             throw new ForbiddenException("error.document.restoreForbidden");
         }
-        doc.setDeletedAt(null);
-        docDocumentRepository.save(doc);
+        doc.setDeletedAt(null); // xoá dấu "đã xoá" -> tài liệu quay lại danh sách bình thường
+        docDocumentRepository.save(doc); // cập nhật bản ghi trong bảng doc_documents
     }
 
+    /**
+     * XOÁ VĨNH VIỄN tài liệu — chỉ chủ sở hữu. Đây là thao tác KHÔNG khôi phục được.
+     *
+     * <p>Đầu vào: id tài liệu. Không trả về gì.
+     *
+     * <p>Các bước: (1) kiểm tra quyền, (2) xoá file vật lý trên đĩa/Cloudinary + ảnh thumbnail,
+     * (3) xoá mọi dữ liệu liên quan ở các bảng khác (bình luận, đánh giá, yêu thích, lượt tải,
+     * bộ sưu tập, embedding AI, kháng cáo, lịch sử xem, chia sẻ), (4) xoá hẳn dòng tài liệu.
+     * Phải xoá dữ liệu liên quan TRƯỚC, nếu không sẽ vướng ràng buộc khoá ngoại của database.
+     */
     @Override
     @Transactional
     public void permanentDeleteDocument(Long id) {
@@ -441,18 +557,21 @@ public class DocumentServiceImpl implements DocumentService {
             throw new ForbiddenException("error.document.permanentDeleteForbidden");
         }
 
+        // B2: xoá file thật. Tài liệu lưu BOTH có 2 dòng file nên vòng lặp chạy 2 lần.
         if (doc.getFiles() != null) {
             for (DocFile f : doc.getFiles()) {
                 if (DocFile.RESOURCE_TYPE_LOCAL.equals(f.getResourceType())) {
-                    fileStorageService.deleteFile(f.getFileUrl());
+                    fileStorageService.deleteFile(f.getFileUrl()); // xoá file trong thư mục uploads
                 } else if (f.getPublicId() != null) {
+                    // Xoá file trên Cloudinary. Lỗi mạng thì bỏ qua để không chặn việc xoá dưới DB.
                     try { cloudinaryService.delete(f.getPublicId(), f.getResourceType()); }
                     catch (Exception ignored) {}
                 }
-                thumbnailService.deleteThumbnail(f.getThumbnailUrl());
+                thumbnailService.deleteThumbnail(f.getThumbnailUrl()); // xoá luôn ảnh xem trước
             }
         }
 
+        // B3: dọn sạch mọi dữ liệu ở các bảng đang tham chiếu tới tài liệu này.
         commentRepository.deleteByDocumentId(id);
         ratingRepository.deleteByDocumentId(id);
         favoriteRepository.deleteByDocumentId(id);
@@ -462,11 +581,22 @@ public class DocumentServiceImpl implements DocumentService {
         moderationAppealRepository.deleteByDocumentId(id);
         viewHistoryRepository.deleteByDocumentId(id);
         documentShareRepository.deleteByDocumentId(id);
+        // Hội thoại AI thì KHÔNG xoá, chỉ gỡ tham chiếu tới tài liệu (giữ lại lịch sử chat).
         aiConversationRepository.clearDocumentReference(id);
 
+        // B4: xoá hẳn dòng tài liệu khỏi bảng doc_documents (và các dòng doc_files theo cascade).
         docDocumentRepository.delete(doc);
     }
 
+    /**
+     * Lấy file để TẢI VỀ.
+     *
+     * <p>Đầu vào: id tài liệu. Trả về: bản ghi file (DocFile) để controller mở nội dung gửi cho
+     * người dùng.
+     *
+     * <p>Các bước: (1) tìm tài liệu, (2) kiểm tra quyền — chỉ chủ sở hữu, tài liệu PUBLIC,
+     * người được chia sẻ hoặc Admin mới được tải, (3) chọn file chính (ưu tiên bản trên đĩa).
+     */
     @Override
     @Transactional(readOnly = true)
     public DocFile getFileByDocumentId(Long documentId) {
@@ -486,6 +616,12 @@ public class DocumentServiceImpl implements DocumentService {
         return pickPrimaryFile(doc);
     }
 
+    /**
+     * Lấy file để XEM TRƯỚC ngay trên trình duyệt (không tính là lượt tải). Dùng chung cho
+     * /preview, /thumbnail và /preview-text.
+     *
+     * <p>Đầu vào: id tài liệu. Trả về: bản ghi file chính. Luật quyền giống hệt tải về.
+     */
     @Override
     @Transactional(readOnly = true)
     public DocFile getFileForPreview(Long id) {
@@ -493,6 +629,7 @@ public class DocumentServiceImpl implements DocumentService {
                 .orElseThrow(() -> new ResourceNotFoundException("error.document.notFound"));
         AuthUser currentUser = getCurrentUser();
         Long currentUserId = currentUser.getId();
+        // 3 điều kiện cho phép xem: là chủ sở hữu, tài liệu đang công khai, hoặc được chia sẻ.
         boolean isOwner = doc.getUser().getId().equals(currentUserId);
         boolean isPublic = doc.getVisibility() == DocumentVisibility.PUBLIC;
         // Người được chia sẻ (RESTRICTED theo userId, hoặc ANYONE_WITH_LINK) cũng được xem trước.
@@ -504,7 +641,18 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     // getCommunityDocuments - đổi đầu method:
+    /**
+     * Dữ liệu cho TRANG CỘNG ĐỒNG — nơi mọi người xem tài liệu công khai của nhau.
+     *
+     * <p>Đầu vào: từ khoá tìm kiếm, môn học, điểm đánh giá tối thiểu, kiểu sắp xếp, số trang và
+     * số tài liệu mỗi trang. Trả về: một trang kết quả kèm tổng số tài liệu và tổng số trang.
+     *
+     * <p>Các bước: (1) làm sạch tham số phân trang, (2) truy vấn tài liệu PUBLIC theo từ
+     * khoá/môn học, (3) đổi sang DTO, (4) lọc theo điểm trung bình, (5) sắp xếp, (6) cắt ra
+     * đúng trang người dùng yêu cầu.
+     */
     public CommunityPageResponseDTO getCommunityDocuments(String keyword, Long subjectId, Double minRating, String sortBy, int page, int size) {
+        // B1: kẹp lại tham số phân trang cho hợp lệ (trang âm -> 0, size <= 0 -> mặc định).
         if (page < 0) page = 0;
         if (size <= 0) size = DEFAULT_COMMUNITY_PAGE_SIZE;
         // Trần kích thước trang: mọi tài liệu PUBLIC đều được nạp và map (mapper còn đếm
@@ -513,6 +661,7 @@ public class DocumentServiceImpl implements DocumentService {
         if (size > MAX_COMMUNITY_PAGE_SIZE) size = MAX_COMMUNITY_PAGE_SIZE;
 
         String kw = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
+        // B2: chỉ lấy tài liệu đang PUBLIC — tài liệu riêng tư không bao giờ lọt ra trang này.
         List<DocDocument> all = docDocumentRepository.findCommunityDocuments(DocumentVisibility.PUBLIC, kw, subjectId);
         // ... phần còn lại giữ nguyên (minRating + sort + phân trang)
         List<DocumentResponseDTO> mapped = all.stream().map(documentMapper::toResponseDTO).collect(Collectors.toList());
@@ -542,6 +691,7 @@ public class DocumentServiceImpl implements DocumentService {
         }
         mapped.sort(comparator);
 
+        // B6: cắt danh sách đã sắp xếp thành đúng 1 trang. Math.min để không vượt quá cỡ danh sách.
         long totalItems = mapped.size();
         int totalPages = (int) Math.ceil(totalItems / (double) size);
         int fromIndex = Math.min(page * size, mapped.size());
@@ -557,6 +707,19 @@ public class DocumentServiceImpl implements DocumentService {
      * tài liệu ở lại PRIVATE cho tới khi Admin duyệt (AdminServiceImpl.approveDocumentReview)
      * hoặc từ chối (removeDocumentReview). AI pre-screen chỉ còn là gợi ý cho Admin, kết quả
      * PASS/FLAG lưu ở aiScreenOutcome.
+     *
+     * <p>Nói ngắn gọn: đây là luồng XIN CÔNG KHAI TÀI LIỆU. Đầu vào là id tài liệu, trả về DTO
+     * tài liệu sau khi đổi để FE hiện trạng thái mới.
+     *
+     * <p>Các bước:
+     * <br>1. Tìm tài liệu, chỉ chủ sở hữu được đổi.
+     * <br>2. Nếu đang PUBLIC -> chuyển về PRIVATE ngay (ẩn bớt luôn an toàn), kết thúc.
+     * <br>3. Nếu xin công khai: xoá kết quả duyệt cũ của Admin (đây là yêu cầu mới).
+     * <br>4. Quét từ khoá cấm trong nội dung (rẻ, không tốn tiền gọi AI). Trúng -> gắn cờ FLAG,
+     *        đưa vào hàng chờ Admin, kết thúc.
+     * <br>5. Không trúng từ khoá -> gọi AI kiểm duyệt, ghi kết quả PASS/FLAG.
+     * <br>6. Dù AI PASS hay FLAG, tài liệu vẫn Ở LẠI PRIVATE và chờ Admin duyệt cuối cùng.
+     * <br>7. Gửi thông báo cho Admin và cho chủ tài liệu.
      */
     @Override
     @Transactional
@@ -583,21 +746,26 @@ public class DocumentServiceImpl implements DocumentService {
         // Keyword DB là lớp rẻ nhất. Hit thì KHÔNG gọi AI (tiết kiệm), nhưng cũng KHÔNG từ chối
         // cứng nữa: đi cùng đường với AI FLAG — vào hàng chờ Admin, Admin mới là người quyết
         // định cuối. Lý do keyword được ghi lại để Admin biết vì sao tài liệu bị gắn cờ.
+        // B4: đối chiếu nội dung tài liệu với danh sách từ khoá cấm do Admin quản lý.
         if (documentContentKeywordService.matches(doc)) {
             log.info("Document {} matched a DOCUMENT_CONTENT keyword; skipping AI moderation screen", documentId);
-            doc.setVisibility(DocumentVisibility.PRIVATE);
+            doc.setVisibility(DocumentVisibility.PRIVATE); // vẫn riêng tư, chưa ai ngoài chủ thấy
+            // ADMIN_PENDING = "đang xếp hàng chờ Admin xem xét", hiện ở tab "Cần xem xét" bên Admin.
             doc.setModerationStatus(ModerationStatus.ADMIN_PENDING);
+            // FLAG = "bị gắn cờ nghi ngờ" — chỉ là gợi ý cho Admin, không phải quyết định từ chối.
             doc.setAiScreenOutcome(AI_SCREEN_FLAG);
             doc.setModerationReason("Nội dung tài liệu kích hoạt quy tắc từ khóa không phù hợp.");
+            // Ghi trạng thái kiểm duyệt xuống database (bảng doc_documents).
             DocDocument flagged = docDocumentRepository.save(doc);
-            notifyAdminsDocumentScreened(flagged, "PENDING_FLAGGED_BY_CONTENT_KEYWORD");
-            notifyOwnerDocPending(flagged, true);
+            notifyAdminsDocumentScreened(flagged, "PENDING_FLAGGED_BY_CONTENT_KEYWORD"); // báo Admin có việc
+            notifyOwnerDocPending(flagged, true); // báo chủ tài liệu là đang chờ duyệt
             return documentMapper.toResponseDTO(flagged);
         }
 
-        // Không trúng keyword: tiếp tục AI pre-screen hiện có (DEC-035).
+        // B5: Không trúng keyword: tiếp tục AI pre-screen hiện có (DEC-035).
+        // Gọi AI đọc nội dung tài liệu và cho nhận xét có phù hợp để công khai hay không.
         ModerationResultDTO result = aiModerationService.screen(documentId);
-        doc.setModerationReason(result.getReason());
+        doc.setModerationReason(result.getReason()); // lý do AI đưa ra, để Admin và chủ tài liệu đọc
         if (result.isMetadataMismatch()) {
             doc.setModerationReason((result.getReason() == null ? "" : result.getReason())
                     + " | Lưu ý metadata: " + result.getMetadataMismatchReason());
@@ -606,11 +774,14 @@ public class DocumentServiceImpl implements DocumentService {
 
         // Dù AI PASS hay FLAG, tài liệu đều ở lại PRIVATE và vào hàng chờ Admin duyệt cuối.
         // Kết quả AI chỉ được ghi vào aiScreenOutcome để Admin (và FE) biết ngữ cảnh.
+        // B6: AI trả PASS nghĩa là "không thấy vấn đề", khác PASS thì coi như bị gắn cờ.
         boolean aiFlagged = result.getDecision() != ModerationDecision.PASS;
-        doc.setVisibility(DocumentVisibility.PRIVATE);
-        doc.setModerationStatus(ModerationStatus.ADMIN_PENDING);
+        doc.setVisibility(DocumentVisibility.PRIVATE); // vẫn chưa công khai — chờ Admin quyết định
+        doc.setModerationStatus(ModerationStatus.ADMIN_PENDING); // vào hàng chờ duyệt của Admin
+        // PASS = AI thấy ổn, FLAG = AI thấy nghi ngờ. Chỉ để Admin tham khảo khi bấm duyệt.
         doc.setAiScreenOutcome(aiFlagged ? AI_SCREEN_FLAG : AI_SCREEN_PASS);
 
+        // Ghi kết quả kiểm duyệt xuống database (bảng doc_documents).
         DocDocument savedDocument = docDocumentRepository.save(doc);
         LocalDateTime metadataCheckedAt = LocalDateTime.now();
         docDocumentRepository.stampMetadataCheck(savedDocument.getId(),
@@ -623,12 +794,16 @@ public class DocumentServiceImpl implements DocumentService {
         // để mọi thứ phía dưới làm việc với bản còn gắn với session.
         DocDocument screenedDocument = docDocumentRepository.findById(savedDocument.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("error.document.notFound"));
+        // B7: gửi thông báo trong ứng dụng — Admin biết có tài liệu cần duyệt, chủ tài liệu biết
+        // yêu cầu công khai đã được ghi nhận.
         notifyAdminsDocumentScreened(screenedDocument, result.getDecision().name());
         notifyOwnerDocPending(screenedDocument, aiFlagged);
 
         return documentMapper.toResponseDTO(screenedDocument);
     }
 
+    // Gửi thông báo cho TẤT CẢ Admin đang hoạt động: có tài liệu vừa qua sàng lọc, cần xem xét.
+    // Bọc try/catch: gửi thông báo lỗi thì chỉ ghi log, KHÔNG làm hỏng luồng kiểm duyệt.
     private void notifyAdminsDocumentScreened(DocDocument document, String outcome) {
         try {
             String message = "Tài liệu \"" + document.getTitle()
@@ -662,6 +837,8 @@ public class DocumentServiceImpl implements DocumentService {
         }
     }
 
+    // Báo cho chủ tài liệu và Admin khi AI thấy tiêu đề/môn học có vẻ không khớp nội dung file
+    // (vd. đặt tên "Toán 12" nhưng nội dung là bài Văn). Chỉ nhắc nhở, không chặn công khai.
     private void notifyMetadataMismatch(DocDocument document, String reason) {
         try {
             notificationService.createDocumentNotification(document.getUser().getId(), NotificationType.METADATA_MISMATCH,
@@ -674,6 +851,15 @@ public class DocumentServiceImpl implements DocumentService {
         }
     }
 
+    /**
+     * Chi tiết một tài liệu cho trang xem tài liệu.
+     *
+     * <p>Đầu vào: id tài liệu. Trả về: DTO đầy đủ (thông tin, môn học, số lượt thích/tải, điểm
+     * đánh giá, danh sách bình luận).
+     *
+     * <p>Các bước: (1) tìm tài liệu, (2) trong thùng rác thì báo không tồn tại, (3) kiểm tra
+     * quyền xem (chủ sở hữu / PUBLIC / được chia sẻ / Admin), (4) đổi sang DTO.
+     */
     @Override
     @Transactional(readOnly = true)
     public DocumentResponseDTO getDocumentById(Long id) {
@@ -700,6 +886,20 @@ public class DocumentServiceImpl implements DocumentService {
         return documentMapper.toResponseDTO(doc);
     }
 
+    /**
+     * DANH SÁCH TÀI LIỆU CHO TRANG QUẢN TRỊ — Admin thấy được TOÀN BỘ tài liệu của mọi người,
+     * bất kể riêng tư hay công khai.
+     *
+     * <p>Đầu vào: các bộ lọc (chế độ hiển thị, cờ "chỉ lấy hàng chờ duyệt", từ khoá, trạng thái
+     * kiểm duyệt, đã gỡ hay chưa) + thông tin phân trang. Trả về: một trang các dòng tóm tắt
+     * tài liệu để đổ vào bảng.
+     *
+     * <p>Các bước: (1) nếu bật cờ "cần xem xét" thì chỉ lấy tài liệu đang ADMIN_PENDING và bỏ
+     * qua mọi bộ lọc khác (hàng chờ phải luôn hiện đủ); (2) ngược lại thì tìm kiếm theo các bộ
+     * lọc; (3) đổi mỗi tài liệu thành một dòng tóm tắt.
+     *
+     * <p>Không kiểm tra quyền ở đây vì đường dẫn /api/admin/** đã yêu cầu vai trò ADMIN.
+     */
     @Override
     @Transactional(readOnly = true)
     public Page<AdminDocumentSummaryDTO> getAllDocumentsForAdmin(
@@ -727,8 +927,11 @@ public class DocumentServiceImpl implements DocumentService {
                     normalizedKeyword, visibility, moderationStatus, removed, pageable);
 
         }
+        // Đổi mỗi tài liệu thành 1 dòng gọn cho bảng admin (không kèm bình luận/số liệu tương tác
+        // để bảng nhẹ và nhanh).
         return page.map(document -> {
 
+            // Tài liệu chưa có file nào thì hiển thị dấu "-" ở cột nơi lưu.
             String storageType = document.getFiles().isEmpty()
                     ? "-"
                     : document.getFiles().get(0).getResourceType();
@@ -749,6 +952,10 @@ public class DocumentServiceImpl implements DocumentService {
         });
     }
 
+    /**
+     * Admin GỠ tài liệu vi phạm (xoá mềm — vẫn khôi phục được). Đầu vào: id tài liệu.
+     * Khác {@link #deleteDocument} ở chỗ không cần là chủ sở hữu.
+     */
     @Override
     @Transactional
     public void adminDeleteDocument(Long id) {
@@ -761,6 +968,10 @@ public class DocumentServiceImpl implements DocumentService {
         docDocumentRepository.save(doc);
     }
 
+    /**
+     * Admin SỬA thông tin tài liệu (vd. sửa tiêu đề/môn học đặt sai). Đầu vào: id + các trường
+     * muốn sửa. Trả về: DTO sau khi sửa. Không cần là chủ sở hữu.
+     */
     @Override
     @Transactional
     public DocumentResponseDTO adminUpdateDocument(Long id, String title, String description, java.util.List<Long> subjectIds) {
@@ -773,6 +984,10 @@ public class DocumentServiceImpl implements DocumentService {
         return documentMapper.toResponseDTO(docDocumentRepository.save(doc));
     }
 
+    /**
+     * Admin KHÔI PHỤC tài liệu đã gỡ (vd. gỡ nhầm, hoặc chủ tài liệu kháng cáo thành công).
+     * Đầu vào: id tài liệu. Không cần là chủ sở hữu.
+     */
     @Override
     @Transactional
     public void adminRestoreDocument(Long id) {

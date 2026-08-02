@@ -49,6 +49,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+/**
+ * NẠP TÀI LIỆU CHO AI ĐỌC (ingest) — bước biến một file tài liệu thành dữ liệu mà AI tra cứu
+ * được để trả lời câu hỏi kèm trích dẫn.
+ *
+ * <p>Cách làm dễ hiểu: đọc chữ trong file -> cắt thành nhiều đoạn nhỏ (chunk) -> nhờ mô hình
+ * Gemini biến mỗi đoạn thành một dãy số gọi là "vector" (thể hiện ý nghĩa của đoạn văn) -> lưu
+ * vector xuống bảng doc_embeddings và nạp vào bộ nhớ tìm kiếm. Khi người dùng hỏi, hệ thống so
+ * vector câu hỏi với vector các đoạn để tìm đoạn liên quan nhất.
+ *
+ * <p>PDF được đọc bằng bộ đọc riêng có biết số TRANG (để trích dẫn "trang mấy"); các định dạng
+ * khác đọc bằng Tika và không có số trang. Ảnh/video/nhạc/file nén thì bỏ qua vì đọc ra chữ
+ * cũng vô nghĩa.
+ */
 @Service
 @RequiredArgsConstructor
 public class DocEmbeddingServiceImpl implements DocEmbeddingService {
@@ -101,6 +114,13 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
     @Value("${app.upload.dir}")
     private String uploadDir;
 
+    /**
+     * NẠP TÀI LIỆU CHO AI. Đầu vào: id tài liệu. Trả về: trạng thái kết quả (INGESTED / NO_FILE /
+     * UNSUPPORTED_FORMAT / FILE_ERROR / EMPTY) kèm số đoạn đã nạp và câu thông báo cho người dùng.
+     *
+     * <p>Method này chỉ lo phần KHOÁ để hai người bấm "nạp" cùng lúc trên cùng một tài liệu không
+     * chạy chồng lên nhau (gây nạp trùng, tốn tiền gọi AI). Phần việc thật nằm ở ingestWithLock().
+     */
     @Override
     public IngestResponseDTO ingest(Long documentId) {
         IngestLock ingestLock = ingestLocks.compute(documentId, (id, existing) -> {
@@ -125,10 +145,20 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
         }
     }
 
+    /**
+     * Phần việc thật của ingest, chạy khi đã giữ khoá.
+     *
+     * <p>Các bước: (1) chỉ chủ tài liệu hoặc Admin được nạp; (2) đã nạp rồi thì thôi; (3) kiểm
+     * tra có file và định dạng đọc được; (4) đọc chữ trong file; (5) chữ quá ít thì coi như
+     * không đọc được; (6) cắt thành các đoạn nhỏ; (7) xoá dữ liệu nạp cũ (nạp lại thì không bị
+     * trùng); (8) với mỗi đoạn, gọi Gemini tạo vector; (9) lưu xuống bảng doc_embeddings và nạp
+     * vào bộ nhớ tìm kiếm; (10) đánh dấu tài liệu đã INGESTED.
+     */
     private IngestResponseDTO ingestWithLock(Long documentId) {
         DocDocument doc = docDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new RuntimeException("Tài liệu không tồn tại!"));
 
+        // B1: chỉ chủ tài liệu hoặc Admin mới được nạp (nạp tốn tiền gọi AI).
         Long currentUserId = getCurrentUserId();
         boolean isOwner = doc.getUser().getId().equals(currentUserId);
         if (!isOwner && !isAdmin()) {
@@ -193,6 +223,8 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
                     "Không trích xuất được nội dung hữu ích từ file (rỗng hoặc không phải văn bản thật).");
         }
 
+        // B6: cắt toàn bộ chữ đọc được thành nhiều đoạn nhỏ. Phải cắt vì AI có giới hạn độ dài
+        // đầu vào, và đoạn nhỏ thì tìm kiếm mới trúng đúng chỗ. Độ dài đoạn Admin chỉnh được.
         int chunkSize = systemSettingService.getInt(
                 SystemSettingService.AI_CHUNK_SIZE_KEY, SystemSettingService.AI_CHUNK_SIZE_DEFAULT);
         List<Document> chunks = TokenTextSplitter.builder().withChunkSize(chunkSize).build().apply(rawDocs);
@@ -217,6 +249,8 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
                     ? (Integer) chunk.getMetadata().get(PagePdfDocumentReader.METADATA_START_PAGE_NUMBER)
                     : null;
 
+            // B8: gọi Gemini biến đoạn văn thành vector (dãy số thể hiện ý nghĩa). Có thử lại
+            // vài lần nếu lỗi tạm thời (quá tải, mạng chập chờn).
             float[] vector = embedWithRetry(text, documentId, i);
 
             rows.add(DocEmbedding.builder()
@@ -232,9 +266,12 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
                     chunkMetadata(documentId, doc.getTitle(), authorOf(doc), page, i), vector));
         }
 
+        // B9: ghi toàn bộ đoạn + vector xuống database (bảng doc_embeddings) để lần khởi động
+        // sau không phải gọi lại AI, rồi nạp vào bộ nhớ tìm kiếm để dùng được ngay.
         docEmbeddingRepository.saveAll(rows);
         vectorStore.hydrate(vectorContents);
 
+        // B10: đánh dấu tài liệu đã nạp xong -> FE hiện nút "Hỏi AI về tài liệu này".
         doc.setIngestStatus(IngestStatus.INGESTED);
         docDocumentRepository.save(doc);
 
@@ -251,6 +288,11 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
 
     private enum IngestFormat { PDF, TIKA, UNSUPPORTED }
 
+    /**
+     * File này AI có đọc được không. Đầu vào: tên file + loại file. Trả về false với ảnh, video,
+     * nhạc, file nén, file chạy — những thứ đọc ra chữ cũng vô nghĩa. Dùng để FE ẩn/hiện nút
+     * "Hỏi AI" ngay ở danh sách tài liệu.
+     */
     @Override
     public boolean isAiSupported(String fileName, String fileType) {
         String type = fileType != null ? fileType.toLowerCase() : "";
@@ -349,6 +391,12 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
         }
     }
 
+    /**
+     * NẠP LẠI toàn bộ vector đã lưu từ database vào bộ nhớ tìm kiếm, chạy MỘT LẦN lúc khởi động
+     * ứng dụng. Bộ nhớ tìm kiếm nằm trong RAM nên tắt server là mất; nhờ có bảng doc_embeddings
+     * mà không phải gọi lại AI (vừa lâu vừa tốn tiền). Dòng dữ liệu nào hỏng thì bỏ qua dòng đó,
+     * không chặn cả lần khởi động.
+     */
     @Override
     @Transactional(readOnly = true)
     public void hydrateFromDatabase() {
@@ -374,6 +422,16 @@ public class DocEmbeddingServiceImpl implements DocEmbeddingService {
         }
     }
 
+    /**
+     * TÌM CÁC ĐOẠN VĂN LIÊN QUAN tới câu hỏi của người dùng — phần "tra cứu" của tính năng hỏi AI.
+     *
+     * <p>Đầu vào: câu hỏi, danh sách id tài liệu ĐƯỢC PHÉP tra cứu, số đoạn tối đa (topK) và
+     * ngưỡng độ giống. Trả về: các đoạn văn giống câu hỏi nhất, kèm thông tin tài liệu/trang để
+     * hiển thị trích dẫn.
+     *
+     * <p>Quan trọng về bảo mật: bộ lọc theo danh sách documentIds đảm bảo AI chỉ đọc được tài
+     * liệu mà người hỏi có quyền xem, không lấy nội dung tài liệu riêng tư của người khác.
+     */
     @Override
     public List<Document> retrieveChunks(String query, List<Long> documentIds, int topK, double similarityThreshold) {
         if (documentIds == null || documentIds.isEmpty()) {
