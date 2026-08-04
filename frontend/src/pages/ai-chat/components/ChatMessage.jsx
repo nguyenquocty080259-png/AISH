@@ -21,6 +21,8 @@ function citationHref(citation) {
   return query ? `${base}?${query}` : base;
 }
 
+// Một bong bóng tin nhắn (của user hoặc AI). Tin nhắn AI có thể kèm nhãn chế độ (RAG/GENERAL),
+// danh sách trích dẫn (bấm vào mở tài liệu ở tab mới, nhảy đúng trang/đoạn), và tài liệu liên quan.
 export default function ChatMessage({
   role,
   text,

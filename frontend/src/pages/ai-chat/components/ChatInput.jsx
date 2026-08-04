@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 
+// Ô nhập tin nhắn + nút gửi ở cuối khung chat.
 export default function ChatInput({
   value,
   onChange,

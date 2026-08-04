@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import "./ai-widget.css";
 
+// Ô nhập tin nhắn của widget: Enter để gửi (Shift+Enter xuống dòng).
 export default function ChatInput({ onSend, disabled }) {
   const { t } = useTranslation();
   const [value, setValue] = useState("");

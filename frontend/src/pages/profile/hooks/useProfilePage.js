@@ -30,6 +30,8 @@ function toFormValues(profile) {
   return values;
 }
 
+// Hook logic trang Hồ sơ: nạp hồ sơ + dung lượng đã dùng, bật chế độ sửa, đổi ảnh đại diện
+// (preview tức thì bằng object URL trong lúc tải lên), và lưu thay đổi.
 export function useProfilePage() {
   const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
@@ -43,6 +45,7 @@ export function useProfilePage() {
   const [storageUsage, setStorageUsage] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
 
+  // Nạp hồ sơ + dung lượng đã dùng (2 API độc lập, dung lượng lỗi thì thanh dung lượng tự ẩn).
   const load = async () => {
     setLoading(true);
     try {
@@ -78,6 +81,8 @@ export function useProfilePage() {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Đổi ảnh đại diện: hiện preview NGAY bằng object URL (chưa cần chờ server), gọi API tải lên,
+  // rồi thay preview bằng URL thật trả về từ server; luôn dọn object URL để không rò rỉ bộ nhớ.
   const handleAvatarChange = async (event) => {
       const file = event.target.files?.[0];
 
@@ -109,6 +114,7 @@ export function useProfilePage() {
       }
     };
   
+  // Lưu toàn bộ hồ sơ (trừ email, chỉ đọc). trashRetentionDays rỗng thì gửi null (dùng mặc định 30 ngày ở BE).
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);

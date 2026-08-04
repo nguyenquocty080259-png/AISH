@@ -7,6 +7,8 @@ import { ROUTES, buildRoute } from "../../../constants/routes";
 
 // Local tile for this page only — My Documents' DocumentCard is page-specific and not
 // worth refactoring into a shared component for this single reuse (kept scope minimal).
+// Một ô tài liệu trong bộ sưu tập. Tài liệu không còn xem được (bị xoá hoặc chủ chuyển riêng tư)
+// hiện dạng chung chung "không khả dụng", không tiết lộ lý do cụ thể — vẫn gỡ khỏi bộ sưu tập được.
 export default function CollectionDocTile({ item, onRemove, removing }) {
   const { t } = useTranslation();
   const navigate = useNavigate();

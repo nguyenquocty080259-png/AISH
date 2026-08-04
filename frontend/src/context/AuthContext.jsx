@@ -6,6 +6,11 @@ import { ROLES } from "../constants/roles";
 
 export const AuthContext = createContext(null);
 
+/**
+ * NGUỒN SỰ THẬT DUY NHẤT về trạng thái đăng nhập trong toàn bộ app: ai đang đăng nhập, vai trò
+ * gì, token là gì, hồ sơ đã điền đủ chưa. Bọc quanh toàn bộ ứng dụng (xem App.jsx) để mọi trang/
+ * component đều đọc được qua hook {@link useAuth}.
+ */
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [accessToken, setAccessToken] = useState(
@@ -17,6 +22,7 @@ export function AuthProvider({ children }) {
   // PrivateRoute/AdminRoute chỉ đọc lại state này để quyết định có bắt onboarding hay không.
   const [profile, setProfile] = useState(null);
 
+  // Xoá sạch phiên đăng nhập: bỏ token khỏi localStorage + reset toàn bộ state về rỗng.
   const clearSession = useCallback(() => {
     localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
@@ -27,6 +33,7 @@ export function AuthProvider({ children }) {
     setProfile(null);
   }, []);
 
+  // Gọi API lấy lại hồ sơ mới nhất (dùng để kiểm tra có cần bắt onboarding không).
   const refreshProfile = useCallback(async () => {
     try {
       const myProfile = await profileApi.getMyProfile();
@@ -68,6 +75,8 @@ export function AuthProvider({ children }) {
 
   // Áp dụng session cho một access token đã có sẵn (login thường HOẶC token nhận từ
   // redirect OAuth) - luôn đi qua GET /me + nạp profile một lần, không tách logic riêng.
+  // Đầu vào: accessToken (+ refreshToken tuỳ chọn). Các bước: (1) lưu token vào localStorage;
+  // (2) gọi GET /auth/me để lấy thông tin user; (3) nạp hồ sơ. Trả về: thông tin user vừa nạp.
   const applySession = useCallback(async (accessTokenValue, refreshTokenValue = "") => {
     localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessTokenValue);
     localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshTokenValue);
@@ -81,6 +90,7 @@ export function AuthProvider({ children }) {
     return me;
   }, [refreshProfile]);
 
+  // Đăng nhập bằng email + mật khẩu: gọi API rồi áp phiên đăng nhập.
   const login = useCallback(async (credentials) => {
     const data = await authApi.login(credentials);
     return applySession(data.accessToken, data.refreshToken ?? "");
@@ -88,10 +98,12 @@ export function AuthProvider({ children }) {
 
   // Redirect OAuth chỉ mang MỘT token (BE ký bằng generateToken, không có refresh token
   // riêng cho luồng social) - refreshToken để rỗng, phần còn lại giống hệt login thường.
+  // Đăng nhập bằng token có sẵn — dùng khi redirect về từ OAuth (Google/GitHub).
   const loginWithToken = useCallback(async (accessTokenValue) => {
     return applySession(accessTokenValue, "");
   }, [applySession]);
 
+  // Đăng xuất: gọi API rồi luôn xoá phiên phía client (kể cả khi API lỗi).
   const logout = useCallback(async () => {
     try {
       await authApi.logout();
@@ -103,6 +115,8 @@ export function AuthProvider({ children }) {
     }
   }, [clearSession]);
 
+  // Có cần chuyển hướng người dùng tới trang onboarding không: đã đăng nhập, không phải Admin,
+  // đã nạp hồ sơ, nhưng còn thiếu ngày sinh hoặc họ tên.
   const needsOnboarding = Boolean(
     accessToken &&
       role &&

@@ -20,6 +20,8 @@ function daysLeft(deletedAt) {
   return left;
 }
 
+// Trang THÙNG RÁC: liệt kê tài liệu đã xoá mềm, hiện số ngày còn lại trước khi tự động xoá vĩnh
+// viễn, cho phép khôi phục hoặc xoá vĩnh viễn ngay.
 // Nút "Quay lại" là điều hướng nên render bằng <Link>, chỉ mượn class của Button
 // để trông giống nút secondary mà vẫn đúng ngữ nghĩa thẻ <a>.
 export default function TrashPage() {

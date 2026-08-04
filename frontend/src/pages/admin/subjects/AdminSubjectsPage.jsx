@@ -8,6 +8,7 @@ import Table from "../../../components/ui/Table";
 import { useAdminSubjectsPage } from "./hooks/useAdminSubjectsPage";
 import "./admin-subjects.css";
 
+// Trang Admin quản lý MÔN HỌC: bảng danh sách, thêm/đổi tên/xoá qua modal.
 export default function AdminSubjectsPage() {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage === "en" ? "en-US" : "vi-VN";

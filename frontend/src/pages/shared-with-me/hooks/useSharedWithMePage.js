@@ -4,6 +4,8 @@ import * as shareApi from "../../../api/shareApi";
 import { useToast } from "../../../hooks/useToast";
 import { ROUTES, buildRoute } from "../../../constants/routes";
 
+// Hook logic trang "Chia sẻ với tôi": nạp danh sách tài liệu người khác chia sẻ, điều hướng sang
+// trang chi tiết khi bấm vào.
 export function useSharedWithMePage() {
   const navigate = useNavigate();
   const { showError } = useToast();
@@ -11,6 +13,7 @@ export function useSharedWithMePage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Gọi API GET /documents/shared-with-me — nạp danh sách tài liệu được chia sẻ với tôi.
   const load = async () => {
     setLoading(true);
     try {

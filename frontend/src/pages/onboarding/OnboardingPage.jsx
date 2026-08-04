@@ -18,6 +18,8 @@ const OPTIONAL_FIELD_ORDER = [
   "websiteUrl",
 ];
 
+// Trang ONBOARDING — hiện ra lần đầu sau đăng ký/đăng nhập OAuth khi hồ sơ còn thiếu họ tên/ngày
+// sinh (xem AuthContext.needsOnboarding). Chỉ họ tên + ngày sinh bắt buộc, còn lại tuỳ chọn.
 export default function OnboardingPage() {
   const { t } = useTranslation();
   const { form, loading, submitting, handleFieldChange, handleSubmit } =

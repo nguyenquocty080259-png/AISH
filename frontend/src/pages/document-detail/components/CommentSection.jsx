@@ -4,6 +4,8 @@ import ReportMenu from "../../../components/report/ReportMenu";
 import Modal from "../../../components/ui/Modal";
 import Button from "../../../components/ui/Button";
 
+// Khu vực BÌNH LUẬN: danh sách, form thêm mới, sửa/xoá bình luận của mình, và modal xử lý khi
+// bình luận bị chặn (lọc từ khoá) — cho phép hiểu lý do và gửi khiếu nại để chờ Admin duyệt.
 export default function CommentSection({
   comments,
   commentText,

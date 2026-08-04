@@ -6,6 +6,8 @@ import { ROUTES } from "../../constants/routes";
 import AuthShell from "../../components/auth/AuthShell";
 import Button from "../../components/ui/Button";
 
+// Trang nhập OTP: 6 ô nhập số riêng biệt (tự nhảy ô, hỗ trợ dán cả mã cùng lúc), dùng chung cho
+// xác minh đăng ký và xác minh quên mật khẩu.
 export default function OtpPage() {
   const { t } = useTranslation();
   const { email, otp, setOtp, submitting, resending, cooldown, handleVerify, handleResend } = useOtpPage();

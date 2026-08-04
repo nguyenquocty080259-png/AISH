@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Select } from "../../../components/ui/Field";
 import Button from "../../../components/ui/Button";
 
+// Thanh lọc theo môn học + nút xoá bộ lọc, dùng ở trang "Tài liệu của tôi".
 export default function FilterBar({
   subjects,
   subjectFilter,

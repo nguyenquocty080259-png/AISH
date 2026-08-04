@@ -23,6 +23,8 @@ public class UsernameGenerator {
 
     private final AuthUserProfileRepository authUserProfileRepository;
 
+    // Biến họ tên thành chuỗi "slug": bỏ dấu tiếng Việt, chuyển thường, chỉ giữ chữ + số.
+    // Ví dụ "Nguyễn Văn A" -> "nguyenvana". Rỗng thì trả về "user".
     public String slugify(String fullName) {
         if (fullName == null) {
             return FALLBACK_BASE;
@@ -37,6 +39,8 @@ public class UsernameGenerator {
         return normalized.isBlank() ? FALLBACK_BASE : normalized;
     }
 
+    // Sinh username không trùng: slugify tên rồi thử lần lượt "ten", "ten1", "ten2"... cho tới
+    // khi tìm được giá trị chưa ai dùng trong bảng auth_user_profiles.
     public String generateUniqueUsername(String fullName) {
         String base = slugify(fullName);
         String candidate = base;

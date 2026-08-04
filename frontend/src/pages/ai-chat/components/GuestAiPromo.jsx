@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ROUTES } from "../../../constants/routes";
 
+// Trang quảng bá tính năng AI Chat cho KHÁCH chưa đăng nhập, mời đăng nhập/đăng ký để dùng thử.
 export default function GuestAiPromo() {
   const { t } = useTranslation();
   return (

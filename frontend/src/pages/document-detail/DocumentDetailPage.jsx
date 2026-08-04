@@ -26,6 +26,9 @@ import ModerationBadge from "../document/components/ModerationBadge";
 import { ROUTES } from "../../constants/routes";
 import "./document-detail.css";
 
+// Trang CHI TIẾT TÀI LIỆU: xem trước file (chọn đúng viewer theo định dạng), thông tin, bình
+// luận/liên quan (tab), và toàn bộ hành động (tải về, hỏi AI, thêm vào bộ sưu tập, sửa/chia sẻ/
+// xoá/đổi công khai cho chủ sở hữu, duyệt nhanh cho Admin). Logic nằm hết ở useDocumentDetailPage.
 export default function DocumentDetailPage() {
   const { t } = useTranslation();
   const {

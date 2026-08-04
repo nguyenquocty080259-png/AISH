@@ -25,6 +25,11 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Nhờ AI GỢI Ý tiêu đề, mô tả và môn học phù hợp cho một tài liệu, dựa trên nội dung thật đã
+ * được nạp cho AI (ingest). Chỉ chủ tài liệu hoặc Admin mới xin gợi ý được; tài liệu phải đã
+ * ingest xong (AI đã "đọc" được nội dung) thì mới gợi ý được.
+ */
 @Service
 @RequiredArgsConstructor
 public class MetadataSuggestionService {
@@ -36,15 +41,21 @@ public class MetadataSuggestionService {
     private final ChatClient chatClient;
     private final AiUsageTracker aiUsageTracker;
 
+    // Đầu vào: id tài liệu. Trả về: gợi ý tiêu đề/mô tả/danh sách môn học (dạng JSON do AI trả về).
+    // Các bước: (1) tìm tài liệu, kiểm tra quyền (chủ sở hữu hoặc Admin); (2) tài liệu phải đã
+    // ingest xong; (3) lấy đoạn mẫu nội dung + toàn bộ danh sách môn học hệ thống đang có;
+    // (4) gọi AI yêu cầu trả JSON; (5) phân tích JSON, chỉ giữ subjectId nằm trong danh sách hợp lệ.
     @Transactional(readOnly = true)
     public MetadataSuggestionDTO suggest(Long documentId) {
         DocDocument doc = documentRepository.findById(documentId).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Tài liệu không tồn tại."));
         AuthAccount account = currentAccount();
         boolean admin = account.getUser().getRole() != null && "ADMIN".equals(account.getUser().getRole().getRoleName());
+        // Chỉ chủ tài liệu hoặc Admin mới được xin gợi ý.
         if (!admin && !doc.getUser().getId().equals(account.getUser().getId()))
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "error.ai.docForbidden");
         String content = contentSignalService.buildContentSignal(doc);
+        // Chưa ingest (AI chưa đọc được nội dung) thì không có gì để gợi ý.
         if (doc.getIngestStatus() != IngestStatus.INGESTED || content.isBlank())
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "error.ai.notIngested");
         List<Subject> subjects = subjectRepository.findAll();
@@ -54,14 +65,17 @@ public class MetadataSuggestionService {
                 + "Trả về JSON duy nhất theo dạng {\"title\":\"...\",\"description\":\"...\",\"subjectIds\":[1]}. "
                 + "subjectIds chỉ được dùng id trong danh sách đã cung cấp.";
         try {
-            ChatResponse chatResponse = chatClient.prompt(new Prompt(List.of(new SystemMessage(system), new UserMessage(promptText)))).call().chatResponse();
+            ChatResponse chatResponse = chatClient.prompt(new Prompt(List.of(new SystemMessage(system), new UserMessage(promptText)))).call().chatResponse(); // gọi AI
             String raw = chatResponse.getResult().getOutput().getText();
-            aiUsageTracker.log("METADATA_SUGGESTION", chatResponse, null);
+            aiUsageTracker.log("METADATA_SUGGESTION", chatResponse, null); // ghi lại số token đã dùng
             return parse(raw, subjects);
         } catch (ResponseStatusException e) { throw e; }
         catch (Exception e) { throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "error.ai.suggestUnavailable"); }
     }
 
+    // Trích JSON từ phản hồi AI (AI có thể kèm chữ thừa quanh JSON), lấy title/description và
+    // lọc subjectIds chỉ giữ những id thật sự tồn tại trong danh sách môn học đã gửi cho AI —
+    // không tin tưởng mù quáng để AI tự bịa id.
     MetadataSuggestionDTO parse(String raw, List<Subject> subjects) {
         Matcher matcher = JSON.matcher(raw == null ? "" : raw);
         if (!matcher.find()) throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "error.ai.suggestInvalid");
@@ -78,10 +92,13 @@ public class MetadataSuggestionService {
         return new MetadataSuggestionDTO(title, description.trim(), ids.stream().distinct().toList());
     }
 
+    // Lấy giá trị chuỗi của một key trong JSON bằng regex (không dùng thư viện parse JSON đầy đủ,
+    // vì chỉ cần đọc 2 trường string đơn giản).
     private String value(String json, String key) {
         Matcher m = Pattern.compile("\\\"" + key + "\\\"\\s*:\\s*\\\"((?:\\\\.|[^\\\"])*)\\\"", Pattern.DOTALL).matcher(json);
         return m.find() ? m.group(1).replace("\\\"", "\"") : null;
     }
+    // Lấy tài khoản của user đang đăng nhập (từ token) — chưa đăng nhập thì báo lỗi 401.
     private AuthAccount currentAccount() {
         String name = SecurityContextHolder.getContext().getAuthentication().getName();
         return accountRepository.findByIdentifier(name).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Vui lòng đăng nhập."));

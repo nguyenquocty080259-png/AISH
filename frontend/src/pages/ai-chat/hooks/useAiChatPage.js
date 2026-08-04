@@ -6,6 +6,7 @@ import * as documentApi from "../../../api/documentApi";
 import { useAuth } from "../../../hooks/useAuth";
 import { useToast } from "../../../hooks/useToast";
 
+// Chuyển tin nhắn lấy từ lịch sử (BE) sang định dạng hiển thị trong trang chat.
 function normalizeHistoryMessage(message) {
   return {
     id: `history-${message.id}`,
@@ -15,6 +16,11 @@ function normalizeHistoryMessage(message) {
   };
 }
 
+/**
+ * Hook TRUNG TÂM cho trang AI Chat toàn màn hình (khác widget nổi — trang này có sidebar lịch sử
+ * cuộc trò chuyện, quản lý nhiều cuộc trò chuyện, và luôn đọc documentId từ query string để tự
+ * bật ngữ cảnh "hỏi AI về tài liệu này" khi được điều hướng tới từ trang chi tiết tài liệu).
+ */
 export function useAiChatPage() {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
@@ -68,6 +74,7 @@ export function useAiChatPage() {
       ? contextDoc?.title || `tài liệu #${documentId}`
       : null);
 
+  // Gọi API nạp toàn bộ tin nhắn của một cuộc trò chuyện, đổi thành cuộc trò chuyện đang xem.
   const loadMessages = useCallback(
     async (conversationId) => {
       if (!conversationId) return;
@@ -88,6 +95,9 @@ export function useAiChatPage() {
     []
   );
 
+  // Gọi API nạp danh sách cuộc trò chuyện cho sidebar. autoSelectLatest: tự mở cuộc trò chuyện
+  // gần nhất nếu chưa vào từ 1 tài liệu cụ thể. keepActiveId: giữ nguyên cuộc đang xem sau khi
+  // danh sách được nạp lại (dùng sau khi đổi tên/xoá).
   const loadConversations = useCallback(
     async ({ autoSelectLatest = false, keepActiveId = null } = {}) => {
       if (!isAuthenticated || authLoading) return [];
@@ -138,6 +148,7 @@ export function useAiChatPage() {
 
   const closeMobileSidebar = () => setSidebarOpen(false);
 
+  // Chọn 1 cuộc trò chuyện khác từ sidebar để xem tiếp.
   const handleSelectConversation = async (conversationId) => {
     if (!isAuthenticated || conversationId === activeConversationId) {
       closeMobileSidebar();
@@ -149,6 +160,7 @@ export function useAiChatPage() {
     closeMobileSidebar();
   };
 
+  // Bắt đầu cuộc trò chuyện mới trống (không gắn tài liệu).
   const handleNewChat = () => {
     setActiveConversationId(null);
     setUseDocumentContext(false);
@@ -157,6 +169,8 @@ export function useAiChatPage() {
     closeMobileSidebar();
   };
 
+  // Xoá 1 cuộc trò chuyện. Xoá đúng cuộc đang xem thì chuyển sang màn "chat mới" trước khi nạp
+  // lại danh sách; xoá cuộc khác thì chỉ cần bỏ khỏi danh sách và giữ nguyên cuộc đang xem.
   const handleDeleteConversation = async (id) => {
     try {
       await aiChatApi.deleteConversation(id);
@@ -176,6 +190,7 @@ export function useAiChatPage() {
     }
   };
 
+  // Đổi tên 1 cuộc trò chuyện.
   const handleRenameConversation = async (id, newTitle) => {
     try {
       const updated = await aiChatApi.renameConversation(id, newTitle);
@@ -193,6 +208,11 @@ export function useAiChatPage() {
   const isInputDisabled =
     sending || loadingMessages || loadingConversations || authLoading;
 
+  // Gửi câu hỏi cho AI. Đầu vào: sự kiện submit form. Các bước: (1) thêm tin nhắn của user vào
+  // giao diện ngay; (2) gọi API /ai/chat kèm documentId nếu đang bật ngữ cảnh tài liệu VÀ đây là
+  // tin nhắn ĐẦU TIÊN của một cuộc trò chuyện mới (đã có activeConversationId thì không gửi lại
+  // documentId — BE tự nhớ tài liệu gắn với cuộc trò chuyện); (3) thêm câu trả lời AI; (4) nạp
+  // lại danh sách cuộc trò chuyện để cập nhật tiêu đề/thời gian.
   const handleSend = async (e) => {
     e.preventDefault();
     const text = input.trim();

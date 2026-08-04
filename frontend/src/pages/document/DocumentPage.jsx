@@ -20,6 +20,8 @@ const IconUpload = () => (
   </svg>
 );
 
+// Trang "Tài liệu của tôi": ô tìm kiếm + lọc môn học, lưới thẻ tài liệu, phân trang, thanh dung
+// lượng, và nút mở modal tải tài liệu lên. Toàn bộ dữ liệu/logic lấy từ hook useDocumentPage.
 export default function DocumentPage() {
   const { t } = useTranslation();
   const {

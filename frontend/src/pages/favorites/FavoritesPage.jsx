@@ -5,6 +5,7 @@ import RecommendationCard from "../../components/recommendations/RecommendationC
 import { useFavoritesPage } from "./hooks/useFavoritesPage";
 import "./favorites.css";
 
+// Trang YÊU THÍCH: lưới tài liệu đã yêu thích, bấm tim để bỏ thích ngay tại trang.
 export default function FavoritesPage() {
   const { t } = useTranslation();
   const { favorites, loading, unfavorite, goToDocument } = useFavoritesPage();

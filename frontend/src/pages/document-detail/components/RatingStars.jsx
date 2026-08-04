@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 
+// 5 nút sao để chấm điểm tài liệu + hiển thị điểm trung bình hiện tại.
 export default function RatingStars({ average, onRate }) {
   const { t } = useTranslation();
   const stars = [1, 2, 3, 4, 5];

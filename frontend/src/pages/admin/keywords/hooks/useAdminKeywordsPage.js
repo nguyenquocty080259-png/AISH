@@ -10,6 +10,8 @@ export const KEYWORD_TYPES = [
   { value: "DOCUMENT_CONTENT", labelKey: "admin.keywords.typeDocContent" },
 ];
 
+// Hook logic trang Admin quản lý TỪ KHOÁ CẤM: theo tab loại từ khoá (AI_CHAT/COMMENT/NAMING/
+// DOCUMENT_CONTENT), thêm/sửa/bật-tắt/xoá.
 export function useAdminKeywordsPage() {
   const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
@@ -21,6 +23,7 @@ export function useAdminKeywordsPage() {
   const [editTarget, setEditTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
+  // Gọi API GET /admin/moderation-keywords — nạp danh sách từ khoá theo loại đang chọn.
   const load = async () => {
     setLoading(true);
     try {
@@ -48,6 +51,7 @@ export function useAdminKeywordsPage() {
     });
   };
 
+  // Thêm từ khoá mới vào loại đang chọn.
   const createKeyword = async (keyword) => {
     setCreating(true);
     try {
@@ -63,6 +67,7 @@ export function useAdminKeywordsPage() {
     }
   };
 
+  // Dùng chung cho toggleActive và saveEdit — cập nhật 1 từ khoá rồi thay vào đúng vị trí trong danh sách.
   const updateKeyword = async (id, payload, successMessage) => {
     markPending(id, true);
     try {
@@ -92,6 +97,7 @@ export function useAdminKeywordsPage() {
     return saved;
   };
 
+  // Xoá hẳn từ khoá đang chọn trong modal xác nhận.
   const deleteKeyword = async () => {
     if (!deleteTarget) return;
     const id = deleteTarget.id;

@@ -2,6 +2,8 @@ import { useTranslation } from "react-i18next";
 import { useOAuthSuccessPage } from "./hooks/useOAuthSuccessPage";
 import logo from "../../assets/images/hivemind-logo.png";
 
+// Trang trung gian sau khi redirect từ Google/GitHub về (?token=...): chỉ hiện màn hình loading,
+// toàn bộ việc lưu token + điều hướng do useOAuthSuccessPage() xử lý.
 export default function OAuthSuccessPage() {
   const { t } = useTranslation();
   useOAuthSuccessPage();

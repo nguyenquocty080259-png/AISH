@@ -22,6 +22,8 @@ const IconUser = () => <I><circle cx="12" cy="8" r="4" /><path d="M4 21v-1a6 6 0
 const IconSwitch = () => <I><path d="M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3" /><path d="M16 21h3a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-3" /><path d="M12 8l-4 4 4 4" /><path d="M8 12h12" /></I>;
 const IconLogout = () => <I><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></I>;
 
+// KHUNG CHUNG cho mọi trang quản trị: sidebar điều hướng (kèm số báo chờ xử lý cho kháng cáo/
+// report), thanh trên cùng, và vùng nội dung (Outlet — render trang admin con tương ứng route).
 export default function AdminLayout() {
   const { t } = useTranslation();
   const { logout } = useAuth();

@@ -8,7 +8,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-/** Shared, bounded document sample used by moderation and metadata assistance. */
+/**
+ * Lấy ra một ĐOẠN MẪU nội dung tài liệu (giới hạn độ dài) để gửi cho AI — dùng chung cho cả
+ * kiểm duyệt (AiModerationService) và gợi ý metadata (MetadataSuggestionService), tránh gửi
+ * nguyên văn cả tài liệu dài (tốn token, chậm).
+ */
 @Service
 @RequiredArgsConstructor
 public class AiContentSignalService {
@@ -16,6 +20,9 @@ public class AiContentSignalService {
     private static final int MAX_SAMPLE_CHUNKS = 5;
     private final DocEmbeddingRepository docEmbeddingRepository;
 
+    // Đầu vào: tài liệu. Trả về: chuỗi mẫu tối đa 1500 ký tự.
+    // Ưu tiên lấy từ các đoạn đã nạp cho AI (doc_embeddings, tối đa 5 đoạn đầu); tài liệu chưa
+    // nạp thì tạm dùng tiêu đề + mô tả.
     public String buildContentSignal(DocDocument doc) {
         List<DocEmbedding> chunks = docEmbeddingRepository.findByDocument_IdOrderByChunkIndexAsc(doc.getId());
         StringBuilder sample = new StringBuilder();

@@ -31,6 +31,8 @@ const AI_SCREEN_LABEL = {
   FLAG: "admin.documents.aiScreenFlag",
 };
 
+// Trang Admin QUẢN LÝ TÀI LIỆU: bảng có tìm kiếm/lọc/phân trang, duyệt/từ chối công khai, gỡ vi
+// phạm, sửa metadata, khôi phục tài liệu đã gỡ, và xem chi tiết read-only.
 export default function AdminDocumentsPage() {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage === "en" ? "en-US" : "vi-VN";

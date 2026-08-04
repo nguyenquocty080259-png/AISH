@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 
+// Thanh phân trang đơn giản (chỉ Trước/Sau) dùng chung cho các bảng trong trang quản trị.
 // Giữ NGUYÊN props: page, totalPages, onPrev, onNext.
 export default function AdminPagination({ page, totalPages, onPrev, onNext }) {
   const { t } = useTranslation();

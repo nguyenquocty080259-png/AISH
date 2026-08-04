@@ -44,6 +44,11 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         this.restTemplate = restTemplate;
     }
 
+    // Nạp thông tin user từ provider OAuth (Google/GitHub) sau khi đăng nhập thành công.
+    // Đầu vào: request OAuth. Trả về: OAuth2User (đã đảm bảo có email nếu là GitHub).
+    // Các bước: (1) để Spring xử lý mặc định trước; (2) không phải GitHub thì trả nguyên; (3) đã
+    // có email thì thôi; (4) GitHub giấu email -> gọi thêm API GitHub để lấy email chính, đã xác
+    // minh, rồi vá lại vào attributes.
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = delegate.loadUser(userRequest);
@@ -75,6 +80,9 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         return new DefaultOAuth2User(oAuth2User.getAuthorities(), attributes, userNameAttributeName);
     }
 
+    // Gọi API GitHub (/user/emails) để lấy email chính (primary) và đã xác minh (verified) của
+    // user — vì GitHub không trả email này trong thông tin đăng nhập mặc định. Lỗi mạng/API thì
+    // trả về null (không email), không ném lỗi.
     private String fetchPrimaryVerifiedGithubEmail(String accessToken) {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);

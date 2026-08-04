@@ -34,6 +34,8 @@ function toFormValues(profile) {
   return values;
 }
 
+// Hook logic trang Onboarding: nạp hồ sơ hiện có để điền sẵn (nếu có), kiểm tra bắt buộc ở client
+// (họ tên + ngày sinh), rồi gửi partial-update và điều hướng về trang đã định trước khi bị chặn.
 export function useOnboardingPage() {
   const { t } = useTranslation();
   const { refreshProfile } = useAuth();
@@ -71,6 +73,8 @@ export function useOnboardingPage() {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Gọi API PUT /profile/onboarding. Chỉ gửi field tuỳ chọn nào đã điền, thành công thì nạp lại
+  // hồ sơ (để AuthContext.needsOnboarding cập nhật) rồi điều hướng về trang đã định trước đó.
   const handleSubmit = async (e) => {
     e.preventDefault();
 

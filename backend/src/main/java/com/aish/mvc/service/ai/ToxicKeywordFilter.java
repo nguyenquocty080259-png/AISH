@@ -8,6 +8,12 @@ import org.springframework.stereotype.Component;
 
 import java.util.Locale;
 
+/**
+ * LỚP LỌC TỪ KHOÁ RẺ chạy TRƯỚC khi gọi AI — so văn bản với danh sách từ khoá cấm trong database
+ * (Admin quản lý). Mục đích: bắt được các trường hợp rõ ràng mà không cần tốn tiền/thời gian gọi
+ * AI. Lỗi khi đọc danh sách từ khoá thì coi như "không trúng" (fail-open), để không chặn oan
+ * người dùng chỉ vì database lỗi.
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -15,10 +21,13 @@ public class ToxicKeywordFilter {
 
     private final ModerationKeywordRepository moderationKeywordRepository;
 
+    // Kiểm tra riêng cho tin nhắn AI chat (loại từ khoá AI_CHAT).
     public boolean containsSuspiciousKeyword(String text) {
         return matches(text, ModerationKeywordType.AI_CHAT);
     }
 
+    // Đầu vào: văn bản cần kiểm tra + loại từ khoá (NAMING/COMMENT/AI_CHAT/DOCUMENT_CONTENT).
+    // Trả về: true nếu văn bản chứa ít nhất một từ khoá cấm loại đó (so không phân biệt hoa thường).
     public boolean matches(String text, ModerationKeywordType type) {
         if (text == null || text.isBlank()) {
             return false;

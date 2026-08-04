@@ -9,6 +9,7 @@ const STATUS_META = {
   UNSUPPORTED_FORMAT: { intent: "warning", labelKey: "admin.ingest.unsupported" },
 };
 
+// Nhãn nhỏ hiện trạng thái nạp nội dung tài liệu cho AI (đã nạp/chưa nạp/không đọc được).
 export default function IngestStatusBadge({ status }) {
   const { t } = useTranslation();
   if (!status) return null;

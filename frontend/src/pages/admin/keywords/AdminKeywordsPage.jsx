@@ -8,6 +8,7 @@ import Table from "../../../components/ui/Table";
 import { KEYWORD_TYPES, useAdminKeywordsPage } from "./hooks/useAdminKeywordsPage";
 import "./admin-keywords.css";
 
+// Trang Admin quản lý TỪ KHOÁ CẤM: chọn loại qua tab, thêm/tìm/lọc/bật-tắt/sửa/xoá từng từ khoá.
 export default function AdminKeywordsPage() {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage === "en" ? "en-US" : "vi-VN";

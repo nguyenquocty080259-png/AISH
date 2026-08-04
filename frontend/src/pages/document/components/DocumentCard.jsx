@@ -6,6 +6,8 @@ import FormatBadge from "../../../components/ui/FormatBadge";
 import ReportMenu from "../../../components/report/ReportMenu";
 import ModerationBadge from "./ModerationBadge";
 
+// Một thẻ tài liệu trong lưới: ảnh thumbnail, tiêu đề (điều hướng sang trang chi tiết), mô tả,
+// nhãn định dạng/kiểm duyệt, nút yêu thích và menu báo cáo vi phạm.
 export default function DocumentCard({ doc, onToggleFavorite }) {
   const { t } = useTranslation();
   const detail = buildRoute(ROUTES.DOCUMENT_DETAIL, { id: doc.id });

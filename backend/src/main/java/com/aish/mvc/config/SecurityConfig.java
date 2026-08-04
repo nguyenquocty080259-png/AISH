@@ -16,6 +16,10 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+/**
+ * CẤU HÌNH BẢO MẬT trung tâm — khai báo đường dẫn nào công khai, đường dẫn nào cần vai trò gì,
+ * gắn JwtAuthFilter vào chuỗi lọc, và cấu hình đăng nhập OAuth2 (Google/GitHub).
+ */
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -27,10 +31,12 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
     private final RestAccessDeniedHandler restAccessDeniedHandler;
+    // Khai báo toàn bộ luật phân quyền cho request HTTP. Đọc theo thứ tự từ trên xuống, luật
+    // khớp trước được áp dụng trước.
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(AbstractHttpConfigurer::disable) // API thuần JSON/JWT, không dùng cookie -> tắt CSRF
                 .cors(Customizer.withDefaults())
 //                .sessionManagement(s ->
 //                        s.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -39,6 +45,7 @@ public class SecurityConfig {
                         s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )
                 .authorizeHttpRequests(auth -> auth
+                        // Các endpoint auth trước khi đăng nhập được -> ai cũng gọi được.
                         .requestMatchers(
                                 "/api/auth/login",
                                 "/api/auth/signup",
@@ -53,6 +60,7 @@ public class SecurityConfig {
                         )
                         .permitAll()
 
+                        // Toàn bộ khu vực quản trị chỉ dành cho vai trò ADMIN.
                         .requestMatchers("/api/admin/**")
                         .hasRole("ADMIN")
 
@@ -64,12 +72,16 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/user/**")
                         .hasAnyRole("USER","ADMIN")
+                        // Mọi request còn lại đều bắt buộc đã đăng nhập (JWT hợp lệ).
                         .anyRequest().authenticated()
                 )
+                // Chưa đăng nhập / không đủ quyền thì trả lỗi JSON thay vì trang login mặc định của Spring.
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(restAuthenticationEntryPoint)
                         .accessDeniedHandler(restAccessDeniedHandler)
                 )
+                // Cấu hình đăng nhập OAuth2: dùng CustomOAuth2UserService để nạp user (vá email
+                // thiếu của GitHub), thành công thì chạy OAuth2SuccessHandler (tạo/tìm user + phát JWT).
                 .oauth2Login(oauth -> oauth
                         .userInfoEndpoint(userInfo ->
                                 userInfo.userService(customOAuth2UserService)
@@ -84,6 +96,8 @@ public class SecurityConfig {
                             );
                         })
                 )
+                // Chạy JwtAuthFilter TRƯỚC bộ lọc đăng nhập mặc định, để mọi request đã gắn JWT
+                // đều được nhận diện danh tính trước khi vào các luật authorizeHttpRequests ở trên.
                 .addFilterBefore(
                         jwtAuthFilter,
                         UsernamePasswordAuthenticationFilter.class

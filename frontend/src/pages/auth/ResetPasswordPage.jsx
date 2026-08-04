@@ -8,6 +8,8 @@ import PasswordField from "../../components/auth/PasswordField";
 import Button from "../../components/ui/Button";
 import Alert from "../../components/ui/Alert";
 
+// Trang ĐẶT MẬT KHẨU MỚI — bước cuối luồng quên mật khẩu. resetToken lấy từ state điều hướng
+// (được OtpPage truyền sang sau khi xác minh OTP thành công), không đọc từ URL.
 export default function ResetPasswordPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -18,6 +20,8 @@ export default function ResetPasswordPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  // Kiểm tra hợp lệ ở client trước (có resetToken, đủ 8 ký tự, khớp xác nhận) rồi mới gọi API
+  // đặt mật khẩu mới.
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");

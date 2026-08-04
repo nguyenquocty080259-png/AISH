@@ -19,6 +19,8 @@ const STAT_TILES = [
   { key: "totalSubjects", labelKey: "admin.stats.totalSubjects" },
 ];
 
+// Trang Admin THỐNG KÊ: các ô số liệu tổng quan (bấm vào để xem chi tiết người dùng/tài liệu),
+// kháng cáo đang chờ, tình trạng ingest AI, và báo cáo mức dùng AI.
 export default function AdminStatsPage() {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage === "en" ? "en-US" : "vi-VN";

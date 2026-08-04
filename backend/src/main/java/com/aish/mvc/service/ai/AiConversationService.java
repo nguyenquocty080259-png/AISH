@@ -28,6 +28,13 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Quản lý LỊCH SỬ CHAT với AI: danh sách cuộc trò chuyện, tin nhắn trong từng cuộc, đổi tên/xoá,
+ * và LƯU LẠI mỗi lượt hỏi-đáp mới (persistExchange). Mỗi cuộc trò chuyện có thể gắn với 1 tài
+ * liệu cụ thể (chat về tài liệu đó) hoặc không gắn tài liệu nào (chat chung).
+ * Tin nhắn của người dùng còn được quét từ khoá + AI kiểm duyệt ngầm, phát hiện vi phạm thì tự
+ * tạo report hệ thống để Admin xem xét.
+ */
 @Service
 @RequiredArgsConstructor
 public class AiConversationService {
@@ -43,6 +50,7 @@ public class AiConversationService {
     private final AiModerationService aiModerationService;
     private final ReportService reportService;
 
+    // Danh sách cuộc trò chuyện của user hiện tại, mới cập nhật gần đây nhất trước.
     @Transactional(readOnly = true)
     public List<AiConversationSummaryDTO> getMyConversations() {
         AuthUser user = requireCurrentUser();
@@ -51,6 +59,7 @@ public class AiConversationService {
                 .toList();
     }
 
+    // Toàn bộ tin nhắn của một cuộc trò chuyện — chỉ chủ cuộc trò chuyện mới xem được.
     @Transactional(readOnly = true)
     public List<AiMessageDTO> getMyMessages(Long conversationId) {
         AuthUser user = requireCurrentUser();
@@ -60,6 +69,8 @@ public class AiConversationService {
                 .toList();
     }
 
+    // Lấy N tin nhắn GẦN NHẤT của cuộc trò chuyện — dùng làm "trí nhớ ngắn hạn" khi AI trả lời
+    // câu hỏi tiếp theo, không gửi toàn bộ lịch sử (tốn token).
     @Transactional(readOnly = true)
     public List<AiMessage> getRecentMessages(Long conversationId, int limit) {
         if (limit <= 0) return List.of();
@@ -70,14 +81,16 @@ public class AiConversationService {
         return List.copyOf(messages.subList(fromIndex, messages.size()));
     }
 
+    // Xoá cuộc trò chuyện — xoá hết tin nhắn bên trong trước, rồi mới xoá cuộc trò chuyện.
     @Transactional
     public void deleteConversation(Long conversationId) {
         AuthUser user = requireCurrentUser();
         AiConversation conversation = requireOwnedConversation(conversationId, user);
-        aiMessageRepository.deleteByConversation_Id(conversationId);
-        aiConversationRepository.delete(conversation);
+        aiMessageRepository.deleteByConversation_Id(conversationId); // xoá bảng ai_messages liên quan
+        aiConversationRepository.delete(conversation); // xoá bảng ai_conversations
     }
 
+    // Đổi tên cuộc trò chuyện. Tên không được rỗng.
     @Transactional
     public AiConversationSummaryDTO renameConversation(Long conversationId, String newTitle) {
         if (newTitle == null || newTitle.trim().isEmpty()) {
@@ -91,12 +104,21 @@ public class AiConversationService {
         return toSummaryDTO(aiConversationRepository.save(conversation));
     }
 
+    // Tìm cuộc trò chuyện theo id, CHỈ trả về nếu đúng là của user này — tránh xem/sửa/xoá cuộc
+    // trò chuyện của người khác.
     @Transactional(readOnly = true)
     public AiConversation requireOwnedConversation(Long conversationId, AuthUser user) {
         return aiConversationRepository.findByIdAndUser_Id(conversationId, user.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Conversation not found"));
     }
 
+    // Lưu lại MỘT LƯỢT hỏi-đáp (câu hỏi của user + câu trả lời của AI) vào cuộc trò chuyện.
+    // Đầu vào: user, id cuộc trò chuyện (null = tạo cuộc mới), id tài liệu đang chat cùng (có thể
+    // null), nội dung câu hỏi và câu trả lời. Trả về: cuộc trò chuyện đã cập nhật.
+    // Các bước: (1) chưa có conversationId thì tạo cuộc trò chuyện mới; (2) lưu tin nhắn của
+    // user; (3) quét từ khoá nghi vấn -> nếu trúng thì gọi AI kiểm duyệt kỹ hơn, phát hiện vi
+    // phạm thì tự tạo report hệ thống cho Admin (lỗi bước này không chặn chat tiếp tục);
+    // (4) lưu tin nhắn trả lời của AI; (5) cập nhật thời điểm sửa đổi gần nhất của cuộc trò chuyện.
     @Transactional
     public AiConversation persistExchange(AuthUser user, Long conversationId, Long documentId, String userText, String assistantText) {
         AiConversation conversation = conversationId == null
@@ -110,12 +132,14 @@ public class AiConversationService {
                 .content(userText)
                 .orderIndex(nextOrder)
                 .build();
-        aiMessageRepository.save(userMessage);
+        aiMessageRepository.save(userMessage); // lưu bảng ai_messages: tin nhắn của user
 
         try {
+            // Lọc rẻ trước: chỉ gọi AI kiểm duyệt (tốn tiền/thời gian) khi trúng từ khoá nghi vấn.
             if (toxicKeywordFilter.containsSuspiciousKeyword(userText)) {
                 ModerationResultDTO moderationResult = aiModerationService.screenText(userText);
                 if (moderationResult.getDecision() == ModerationDecision.FLAG) {
+                    // AI xác nhận vi phạm -> tự tạo report hệ thống để Admin xem xét.
                     reportService.createSystemReport(
                             ReportTargetType.AI_MESSAGE,
                             userMessage.getId(),
@@ -133,12 +157,13 @@ public class AiConversationService {
                 .content(assistantText)
                 .orderIndex(nextOrder + 1)
                 .build();
-        aiMessageRepository.save(assistantMessage);
+        aiMessageRepository.save(assistantMessage); // lưu bảng ai_messages: câu trả lời của AI
 
         conversation.setUpdatedAt(LocalDateTime.now());
-        return aiConversationRepository.save(conversation);
+        return aiConversationRepository.save(conversation); // lưu bảng ai_conversations
     }
 
+    // Lấy user đang đăng nhập từ token; guest (chưa đăng nhập) thì trả null thay vì báo lỗi.
     public AuthUser currentUserOrNull() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
@@ -149,6 +174,7 @@ public class AiConversationService {
                 .orElse(null);
     }
 
+    // Tạo cuộc trò chuyện mới, tự đặt tên từ câu hỏi đầu tiên (rút gọn nếu quá dài).
     private AiConversation createConversation(AuthUser user, Long documentId, String firstMessage) {
         DocDocument document = documentId == null
                 ? null
@@ -162,6 +188,7 @@ public class AiConversationService {
         return aiConversationRepository.save(conversation);
     }
 
+    // Giống currentUserOrNull nhưng bắt buộc phải đăng nhập — chưa đăng nhập thì báo lỗi 401.
     private AuthUser requireCurrentUser() {
         AuthUser user = currentUserOrNull();
         if (user == null) {
@@ -196,6 +223,7 @@ public class AiConversationService {
                 message.getCreatedAt());
     }
 
+    // Sinh tiêu đề cuộc trò chuyện từ câu hỏi đầu tiên: gộp khoảng trắng, cắt tối đa 50 ký tự.
     private String titleFrom(String text) {
         String normalized = text == null ? "" : text.trim().replaceAll("\\s+", " ");
         if (normalized.isEmpty()) return "Cuộc trò chuyện mới";

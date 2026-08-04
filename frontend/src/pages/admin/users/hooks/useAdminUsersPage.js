@@ -5,6 +5,8 @@ import { useToast } from "../../../../hooks/useToast";
 
 const PAGE_SIZE = 8;
 
+// Hook logic trang Admin quản lý NGƯỜI DÙNG: nạp toàn bộ user 1 lần, lọc + phân trang ở CLIENT,
+// tạo tài khoản mới, đổi vai trò, khoá/mở khoá tài khoản.
 export function useAdminUsersPage() {
   const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
@@ -57,6 +59,7 @@ export function useAdminUsersPage() {
     setPage(0);
   };
 
+  // Admin tạo tài khoản mới trực tiếp (bỏ qua luồng đăng ký + OTP).
   const createUser = async (payload) => {
     setCreating(true);
     try {
@@ -97,6 +100,7 @@ export function useAdminUsersPage() {
     }
   };
 
+  // Khoá/mở khoá tài khoản (đảo trạng thái hiện tại giữa ACTIVE và BANNED).
   const toggleUserStatus = async (user) => {
     const nextStatus = user.status === "BANNED" ? "ACTIVE" : "BANNED";
     setStatusUpdatingId(user.id);

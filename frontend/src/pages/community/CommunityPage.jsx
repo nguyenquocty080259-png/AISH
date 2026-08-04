@@ -19,6 +19,8 @@ const IconSearch = () => (
   </svg>
 );
 
+// Trang CỘNG ĐỒNG: duyệt tài liệu PUBLIC đã được duyệt của mọi người, có tìm kiếm/lọc môn học/
+// lọc điểm tối thiểu/sắp xếp và phân trang phía SERVER (khác trang "Tài liệu của tôi" lọc ở client).
 export default function CommunityPage() {
   const { t } = useTranslation();
   const {

@@ -1,28 +1,35 @@
 import apiClient from "../lib/apiClient";
 
 // Tập trung toàn bộ request liên quan /api/documents/* tại đây.
+// Mỗi hàm gọi 1 API tương ứng ở DocumentController (backend) rồi trả về res.data cho component dùng.
 
+// Gọi API GET /documents — danh sách tài liệu của tôi.
 export function getAll() {
   return apiClient.get("/documents").then((res) => res.data);
 }
 
+// Gọi API GET /documents/{id} — chi tiết một tài liệu.
 export function getOne(id) {
   return apiClient.get(`/documents/${id}`).then((res) => res.data);
 }
 
+// Gọi API GET /documents/trash — danh sách tài liệu trong thùng rác.
 export function getTrash() {
   return apiClient.get("/documents/trash").then((res) => res.data);
 }
 
+// Gọi API GET /documents/favorites — danh sách tài liệu đã yêu thích.
 export function listFavorites() {
   return apiClient.get("/documents/favorites").then((res) => res.data);
 }
 
+// Gọi API GET /documents/community — trang Cộng đồng, có lọc/phân trang.
 export function getCommunity(params) {
   // params: { keyword, subjectId, minRating, sortBy, page, size }
   return apiClient.get("/documents/community", { params }).then((res) => res.data);
 }
 
+// Gọi API GET /documents/{id}/preview — lấy file dạng blob để xem trước trong trang.
 export function previewFile(id) {
   return apiClient
     .get(`/documents/${id}/preview`, { responseType: "blob" })
@@ -67,14 +74,17 @@ export function getAllowedFileTypes() {
   return apiClient.get("/documents/allowed-file-types").then((res) => res.data);
 }
 
+// Gọi API PUT /documents/{id} — sửa tiêu đề/mô tả/môn học.
 export function updateDocument(id, data) {
   // data: { title?, description?, subjectIds? }  (field bỏ trống = giữ nguyên)
   return apiClient.put(`/documents/${id}`, data).then((res) => res.data);
 }
 
+// Gọi API POST /documents/{id}/favorite — bật/tắt yêu thích.
 export function toggleFavorite(id) {
   return apiClient.post(`/documents/${id}/favorite`);
 }
+// Gọi API POST /documents/{id}/comment — thêm bình luận (kèm cờ khiếu nại nếu có).
 export function addComment(id, content, { dispute = false, disputeNote } = {}) {
   return apiClient.post(`/documents/${id}/comment`, content, {
     headers: { "Content-Type": "text/plain; charset=UTF-8" },
@@ -82,28 +92,34 @@ export function addComment(id, content, { dispute = false, disputeNote } = {}) {
   });
 }
 
+// Gọi API PUT /documents/comments/{commentId} — sửa bình luận.
 export function updateComment(commentId, content, { dispute = false, disputeNote } = {}) {
   return apiClient.put(`/documents/comments/${commentId}`, content, {
     headers: { "Content-Type": "text/plain; charset=UTF-8" },
     params: { dispute, ...(disputeNote ? { disputeNote } : {}) },
   });
 }
+// Gọi API DELETE /documents/comments/{commentId} — xoá bình luận.
 export function deleteComment(commentId) {
   return apiClient.delete(`/documents/comments/${commentId}`);
 }
 
+// Gọi API POST /documents/{id}/rate — chấm điểm 1-5 sao.
 export function rateDocument(id, star) {
   return apiClient.post(`/documents/${id}/rate`, null, { params: { star } });
 }
 
+// Gọi API DELETE /documents/{id} — xoá mềm (đưa vào thùng rác).
 export function deleteDocument(id) {
   return apiClient.delete(`/documents/${id}`);
 }
 
+// Gọi API DELETE /documents/{id}/permanent — xoá vĩnh viễn khỏi thùng rác.
 export function permanentDelete(id) {
   return apiClient.delete(`/documents/${id}/permanent`);
 }
 
+// Gọi API PUT /documents/{id}/restore — khôi phục tài liệu từ thùng rác.
 export function restoreDocument(id) {
   return apiClient.put(`/documents/${id}/restore`);
 }
@@ -116,6 +132,7 @@ export function toggleVisibility(id) {
     .then((res) => res.data);
 }
 
+// Gọi API GET /documents/{id}/download — tải file gốc về (dạng blob).
 export function downloadFile(id) {
   return apiClient.get(`/documents/${id}/download`, { responseType: "blob" });
 }

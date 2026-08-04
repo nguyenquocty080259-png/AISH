@@ -51,6 +51,7 @@ import java.util.Locale;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
+/** Cài đặt thật của {@link AdminService}. Xem chi tiết nghiệp vụ ở comment trên từng method của interface. */
 @Service
 @RequiredArgsConstructor
 public class AdminServiceImpl implements AdminService {
@@ -78,6 +79,8 @@ public class AdminServiceImpl implements AdminService {
         return appeals.stream().map(this::toAdminDTO).collect(Collectors.toList());
     }
 
+    // Chấp nhận kháng cáo: đổi appeal sang APPEAL_APPROVED, và tài liệu được chuyển thẳng sang
+    // PUBLIC + APPROVED (không cần AI kiểm duyệt lại). Ghi lại admin nào duyệt + thời điểm.
     @Override
     @Transactional
     public AdminAppealResponseDTO approveAppeal(Long appealId, String adminNote) {
@@ -89,17 +92,18 @@ public class AdminServiceImpl implements AdminService {
         // DEC-009: admin gỡ/chuyển trạng thái nhưng KHÔNG trở thành owner — document.user
         // không hề bị đụng tới ở đây.
         DocDocument doc = appeal.getDocument();
-        doc.setVisibility(DocumentVisibility.PUBLIC);
-        doc.setModerationStatus(ModerationStatus.APPROVED);
+        doc.setVisibility(DocumentVisibility.PUBLIC); // đổi trạng thái: visibility -> PUBLIC
+        doc.setModerationStatus(ModerationStatus.APPROVED); // đổi trạng thái: moderationStatus -> APPROVED
         doc.setAdminReviewedAt(LocalDateTime.now());
         doc.setAdminReviewedBy(getCurrentAdminId());
-        docDocumentRepository.save(doc);
+        docDocumentRepository.save(doc); // lưu bảng doc_documents
 
-        moderationAppealRepository.save(appeal);
+        moderationAppealRepository.save(appeal); // lưu bảng moderation_appeals
         notifyAppealDecision(appeal, NotificationType.APPEAL_APPROVED);
         return toAdminDTO(appeal);
     }
 
+    // Từ chối kháng cáo: chỉ đổi trạng thái appeal, tài liệu GIỮ NGUYÊN PRIVATE/REJECTED.
     @Override
     @Transactional
     public AdminAppealResponseDTO rejectAppeal(Long appealId, String adminNote) {
@@ -107,7 +111,7 @@ public class AdminServiceImpl implements AdminService {
 
         appeal.setStatus(AppealStatus.APPEAL_REJECTED);
         appeal.setAdminNote(adminNote);
-        moderationAppealRepository.save(appeal);
+        moderationAppealRepository.save(appeal); // lưu bảng moderation_appeals
         notifyAppealDecision(appeal, NotificationType.APPEAL_REJECTED);
         return toAdminDTO(appeal);
     }
@@ -133,32 +137,37 @@ public class AdminServiceImpl implements AdminService {
         return reviewComment(commentId, false);
     }
 
+    // Admin TỰ TAY xác nhận tài liệu đủ điều kiện public — dùng khi Admin muốn ghi đè/bỏ qua kết
+    // quả AI, không qua luồng kháng cáo.
     @Override
     @Transactional
     public void approveDocumentReview(Long documentId) {
         DocDocument document = requireActiveDocument(documentId);
-        document.setVisibility(DocumentVisibility.PUBLIC);
-        document.setModerationStatus(ModerationStatus.APPROVED);
+        document.setVisibility(DocumentVisibility.PUBLIC); // đổi trạng thái: visibility -> PUBLIC
+        document.setModerationStatus(ModerationStatus.APPROVED); // đổi trạng thái: moderationStatus -> APPROVED
         document.setAdminReviewedAt(LocalDateTime.now());
         document.setAdminReviewedBy(getCurrentAdminId());
-        docDocumentRepository.save(document);
+        docDocumentRepository.save(document); // lưu bảng doc_documents
         notifyDocumentReviewDecision(document, NotificationType.DOC_APPROVED,
                 "Tài liệu \"" + document.getTitle() + "\" của bạn đã được duyệt và công khai.");
     }
 
+    // Admin từ chối tài liệu: chuyển về PRIVATE + REJECTED.
     @Override
     @Transactional
     public void removeDocumentReview(Long documentId) {
         DocDocument document = requireActiveDocument(documentId);
-        document.setVisibility(DocumentVisibility.PRIVATE);
-        document.setModerationStatus(ModerationStatus.REJECTED);
+        document.setVisibility(DocumentVisibility.PRIVATE); // đổi trạng thái: visibility -> PRIVATE
+        document.setModerationStatus(ModerationStatus.REJECTED); // đổi trạng thái: moderationStatus -> REJECTED
         document.setAdminReviewedAt(LocalDateTime.now());
         document.setAdminReviewedBy(getCurrentAdminId());
-        docDocumentRepository.save(document);
+        docDocumentRepository.save(document); // lưu bảng doc_documents
         notifyDocumentReviewDecision(document, NotificationType.DOC_REJECTED,
                 "Tài liệu \"" + document.getTitle() + "\" của bạn không được duyệt công khai và vẫn ở chế độ riêng tư.");
     }
 
+    // Số liệu tổng quan cho dashboard Admin (tổng user, tài liệu public/private, kháng nghị
+    // chờ, tình trạng ingest, dung lượng lưu trữ đã dùng...).
     @Override
     @Transactional(readOnly = true)
     public AdminStatsDTO getStats() {
@@ -178,6 +187,7 @@ public class AdminServiceImpl implements AdminService {
                 totalSubjects, docsIngested, docsNotIngested, docsUnsupported, usedLocalBytes, usedCloudBytes);
     }
 
+    // Toàn bộ người dùng trong hệ thống, cho trang quản lý người dùng của Admin.
     @Override
     @Transactional(readOnly = true)
     public List<AdminUserResponseDTO> getAllUsers() {
@@ -189,6 +199,8 @@ public class AdminServiceImpl implements AdminService {
                 .toList();
     }
 
+    // Admin tạo tài khoản mới trực tiếp — bỏ qua hẳn luồng đăng ký + xác minh OTP thông thường
+    // (tài khoản được tạo với isVerified=true, ACTIVE ngay).
     @Override
     @Transactional
     public AdminUserResponseDTO createUser(AdminCreateUserRequestDTO request) {
@@ -208,20 +220,21 @@ public class AdminServiceImpl implements AdminService {
         user.setFullName(request.getFullName().trim());
         user.setRole(role);
         user.setStatus(UserStatus.ACTIVE);
-        authUserRepository.save(user);
+        authUserRepository.save(user); // lưu bảng auth_users
 
         AuthAccount account = new AuthAccount();
         account.setUser(user);
         account.setProvider(AuthProviders.LOCAL);
         account.setIdentifier(email);
-        account.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        account.setPasswordHash(passwordEncoder.encode(request.getPassword())); // băm mật khẩu
         account.setIsVerified(true);
         account.setIsPrimary(true);
-        authAccountRepository.save(account);
+        authAccountRepository.save(account); // lưu bảng auth_accounts
 
         return toAdminUserResponseDTO(account);
     }
 
+    // Admin sửa thông tin người dùng (họ tên, avatar, vai trò).
     @Override
     @Transactional
     public AdminUserResponseDTO updateUser(Long userId, AdminUpdateUserRequestDTO request) {
@@ -236,7 +249,7 @@ public class AdminServiceImpl implements AdminService {
         user.setFullName(request.getFullName().trim());
         user.setAvatarUrl(request.getAvatarUrl());
         user.setRole(role);
-        authUserRepository.save(user);
+        authUserRepository.save(user); // lưu bảng auth_users
 
         AuthAccount account = authAccountRepository.findAll().stream()
                 .filter(candidate -> candidate.getUser().getId().equals(userId))
@@ -248,6 +261,9 @@ public class AdminServiceImpl implements AdminService {
         return toAdminUserResponseDTO(account);
     }
 
+    // Admin đổi trạng thái tài khoản (chỉ nhận ACTIVE hoặc BANNED). Trước khi khoá (BANNED) có 2
+    // chốt an toàn: (1) Admin không được tự khoá chính mình; (2) không được khoá nốt Admin ACTIVE
+    // cuối cùng còn lại trong hệ thống (tránh hệ thống mất hết quyền quản trị).
     @Override
     @Transactional
     public AdminUserResponseDTO updateUserStatus(
@@ -290,8 +306,8 @@ public class AdminServiceImpl implements AdminService {
             }
         }
 
-        user.setStatus(requestedStatus);
-        authUserRepository.save(user);
+        user.setStatus(requestedStatus); // đổi trạng thái: -> ACTIVE hoặc BANNED
+        authUserRepository.save(user); // lưu bảng auth_users
 
         AuthAccount account = authAccountRepository.findAll().stream()
                 .filter(candidate -> candidate.getUser().getId().equals(userId))
@@ -303,6 +319,8 @@ public class AdminServiceImpl implements AdminService {
         return toAdminUserResponseDTO(account);
     }
 
+    // Admin đặt lại mật khẩu cho người dùng (chỉ áp dụng cho tài khoản LOCAL — OAuth không có mật
+    // khẩu để đặt lại). Có ghi log ai đã thực hiện, cho ai, để truy vết sau này.
     @Override
     @Transactional
     public void resetUserPassword(Long userId, AdminResetPasswordRequestDTO request) {
@@ -312,8 +330,8 @@ public class AdminServiceImpl implements AdminService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Người dùng không có tài khoản đăng nhập LOCAL."));
 
-        account.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
-        authAccountRepository.save(account);
+        account.setPasswordHash(passwordEncoder.encode(request.getNewPassword())); // băm mật khẩu mới
+        authAccountRepository.save(account); // lưu bảng auth_accounts
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String adminIdentifier = authentication != null ? authentication.getName() : "unknown";
@@ -321,6 +339,8 @@ public class AdminServiceImpl implements AdminService {
                 adminIdentifier, userId, account.getIdentifier());
     }
 
+    // Dựng DTO người dùng cho Admin xem — kèm cả mật khẩu seed (nếu là tài khoản demo/seed data,
+    // để Admin biết mật khẩu test mà không cần tra database).
     private AdminUserResponseDTO toAdminUserResponseDTO(AuthAccount account) {
         AuthUser user = account.getUser();
         return AdminUserResponseDTO.builder()
@@ -339,6 +359,7 @@ public class AdminServiceImpl implements AdminService {
                 .build();
     }
 
+    // Chỉ kháng cáo đang chờ (APPEAL_PENDING) mới xử lý được — tránh duyệt/từ chối lại kháng cáo đã xong.
     private ModerationAppeal requirePendingAppeal(Long appealId) {
         ModerationAppeal appeal = moderationAppealRepository.findById(appealId)
                 .orElseThrow(() -> new ResourceNotFoundException("Kháng cáo không tồn tại!"));
@@ -348,6 +369,7 @@ public class AdminServiceImpl implements AdminService {
         return appeal;
     }
 
+    // Tài liệu phải tồn tại và CHƯA bị xoá mềm mới cho Admin duyệt/từ chối.
     private DocDocument requireActiveDocument(Long documentId) {
         DocDocument document = docDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tài liệu không tồn tại!"));
@@ -357,6 +379,10 @@ public class AdminServiceImpl implements AdminService {
         return document;
     }
 
+    // Dùng chung cho cả approveComment và rejectComment. Chỉ bình luận đang PENDING_REVIEW (AI đã
+    // gắn cờ, chờ Admin) mới xử lý được. Duyệt -> VISIBLE (hiện lại cho mọi người); từ chối ->
+    // REJECTED (giữ ẩn). Sau khi lưu, báo cho chủ bình luận biết kết quả, và nếu được duyệt thì
+    // báo thêm cho chủ tài liệu biết có bình luận mới (trừ khi tự bình luận trên tài liệu của mình).
     private AdminCommentReviewDTO reviewComment(Long commentId, boolean approved) {
         Comment comment = commentRepository.findWithUserAndDocumentById(commentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bình luận không tồn tại!"));
@@ -364,10 +390,10 @@ public class AdminServiceImpl implements AdminService {
             throw new IllegalStateException("error.admin.commentNotPending");
         }
 
-        comment.setStatus(approved ? CommentStatus.VISIBLE : CommentStatus.REJECTED);
+        comment.setStatus(approved ? CommentStatus.VISIBLE : CommentStatus.REJECTED); // đổi trạng thái bình luận
         comment.setReviewedBy(getCurrentAdminId());
         comment.setReviewedAt(LocalDateTime.now());
-        Comment saved = commentRepository.saveAndFlush(comment);
+        Comment saved = commentRepository.saveAndFlush(comment); // lưu bảng comments
 
         try {
             notificationService.notifyCommentReviewed(
@@ -392,6 +418,7 @@ public class AdminServiceImpl implements AdminService {
         return toAdminCommentDTO(saved);
     }
 
+    // Báo cho chủ tài liệu biết kết quả duyệt (approve/reject) — lỗi gửi thông báo không huỷ quyết định đã lưu.
     private void notifyDocumentReviewDecision(DocDocument document, NotificationType type, String message) {
         try {
             notificationService.createDocumentNotification(
@@ -402,6 +429,7 @@ public class AdminServiceImpl implements AdminService {
         }
     }
 
+    // Báo cho người kháng cáo biết kết quả (chấp nhận/từ chối).
     private void notifyAppealDecision(ModerationAppeal appeal, NotificationType type) {
         try {
             String title = appeal.getDocument().getTitle();
@@ -416,6 +444,7 @@ public class AdminServiceImpl implements AdminService {
         }
     }
 
+    // Lấy id của Admin đang đăng nhập (để ghi lại "ai đã duyệt/từ chối").
     private Long getCurrentAdminId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String identifier = authentication != null ? authentication.getName() : null;
@@ -426,6 +455,7 @@ public class AdminServiceImpl implements AdminService {
                 .getId();
     }
 
+    // Dựng DTO kháng cáo cho danh sách Admin xem.
     private AdminAppealResponseDTO toAdminDTO(ModerationAppeal appeal) {
         DocDocument doc = appeal.getDocument();
         DocumentSummaryDTO documentSummary = new DocumentSummaryDTO(
@@ -443,6 +473,7 @@ public class AdminServiceImpl implements AdminService {
                 appeal.getStatus());
     }
 
+    // Dựng DTO bình luận cho danh sách Admin duyệt.
     private AdminCommentReviewDTO toAdminCommentDTO(Comment comment) {
         return new AdminCommentReviewDTO(
                 comment.getId(),

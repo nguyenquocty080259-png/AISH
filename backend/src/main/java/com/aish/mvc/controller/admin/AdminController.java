@@ -35,6 +35,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * CỬA NGÕ API TRUNG TÂM của trang quản trị: report, kháng cáo, bình luận chờ duyệt, quản lý tài
+ * liệu, thống kê, quản lý người dùng. Mọi route ở đây nằm dưới /api/admin/** -> SecurityConfig đã
+ * gate .hasRole("ADMIN"), nên chỉ cần đăng nhập với vai trò ADMIN mới gọi được (không cần
+ * @PreAuthorize lặp lại ở từng method, dù một số method vẫn có thêm cho rõ ràng).
+ */
 // Mọi route ở đây nằm dưới /api/admin/** -> SecurityConfig đã gate .hasRole("ADMIN").
 @RestController
 @RequestMapping("/api/admin")
@@ -45,6 +51,7 @@ public class AdminController {
     private final DocumentService documentService;
     private final ReportService reportService;
 
+    // ===== Report (báo cáo vi phạm) =====
     @GetMapping("/reports")
     public ResponseEntity<List<AdminReportResponseDTO>> listReports(
             @RequestParam(value = "status", required = false) ReportStatus status) {
@@ -59,6 +66,7 @@ public class AdminController {
                 id, request.getActionTaken(), request.getAdminResponse()));
     }
 
+    // ===== Kháng cáo kiểm duyệt =====
     @GetMapping("/appeals")
     public ResponseEntity<List<AdminAppealResponseDTO>> listAppeals(
             @RequestParam(value = "status", required = false) AppealStatus status) {
@@ -81,6 +89,7 @@ public class AdminController {
         return ResponseEntity.ok(adminService.rejectAppeal(appealId, note));
     }
 
+    // ===== Bình luận chờ duyệt (AI đã gắn cờ) =====
     @GetMapping("/comments")
     public ResponseEntity<List<AdminCommentReviewDTO>> listComments(
             @RequestParam(defaultValue = "PENDING_REVIEW") CommentStatus status) {
@@ -97,6 +106,7 @@ public class AdminController {
         return ResponseEntity.ok(adminService.rejectComment(id));
     }
 
+    // ===== Quản lý tài liệu (danh sách lọc nhiều tiêu chí, duyệt/từ chối, xoá, sửa, khôi phục) =====
     @GetMapping("/documents")
     public ResponseEntity<Page<AdminDocumentSummaryDTO>> listDocuments(
 
@@ -167,11 +177,13 @@ public class AdminController {
         return ResponseEntity.ok().build();
     }
 
+    // ===== Thống kê tổng quan =====
     @GetMapping("/stats")
     public ResponseEntity<AdminStatsDTO> getStats() {
         return ResponseEntity.ok(adminService.getStats());
     }
 
+    // ===== Quản lý người dùng =====
     @GetMapping("/users")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<AdminUserResponseDTO>> getAllUsers() {

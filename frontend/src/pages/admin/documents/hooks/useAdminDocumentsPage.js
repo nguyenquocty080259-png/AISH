@@ -7,6 +7,9 @@ import * as subjectApi from "../../../../api/subjectApi";
 import { useToast } from "../../../../hooks/useToast";
 import { useDebounce } from "../../../../hooks/useDebounce";
 
+// Hook logic trang Admin QUẢN LÝ TÀI LIỆU: bảng có phân trang server, tìm kiếm/lọc (debounce từ
+// khoá), duyệt/từ chối công khai, gỡ vi phạm (kèm modal xác nhận), sửa metadata, khôi phục, và
+// xem chi tiết read-only.
 export function useAdminDocumentsPage() {
   const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
@@ -42,6 +45,7 @@ export function useAdminDocumentsPage() {
   // "" = tất cả (mặc định) | "ACTIVE" = đang hoạt động | "REMOVED" = đã gỡ.
   const [removedFilter, setRemovedFilter] = useState("");
 
+  // Gọi API GET /admin/documents — nạp 1 trang kết quả theo toàn bộ bộ lọc hiện tại.
   const load = async (targetPage) => {
     setLoading(true);
     setError(null);
@@ -99,6 +103,7 @@ export function useAdminDocumentsPage() {
     setSearchParams(nextParams);
   };
 
+  // Duyệt hoặc gỡ công khai một tài liệu đang chờ xem xét.
   const reviewDocument = async (doc, action) => {
     setReviewing({ id: doc.id, action });
     try {
@@ -116,6 +121,7 @@ export function useAdminDocumentsPage() {
   const openRemoveModal = (doc) => setRemoveTarget(doc);
   const closeRemoveModal = () => setRemoveTarget(null);
 
+  // Gỡ tài liệu vi phạm (xác nhận trong modal trước).
   const confirmRemove = async () => {
     if (!removeTarget) return;
     setRemoving(true);
@@ -153,6 +159,7 @@ export function useAdminDocumentsPage() {
   };
   const closeEditModal = () => setEditTarget(null);
 
+  // Lưu thay đổi metadata tài liệu từ modal sửa.
   const submitEdit = async (data) => {
     if (!editTarget) return;
     setEditing(true);

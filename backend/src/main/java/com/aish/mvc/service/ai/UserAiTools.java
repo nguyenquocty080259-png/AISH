@@ -23,6 +23,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+/**
+ * "CÔNG CỤ" mà AI Chat được phép TỰ GỌI (function calling / tool-use của Spring AI, đánh dấu
+ * bằng @Tool) khi người dùng hỏi về dữ liệu CÁ NHÂN của chính họ: thống kê tài liệu, tìm tài liệu
+ * mình có quyền xem, trạng thái kiểm duyệt một tài liệu, hoặc report đã gửi. AI đọc phần
+ * "description" trong @Tool để tự quyết định khi nào cần gọi hàm nào — không phải gọi trực tiếp
+ * từ controller. Mọi hàm đều tự suy ra "user hiện tại" từ token, KHÔNG bao giờ lộ dữ liệu người khác.
+ */
 @Component
 @RequiredArgsConstructor
 public class UserAiTools {
@@ -36,6 +43,8 @@ public class UserAiTools {
     private final ReportRepository reportRepository;
     private final DocumentAccessPort documentAccessPort;
 
+    // AI gọi khi user hỏi "tôi có bao nhiêu tài liệu", "tài liệu của tôi được duyệt chưa"...
+    // Trả về: chuỗi văn bản tóm tắt số liệu (AI sẽ diễn giải lại cho tự nhiên khi trả lời).
     @Tool(description = "Use this tool when the logged-in person asks for their own document totals, visibility and "
             + "moderation breakdown, favorites received, or reports filed. Identity is resolved automatically.")
     @Transactional(readOnly = true)
@@ -66,6 +75,9 @@ public class UserAiTools {
         }
     }
 
+    // AI gọi khi user muốn tìm tài liệu mà họ có quyền xem. Tìm lần lượt theo 4 nhóm: tài liệu
+    // của mình -> yêu thích -> trong collection -> công khai đã duyệt; mỗi tài liệu chỉ liệt kê
+    // một lần dù trùng ở nhiều nhóm (dựa vào tập "included").
     @Tool(description = "Use this tool when the logged-in person wants to search documents they can access. It searches "
             + "their own, favorites, collections, then approved public documents; identity is resolved automatically.")
     @Transactional(readOnly = true)
@@ -96,6 +108,8 @@ public class UserAiTools {
         }
     }
 
+    // AI gọi khi user hỏi trạng thái một tài liệu cụ thể của mình (theo tiêu đề/từ khoá).
+    // Khớp nhiều hơn 1 tài liệu -> yêu cầu AI hỏi lại cho rõ thay vì đoán bừa.
     @Tool(description = "Use this tool when the logged-in person asks for the status of one of their own documents by "
             + "title or keyword. Never use it to inspect another person's document.")
     @Transactional(readOnly = true)
@@ -142,6 +156,7 @@ public class UserAiTools {
         }
     }
 
+    // AI gọi khi user hỏi về report mình đã gửi và trạng thái xử lý — tối đa 10 report gần nhất.
     @Tool(description = "Use this tool when the logged-in person asks about reports they filed and their processing "
             + "status. Identity is resolved automatically; return at most the ten most recent reports.")
     @Transactional(readOnly = true)
@@ -166,6 +181,8 @@ public class UserAiTools {
         return aiConversationService.currentUserOrNull();
     }
 
+    // Lọc tài liệu theo từ khoá + còn quyền xem, gom vào "lines" (đủ limit dòng thì dừng sớm).
+    // Nhóm "Công khai" còn lọc thêm: phải PUBLIC và đã APPROVED mới được liệt.
     private void addDocuments(List<DocDocument> documents, String group, String keyword, int limit,
                               Long userId, Set<Long> included, List<String> lines) {
         if (lines.size() >= limit) return;

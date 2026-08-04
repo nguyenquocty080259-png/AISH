@@ -8,6 +8,7 @@ import AuthShell from "../../components/auth/AuthShell";
 import Button from "../../components/ui/Button";
 import { Input } from "../../components/ui/Field";
 
+// Trang bắt đầu luồng QUÊN MẬT KHẨU: nhập email, gửi OTP, rồi chuyển sang trang OTP.
 export default function ForgotPasswordPage() {
   const { t } = useTranslation();
   const { showError } = useToast();
@@ -15,6 +16,8 @@ export default function ForgotPasswordPage() {
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
 
+  // Gọi API POST /auth/forgot-password rồi điều hướng sang trang OTP với mode="forgot-password"
+  // (OtpPage đọc mode này để biết cần gọi verifyForgotPassword thay vì verifyOtp).
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);

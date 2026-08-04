@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import * as collectionApi from "../../../api/collectionApi";
 import { useToast } from "../../../hooks/useToast";
 
+// Hook chứa logic trang danh sách bộ sưu tập: nạp danh sách, tạo/đổi tên/xoá qua các modal riêng.
 export function useCollectionsPage() {
   const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
@@ -20,6 +21,7 @@ export function useCollectionsPage() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
+  // Gọi API GET /collections — nạp danh sách bộ sưu tập của tôi.
   const load = async () => {
     setLoading(true);
     setError(null);
@@ -42,6 +44,7 @@ export function useCollectionsPage() {
   const openCreateModal = () => setCreateModalOpen(true);
   const closeCreateModal = () => setCreateModalOpen(false);
 
+  // Tạo bộ sưu tập mới, thêm ngay vào đầu danh sách hiển thị.
   const handleCreate = async (name) => {
     setCreating(true);
     try {
@@ -59,6 +62,7 @@ export function useCollectionsPage() {
   const openRenameModal = (collection) => setRenameTarget(collection);
   const closeRenameModal = () => setRenameTarget(null);
 
+  // Đổi tên bộ sưu tập đang chọn.
   const handleRename = async (name) => {
     if (!renameTarget) return;
     setRenaming(true);
@@ -77,6 +81,7 @@ export function useCollectionsPage() {
   const openDeleteModal = (collection) => setDeleteTarget(collection);
   const closeDeleteModal = () => setDeleteTarget(null);
 
+  // Xoá bộ sưu tập đang chọn (không xoá tài liệu gốc bên trong).
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
     setDeleting(true);

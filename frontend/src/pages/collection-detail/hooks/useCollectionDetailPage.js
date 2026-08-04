@@ -15,6 +15,8 @@ function normalizeForSearch(text) {
     .toLowerCase();
 }
 
+// Hook chứa logic trang chi tiết bộ sưu tập: nạp chi tiết, đổi tên/xoá bộ sưu tập, gỡ/thêm tài
+// liệu (thêm là THAM CHIẾU — không copy, tài liệu vẫn còn nguyên trong "Tài liệu của tôi").
 export function useCollectionDetailPage() {
   const { t } = useTranslation();
   const { id } = useParams();
@@ -43,6 +45,7 @@ export function useCollectionDetailPage() {
   const [storageFilter, setStorageFilter] = useState("ALL");
   const [subjectFilter, setSubjectFilter] = useState("ALL");
 
+  // Gọi API GET /collections/{id} — nạp chi tiết bộ sưu tập kèm tài liệu bên trong.
   const load = async () => {
     setLoading(true);
     setError(null);
@@ -94,6 +97,7 @@ export function useCollectionDetailPage() {
     }
   };
 
+  // Gỡ một tài liệu khỏi bộ sưu tập (chỉ xoá liên kết, tài liệu gốc vẫn còn).
   const removeDocument = async (docId) => {
     setRemovingDocId(docId);
     try {

@@ -24,6 +24,7 @@ export function getRecommendationsForYou() {
   return apiClient.get("/ai/recommendations").then((res) => res.data);
 }
 
+// Gọi API POST /ai/documents/{documentId}/metadata-suggestion — xin AI gợi ý tiêu đề/mô tả/môn học.
 export function suggestMetadata(documentId) {
   return apiClient.post(`/ai/documents/${documentId}/metadata-suggestion`).then((res) => res.data);
 }

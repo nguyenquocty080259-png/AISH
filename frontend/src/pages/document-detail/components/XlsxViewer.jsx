@@ -44,6 +44,8 @@ function truncationNotice(sheet, t, locale) {
   });
 }
 
+// Xem trước file XLSX ngay trong trang: tải blob file gốc, parse bằng thư viện xlsx ở phía
+// client, hiển thị từng sheet dạng bảng (giới hạn 500 dòng x 50 cột để tránh treo trình duyệt).
 export default function XlsxViewer({ documentId }) {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage === "en" ? "en-US" : "vi-VN";

@@ -7,6 +7,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * CỬA NGÕ API cho tính năng chat với AI. Chỉ có 1 endpoint duy nhất — toàn bộ logic chọn chế độ
+ * RAG/GENERAL, quota, lưu lịch sử đều nằm ở {@link AiChatService}.
+ */
 @RestController
 @RequestMapping("/api/ai")
 @RequiredArgsConstructor

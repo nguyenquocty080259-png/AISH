@@ -23,6 +23,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
+/**
+ * "CÔNG CỤ" mà AI Chat được phép tự gọi (@Tool) khi người đang chat là ADMIN và hỏi về số liệu
+ * TOÀN HỆ THỐNG: thống kê tổng quan, chi phí/lượng dùng AI, tìm tài liệu, tìm người dùng, trạng
+ * thái chi tiết một tài liệu/một người dùng. Chỉ nên có hiệu lực khi AI đã biết người hỏi là
+ * Admin (chốt quyền thật vẫn nằm ở kiểm tra vai trò tại tầng cấu hình AI chat/SecurityConfig).
+ */
 @Component
 @RequiredArgsConstructor
 public class AdminAiTools {
@@ -36,6 +42,7 @@ public class AdminAiTools {
     private final AuthUserRepository authUserRepository;
     private final AiUsageStatsService aiUsageStatsService;
 
+    // AI gọi khi Admin hỏi số liệu tổng quan hệ thống (tổng user, tổng tài liệu, kháng nghị chờ...).
     @Tool(description = "Use this tool when an ADMIN asks for current live, system-wide HiveMind statistics: "
             + "total users, total documents, public/private document counts, pending appeals, total subjects, "
             + "or document ingest status counts. Always use it instead of guessing these numbers.")
@@ -68,6 +75,7 @@ public class AdminAiTools {
         }
     }
 
+    // AI gọi khi Admin hỏi về mức dùng AI (số lượt gọi, token, chi phí) hôm nay / 7 ngày qua.
     @Tool(description = "Use this tool when an ADMIN asks about AI/Groq call volume, token consumption, cost, "
             + "or usage breakdown today or over the last seven days. Always use live tracked data instead of guessing.")
     public String getAiUsageStats() {
@@ -81,6 +89,7 @@ public class AdminAiTools {
         }
     }
 
+    // Định dạng số liệu dùng AI của một khoảng thời gian thành chuỗi dễ đọc cho AI diễn giải lại.
     private static String formatUsagePeriod(String label, AiUsageStatsDTO.PeriodStats period) {
         String breakdown = period.byCallType().isEmpty() ? "Không có"
                 : period.byCallType().stream()
@@ -91,6 +100,7 @@ public class AdminAiTools {
                 .formatted(label, period.totalCalls(), period.totalTokens(), period.totalCostUsd(), breakdown);
     }
 
+    // AI gọi khi Admin muốn tìm tài liệu theo từ khoá/visibility/trạng thái kiểm duyệt/môn học.
     @Tool(description = "Use this tool when an ADMIN wants to find documents by title keyword or filter them by "
             + "visibility, moderation status, or subject name. Filters are optional; use it instead of inventing document records.")
     public String searchDocuments(String keyword, String visibility, String moderationStatus,
@@ -112,6 +122,8 @@ public class AdminAiTools {
         }
     }
 
+    // AI gọi khi Admin muốn tìm người dùng theo tên/email, lọc theo vai trò/trạng thái tài khoản.
+    // Không bao giờ trả về mật khẩu hay thông tin đăng nhập nhạy cảm khác.
     @Tool(description = "Use this tool when an ADMIN wants to find users by name or email, optionally filtered by "
             + "role or account status. Never infer or expose credentials.")
     public String searchUsers(String keyword, String role, String status, Integer limit) {
@@ -129,6 +141,7 @@ public class AdminAiTools {
         }
     }
 
+    // AI gọi khi Admin hỏi chi tiết trạng thái một tài liệu cụ thể theo ID.
     @Tool(description = "Use this tool when an ADMIN asks for the complete current status of one document by its numeric ID, "
             + "including moderation, ingest, metadata-match, review, and trash status.")
     public String getDocumentStatus(Long documentId) {
@@ -164,6 +177,7 @@ public class AdminAiTools {
         }
     }
 
+    // AI gọi khi Admin hỏi trạng thái một người dùng cụ thể theo ID số hoặc email.
     @Tool(description = "Use this tool when an ADMIN asks for the current status of one user identified by numeric user ID "
             + "or email, including role, status, and owned-document count.")
     public String getUserStatus(String identifier) {
@@ -174,6 +188,7 @@ public class AdminAiTools {
             AuthUser user;
             String email;
             try {
+                // Thử coi identifier là ID số trước...
                 Long userId = Long.valueOf(normalizedIdentifier);
                 Optional<AuthUser> foundUser = authUserRepository.findById(userId);
                 if (foundUser.isEmpty()) return "Không tìm thấy người dùng '" + normalizedIdentifier + "'.";
@@ -181,6 +196,7 @@ public class AdminAiTools {
                 email = authAccountRepository.findFirstByUser_IdAndIsPrimaryTrue(userId)
                         .map(AuthAccount::getIdentifier).orElse("-");
             } catch (NumberFormatException ignored) {
+                // ...không phải số thì coi là email, tìm khớp chính xác (không phân biệt hoa thường).
                 Optional<AuthAccount> foundAccount = authAccountRepository.searchUsersForAdminTool(
                                 normalizedIdentifier, null, null, PageRequest.of(0, 10)).stream()
                         .filter(account -> normalizedIdentifier.equalsIgnoreCase(account.getIdentifier()))
@@ -197,6 +213,7 @@ public class AdminAiTools {
         }
     }
 
+    // Định dạng thông tin cơ bản của một user thành chuỗi dễ đọc cho AI diễn giải.
     private static String formatUser(AuthUser user, String email) {
         return "ID %d | %s | Email: %s | Vai trò: %s | Trạng thái: %s".formatted(
                 user.getId(), value(user.getFullName()), value(email),

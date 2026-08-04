@@ -11,6 +11,8 @@ import { useCollectionDetailPage } from "./hooks/useCollectionDetailPage";
 import { ROUTES } from "../../constants/routes";
 import "./collection-detail.css";
 
+// Trang CHI TIẾT một bộ sưu tập: lưới tài liệu bên trong, thêm tài liệu (modal có tìm kiếm/lọc
+// theo nơi lưu và môn học), đổi tên, xoá bộ sưu tập, gỡ từng tài liệu khỏi bộ sưu tập.
 export default function CollectionDetailPage() {
   const { t } = useTranslation();
   const {
@@ -176,10 +178,10 @@ export default function CollectionDetailPage() {
                   </button>
                   <button
                     type="button"
-                    className={storageFilter === "LOCAL" ? "is-active" : ""}
-                    onClick={() => setStorageFilter("LOCAL")}
+                    className={storageFilter === "SERVER" ? "is-active" : ""}
+                    onClick={() => setStorageFilter("SERVER")}
                   >
-                    LOCAL
+                    SERVER
                   </button>
                   <button
                     type="button"

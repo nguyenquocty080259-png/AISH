@@ -8,6 +8,7 @@ import SocialButtons from "../../components/auth/SocialButtons";
 import Button from "../../components/ui/Button";
 import { Input } from "../../components/ui/Field";
 
+// Trang ĐĂNG NHẬP: form email + mật khẩu, link quên mật khẩu, và nút đăng nhập Google/GitHub.
 export default function LoginPage() {
   const { t } = useTranslation();
   const { email, setEmail, password, setPassword, submitting, handleSubmit } = useLoginPage();

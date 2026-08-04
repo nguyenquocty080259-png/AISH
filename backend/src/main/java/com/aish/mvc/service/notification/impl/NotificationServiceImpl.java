@@ -26,6 +26,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Cài đặt thật của {@link NotificationService}. Việc TẠO thông báo (createNotification,
+ * createDocumentNotification, createCaseNotification) chạy NGẦM (@Async) và tự nuốt lỗi — tạo
+ * thông báo thất bại không được phép làm hỏng luồng nghiệp vụ chính (vd lưu bình luận vẫn phải
+ * thành công dù gửi thông báo lỗi).
+ */
 @Service
 @RequiredArgsConstructor
 public class NotificationServiceImpl implements NotificationService {
@@ -37,6 +43,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final AuthUserRepository authUserRepository;
     private final NotificationPreferenceService notificationPreferenceService;
 
+    // Lấy user đang đăng nhập từ token.
     private AuthUser getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return authAccountRepository.findByIdentifier(email)
@@ -44,6 +51,8 @@ public class NotificationServiceImpl implements NotificationService {
                 .getUser();
     }
 
+    // Tạo thông báo gắn với report. Chạy ngầm trên luồng riêng; người nhận đã tắt loại thông báo
+    // này thì bỏ qua, không tạo. Lỗi bất kỳ chỉ log, không ném ra ngoài.
     @Override
     @Async("notificationExecutor")
     @Transactional
@@ -58,12 +67,13 @@ public class NotificationServiceImpl implements NotificationService {
                     .relatedReportId(relatedReportId)
                     .isRead(false)
                     .build();
-            notificationRepository.save(notification);
+            notificationRepository.save(notification); // lưu bảng notifications
         } catch (Exception ex) {
             log.error("Failed to create notification for recipientUserId={}, type={}", recipientUserId, type, ex);
         }
     }
 
+    // Tạo thông báo gắn với tài liệu (vd có người bình luận/đánh giá tài liệu của bạn).
     @Override
     @Async("notificationExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -78,12 +88,14 @@ public class NotificationServiceImpl implements NotificationService {
                     .relatedDocumentId(relatedDocumentId)
                     .isRead(false)
                     .build();
-            notificationRepository.save(notification);
+            notificationRepository.save(notification); // lưu bảng notifications
         } catch (Exception ex) {
             log.error("Failed to create document notification for recipientUserId={}, type={}", recipientUserId, type, ex);
         }
     }
 
+    // Báo cho CẢ chủ bình luận LẪN mọi Admin đang hoạt động biết có bình luận chờ duyệt (AI vừa
+    // gắn cờ) — chủ bình luận nhận thông báo "đang chờ xem xét", Admin nhận thông báo "cần duyệt".
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void notifyCommentUnderReview(Long ownerUserId, Long commentId, Long documentId) {
@@ -103,6 +115,7 @@ public class NotificationServiceImpl implements NotificationService {
                         documentId)));
     }
 
+    // Báo cho chủ bình luận biết kết quả duyệt của Admin (được duyệt hoặc bị từ chối).
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void notifyCommentReviewed(
@@ -114,6 +127,7 @@ public class NotificationServiceImpl implements NotificationService {
                 ownerUserId, NotificationType.COMMENT_REVIEWED, message, commentId, documentId));
     }
 
+    // Tạo thông báo gắn với một "case" (khiếu nại/hỗ trợ).
     @Override
     @Async("notificationExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -150,6 +164,7 @@ public class NotificationServiceImpl implements NotificationService {
         return notificationRepository.countByRecipientUserIdAndIsReadFalse(getCurrentUser().getId());
     }
 
+    // Đánh dấu đã đọc — chặn nếu thông báo không phải của user hiện tại.
     @Override
     @Transactional
     public NotificationResponseDTO markAsRead(Long notificationId) {
@@ -160,7 +175,7 @@ public class NotificationServiceImpl implements NotificationService {
             throw new ForbiddenException("error.notification.markOthersForbidden");
         }
         notification.setIsRead(true);
-        return toResponseDTO(notificationRepository.save(notification));
+        return toResponseDTO(notificationRepository.save(notification)); // lưu bảng notifications
     }
 
     @Override
@@ -194,6 +209,7 @@ public class NotificationServiceImpl implements NotificationService {
         notificationRepository.deleteByRecipientUserId(userId);
     }
 
+    // Chuyển entity Notification sang DTO trả về FE.
     private NotificationResponseDTO toResponseDTO(Notification notification) {
         return NotificationResponseDTO.builder()
                 .id(notification.getId())
@@ -209,6 +225,7 @@ public class NotificationServiceImpl implements NotificationService {
                 .build();
     }
 
+    // Dựng nhanh một thông báo liên quan tới bình luận (dùng chung cho notifyCommentUnderReview/Reviewed).
     private Notification commentNotification(
             Long recipientUserId,
             NotificationType type,

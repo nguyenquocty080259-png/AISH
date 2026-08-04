@@ -5,6 +5,8 @@ import Button from "../../../components/ui/Button";
 import { useAdminSettingsPage } from "./hooks/useAdminSettingsPage";
 import "./admin-settings.css";
 
+// Trang Admin CẤU HÌNH HỆ THỐNG: 4 form riêng biệt — tuổi tối thiểu upload, giới hạn dung lượng/
+// quota, loại tệp cho phép, và tham số AI (topK/ngưỡng/trọng số gợi ý/kích thước chunk).
 export default function AdminSettingsPage() {
   const { t } = useTranslation();
   const {

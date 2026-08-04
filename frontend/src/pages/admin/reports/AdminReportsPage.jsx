@@ -21,6 +21,9 @@ const ACTION_LABEL_KEYS = {
   DISMISSED: "admin.reports.actionDismiss",
 };
 
+// Trang Admin xử lý REPORT (báo cáo vi phạm): bảng report, lọc theo trạng thái, modal chọn hành
+// động xử lý (xoá nội dung/cảnh báo/khoá tài khoản/bỏ qua — tuỳ loại đối tượng bị báo cáo), và
+// modal xem/trao đổi (CaseThread) với người báo cáo.
 export default function AdminReportsPage() {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage === "en" ? "en-US" : "vi-VN";

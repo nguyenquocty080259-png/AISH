@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import "./ai-widget.css";
 
+// Hiệu ứng "AI đang gõ..." với 3 chấm nhấp nháy.
 export default function TypingIndicator() {
   const { t } = useTranslation();
   const [dots, setDots] = useState(".");

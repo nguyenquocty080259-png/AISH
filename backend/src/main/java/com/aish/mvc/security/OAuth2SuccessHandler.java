@@ -22,6 +22,11 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
+/**
+ * Xử lý sau khi đăng nhập Google/GitHub THÀNH CÔNG (về mặt OAuth). Nhiệm vụ: tìm hoặc tạo user
+ * tương ứng trong hệ thống, rồi phát JWT và điều hướng (redirect) trình duyệt về FE kèm token.
+ * Không dùng cho luồng đăng nhập LOCAL (email + mật khẩu) — xem {@link AuthService} cho luồng đó.
+ */
 @Component
 @RequiredArgsConstructor
 public class OAuth2SuccessHandler
@@ -36,6 +41,12 @@ public class OAuth2SuccessHandler
     @Value("${app.frontend.base-url:http://localhost:5173}")
     private String frontendBaseUrl = "http://localhost:5173";
 
+    // Được Spring Security gọi ngay sau khi xác thực OAuth2 thành công.
+    // Các bước: (1) lấy provider (Google/GitHub) và email từ thông tin OAuth trả về;
+    // (2) đã có tài khoản đúng provider này -> kiểm tra trạng thái (banned/pending) rồi phát JWT;
+    // (3) email đã tồn tại nhưng qua provider KHÁC -> từ chối, báo dùng đúng provider cũ;
+    // (4) email hoàn toàn mới -> tạo AuthUser + AuthAccount mới rồi phát JWT.
+    // Kết thúc bằng redirect trình duyệt về FE (kèm token hoặc kèm mã lỗi trên query string).
     @Override
     public void onAuthenticationSuccess(
             HttpServletRequest request,
@@ -88,12 +99,12 @@ public class OAuth2SuccessHandler
             AuthUser existingUser = providerAccount.get().getUser();
 
             if (existingUser.getStatus() == UserStatus.BANNED) {
-                response.sendRedirect(frontendBaseUrl + "/login?error=banned");
+                response.sendRedirect(frontendBaseUrl + "/login?error=banned"); // điều hướng FE báo tài khoản bị khoá
                 return;
             }
 
             if (existingUser.getStatus() == UserStatus.PENDING) {
-                response.sendRedirect(frontendBaseUrl + "/login?error=pending");
+                response.sendRedirect(frontendBaseUrl + "/login?error=pending"); // điều hướng FE báo đang chờ duyệt
                 return;
             }
 
@@ -102,6 +113,7 @@ public class OAuth2SuccessHandler
                     existingUser.getRole().getRoleName()
             );
 
+            // Đăng nhập thành công -> điều hướng về trang FE xử lý token kèm JWT trên query string.
             response.sendRedirect(
                     frontendBaseUrl + "/oauth-success?token=" + jwt
             );
@@ -127,11 +139,11 @@ public class OAuth2SuccessHandler
             return;
         }
 
-        // TẠO USER MỚI
+        // TẠO USER MỚI — đăng nhập OAuth lần đầu nên bỏ qua bước xác minh email (provider đã xác minh hộ).
 
         AuthUser user = new AuthUser();
 
-        user.setStatus(UserStatus.ACTIVE);
+        user.setStatus(UserStatus.ACTIVE); // OAuth không cần duyệt/OTP, kích hoạt luôn
 
         applyProviderProfile(user, provider, oauthUser);
 
@@ -141,9 +153,9 @@ public class OAuth2SuccessHandler
 
         user.setRole(role);
 
-        userRepo.save(user);
+        userRepo.save(user); // lưu bảng auth_users
 
-        usernameGenerator.createProfileForUser(user);
+        usernameGenerator.createProfileForUser(user); // tạo hồ sơ (auth_user_profiles) kèm username tự sinh
 
         AuthAccount account =
                 new AuthAccount();
@@ -156,7 +168,7 @@ public class OAuth2SuccessHandler
 
         account.setIsVerified(true);
 
-        accountRepo.save(account);
+        accountRepo.save(account); // lưu bảng auth_accounts
 
         String jwt =
                 jwtUtil.generateToken(email, role.getRoleName());

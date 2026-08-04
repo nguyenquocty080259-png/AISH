@@ -2,6 +2,8 @@ import { useTranslation } from "react-i18next";
 import { useAiWidget } from "../../context/AiWidgetContext";
 import "./ai-widget.css";
 
+// Thanh bật/tắt "hỏi AI về tài liệu này" — chỉ hiện khi đang đứng ở trang chi tiết 1 tài liệu.
+// Tắt nếu tài liệu chưa được nạp cho AI (ingest) xong.
 export default function DocContextBar() {
   const { t } = useTranslation();
   const {

@@ -1,5 +1,6 @@
 import "./ai-widget.css";
 
+// Một bong bóng tin nhắn trong widget (của user, AI, hoặc AI báo lỗi).
 export default function MessageBubble({ message }) {
   const isUser = message.role === "user";
   const bubbleClass = [

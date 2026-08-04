@@ -15,6 +15,8 @@ const OAUTH_ERROR_KEYS = {
   pending: "auth.oauth.pending",
 };
 
+// Hook logic trang Đăng nhập: form email/mật khẩu, đọc lỗi OAuth trả về qua query string (khi
+// redirect từ luồng Google/GitHub thất bại), và điều hướng theo vai trò sau khi đăng nhập thành công.
 export function useLoginPage() {
   const { t } = useTranslation();
   const { login } = useAuth();
@@ -35,6 +37,8 @@ export function useLoginPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
+  // Gọi API đăng nhập (qua AuthContext.login). Thành công thì điều hướng: Admin vào trang quản
+  // trị, user thường vào Dashboard. Tài khoản chưa xác minh email thì đẩy sang trang nhập OTP.
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);

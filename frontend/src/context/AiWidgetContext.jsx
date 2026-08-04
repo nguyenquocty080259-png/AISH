@@ -15,23 +15,31 @@ import { useAuth } from "../hooks/useAuth";
 
 const AiWidgetContext = createContext(null);
 
+// Tin nhắn chào mở đầu mỗi cuộc trò chuyện mới (chưa có lịch sử).
 const createGreeting = () => ({
   id: "ai-greeting",
   role: "ai",
   text: i18n.t("aiWidget.greeting"),
 });
 
+// Chuyển tin nhắn lấy từ lịch sử (BE) sang định dạng hiển thị trong widget.
 const mapHistoryMessage = (message) => ({
   id: `history-${message.id}`,
   role: message.role === "USER" ? "user" : "ai",
   text: message.content,
 });
 
+// Đang ở trang chi tiết tài liệu (/documents/{id}) thì lấy ra id đó để tự bật "hỏi AI về tài liệu này".
 function getDocumentIdFromPath(pathname) {
   const match = pathname.match(/^\/documents\/(\d+)$/);
   return match ? Number(match[1]) : null;
 }
 
+/**
+ * Trạng thái CHUNG cho WIDGET CHAT AI nổi (hiển thị ở mọi trang): mở/đóng, tin nhắn, đang gõ,
+ * lịch sử cuộc trò chuyện, và ngữ cảnh tài liệu đang xem (để tự bật chế độ RAG khi đứng ở trang
+ * chi tiết tài liệu). Bọc quanh toàn app để widget giữ được trạng thái khi chuyển trang.
+ */
 export function AiWidgetProvider({ children }) {
   const location = useLocation();
   const { isAuthenticated } = useAuth();
@@ -97,6 +105,7 @@ export function AiWidgetProvider({ children }) {
     };
   }, [docCache, isOpen, routeDocumentId]);
 
+  // Gọi API lấy danh sách cuộc trò chuyện của user hiện tại (guest thì bỏ qua).
   const loadConversations = useCallback(async () => {
     if (!isAuthenticated) return [];
 
@@ -106,6 +115,7 @@ export function AiWidgetProvider({ children }) {
     return nextConversations;
   }, [isAuthenticated]);
 
+  // Gọi API nạp toàn bộ tin nhắn của một cuộc trò chuyện cụ thể, thay thế nội dung widget.
   const loadConversationMessages = useCallback(
     async (nextConversationId) => {
       if (!isAuthenticated || !nextConversationId) return;
@@ -128,6 +138,7 @@ export function AiWidgetProvider({ children }) {
     [isAuthenticated]
   );
 
+  // Mở widget và xoá số tin nhắn chưa đọc (coi như đã xem).
   const openWidget = () => {
     setIsOpen(true);
     setUnreadCount(0);
@@ -138,6 +149,7 @@ export function AiWidgetProvider({ children }) {
     setIsHistoryPanelOpen(false);
   };
 
+  // Bật/tắt bảng lịch sử cuộc trò chuyện; mở lần đầu thì nạp danh sách cuộc trò chuyện.
   const toggleHistoryPanel = async () => {
     if (!isAuthenticated) return;
 
@@ -151,12 +163,14 @@ export function AiWidgetProvider({ children }) {
     }
   };
 
+  // Bắt đầu cuộc trò chuyện mới: xoá conversationId hiện tại, chỉ còn lời chào.
   const startNewConversation = () => {
     setConversationId(null);
     setMessages([createGreeting()]);
     setIsHistoryPanelOpen(false);
   };
 
+  // Chọn một cuộc trò chuyện cũ từ bảng lịch sử để xem tiếp.
   const selectConversation = async (nextConversationId) => {
     if (!isAuthenticated || !nextConversationId) return;
 
@@ -224,6 +238,10 @@ export function AiWidgetProvider({ children }) {
     };
   }, [conversationId, historyLoaded, isAuthenticated, isOpen, loadConversations, messages]);
 
+  // Gửi tin nhắn mới cho AI. Đầu vào: nội dung câu hỏi. Các bước: (1) thêm tin nhắn của user vào
+  // giao diện ngay (optimistic UI); (2) gọi API /ai/chat, kèm documentId nếu đang bật ngữ cảnh
+  // tài liệu; (3) thêm câu trả lời của AI vào giao diện; (4) đã đăng nhập thì nạp lại danh sách
+  // cuộc trò chuyện (để cập nhật tiêu đề/thời gian mới nhất); (5) lỗi thì hiện tin nhắn báo lỗi.
   const sendMessage = async (text) => {
     const cleanText = text.trim();
     if (!cleanText || isTyping || isHistoryLoading) return;
@@ -332,6 +350,7 @@ export function AiWidgetProvider({ children }) {
   return <AiWidgetContext.Provider value={value}>{children}</AiWidgetContext.Provider>;
 }
 
+// Hook tiện lợi để đọc/điều khiển trạng thái widget chat AI từ bất kỳ component nào.
 export function useAiWidget() {
   const context = useContext(AiWidgetContext);
   if (!context) {

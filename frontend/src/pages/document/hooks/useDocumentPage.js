@@ -7,6 +7,11 @@ import { useDebounce } from "../../../hooks/useDebounce";
 
 const PAGE_SIZE = 8;
 
+/**
+ * Hook chứa toàn bộ logic cho trang "Tài liệu của tôi": nạp danh sách tài liệu + môn học, lọc/
+ * tìm kiếm/phân trang phía CLIENT (không gọi lại API mỗi lần lọc), và luồng tải tài liệu lên
+ * (modal Upload). UI (DocumentPage.jsx) chỉ gọi các hàm/đọc state hook này trả về.
+ */
 export function useDocumentPage() {
   const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
@@ -29,6 +34,7 @@ export function useDocumentPage() {
   // để BE tự quyết (fail-open, giống storageUsage).
   const [allowedFileTypes, setAllowedFileTypes] = useState(null);
 
+  // Gọi API lấy dung lượng đã dùng (cho thanh dung lượng trong modal upload).
   const loadStorageUsage = () => {
     documentApi
       .getStorageUsage()
@@ -36,6 +42,7 @@ export function useDocumentPage() {
       .catch(() => setStorageUsage(null));
   };
 
+  // Gọi API lấy danh sách đuôi tệp được phép tải lên.
   const loadAllowedFileTypes = () => {
     documentApi
       .getAllowedFileTypes()
@@ -43,6 +50,7 @@ export function useDocumentPage() {
       .catch(() => setAllowedFileTypes(null));
   };
 
+  // Nạp lại toàn bộ dữ liệu trang: tài liệu của tôi + danh sách môn học (gọi song song).
   const loadAll = async () => {
     setLoading(true);
     try {
@@ -113,6 +121,7 @@ export function useDocumentPage() {
     setPage(1);
   };
 
+  // Gọi API bật/tắt yêu thích rồi nạp lại danh sách để cập nhật giao diện.
   const handleToggleFavorite = async (id) => {
     try {
       await documentApi.toggleFavorite(id);
@@ -122,6 +131,8 @@ export function useDocumentPage() {
     }
   };
 
+  // Xử lý form Upload: dựng FormData rồi gọi API tải tài liệu lên. Thành công thì báo tin nhắn
+  // theo đúng nơi lưu (LOCAL/CLOUD/BOTH), đóng modal, và nạp lại danh sách.
   const handleUpload = async ({ title, description, subjectIds, file, storage }) => {
     setUploading(true);
     try {
@@ -129,7 +140,7 @@ export function useDocumentPage() {
       formData.append("title", title);
       formData.append("description", description);
       (subjectIds || []).forEach((id) => formData.append("subjectIds", id));
-      formData.append("storage", storage || "LOCAL");
+      formData.append("storage", storage || "SERVER");
       formData.append("file", file);
 
       await documentApi.upload(formData);

@@ -13,6 +13,8 @@ function bytesToGb(bytes) {
   return String(Math.round((bytes / GB_BYTES) * 1e6) / 1e6);
 }
 
+// Hook logic trang Admin CẤU HÌNH HỆ THỐNG: 4 form độc lập (tuổi tối thiểu, giới hạn dung lượng,
+// loại tệp cho phép, tham số AI) — mỗi form tự validate ở FE trước khi gọi API lưu.
 export function useAdminSettingsPage() {
   const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
@@ -37,6 +39,7 @@ export function useAdminSettingsPage() {
   const [savingFileTypes, setSavingFileTypes] = useState(false);
   const [savingAiConfig, setSavingAiConfig] = useState(false);
 
+  // Nạp cả 4 nhóm cấu hình song song, quy đổi byte -> GB để hiển thị.
   const load = async () => {
     setLoading(true);
     try {
@@ -72,6 +75,7 @@ export function useAdminSettingsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Lưu tuổi tối thiểu được phép tải tài liệu lên.
   const saveMinUploadAge = async (value) => {
     setSaving(true);
     try {
@@ -104,6 +108,7 @@ export function useAdminSettingsPage() {
     return null;
   };
 
+  // Validate rồi quy đổi GB -> byte và lưu giới hạn dung lượng file/quota.
   const saveUploadLimits = async (values) => {
     const { maxFileLocalGbValue, maxFileCloudGbValue, quotaLocalGbValue, quotaCloudGbValue } = values;
 
@@ -167,6 +172,7 @@ export function useAdminSettingsPage() {
     return result;
   };
 
+  // Parse chuỗi đuôi tệp admin nhập, validate định dạng, rồi lưu whitelist mới.
   const saveAllowedFileTypes = async (raw) => {
     const extensions = parseExtensions(raw);
     if (extensions.length === 0) {
@@ -206,6 +212,7 @@ export function useAdminSettingsPage() {
     return null;
   };
 
+  // Validate từng tham số AI theo đúng khoảng cho phép rồi lưu.
   const saveAiConfig = async (values) => {
     const {
       topK,

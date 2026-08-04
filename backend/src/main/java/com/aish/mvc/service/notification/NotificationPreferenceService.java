@@ -5,6 +5,10 @@ import com.aish.mvc.entity.enums.NotificationType;
 
 import java.util.List;
 
+/**
+ * Cài đặt "muốn nhận loại thông báo nào" của từng người dùng — chỉ áp dụng cho 4 loại trong
+ * {@link ConfigurableNotificationTypes}.
+ */
 public interface NotificationPreferenceService {
 
     // Trạng thái 4 loại CONFIGURABLE cho current user; loại chưa có row -> enabled=true.

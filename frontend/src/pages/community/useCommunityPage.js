@@ -4,6 +4,8 @@ import * as subjectApi from "../../api/subjectApi";
 import { useToast } from "../../hooks/useToast";
 import { useDebounce } from "../../hooks/useDebounce";
 
+// Hook logic trang Cộng đồng: nạp danh sách môn học 1 lần, gọi API tìm kiếm mỗi khi bộ lọc/trang
+// đổi (debounce riêng cho từ khoá), và tự về trang 0 khi đổi bộ lọc (trừ đổi trang).
 export function useCommunityPage() {
   const { showError } = useToast();
   const [items, setItems] = useState([]);
@@ -23,6 +25,7 @@ export function useCommunityPage() {
     subjectApi.getAll().then(setSubjects).catch(() => setSubjects([]));
   }, []);
 
+  // Gọi API GET /documents/community — nạp trang kết quả theo bộ lọc/sắp xếp hiện tại.
   const load = async () => {
     setLoading(true);
     try {

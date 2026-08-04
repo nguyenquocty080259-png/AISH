@@ -25,6 +25,11 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 
+/**
+ * Cài đặt thật của {@link ProfileService}. Mọi thao tác đều lấy user hiện tại từ email trong
+ * token (SecurityContext) — không nhận userId từ client để tránh sửa hồ sơ người khác.
+ * Ảnh đại diện được lưu thẳng ra đĩa (thư mục uploads/avatars), không qua Cloudinary.
+ */
 @Service
 @RequiredArgsConstructor
 public class ProfileServiceImpl implements ProfileService {
@@ -45,6 +50,8 @@ public class ProfileServiceImpl implements ProfileService {
 
     private static final String AVATAR_UPLOAD_DIR = "uploads/avatars";
 
+    // Lấy hồ sơ của user đang đăng nhập. Nếu user chưa từng có profile (tài khoản cũ / vừa tạo
+    // qua OAuth) thì tự tạo mới với username sinh tự động, tránh lỗi "không tìm thấy hồ sơ".
     @Override
     public ProfileResponse getMyProfile() {
 
@@ -60,6 +67,8 @@ public class ProfileServiceImpl implements ProfileService {
         return mapToResponse(account, user, profile);
     }
 
+    // Cập nhật TOÀN BỘ hồ sơ (ghi đè hết các trường bằng giá trị trong request, kể cả rỗng).
+    // Khác với completeOnboarding (chỉ cập nhật trường có giá trị).
     @Override
     public ProfileResponse updateMyProfile(UpdateProfileRequest request) {
 
@@ -85,7 +94,7 @@ public class ProfileServiceImpl implements ProfileService {
         }
         // AuthUser
         user.setFullName(request.getFullName());
-        authUserRepository.save(user);
+        authUserRepository.save(user); // lưu bảng auth_users
         // AuthUserProfile (username không nhận từ request nữa - do hệ thống tự sinh)
         profile.setBio(request.getBio());
 
@@ -113,7 +122,7 @@ public class ProfileServiceImpl implements ProfileService {
 
         profile.setTrashRetentionDays(request.getTrashRetentionDays());
 
-        authUserProfileRepository.save(profile);
+        authUserProfileRepository.save(profile); // lưu bảng auth_user_profiles
 
         return mapToResponse(account, user, profile);
     }
@@ -165,6 +174,10 @@ public class ProfileServiceImpl implements ProfileService {
         return mapToResponse(account, user, profile);
     }
 
+    // Tải ảnh đại diện mới lên. Đầu vào: file ảnh. Trả về: đường dẫn URL của ảnh vừa lưu.
+    // Các bước: (1) kiểm tra file hợp lệ (không rỗng, tối đa 5MB, đúng định dạng ảnh);
+    // (2) tạo thư mục lưu nếu chưa có; (3) sinh tên file ngẫu nhiên (UUID) tránh trùng;
+    // (4) lưu file mới xuống đĩa; (5) xoá file avatar cũ (nếu có); (6) cập nhật đường dẫn vào DB.
     @Override
     public String uploadAvatar(MultipartFile file) {
 
@@ -262,7 +275,7 @@ public class ProfileServiceImpl implements ProfileService {
             String avatarUrl = "/uploads/avatars/" + filename;
 
             user.setAvatarUrl(avatarUrl);
-            authUserRepository.save(user);
+            authUserRepository.save(user); // lưu đường dẫn avatar mới vào bảng auth_users
 
             return avatarUrl;
         } catch (IOException e) {
@@ -278,12 +291,15 @@ public class ProfileServiceImpl implements ProfileService {
         return isBlank(value) ? null : value;
     }
 
+    // Chỉ gán giá trị mới nếu value không rỗng — dùng cho onboarding để không ghi đè mất dữ liệu
+    // cũ khi user chỉ điền một phần form.
     private static void applyIfPresent(String value, Consumer<String> setter) {
         if (!isBlank(value)) {
             setter.accept(value);
         }
     }
 
+    // Lấy email của user đang đăng nhập từ token (SecurityContext).
     private String getCurrentEmail() {
 
         Authentication authentication =
@@ -294,6 +310,7 @@ public class ProfileServiceImpl implements ProfileService {
         return authentication.getName();
     }
 
+    // Gom dữ liệu từ 3 bảng (account, user, profile) thành một DTO duy nhất để trả về FE.
     private ProfileResponse mapToResponse(
             AuthAccount account,
             AuthUser user,

@@ -4,6 +4,7 @@ import * as documentApi from "../../../api/documentApi";
 import { useToast } from "../../../hooks/useToast";
 import { ROUTES, buildRoute } from "../../../constants/routes";
 
+// Hook logic trang Yêu thích: nạp danh sách, bỏ thích (optimistic — xoá khỏi UI ngay, không chờ nạp lại cả trang).
 export function useFavoritesPage() {
   const navigate = useNavigate();
   const { showError } = useToast();
@@ -12,6 +13,7 @@ export function useFavoritesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Gọi API GET /documents/favorites — nạp danh sách tài liệu đã yêu thích.
   const load = async () => {
     setLoading(true);
     setError(null);

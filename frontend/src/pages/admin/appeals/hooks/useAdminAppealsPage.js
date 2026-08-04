@@ -4,6 +4,8 @@ import * as adminApi from "../../../../api/adminApi";
 import { useToast } from "../../../../hooks/useToast";
 import { useSearchParams } from "react-router-dom";
 
+// Hook logic trang Admin xử lý KHÁNG CÁO + BÌNH LUẬN CHỜ DUYỆT (2 tab, tab hiện tại lưu vào URL
+// query để giữ khi tải lại trang).
 export function useAdminAppealsPage() {
   const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
@@ -24,6 +26,7 @@ export function useAdminAppealsPage() {
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentPendingIds, setCommentPendingIds] = useState(() => new Set());
 
+  // Gọi API GET /admin/appeals — nạp danh sách kháng cáo theo bộ lọc trạng thái.
   const load = async (status) => {
     setLoading(true);
     setError(null);
@@ -43,6 +46,7 @@ export function useAdminAppealsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
 
+  // Gọi API GET /admin/comments?status=PENDING_REVIEW — nạp bình luận chờ duyệt.
   const loadComments = async () => {
     setCommentsLoading(true);
     try {
@@ -74,6 +78,7 @@ export function useAdminAppealsPage() {
 
   const closeDecisionModal = () => setDecisionTarget(null);
 
+  // Xác nhận duyệt/từ chối kháng cáo đang chọn trong modal.
   const submitDecision = async () => {
     if (!decisionTarget) return;
     const { appeal, action } = decisionTarget;
@@ -102,6 +107,7 @@ export function useAdminAppealsPage() {
     }
   };
 
+  // Duyệt/từ chối 1 bình luận chờ duyệt, xoá khỏi danh sách sau khi xử lý xong.
   const reviewComment = async (comment, approve) => {
     setCommentPendingIds((previous) => new Set(previous).add(comment.id));
     try {

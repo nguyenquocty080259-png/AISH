@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import Button from "../../../components/ui/Button";
 import Modal from "../../../components/ui/Modal";
 
+// Định dạng thời gian cập nhật cuối của cuộc trò chuyện thành dạng tương đối ("5 phút trước"...).
 function formatConversationTime(value, t, locale) {
   if (!value) return "";
 
@@ -26,6 +27,8 @@ function formatConversationTime(value, t, locale) {
   });
 }
 
+// Sidebar LỊCH SỬ CHAT: danh sách cuộc trò chuyện (đánh dấu cuộc gắn với tài liệu), nút tạo mới,
+// và modal đổi tên/xoá cho từng cuộc.
 export default function ConversationSidebar({
   isOpen,
   isAuthenticated,

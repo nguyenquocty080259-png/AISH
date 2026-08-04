@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/** Cài đặt thật của {@link NotificationPreferenceService}. */
 @Service
 @RequiredArgsConstructor
 public class NotificationPreferenceServiceImpl implements NotificationPreferenceService {
@@ -25,6 +26,7 @@ public class NotificationPreferenceServiceImpl implements NotificationPreference
     private final NotificationPreferenceRepository notificationPreferenceRepository;
     private final AuthAccountRepository authAccountRepository;
 
+    // Lấy user đang đăng nhập từ token.
     private AuthUser getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return authAccountRepository.findByIdentifier(email)
@@ -32,6 +34,8 @@ public class NotificationPreferenceServiceImpl implements NotificationPreference
                 .getUser();
     }
 
+    // Lấy trạng thái bật/tắt của 4 loại thông báo có thể cấu hình. Loại chưa có bản ghi trong DB
+    // (user chưa từng đổi) mặc định coi là ĐANG BẬT.
     @Override
     @Transactional(readOnly = true)
     public List<NotificationPreferenceDTO> getMyPreferences() {
@@ -44,6 +48,8 @@ public class NotificationPreferenceServiceImpl implements NotificationPreference
                 .toList();
     }
 
+    // Cập nhật cài đặt: chỉ áp dụng cho các loại nằm trong CONFIGURABLE, loại khác bị bỏ qua âm
+    // thầm (không báo lỗi). Chưa có bản ghi thì tạo mới, có rồi thì cập nhật (upsert).
     @Override
     @Transactional
     public void updateMyPreferences(List<NotificationPreferenceDTO> prefs) {
@@ -59,10 +65,12 @@ public class NotificationPreferenceServiceImpl implements NotificationPreference
                             .type(pref.getType())
                             .build());
             entity.setEnabled(pref.isEnabled());
-            notificationPreferenceRepository.save(entity);
+            notificationPreferenceRepository.save(entity); // lưu bảng notification_preferences
         }
     }
 
+    // Dùng NỘI BỘ (NotificationService gọi trước khi tạo thông báo): loại không thể cấu hình luôn
+    // trả true (luôn gửi); loại có thể cấu hình mà chưa có bản ghi cũng mặc định true.
     @Override
     @Transactional(readOnly = true)
     public boolean isEnabled(Long userId, NotificationType type) {

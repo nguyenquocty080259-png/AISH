@@ -22,6 +22,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.text.Normalizer;
 
+/**
+ * Cài đặt thật của {@link AiModerationService} — gọi mô hình AI (qua Spring AI ChatClient) để
+ * chấm nội dung PASS/FLAG. Prompt luôn bọc nội dung người dùng giữa 2 delimiter đặc biệt và dặn
+ * AI coi đó là DATA thuần, không phải chỉ thị — chống kiểu tấn công "prompt injection" (người
+ * dùng viết nội dung giả làm chỉ thị để lừa AI bỏ qua kiểm duyệt).
+ */
 @Service
 @RequiredArgsConstructor
 public class AiModerationServiceImpl implements AiModerationService {
@@ -57,6 +63,8 @@ public class AiModerationServiceImpl implements AiModerationService {
     private final ChatClient chatClient;
     private final AiUsageTracker aiUsageTracker;
 
+    // Kiểm duyệt tài liệu bằng AI. Lỗi bất kỳ (AI sập, timeout...) -> failSafe trả về FLAG, đẩy
+    // sang cho Admin xem thủ công thay vì để lọt tài liệu chưa kiểm tra.
     @Override
     @Transactional(readOnly = true)
     public ModerationResultDTO screen(Long documentId) {
@@ -70,6 +78,7 @@ public class AiModerationServiceImpl implements AiModerationService {
         }
     }
 
+    // Dùng lại đúng một lệnh gọi AI (callDocumentModeration) để lấy riêng phần đối chiếu metadata.
     @Override
     @Transactional(readOnly = true)
     public MetadataMatchResult checkMetadata(DocDocument document) {
@@ -78,6 +87,10 @@ public class AiModerationServiceImpl implements AiModerationService {
                 result.getMetadataMismatchReason());
     }
 
+    // Gọi AI một lần cho tài liệu, trả cả PASS/FLAG lẫn kết quả đối chiếu metadata (4 dòng trong
+    // MODERATION_SYSTEM_PROMPT). Các bước: (1) lấy đoạn mẫu nội dung; (2) ghép nội dung + metadata
+    // (tên file/tiêu đề/mô tả/môn học) thành 1 tin nhắn, bọc nội dung trong delimiter chống
+    // prompt-injection; (3) gọi AI; (4) ghi lại lượt dùng AI; (5) phân tích phản hồi 4 dòng.
     private ModerationResultDTO callDocumentModeration(DocDocument doc, String callType) {
         String content = contentSignalService.buildContentSignal(doc);
         if (content == null || content.isBlank()) {
@@ -96,12 +109,15 @@ public class AiModerationServiceImpl implements AiModerationService {
         Prompt prompt = new Prompt(
                 List.of(new SystemMessage(MODERATION_SYSTEM_PROMPT), new UserMessage(userMessage)),
                 MODERATION_CHAT_OPTIONS);
-        ChatResponse chatResponse = chatClient.prompt(prompt).call().chatResponse();
+        ChatResponse chatResponse = chatClient.prompt(prompt).call().chatResponse(); // gọi AI
         String raw = chatResponse.getResult().getOutput().getText();
-        aiUsageTracker.log(callType, chatResponse, null);
+        aiUsageTracker.log(callType, chatResponse, null); // ghi lại số token đã dùng
         return parseResponse(doc.getId(), raw);
     }
 
+    // Kiểm duyệt một đoạn văn bản rời (chat/bình luận). Lỗi -> fail-open trả PASS (khác hẳn
+    // screen() ở trên trả FLAG khi lỗi), vì đây là luồng thời gian thực: thà bỏ lọt một tin nhắn
+    // còn hơn chặn nhầm toàn bộ người dùng khi dịch vụ AI trục trặc.
     @Override
     public ModerationResultDTO screenText(String text) {
         if (text == null || text.isBlank()) return textPass("Tin nhắn trống.");
@@ -122,6 +138,8 @@ public class AiModerationServiceImpl implements AiModerationService {
         }
     }
 
+    // Đọc 4 dòng phản hồi của AI: dòng 1 PASS/FLAG, dòng 2 lý do, dòng 3 KHOP/LECH (metadata),
+    // dòng 4 lý do lệch. Phản hồi không đúng khuôn dạng -> coi như lỗi, trả failSafe (FLAG).
     // Package-visible for focused parser tests.
     ModerationResultDTO parseResponse(Long documentId, String raw) {
         if (raw == null || raw.isBlank()) return failSafe(documentId, "Không nhận được phản hồi từ AI kiểm duyệt.");
@@ -143,6 +161,7 @@ public class AiModerationServiceImpl implements AiModerationService {
         return failSafe(documentId, "Không phân tích được phản hồi kiểm duyệt.");
     }
 
+    // Đọc 2 dòng phản hồi cho screenText: dòng 1 PASS/FLAG, dòng 2 lý do.
     private ModerationResultDTO parseTextResponse(String raw) {
         if (raw == null || raw.isBlank()) return textPass("AI không trả về kết quả rõ ràng.");
         String[] lines = raw.strip().split("\\R", 2);
@@ -152,6 +171,8 @@ public class AiModerationServiceImpl implements AiModerationService {
         return textPass(reason);
     }
 
+    // Chuẩn hoá 1 dòng phản hồi AI để so sánh: bỏ dấu tiếng Việt, chỉ giữ chữ cái, viết hoa hết —
+    // giúp so khớp "PASS"/"FLAG" dù AI có lỡ thêm khoảng trắng/dấu câu.
     private static String normalize(String line) {
         if (line == null) return "";
         String ascii = Normalizer.normalize(line, Normalizer.Form.NFD)

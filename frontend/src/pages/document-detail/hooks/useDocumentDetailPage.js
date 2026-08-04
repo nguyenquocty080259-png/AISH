@@ -45,6 +45,12 @@ export function resolveViewerKind(fileType, fileName) {
 // TextFileViewer, ExtractedTextViewer) nên không cần state chung ở đây.
 const RAW_BLOB_KINDS = new Set(["image", "pdf", "other"]);
 
+/**
+ * Hook TRUNG TÂM cho trang chi tiết tài liệu — gom toàn bộ state và hành động: nạp tài liệu, xem
+ * trước (chọn đúng viewer theo định dạng file), bình luận/đánh giá/yêu thích, sửa/xoá/tải về,
+ * bật/tắt công khai (qua kiểm duyệt AI), ingest cho AI chat, chia sẻ, thêm vào bộ sưu tập, xem
+ * tài liệu liên quan, và duyệt nhanh của Admin ngay trên trang.
+ */
 export function useDocumentDetailPage() {
   const { t } = useTranslation();
   const { id } = useParams();
@@ -100,6 +106,7 @@ export function useDocumentDetailPage() {
   const [shareRecipients, setShareRecipients] = useState([]);
   const [loadingRecipients, setLoadingRecipients] = useState(false);
 
+  // Gọi API GET /documents/{id} — nạp (hoặc nạp lại) chi tiết tài liệu.
   const load = async () => {
     setLoading(true);
     try {
@@ -155,6 +162,7 @@ export function useDocumentDetailPage() {
     user?.fullName && doc?.ownerName && user.fullName === doc.ownerName
   );
 
+  // Bật/tắt yêu thích rồi nạp lại tài liệu.
   const handleToggleFavorite = async () => {
     try {
       await documentApi.toggleFavorite(id);
@@ -164,6 +172,7 @@ export function useDocumentDetailPage() {
     }
   };
 
+  // Chấm điểm 1-5 sao rồi nạp lại tài liệu.
   const handleRate = async (star) => {
     try {
       await documentApi.rateDocument(id, star);
@@ -174,6 +183,8 @@ export function useDocumentDetailPage() {
     }
   };
 
+  // Gửi bình luận mới. Bị chặn vì trúng từ khoá cấm (lỗi 422 kèm blocked=true) thì mở hộp thoại
+  // khiếu nại (blockedComment) thay vì báo lỗi thẳng — cho người dùng cơ hội giải thích.
   const handleAddComment = async (e) => {
     e.preventDefault();
     if (!commentText.trim()) return;
@@ -197,6 +208,7 @@ export function useDocumentDetailPage() {
     }
   };
 
+  // Sửa bình luận — cùng luồng chặn/khiếu nại như handleAddComment.
   const handleUpdateComment = async (commentId, content) => {
     if (!content.trim()) return false;
     try {
@@ -221,6 +233,7 @@ export function useDocumentDetailPage() {
 
   const dismissBlockedComment = () => setBlockedComment(null);
 
+  // Gửi lại bình luận bị chặn kèm lý do khiếu nại — vào thẳng trạng thái chờ Admin duyệt.
   const disputeBlockedComment = async (disputeNote) => {
     if (!blockedComment) return false;
     setPosting(true);
@@ -245,6 +258,7 @@ export function useDocumentDetailPage() {
     }
   };
 
+  // Xoá bình luận (chỉ tác giả).
   const handleDeleteComment = async (commentId) => {
     try {
       await documentApi.deleteComment(commentId);
@@ -270,6 +284,7 @@ export function useDocumentDetailPage() {
 
   const closeEditModal = () => setEditModalOpen(false);
 
+  // Lưu thay đổi tiêu đề/mô tả/môn học từ modal sửa.
   const handleUpdateDocument = async (data) => {
     setEditSubmitting(true);
     try {
@@ -284,6 +299,8 @@ export function useDocumentDetailPage() {
     }
   };
 
+  // Tải file gốc về máy: gọi API lấy blob, đọc tên file thật từ header Content-Disposition,
+  // rồi tạo link ẩn để trình duyệt tự tải xuống.
   const handleDownload = async () => {
     setDownloading(true);
     try {
@@ -328,6 +345,8 @@ export function useDocumentDetailPage() {
     }
   };
 
+  // Bấm "Công khai"/"Riêng tư": gọi API xin đổi visibility rồi hiện thông báo phù hợp với kết
+  // quả kiểm duyệt AI trả về (chờ duyệt / công khai ngay / bị từ chối kèm lý do).
   const handleToggleVisibility = async () => {
     try {
       // BE trả về document sau khi đổi kèm kết quả kiểm duyệt AI. Yêu cầu công khai KHÔNG còn
@@ -365,6 +384,7 @@ export function useDocumentDetailPage() {
   const isAdmin = role === ROLES.ADMIN;
   const [adminReviewing, setAdminReviewing] = useState(null); // "approve" | "reject" | null
 
+  // Admin duyệt/từ chối tài liệu ngay trên trang chi tiết (không cần qua trang quản trị riêng).
   const handleAdminReview = async (action) => {
     setAdminReviewing(action);
     try {
@@ -382,6 +402,7 @@ export function useDocumentDetailPage() {
       setAdminReviewing(null);
     }
   };
+  // Xoá mềm tài liệu (vào thùng rác) rồi điều hướng về danh sách tài liệu.
   const handleDelete = async () => {
     try {
       await documentApi.deleteDocument(id);
@@ -392,6 +413,7 @@ export function useDocumentDetailPage() {
     }
   };
 
+  // Điều hướng sang trang AI Chat, kèm sẵn documentId để tự bật hỏi-đáp về tài liệu này.
   const goAskAi = () => {
     navigate(`${ROUTES.AI_CHAT}?documentId=${id}`);
   };
@@ -416,6 +438,7 @@ export function useDocumentDetailPage() {
     navigate(buildRoute(ROUTES.DOCUMENT_DETAIL, { id: documentId }));
   };
 
+  // Mở modal "Thêm vào bộ sưu tập" — nạp danh sách bộ sưu tập của tôi.
   const openAddToCollectionModal = async () => {
     setAddToCollectionModalOpen(true);
     setSelectedCollectionIds([]);
@@ -461,6 +484,7 @@ export function useDocumentDetailPage() {
     }
   };
 
+  // Tạo bộ sưu tập mới NGAY TRONG modal rồi thêm luôn tài liệu này vào đó.
   const handleCreateCollectionAndAdd = async (name) => {
     setCreatingCollection(true);
     try {
@@ -476,6 +500,7 @@ export function useDocumentDetailPage() {
     }
   };
 
+  // Nạp danh sách người đang được chia sẻ tài liệu (chỉ chủ sở hữu gọi được).
   const loadShareRecipients = async () => {
     setLoadingRecipients(true);
     try {

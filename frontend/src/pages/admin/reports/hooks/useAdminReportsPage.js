@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import * as adminApi from "../../../../api/adminApi";
 import { useToast } from "../../../../hooks/useToast";
 
+// Hook logic trang Admin xử lý REPORT: nạp danh sách theo bộ lọc trạng thái, xử lý report qua modal.
 export function useAdminReportsPage() {
   const { t } = useTranslation();
   const { showError, showSuccess } = useToast();
@@ -31,6 +32,7 @@ export function useAdminReportsPage() {
     setAdminResponse("");
   };
   const closeResolveModal = () => { if (!submitting) setResolveTarget(null); };
+  // Gọi API PUT /admin/reports/{id}/resolve với hành động + phản hồi đã chọn.
   const submitResolve = async () => {
     if (!resolveTarget || !actionTaken) return showError(t("admin.reports.chooseActionError"));
     setSubmitting(true);

@@ -7,6 +7,9 @@ import { ROUTES } from "../../../constants/routes";
 
 const RESEND_COOLDOWN_SECONDS = 60;
 
+// Hook logic trang nhập OTP — dùng chung cho 2 luồng: xác minh email lúc đăng ký (mode="signup")
+// và xác minh OTP quên mật khẩu (mode="forgot-password"). Có đếm ngược 60 giây trước khi cho gửi
+// lại OTP để tránh spam.
 export function useOtpPage() {
 
   const { t } = useTranslation();
@@ -37,6 +40,8 @@ export function useOtpPage() {
     }, 1000);
     return () => clearInterval(timer);
   }, [cooldown, email]);
+  // Xác minh OTP. mode="forgot-password" -> gọi verifyForgotPassword, lấy resetToken rồi sang
+  // trang đặt mật khẩu mới; mode="signup" (mặc định) -> gọi verifyOtp, xong thì về trang đăng nhập.
   const handleVerify = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -79,6 +84,7 @@ export function useOtpPage() {
     }
   };
 
+  // Gửi lại OTP mới, đúng API theo mode hiện tại, rồi khởi động lại đếm ngược.
   const handleResend = async () => {
     setResending(true);
     try {

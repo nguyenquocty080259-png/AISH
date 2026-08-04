@@ -4,6 +4,8 @@ import Card from "../../../components/ui/Card";
 import Button from "../../../components/ui/Button";
 import { ROUTES, buildRoute } from "../../../constants/routes";
 
+// Thẻ 1 bộ sưu tập: bấm vào để mở trang chi tiết, có nút đổi tên/xoá riêng (không kích hoạt điều
+// hướng khi bấm nút nhờ stopPropagation).
 export default function CollectionCard({ collection, onRename, onDelete }) {
   const { t } = useTranslation();
   const navigate = useNavigate();

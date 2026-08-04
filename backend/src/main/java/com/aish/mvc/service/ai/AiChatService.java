@@ -39,6 +39,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * TRÁI TIM của tính năng CHAT VỚI AI. Có 2 chế độ trả lời:
+ * <p>1) RAG (Retrieval-Augmented Generation) — khi câu hỏi gắn với một tài liệu cụ thể mà người
+ * dùng có quyền xem: tìm các đoạn nội dung liên quan nhất trong tài liệu (qua
+ * {@link com.aish.mvc.service.doc.DocEmbeddingService}) rồi bắt AI CHỈ trả lời dựa trên các đoạn
+ * đó (kèm trích dẫn trang).
+ * <p>2) GENERAL — không gắn tài liệu, hoặc tài liệu không tìm được đoạn nào liên quan: AI trả lời
+ * như trợ lý thông thường, có thể tự gọi thêm "công cụ" ({@link AdminAiTools}, {@link UserAiTools})
+ * để tra dữ liệu thật của hệ thống thay vì bịa.
+ * <p>Người dùng đã đăng nhập bị giới hạn số lượt chat/số token mỗi ngày (quota); khách (chưa đăng
+ * nhập) được chat nhưng không lưu lịch sử và không dùng được các "công cụ" cá nhân.
+ */
 @Service
 @RequiredArgsConstructor
 public class AiChatService {
@@ -121,6 +133,14 @@ public class AiChatService {
             %s
             """;
 
+    // ĐIỂM VÀO CHÍNH của tính năng chat AI. Đầu vào: câu hỏi + (tuỳ chọn) id cuộc trò chuyện/id
+    // tài liệu đang hỏi. Trả về: câu trả lời kèm trích dẫn (nếu RAG) và tài liệu liên quan gợi ý.
+    // Các bước: (1) xác định user hiện tại, chưa đăng nhập thì bỏ qua kiểm tra quota;
+    // (2) đọc cấu hình hệ thống (topK, ngưỡng tương đồng, số tin nhắn nhớ gần nhất) một lần duy
+    // nhất; (3) xác định tài liệu đang hỏi (từ request hoặc từ cuộc trò chuyện cũ);
+    // (4) có tài liệu và tìm được đoạn nội dung liên quan -> trả lời theo chế độ RAG;
+    // (5) không thì trả lời theo chế độ GENERAL (có thể AI tự gọi thêm công cụ tra dữ liệu);
+    // (6) lưu lại lượt hỏi-đáp nếu đã đăng nhập.
     public AiChatResponse chat(AiChatRequest request) {
         String message = request.getMessage();
         AuthUser currentUser = aiConversationService.currentUserOrNull();
@@ -148,6 +168,7 @@ public class AiChatService {
 
         AiChatResponse response;
         if (resolution.documentId() != null) {
+            // Tìm các đoạn nội dung trong tài liệu có ý nghĩa gần với câu hỏi nhất (similarity search).
             List<Document> hits = docEmbeddingService.retrieveChunks(
                     message,
                     List.of(resolution.documentId()),
@@ -178,13 +199,18 @@ public class AiChatService {
         LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
 
         if (callCap > 0 && aiUsageLogRepository.countChatCallsForUserSince(currentUserId, CHAT_CALL_TYPES, startOfDay) >= callCap) {
-            throw new QuotaExceededException("error.ai.quotaCallsExceeded");
+            throw new QuotaExceededException("error.ai.quotaCallsExceeded"); // vượt số lượt chat/ngày
         }
         if (tokenCap > 0 && aiUsageLogRepository.sumChatTokensForUserSince(currentUserId, CHAT_CALL_TYPES, startOfDay) >= tokenCap) {
-            throw new QuotaExceededException("error.ai.quotaTokensExceeded");
+            throw new QuotaExceededException("error.ai.quotaTokensExceeded"); // vượt số token/ngày
         }
     }
 
+    // Xác định tài liệu nào đang được hỏi tới, và có còn xem được không.
+    // Ưu tiên: id tài liệu gửi kèm trong request (phải còn quyền xem, không thì chặn hẳn) ->
+    // tài liệu gắn với cuộc trò chuyện cũ (còn quyền xem thì dùng tiếp, hết quyền thì đánh dấu
+    // "documentUnavailable" để chuyển sang trả lời GENERAL kèm lời giải thích) -> không có tài
+    // liệu nào thì chat kiểu chung.
     private DocumentResolution resolveDocument(
             AiChatRequest request,
             AiConversation conversation,
@@ -209,6 +235,7 @@ public class AiChatService {
 
     private record DocumentResolution(Long documentId, boolean documentUnavailable) {}
 
+    // Guest (chưa đăng nhập) không lưu lịch sử chat — chỉ lưu khi đã xác định được user.
     private void persistIfAuthenticated(AuthUser currentUser, AiChatRequest request, AiChatResponse response) {
         if (currentUser == null) return;
 
@@ -221,6 +248,11 @@ public class AiChatService {
         response.setConversationId(conversation.getId());
     }
 
+    // Trả lời theo chế độ RAG: chỉ dựa trên các đoạn trích (hits) tìm được trong tài liệu.
+    // Các bước: (1) ghép các đoạn trích thành 1 khối "ngữ cảnh" kèm số trang; (2) dựng prompt
+    // gồm system prompt (chứa ngữ cảnh) + vài tin nhắn gần đây (giữ mạch hội thoại) + câu hỏi mới;
+    // (3) gọi AI; (4) ghi lại lượt dùng AI; (5) dựng danh sách trích dẫn (trang + đoạn trích) và
+    // gợi ý thêm vài tài liệu liên quan tới tài liệu đang hỏi.
     private AiChatResponse buildRagResponse(
             String userMessage,
             List<Document> hits,
@@ -236,9 +268,9 @@ public class AiChatService {
         promptMessages.add(new UserMessage(userMessage));
         Prompt prompt = new Prompt(promptMessages);
 
-        ChatResponse chatResponse = chatClient.prompt(prompt).call().chatResponse();
+        ChatResponse chatResponse = chatClient.prompt(prompt).call().chatResponse(); // gọi AI
         String answer = chatResponse.getResult().getOutput().getText();
-        aiUsageTracker.log("CHAT_RAG", chatResponse, null);
+        aiUsageTracker.log("CHAT_RAG", chatResponse, null); // ghi lại số token đã dùng
 
         List<CitationDTO> citations = hits.stream()
                 .map(d -> new CitationDTO(
@@ -254,6 +286,8 @@ public class AiChatService {
         return new AiChatResponse(answer, "RAG", citations, relatedDocs);
     }
 
+    // Chuyển lịch sử tin nhắn đã lưu (AiMessage, entity của DB) sang định dạng Message của Spring
+    // AI (UserMessage/AssistantMessage) để đưa vào prompt gọi AI tiếp theo.
     private List<Message> toChatMessages(List<AiMessage> messages) {
         return messages.stream()
                 .map(message -> switch (message.getRole()) {
@@ -264,6 +298,13 @@ public class AiChatService {
                 .toList();
     }
 
+    // Trả lời theo chế độ GENERAL (không dựa trên tài liệu cụ thể).
+    // Các bước: (1) chọn system prompt theo vai trò — Admin được thêm mô tả công cụ quản trị +
+    // công cụ cá nhân, user thường chỉ có công cụ cá nhân, guest không có công cụ nào;
+    // (2) gắn danh sách "công cụ" tương ứng để AI có thể tự gọi khi cần tra dữ liệu thật;
+    // (3) gọi AI; (4) không phải Admin thì lọc bỏ mọi ID nội bộ lỡ lọt vào câu trả lời (lưới an
+    // toàn cuối, phòng khi AI phá rào dặn dò trong prompt); (5) ghi lại lượt dùng AI; (6) gợi ý
+    // thêm vài tài liệu PUBLIC liên quan tới chủ đề đang hỏi.
     private AiChatResponse buildGeneralResponse(
             String userMessage,
             AuthUser user,
@@ -281,16 +322,16 @@ public class AiChatService {
                 .messages(toChatMessages(recentMessages))
                 .user(userMessage);
         if (isAdmin) {
-            promptSpec = promptSpec.tools(adminAiTools, userAiTools);
+            promptSpec = promptSpec.tools(adminAiTools, userAiTools); // Admin dùng được cả 2 bộ công cụ
         } else if (isAuthenticated) {
-            promptSpec = promptSpec.tools(userAiTools);
+            promptSpec = promptSpec.tools(userAiTools); // user thường chỉ dùng công cụ dữ liệu cá nhân
         }
-        ChatResponse chatResponse = promptSpec.call().chatResponse();
+        ChatResponse chatResponse = promptSpec.call().chatResponse(); // gọi AI
         String answer = chatResponse.getResult().getOutput().getText();
         if (!isAdmin) {
-            answer = stripInternalIds(answer);
+            answer = stripInternalIds(answer); // lọc bỏ ID nội bộ lỡ lọt ra (không áp cho Admin)
         }
-        aiUsageTracker.log("CHAT_GENERAL", chatResponse, null);
+        aiUsageTracker.log("CHAT_GENERAL", chatResponse, null); // ghi lại số token đã dùng
 
         List<RelatedDocDTO> relatedDocs = suggestPublicDocsForTopic(userMessage, currentUserId, similarityThreshold);
 
@@ -311,6 +352,8 @@ public class AiChatService {
         return result.replaceAll("[ \\t]{2,}", " ").strip();
     }
 
+    // Trường hợp tài liệu gắn với cuộc trò chuyện cũ không còn xem được nữa (bị xoá/chuyển riêng
+    // tư) -> vẫn trả lời GENERAL bình thường nhưng thêm câu giải thích ở đầu để người dùng hiểu vì sao.
     private AiChatResponse buildUnavailableDocumentGeneralResponse(
             String userMessage,
             AuthUser user,
@@ -323,6 +366,8 @@ public class AiChatService {
         return new AiChatResponse(answer, "GENERAL", response.getCitations(), response.getRelatedDocs());
     }
 
+    // Gợi ý tài liệu liên quan tới tài liệu có đoạn trích khớp cao nhất (chế độ RAG). Lỗi thì bỏ
+    // qua gợi ý (không làm hỏng câu trả lời chính).
     private List<RelatedDocDTO> relatedToTopHit(List<Document> hits, Long currentUserId) {
         Long seedDocId = hits.isEmpty() ? null : documentIdOf(hits.get(0));
         if (seedDocId == null) return List.of();
@@ -337,6 +382,9 @@ public class AiChatService {
         }
     }
 
+    // Chế độ GENERAL: tìm vài tài liệu PUBLIC đã duyệt có nội dung gần với câu hỏi (dùng chung cơ
+    // chế similarity search với RAG, nhưng tìm trên TOÀN BỘ tài liệu công khai thay vì 1 tài liệu).
+    // Lỗi thì bỏ qua gợi ý, không ảnh hưởng câu trả lời chính.
     private List<RelatedDocDTO> suggestPublicDocsForTopic(String message, Long currentUserId, double similarityThreshold) {
         try {
             List<Long> publicDocIds = docDocumentRepository
@@ -372,6 +420,8 @@ public class AiChatService {
         }
     }
 
+    // Các hàm dưới đây đọc metadata đính kèm mỗi đoạn trích (được gắn lúc ingest tài liệu, xem
+    // DocEmbeddingServiceImpl) để dựng trích dẫn: số trang, tiêu đề tài liệu, tác giả, id tài liệu.
     private static Integer pageOf(Document d) {
         Object page = d.getMetadata().get("page");
         return page instanceof Integer ? (Integer) page : null;
@@ -394,6 +444,7 @@ public class AiChatService {
         return null;
     }
 
+    // Cắt đoạn trích dài thành đoạn ngắn (kèm "...") để hiển thị gọn trong phần trích dẫn.
     private static String snippet(String text) {
         if (text == null) return "";
         String trimmed = text.trim();

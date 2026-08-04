@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import * as subjectApi from "../../../../api/subjectApi";
 import { useToast } from "../../../../hooks/useToast";
 
+// Hook logic trang Admin quản lý MÔN HỌC: nạp danh sách, tạo/đổi tên/xoá qua modal.
 export function useAdminSubjectsPage() {
   const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
@@ -42,6 +43,7 @@ export function useAdminSubjectsPage() {
   const openCreateModal = () => setCreateModalOpen(true);
   const closeCreateModal = () => setCreateModalOpen(false);
 
+  // Tạo môn học mới — trùng tên thì BE trả về môn cũ đã có (findOrCreate), không tạo bản trùng.
   const createSubject = async ({ name, description }) => {
     setCreating(true);
     try {
@@ -60,6 +62,7 @@ export function useAdminSubjectsPage() {
   const openRenameModal = (subject) => setRenameTarget(subject);
   const closeRenameModal = () => setRenameTarget(null);
 
+  // Sửa tên/mô tả môn học đang chọn.
   const renameSubject = async ({ name, description }) => {
     if (!renameTarget) return;
     setRenaming(true);
@@ -79,6 +82,7 @@ export function useAdminSubjectsPage() {
   const openDeleteModal = (subject) => setDeleteTarget(subject);
   const closeDeleteModal = () => setDeleteTarget(null);
 
+  // Xoá môn học — BE chặn (409) nếu còn tài liệu đang gán môn này.
   const deleteSubject = async () => {
     if (!deleteTarget) return;
     setDeleting(true);

@@ -36,6 +36,12 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Cài đặt thật của {@link ReportService}. Điểm quan trọng nhất là {@link #resolveReport}: khi
+ * Admin xử lý report, tùy hành động chọn (actionTaken) mà hệ thống có thể TỰ ĐỘNG xoá nội dung vi
+ * phạm (removeContent) hoặc khoá tài khoản người vi phạm (lockTargetAccount) — không chỉ đơn
+ * thuần ghi nhận trạng thái.
+ */
 @Service
 @RequiredArgsConstructor
 public class ReportServiceImpl implements ReportService {
@@ -51,6 +57,7 @@ public class ReportServiceImpl implements ReportService {
     private final AdminService adminService;
     private final NotificationService notificationService;
 
+    // Lấy user đang đăng nhập từ token.
     private AuthUser getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return authAccountRepository.findByIdentifier(email)
@@ -58,6 +65,9 @@ public class ReportServiceImpl implements ReportService {
                 .getUser();
     }
 
+    // Người dùng gửi báo cáo mới. Các bước: (1) kiểm tra targetType hợp lệ; (2) kiểm tra đối
+    // tượng bị báo cáo có thật tồn tại; (3) lưu report với trạng thái PENDING; (4) báo cho mọi
+    // Admin đang hoạt động biết có report mới cần xử lý.
     @Override
     @Transactional
     public ReportResponseDTO createReport(String targetType, Long targetId, String reason) {
@@ -74,7 +84,7 @@ public class ReportServiceImpl implements ReportService {
                 .status(ReportStatus.PENDING)
                 .build();
 
-        Report savedReport = reportRepository.save(report);
+        Report savedReport = reportRepository.save(report); // lưu bảng reports
         authUserRepository.findByRole_RoleNameAndStatus("ADMIN", UserStatus.ACTIVE)
                 .forEach(admin -> notificationService.createNotification(
                         admin.getId(),
@@ -84,6 +94,7 @@ public class ReportServiceImpl implements ReportService {
         return toResponseDTO(savedReport);
     }
 
+    // Hệ thống tự tạo report (không phải người dùng bấm nút) — nguồn SYSTEM, không có reporterUserId.
     @Override
     @Transactional
     public void createSystemReport(ReportTargetType targetType, Long targetId, String reason) {
@@ -95,7 +106,7 @@ public class ReportServiceImpl implements ReportService {
                 .reason(reason)
                 .status(ReportStatus.PENDING)
                 .build();
-        reportRepository.save(report);
+        reportRepository.save(report); // lưu bảng reports
     }
 
     @Override
@@ -116,6 +127,13 @@ public class ReportServiceImpl implements ReportService {
         return reports.stream().map(this::toAdminResponseDTO).toList();
     }
 
+    // (Admin) Xử lý report. Đầu vào: id report, hành động chọn (vd REMOVE_CONTENT/LOCK_ACCOUNT/
+    // WARN_USER/DISMISSED), phản hồi cho người báo cáo. Các bước: (1) report phải đang PENDING,
+    // xử lý 2 lần thì báo lỗi; (2) hành động phải hợp lệ với loại đối tượng (vd không xoá nội
+    // dung của USER report); (3) THỰC THI hành động (xoá nội dung / khoá tài khoản — có tác dụng
+    // phụ thật, không chỉ đổi trạng thái); (4) ghi lại trạng thái RESOLVED/DISMISSED + người
+    // quyết định + thời điểm; (5) báo cho người đã gửi report biết kết quả (report hệ thống thì
+    // không có ai để báo).
     @Override
     @Transactional
     public AdminReportResponseDTO resolveReport(Long reportId, String actionTakenRaw, String adminResponse) {
@@ -133,7 +151,7 @@ public class ReportServiceImpl implements ReportService {
         report.setDecidedByAdminId(getCurrentUser().getId());
         report.setDecidedAt(LocalDateTime.now());
 
-        Report savedReport = reportRepository.save(report);
+        Report savedReport = reportRepository.save(report); // lưu bảng reports
         if (savedReport.getReporterUserId() != null) {
             notificationService.createNotification(
                     savedReport.getReporterUserId(),
@@ -144,6 +162,7 @@ public class ReportServiceImpl implements ReportService {
         return toAdminResponseDTO(savedReport);
     }
 
+    // Chỉ report đang chờ (PENDING) mới xử lý được — tránh xử lý trùng lặp một report đã xong.
     private Report requirePendingReport(Long reportId) {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new ResourceNotFoundException("Report không tồn tại."));
@@ -153,6 +172,7 @@ public class ReportServiceImpl implements ReportService {
         return report;
     }
 
+    // Đọc chuỗi hành động từ request thành enum ReportAction; rỗng/không hợp lệ -> báo lỗi rõ ràng.
     private ReportAction parseActionTaken(String actionTakenRaw) {
         if (actionTakenRaw == null || actionTakenRaw.isBlank()) {
             throw new IllegalArgumentException("error.report.actionRequired");
@@ -164,6 +184,8 @@ public class ReportServiceImpl implements ReportService {
         }
     }
 
+    // Chặn hành động không hợp lý với loại đối tượng: DOCUMENT/COMMENT được xoá nội dung, nhưng
+    // USER/AI_MESSAGE (không có "nội dung" độc lập để xoá) chỉ cho khoá tài khoản/cảnh báo/bỏ qua.
     private void validateActionForTarget(ReportTargetType targetType, ReportAction actionTaken) {
         EnumSet<ReportAction> allowedActions = switch (targetType) {
             case DOCUMENT, COMMENT -> EnumSet.allOf(ReportAction.class);
@@ -176,6 +198,8 @@ public class ReportServiceImpl implements ReportService {
         }
     }
 
+    // Thực thi tác dụng phụ thật của hành động đã chọn. WARN_USER/DISMISSED không có tác dụng
+    // phụ nào ngoài việc ghi nhận quyết định.
     private void executeAction(Report report, ReportAction actionTaken) {
         switch (actionTaken) {
             case REMOVE_CONTENT -> removeContent(report);
@@ -186,6 +210,8 @@ public class ReportServiceImpl implements ReportService {
         }
     }
 
+    // Xoá thật nội dung vi phạm: tài liệu -> xoá qua DocumentService (xoá mềm), bình luận -> xoá
+    // qua EngagementService.
     private void removeContent(Report report) {
         switch (report.getTargetType()) {
             case DOCUMENT -> documentService.adminDeleteDocument(report.getTargetId());
@@ -195,13 +221,17 @@ public class ReportServiceImpl implements ReportService {
         }
     }
 
+    // Khoá tài khoản người liên quan tới report — đổi trạng thái người dùng sang BANNED
+    // (dùng lại đúng luồng AdminService.updateUserStatus).
     private void lockTargetAccount(Report report) {
         Long userId = resolveTargetOwnerUserId(report);
         AdminUpdateUserStatusRequestDTO request = new AdminUpdateUserStatusRequestDTO();
         request.setStatus("BANNED");
-        adminService.updateUserStatus(userId, request);
+        adminService.updateUserStatus(userId, request); // đổi trạng thái: -> BANNED
     }
 
+    // Tìm ra "chủ nhân" thật sự của đối tượng bị báo cáo — người sẽ bị khoá tài khoản nếu chọn
+    // LOCK_ACCOUNT. DOCUMENT/COMMENT/AI_MESSAGE đều quy về chủ sở hữu; USER thì chính targetId đó.
     private Long resolveTargetOwnerUserId(Report report) {
         return switch (report.getTargetType()) {
             case DOCUMENT -> {
@@ -223,6 +253,8 @@ public class ReportServiceImpl implements ReportService {
         };
     }
 
+    // Đọc chuỗi loại đối tượng từ request. AI_MESSAGE bị chặn ở đây vì report AI_MESSAGE chỉ tạo
+    // được từ hệ thống (createSystemReport), không cho người dùng tự chọn loại này.
     private ReportTargetType parseTargetType(String targetType) {
         if (targetType == null || targetType.isBlank()) {
             throw new IllegalArgumentException("error.report.targetTypeRequired");
@@ -241,6 +273,7 @@ public class ReportServiceImpl implements ReportService {
         return parsedTargetType;
     }
 
+    // Kiểm tra đối tượng bị báo cáo có thật tồn tại — tránh report "ma" trỏ tới id không có thật.
     private void validateTargetExists(ReportTargetType targetType, Long targetId) {
         if (targetId == null) {
             throw new IllegalArgumentException("error.report.targetIdRequired");
@@ -258,6 +291,7 @@ public class ReportServiceImpl implements ReportService {
         }
     }
 
+    // DTO rút gọn cho người dùng thường xem report của chính mình.
     private ReportResponseDTO toResponseDTO(Report report) {
         return ReportResponseDTO.builder()
                 .id(report.getId())
@@ -272,6 +306,7 @@ public class ReportServiceImpl implements ReportService {
                 .build();
     }
 
+    // DTO đầy đủ cho Admin: kèm email người báo cáo, ai đã xử lý, và nội dung tin nhắn bị gắn cờ (nếu là AI_MESSAGE).
     private AdminReportResponseDTO toAdminResponseDTO(Report report) {
         return AdminReportResponseDTO.builder()
                 .id(report.getId())
@@ -291,6 +326,7 @@ public class ReportServiceImpl implements ReportService {
                 .build();
     }
 
+    // Lấy nội dung tin nhắn AI bị gắn cờ để Admin xem trực tiếp mà không cần mở riêng cuộc trò chuyện.
     private String findFlaggedMessageContent(Report report) {
         if (report.getTargetType() != ReportTargetType.AI_MESSAGE) {
             return null;
@@ -300,6 +336,7 @@ public class ReportServiceImpl implements ReportService {
                 .orElse(null);
     }
 
+    // Email người báo cáo (report hệ thống thì không có ai để tra -> trả null).
     private String findReporterEmail(Report report) {
         if (report.getSource() == ReportSource.SYSTEM || report.getReporterUserId() == null) {
             return null;

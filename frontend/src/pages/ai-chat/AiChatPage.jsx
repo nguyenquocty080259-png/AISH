@@ -8,6 +8,8 @@ import GuestAiPromo from "./components/GuestAiPromo";
 import { ROUTES, buildRoute } from "../../constants/routes";
 import "./ai-chat.css";
 
+// Trang AI CHAT toàn màn hình: sidebar lịch sử cuộc trò chuyện + khung chat chính. Khách (chưa
+// đăng nhập) thấy trang quảng bá (GuestAiPromo) thay vì khung chat thật.
 export default function AiChatPage() {
   const { t } = useTranslation();
   const {

@@ -19,6 +19,12 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
+/**
+ * GHI LẠI mỗi lần gọi AI (chat, kiểm duyệt, gợi ý metadata...) vào bảng ai_usage_logs: số token
+ * dùng, chi phí ước tính, ai gọi. Dữ liệu này nuôi trang thống kê AI cho Admin
+ * ({@link AiUsageStatsService}). Việc ghi log không bao giờ làm hỏng luồng chính — lỗi khi ghi
+ * chỉ log cảnh báo, không ném ra ngoài.
+ */
 @Service
 @RequiredArgsConstructor
 public class AiUsageTracker {
@@ -32,6 +38,10 @@ public class AiUsageTracker {
     @Value("${spring.ai.openai.chat.options.model}")
     private String configuredChatModel;
 
+    // Ghi một lượt gọi AI. Đầu vào: loại lệnh gọi (vd "AI_CHAT", "DOC_MODERATION"), phản hồi từ
+    // AI (để đọc số token dùng), và id tin nhắn liên quan (có thể null). Không trả về gì.
+    // Dùng giao dịch RIÊNG (REQUIRES_NEW) để việc ghi log không bị cuốn theo rollback của giao
+    // dịch chính, và ngược lại lỗi ghi log không làm rollback giao dịch chính.
     public void log(String callType, ChatResponse chatResponse, Long messageId) {
         try {
             AiModel model = aiModelRepository.findByModelKey(configuredChatModel)
@@ -68,13 +78,14 @@ public class AiUsageTracker {
                     .build();
             TransactionTemplate transaction = new TransactionTemplate(transactionManager);
             transaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-            transaction.executeWithoutResult(status -> usageLogRepository.save(usageLog));
+            transaction.executeWithoutResult(status -> usageLogRepository.save(usageLog)); // lưu bảng ai_usage_logs
         } catch (Exception exception) {
             log.warn("Could not persist AI usage for {}; AI response remains available: {}",
                     callType, exception.getMessage());
         }
     }
 
+    // Ai đang gọi AI — lấy từ token đăng nhập. Chưa đăng nhập (guest) thì trả null.
     private AuthUser currentUserOrNull() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()
@@ -83,6 +94,7 @@ public class AiUsageTracker {
                 .map(account -> account.getUser()).orElse(null);
     }
 
+    // Ước tính chi phí (USD) dựa trên đơn giá mỗi 1 triệu token của model đang dùng.
     static Double calculateCost(Integer inputTokens, Integer outputTokens,
                                 Double inputPricePer1m, Double outputPricePer1m) {
         if (inputPricePer1m == null || outputPricePer1m == null) return null;

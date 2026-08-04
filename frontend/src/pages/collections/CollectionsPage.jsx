@@ -8,6 +8,7 @@ import CollectionCard from "./components/CollectionCard";
 import { useCollectionsPage } from "./hooks/useCollectionsPage";
 import "./collections.css";
 
+// Trang danh sách BỘ SƯU TẬP của tôi: lưới các bộ sưu tập, tạo mới/đổi tên/xoá qua modal.
 export default function CollectionsPage() {
   const { t } = useTranslation();
   const {

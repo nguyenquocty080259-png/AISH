@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { useAiWidget } from "../../context/AiWidgetContext";
 import "./ai-widget.css";
 
+// Phần đầu widget: tên AI, nút mở lịch sử (chỉ khi đã đăng nhập) và nút thu nhỏ/đóng.
 export default function ChatHeader() {
   const { t } = useTranslation();
   const { closeWidget, isAuthenticated, toggleHistoryPanel } = useAiWidget();

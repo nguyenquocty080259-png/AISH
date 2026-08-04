@@ -16,6 +16,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * TRANG CẤU HÌNH HỆ THỐNG cho Admin: tuổi tối thiểu được upload, giới hạn dung lượng/quota, loại
+ * tệp cho phép, và tham số AI (topK, ngưỡng tương đồng, trọng số gợi ý, kích thước chunk). Mọi
+ * giá trị đọc/ghi qua {@link SystemSettingService} (lưu database, có hiệu lực ngay không cần khởi
+ * động lại server). Mỗi API cập nhật đều validate khoảng giá trị hợp lý trước khi lưu.
+ */
 @RestController
 @RequestMapping("/api/admin/settings")
 @RequiredArgsConstructor
@@ -32,6 +38,7 @@ public class SystemSettingAdminController {
     private final SystemSettingService systemSettingService;
     private final UploadFileTypeService uploadFileTypeService;
 
+    // ===== Tuổi tối thiểu được phép tải tài liệu lên =====
     @GetMapping("/min-upload-age")
     public ResponseEntity<MinUploadAgeDTO> getMinUploadAge() {
         int value = systemSettingService.getInt(
@@ -49,6 +56,7 @@ public class SystemSettingAdminController {
         return ResponseEntity.ok(new MinUploadAgeDTO(value));
     }
 
+    // ===== Giới hạn dung lượng file/quota (LOCAL và CLOUD) =====
     @GetMapping("/upload-limits")
     public ResponseEntity<UploadLimitsDTO> getUploadLimits() {
         return ResponseEntity.ok(readUploadLimits());
@@ -83,6 +91,7 @@ public class SystemSettingAdminController {
         return ResponseEntity.ok(readUploadLimits());
     }
 
+    // ===== Danh sách đuôi tệp được phép upload =====
     @GetMapping("/upload-file-types")
     public ResponseEntity<UploadFileTypesDTO> getUploadFileTypes() {
         return ResponseEntity.ok(new UploadFileTypesDTO(uploadFileTypeService.getAllowedExtensions()));
@@ -114,6 +123,7 @@ public class SystemSettingAdminController {
         return ResponseEntity.ok(new UploadFileTypesDTO(normalized));
     }
 
+    // ===== Tham số AI: topK, ngưỡng tương đồng, số tin nhắn nhớ gần nhất, trọng số gợi ý, kích thước chunk =====
     @GetMapping("/ai-config")
     public ResponseEntity<AiConfigDTO> getAiConfig() {
         return ResponseEntity.ok(readAiConfig());
@@ -161,6 +171,7 @@ public class SystemSettingAdminController {
         return ResponseEntity.ok(readAiConfig());
     }
 
+    // Đọc toàn bộ tham số AI hiện tại từ database (hoặc giá trị mặc định nếu chưa cấu hình).
     private AiConfigDTO readAiConfig() {
         int topK = systemSettingService.getInt(
                 SystemSettingService.AI_TOP_K_KEY, SystemSettingService.AI_TOP_K_DEFAULT);
@@ -185,12 +196,14 @@ public class SystemSettingAdminController {
                 favoriteWeight, downloadWeight, ratingWeight, chunkSize);
     }
 
+    // Trọng số gợi ý tài liệu không được âm (âm sẽ làm đảo ngược logic xếp hạng).
     private void validateNonNegativeWeight(Double value) {
         if (value == null || value < 0.0) {
             throw new IllegalArgumentException("error.settings.aiWeightNonNegative");
         }
     }
 
+    // Đọc toàn bộ giới hạn dung lượng hiện tại từ database.
     private UploadLimitsDTO readUploadLimits() {
         long maxFileLocal = systemSettingService.getLong(
                 SystemSettingService.MAX_FILE_LOCAL_BYTES_KEY, SystemSettingService.MAX_FILE_LOCAL_BYTES_DEFAULT);
@@ -203,6 +216,7 @@ public class SystemSettingAdminController {
         return new UploadLimitsDTO(maxFileLocal, maxFileCloud, quotaLocal, quotaCloud);
     }
 
+    // Giới hạn dung lượng phải dương và không vượt trần cứng của Tomcat/Spring (2GB).
     private void validateUploadLimit(Long value, String label) {
         if (value == null || value <= 0 || value > MULTIPART_CEILING_BYTES) {
             throw new IllegalArgumentException(

@@ -8,6 +8,7 @@ const IconSearch = () => (
   </svg>
 );
 
+// Ô tìm kiếm theo tên/mô tả/môn học ở trang "Tài liệu của tôi".
 export default function SearchBar({ value, onChange }) {
   const { t } = useTranslation();
   return (

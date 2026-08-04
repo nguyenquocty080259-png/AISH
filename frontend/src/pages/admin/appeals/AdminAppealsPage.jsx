@@ -17,6 +17,8 @@ const STATUS_BADGE = {
   APPEAL_REJECTED: { intent: "error", labelKey: "admin.appeals.statusRejected" },
 };
 
+// Trang Admin xử lý kháng cáo kiểm duyệt + bình luận chờ duyệt (2 tab), có modal xác nhận quyết
+// định và modal xem/trao đổi (CaseThread) với người kháng cáo.
 export default function AdminAppealsPage() {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage === "en" ? "en-US" : "vi-VN";

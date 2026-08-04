@@ -36,6 +36,7 @@ function initials(name) {
     .join("");
 }
 
+// Trang HỒ SƠ CÁ NHÂN: xem/sửa thông tin, đổi ảnh đại diện, thanh dung lượng, và cài đặt thông báo.
 export default function ProfilePage() {
   const { t } = useTranslation();
   const fileInputRef = useRef(null);

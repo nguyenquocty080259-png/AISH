@@ -6,6 +6,8 @@ import "./notification-settings.css";
 
 const CONFIGURABLE_TYPES = ["COMMENT_ON_MY_DOC", "RATING_ON_MY_DOC", "DOCUMENT_SHARED", "CASE_REPLY"];
 
+// Bảng cài đặt bật/tắt 4 loại thông báo "xã hội" (bình luận/đánh giá/chia sẻ/phản hồi case) —
+// đổi là lưu ngay (không cần bấm nút Lưu riêng), rollback lại UI nếu API lỗi.
 export default function NotificationSettings() {
   const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
@@ -27,6 +29,7 @@ export default function NotificationSettings() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Bật/tắt 1 loại — cập nhật UI ngay (optimistic), gọi API lưu; lỗi thì khôi phục lại trạng thái cũ.
   const handleToggle = async (type) => {
     const previous = prefs;
     const next = prefs.map((pref) => (pref.type === type ? { ...pref, enabled: !pref.enabled } : pref));

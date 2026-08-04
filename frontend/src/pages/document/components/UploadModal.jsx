@@ -17,7 +17,7 @@ function checkSizeLimit(file, storage, storageUsage, t) {
     maxFileLocalBytes, maxFileCloudBytes,
   } = storageUsage;
 
-  if (storage === "LOCAL" || storage === "BOTH") {
+  if (storage === "SERVER" || storage === "BOTH") {
     if (maxFileLocalBytes != null && file.size > maxFileLocalBytes) {
       return t("documents.upload_modal.sizeLocal", { file: formatBytes(file.size), limit: formatBytes(maxFileLocalBytes) });
     }
@@ -43,7 +43,7 @@ function remainingSpaceText(storage, storageUsage, t) {
   if (!storageUsage) return null;
   const { usedLocalBytes, usedCloudBytes, quotaLocalBytes, quotaCloudBytes } = storageUsage;
   const parts = [];
-  if (storage === "LOCAL" || storage === "BOTH") {
+  if (storage === "SERVER" || storage === "BOTH") {
     parts.push(t("documents.upload_modal.remainingLocal", { size: formatBytes(Math.max(quotaLocalBytes - usedLocalBytes, 0)) }));
   }
   if (storage === "CLOUD" || storage === "BOTH") {
@@ -76,6 +76,9 @@ function checkFileType(file, allowedFileTypes, t) {
   return null;
 }
 
+// Modal form TẢI TÀI LIỆU LÊN: nhập tiêu đề/mô tả, chọn môn học, chọn file, chọn nơi lưu
+// (LOCAL/CLOUD/BOTH). Tự kiểm tra trước ở FE (dung lượng, đuôi tệp) để báo lỗi sớm, nhưng BE vẫn
+// là chốt chặn cuối cùng.
 export default function UploadModal({ open, subjects, submitting, storageUsage, allowedFileTypes, onClose, onSubmit }) {
   const { t } = useTranslation();
   const [title, setTitle] = useState("");
@@ -84,11 +87,11 @@ export default function UploadModal({ open, subjects, submitting, storageUsage, 
   const [subjectSearch, setSubjectSearch] = useState("");
   const [subjectError, setSubjectError] = useState(false);
   const [file, setFile] = useState(null);
-  // Nơi lưu file: LOCAL (máy chủ) | CLOUD (Cloudinary) | BOTH (lưu cả 2)
-  const [storage, setStorage] = useState("LOCAL");
+  // Nơi lưu file: SERVER (máy chủ) | CLOUD (Cloudinary) | BOTH (lưu cả 2)
+  const [storage, setStorage] = useState("SERVER");
 
   const STORAGE_OPTIONS = [
-    { value: "LOCAL", label: t("documents.upload_modal.storageLocal"), hint: t("documents.upload_modal.storageLocalHint") },
+    { value: "SERVER", label: t("documents.upload_modal.storageLocal"), hint: t("documents.upload_modal.storageLocalHint") },
     { value: "CLOUD", label: t("documents.upload_modal.storageCloud"), hint: t("documents.upload_modal.storageCloudHint") },
     { value: "BOTH", label: t("documents.upload_modal.storageBoth"), hint: t("documents.upload_modal.storageBothHint") },
   ];
@@ -115,6 +118,8 @@ export default function UploadModal({ open, subjects, submitting, storageUsage, 
     );
   };
 
+  // Kiểm tra trước khi gửi: phải có file, phải chọn ít nhất 1 môn, không vượt giới hạn dung
+  // lượng/đuôi tệp — hợp lệ thì gọi onSubmit (handleUpload ở hook cha) để gọi API tải lên.
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!file) return;

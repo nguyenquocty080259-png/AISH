@@ -10,6 +10,8 @@ import { useAdminUsersPage } from "./hooks/useAdminUsersPage";
 import { useToast } from "../../../hooks/useToast";
 import "./admin-users.css";
 
+// Trang Admin quản lý NGƯỜI DÙNG: bảng có tìm kiếm/phân trang, tạo tài khoản mới, đổi vai trò,
+// khoá/mở khoá, và sao chép mật khẩu seed (dữ liệu demo) nếu có.
 export default function AdminUsersPage() {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage === "en" ? "en-US" : "vi-VN";

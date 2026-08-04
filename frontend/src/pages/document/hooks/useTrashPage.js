@@ -3,12 +3,14 @@ import { useTranslation } from "react-i18next";
 import * as documentApi from "../../../api/documentApi";
 import { useToast } from "../../../hooks/useToast";
 
+// Hook chứa logic trang Thùng rác: nạp danh sách tài liệu đã xoá mềm, khôi phục, xoá vĩnh viễn.
 export function useTrashPage() {
   const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Gọi API GET /documents/trash — nạp danh sách tài liệu trong thùng rác.
   const load = async () => {
     setLoading(true);
     try {
@@ -26,6 +28,7 @@ export function useTrashPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Khôi phục tài liệu khỏi thùng rác rồi nạp lại danh sách.
   const handleRestore = async (id) => {
     try {
       await documentApi.restoreDocument(id);
@@ -36,6 +39,7 @@ export function useTrashPage() {
     }
   };
 
+  // Xoá vĩnh viễn — hỏi xác nhận trước vì không thể hoàn tác.
   const handlePermanentDelete = async (id) => {
     if (!window.confirm(t("trash.confirmPermanent"))) return;
     try {

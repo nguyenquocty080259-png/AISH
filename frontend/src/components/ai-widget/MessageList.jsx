@@ -4,6 +4,7 @@ import MessageBubble from "./MessageBubble";
 import TypingIndicator from "./TypingIndicator";
 import "./ai-widget.css";
 
+// Danh sách tin nhắn trong widget, tự cuộn xuống cuối mỗi khi có tin nhắn mới/đang gõ/đang nạp lịch sử.
 export default function MessageList({ messages, isTyping, isHistoryLoading }) {
   const { t } = useTranslation();
   const bottomRef = useRef(null);

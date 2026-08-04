@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { useAiWidget } from "../../context/AiWidgetContext";
 import "./ai-widget.css";
 
+// Nút tròn nổi ở góc màn hình để mở widget chat, kèm số tin nhắn chưa đọc.
 export default function FloatingButton() {
   const { t } = useTranslation();
   const { openWidget, unreadCount } = useAiWidget();

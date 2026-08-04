@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { useAiWidget } from "../../context/AiWidgetContext";
 import "./ai-widget.css";
 
+// Định dạng thời gian cập nhật cuối của cuộc trò chuyện thành dạng tương đối ("5 phút trước"...).
 function formatConversationTime(value, t, locale) {
   if (!value) return "";
 
@@ -23,6 +24,7 @@ function formatConversationTime(value, t, locale) {
   });
 }
 
+// Bảng lịch sử cuộc trò chuyện hiện đè lên trong widget (khi bấm nút ≡ ở ChatHeader).
 export default function HistoryPanel() {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage === "en" ? "en-US" : "vi-VN";
